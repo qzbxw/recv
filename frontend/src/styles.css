@@ -3422,6 +3422,18 @@ html {
   align-items: start;
 }
 
+.lend-hero-copy,
+.lend-hero-side,
+.lend-section-copy,
+.lend-overview-grid,
+.lend-network-layout,
+.lend-compare-board,
+.lend-faq-grid,
+.lend-footer-copy,
+.lend-footer-meta {
+  min-width: 0;
+}
+
 .lend-hero-subcopy {
   margin-top: 0.9rem !important;
   color: #95a1ad !important;
@@ -3821,6 +3833,7 @@ html {
 
 @media (max-width: 620px) {
   .lend-topbar {
+    align-items: stretch;
     gap: 0.75rem;
     padding: 0.72rem;
     border-radius: 20px;
@@ -3843,12 +3856,12 @@ html {
   }
 
   .lend-topbar-actions {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    display: grid;
+    grid-template-columns: 1fr;
     width: 100%;
     gap: 0.5rem;
-    padding-bottom: 0.1rem;
+    overflow: visible;
+    padding-bottom: 0;
   }
 
   .lend-topbar-actions .lend-language,
@@ -3858,9 +3871,19 @@ html {
   .lend-topbar-actions .lend-secondary,
   .lend-cta-row .lend-primary,
   .lend-cta-row .lend-secondary {
-    width: auto;
-    min-width: max-content;
-    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .lend-topbar-actions .lend-language {
+    order: -1;
+  }
+
+  .lend-topbar-actions .lend-nav-link,
+  .lend-topbar-actions .lend-primary,
+  .lend-topbar-actions .lend-secondary {
+    justify-content: center;
   }
 
   .lend-hero-copy h1 {
@@ -3878,6 +3901,8 @@ html {
   }
 
   .lend-cta-row {
+    display: grid;
+    grid-template-columns: 1fr;
     margin: 1rem 0;
   }
 
@@ -3933,20 +3958,31 @@ html {
   }
 
   .lend-footer {
+    align-items: stretch;
     padding-top: 1rem;
   }
 
   .lend-inline-links {
+    display: grid;
+    grid-template-columns: 1fr;
     width: 100%;
   }
 
   .lend-inline-links .lend-secondary {
-    flex: 1 1 0;
+    width: 100%;
     min-width: 0;
   }
 
   .lend-panel-heading h2 {
     font-size: 1.5rem;
+  }
+
+  .lend-hero-panel,
+  .lend-soon-card,
+  .lend-footer-copy,
+  .lend-footer-meta {
+    padding: 1rem;
+    border-radius: 22px;
   }
 
   .lend-faq-trigger {
@@ -3959,6 +3995,10 @@ html {
 }
 
 @media (max-width: 420px) {
+  .lend-shell {
+    padding-inline: 0.7rem;
+  }
+
   .lend-topnav {
     gap: 0.45rem;
   }
@@ -3967,6 +4007,29 @@ html {
   .lend-secondary,
   .lend-primary {
     padding: 0.68rem 0.84rem;
+  }
+
+  .lend-topnav .lend-nav-link {
+    padding-inline: 0.78rem;
+  }
+
+  .lend-panel-heading h2,
+  .lend-section-copy h2,
+  .lend-final h2 {
+    word-break: break-word;
+  }
+
+  .lend-faq-trigger {
+    gap: 0.75rem;
+    padding: 0.88rem;
+  }
+
+  .lend-faq-trigger span {
+    font-size: 1rem;
+  }
+
+  .lend-faq-answer {
+    padding: 0 0.88rem 0.88rem;
   }
 }
 

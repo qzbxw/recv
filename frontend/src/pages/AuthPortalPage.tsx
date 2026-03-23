@@ -19,52 +19,30 @@ declare global {
 
 const COPY = {
   ru: {
-    eyebrow: "Access",
-    title: "Вход в reqst console",
-    body:
-      "Нормальная схема здесь выглядит так: Telegram остается identity-ядром, а email становится веб-точкой входа и recovery-каналом. В этом проходе уже выносим auth в отдельную страницу и даем привязать почту внутри консоли.",
-    telegramTitle: "Telegram-first вход",
-    telegramBody: "Если ты уже внутри Telegram WebApp, можно зайти сразу. Если заходишь с сайта, открой бота и продолжи оттуда.",
-    openBot: "Открыть Telegram bot",
-    continueTelegram: "Продолжить через Telegram",
-    devTitle: "Web / dev вход",
-    devBody: "Пока email login не завершен на backend-уровне, веб-вход остается через Telegram identity. Для локальной разработки можно зайти вручную.",
-    telegramId: "Telegram ID",
-    username: "Username",
-    signIn: "Войти в консоль",
+    title: "Вход в reqst",
+    body: "Используйте ваш аккаунт Telegram для безопасного входа в панель управления продавца.",
+    telegramTitle: "Авторизация через Telegram",
+    telegramBody: "Нажмите кнопку ниже, чтобы войти в консоль. Если вы заходите не из Telegram, мы предложим открыть бота для подтверждения личности.",
+    openBot: "Открыть бота",
+    continueTelegram: "Войти через Telegram",
     signingIn: "Входим...",
-    linkedTitle: "Что уже готово",
-    linkedItems: [
-      "Корень сайта можно держать под landing, а консоль отдельно на /console.",
-      "Auth вынесен в отдельную точку входа на /auth.",
-      "После Telegram-входа в консоли можно привязать email к аккаунту.",
-    ],
-    landing: "На лендинг",
+    landing: "На главную",
     console: "В консоль",
+    devAccess: "Вход для разработчиков (Manual ID)",
+    devEnter: "Войти по ID",
   },
   en: {
-    eyebrow: "Access",
-    title: "Sign in to reqst console",
-    body:
-      "The clean structure here is hybrid: Telegram stays the identity core, while email becomes the web access and recovery layer. This pass moves auth into its own page and adds email linking inside the console.",
-    telegramTitle: "Telegram-first sign-in",
-    telegramBody: "If you are already inside Telegram WebApp, continue directly. If you are on the website, open the bot first and keep going from there.",
-    openBot: "Open Telegram bot",
-    continueTelegram: "Continue with Telegram",
-    devTitle: "Web / dev sign-in",
-    devBody: "Until email login is finished end-to-end on the backend, website sign-in still uses Telegram identity. Manual entry stays available for local development.",
-    telegramId: "Telegram ID",
-    username: "Username",
-    signIn: "Enter console",
+    title: "Sign in to reqst",
+    body: "Use your Telegram account to securely access your seller dashboard.",
+    telegramTitle: "Telegram Authentication",
+    telegramBody: "Click the button below to enter the console. If you are browsing outside of Telegram, you can use our bot to verify your identity.",
+    openBot: "Open Bot",
+    continueTelegram: "Login with Telegram",
     signingIn: "Signing in...",
-    linkedTitle: "What is already in place",
-    linkedItems: [
-      "The website root can stay a landing page, while the console lives at /console.",
-      "Auth now has its own entry point at /auth.",
-      "After Telegram sign-in, a seller can link an email inside the console.",
-    ],
-    landing: "Back to landing",
-    console: "Open console",
+    landing: "Back to Home",
+    console: "Open Console",
+    devAccess: "Developer Access (Manual ID)",
+    devEnter: "Enter by ID",
   },
 } as const;
 
@@ -75,6 +53,7 @@ export function AuthPortalPage() {
   const [authForm, setAuthForm] = useState({ telegramId: "1001001", username: "reqst_dev" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showDev, setShowDev] = useState(false);
   const hasTelegramInitData = useMemo(() => Boolean(window.Telegram?.WebApp?.initData), []);
   const hasSession = Boolean(getStoredToken());
 
@@ -93,11 +72,6 @@ export function AuthPortalPage() {
       setError((err as Error).message);
       setLoading(false);
     }
-  }
-
-  async function handleAuth(event: FormEvent) {
-    event.preventDefault();
-    await performAuth();
   }
 
   return (
@@ -122,54 +96,54 @@ export function AuthPortalPage() {
           </div>
         </header>
 
-        <section className="auth-portal__hero">
+        <section className="auth-portal__hero auth-portal__hero--centered">
           <div className="auth-portal__copy">
-            <span className="lend-kicker">{text.eyebrow}</span>
             <h1>{text.title}</h1>
             <p>{text.body}</p>
           </div>
 
-          <div className="auth-portal__grid">
-            <article className="auth-card auth-card--telegram">
-              <h2>{text.telegramTitle}</h2>
-              <p>{text.telegramBody}</p>
+          <div className="auth-portal__main-action">
+            <article className="auth-card auth-card--hero">
+              <div className="auth-card__content">
+                <h2>{text.telegramTitle}</h2>
+                <p>{text.telegramBody}</p>
+              </div>
               <div className="auth-card__actions">
+                <button 
+                  type="button" 
+                  className="lend-primary lend-primary--large"
+                  disabled={loading} 
+                  onClick={() => void performAuth()}
+                >
+                  {loading ? text.signingIn : text.continueTelegram}
+                </button>
                 <a className="lend-secondary" href={BOT_URL} target="_blank" rel="noreferrer">
                   {text.openBot}
                 </a>
-                <button type="button" disabled={!hasTelegramInitData || loading} onClick={() => void performAuth()}>
-                  {loading ? text.signingIn : text.continueTelegram}
-                </button>
               </div>
-            </article>
-
-            <article className="auth-card">
-              <h2>{text.devTitle}</h2>
-              <p>{text.devBody}</p>
-              <form onSubmit={handleAuth} className="form-grid auth-card__form">
-                <label>
-                  {text.telegramId}
-                  <input value={authForm.telegramId} onChange={(event) => setAuthForm((current) => ({ ...current, telegramId: event.target.value }))} />
-                </label>
-                <label>
-                  {text.username}
-                  <input value={authForm.username} onChange={(event) => setAuthForm((current) => ({ ...current, username: event.target.value }))} />
-                </label>
-                <button disabled={loading} type="submit">
-                  {loading ? text.signingIn : text.signIn}
-                </button>
-              </form>
               {error ? <div className="alert">{error}</div> : null}
             </article>
+          </div>
 
-            <article className="auth-card auth-card--notes">
-              <h2>{text.linkedTitle}</h2>
-              <ul className="note-list note-list--console">
-                {text.linkedItems.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
+          <div className="auth-portal__dev-trigger">
+            <button type="button" className="ghost-link" onClick={() => setShowDev(!showDev)}>
+              {text.devAccess}
+            </button>
+            {showDev && (
+              <div className="dev-form-mini">
+                <input 
+                  value={authForm.telegramId} 
+                  placeholder="ID"
+                  onChange={(e) => setAuthForm(c => ({ ...c, telegramId: e.target.value }))} 
+                />
+                <input 
+                  value={authForm.username} 
+                  placeholder="Username"
+                  onChange={(e) => setAuthForm(c => ({ ...c, username: e.target.value }))} 
+                />
+                <button onClick={() => void performAuth()}>{text.devEnter}</button>
+              </div>
+            )}
           </div>
         </section>
       </div>
