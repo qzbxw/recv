@@ -417,6 +417,10 @@ code {
   color: var(--button-text);
 }
 
+.inline-link--wallet {
+  min-height: 48px;
+}
+
 .alert {
   position: relative;
   z-index: 1;
@@ -637,10 +641,34 @@ code {
   align-items: stretch;
 }
 
+.receipt-hero--paid,
+.receipt-hero--expired {
+  position: relative;
+}
+
 .receipt-copy {
   flex: 1 1 420px;
   display: grid;
   gap: 0.9rem;
+}
+
+.receipt-brandline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.receipt-brandmark {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 0.35rem;
+  background:
+    linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent-strong) 72%, white));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-soft) 65%, transparent);
 }
 
 .receipt-heading {
@@ -679,7 +707,8 @@ code {
 }
 
 .checkout-grid--receipt {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(240px, 0.85fr);
+  align-items: start;
 }
 
 .qr-stage {
@@ -723,17 +752,36 @@ code {
 }
 
 .qr-frame--receipt {
+  position: relative;
   width: min(100%, 272px);
   padding: 0.65rem;
   border-radius: 26px;
-  border: 0;
-  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+  box-shadow:
+    0 18px 44px color-mix(in srgb, var(--accent-soft) 42%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 42%, transparent);
+  overflow: hidden;
+}
+
+.qr-frame--receipt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--accent-soft) 82%, transparent), transparent 34%),
+    radial-gradient(circle at 85% 82%, color-mix(in srgb, var(--secondary) 92%, transparent), transparent 28%);
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .qr-image--lux {
   width: min(320px, 100%);
   height: auto;
   border-radius: 24px;
+  position: relative;
+  z-index: 1;
+  background: white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .center-text {
@@ -805,9 +853,21 @@ code {
   gap: 0.28rem;
 }
 
+.receipt-timer--urgent strong,
+.receipt-hero--expired .receipt-timer strong {
+  color: var(--danger);
+}
+
+.receipt-timer em {
+  color: var(--danger);
+  font-size: 0.85rem;
+  font-style: normal;
+}
+
 .receipt-timer span,
 .receipt-meta span,
-.payment-field label {
+.payment-field label,
+.receipt-docmeta span {
   color: var(--muted);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
@@ -821,10 +881,41 @@ code {
   letter-spacing: -0.08em;
 }
 
+.receipt-docmeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  padding-top: 0.15rem;
+}
+
+.receipt-docmeta div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.receipt-docmeta strong {
+  font-size: 0.94rem;
+  word-break: break-word;
+}
+
 .payment-sheet {
   display: grid;
   gap: 0.85rem;
   max-width: 100%;
+}
+
+.payment-sheet--receipt {
+  gap: 1rem;
+}
+
+.payment-sheet-header {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.payment-essentials {
+  display: grid;
+  gap: 0.85rem;
 }
 
 .payment-field {
@@ -838,11 +929,23 @@ code {
   background: color-mix(in srgb, var(--paper-strong) 96%, transparent);
 }
 
+.payment-field--button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
 .payment-field code {
   display: block;
   margin-top: 0.3rem;
   font-size: 0.98rem;
   line-height: 1.45;
+}
+
+.payment-field small {
+  display: block;
+  margin-top: 0.38rem;
+  color: var(--muted);
 }
 
 .payment-field--alert {
@@ -866,10 +969,31 @@ code {
   background: color-mix(in srgb, var(--accent-soft) 78%, var(--paper-strong));
 }
 
+.network-badge {
+  display: grid;
+  gap: 0.12rem;
+  margin-top: 0.6rem;
+  padding: 0.72rem 0.8rem;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--accent-soft) 78%, var(--paper-strong));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.network-badge b {
+  font-size: 0.96rem;
+  letter-spacing: 0.1em;
+}
+
+.network-badge small {
+  color: var(--muted);
+}
+
 .receipt-meta {
   display: grid;
   gap: 0.3rem;
   padding-inline: 0.15rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
 }
 
 .receipt-meta strong {
@@ -885,6 +1009,16 @@ code {
 .checkout-footer-link {
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.qr-frame--paid {
+  opacity: 0.58;
+  filter: saturate(0.7);
+}
+
+.qr-frame--expired {
+  opacity: 0.34;
+  filter: grayscale(1);
 }
 
 @media (max-width: 980px) {
@@ -918,6 +1052,15 @@ code {
 
   .receipt-hero {
     flex-direction: column;
+  }
+
+  .checkout-grid--receipt,
+  .receipt-docmeta {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-stage--receipt {
+    order: 2;
   }
 }
 
@@ -1003,6 +1146,10 @@ code {
   .field-copy {
     justify-self: start;
     min-width: 0;
+  }
+
+  .receipt-brandline {
+    letter-spacing: 0.12em;
   }
 
   .qr-shell {
