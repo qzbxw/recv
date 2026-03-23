@@ -98,6 +98,7 @@ func (s *Store) SetSellerBlocked(ctx context.Context, sellerID int64, blocked bo
 }
 
 func (s *Store) ListWallets(ctx context.Context, sellerID int64) ([]Wallet, error) {
+	wallets := make([]Wallet, 0)
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, seller_id, network, address, is_active, created_at
 		FROM wallets
@@ -109,7 +110,6 @@ func (s *Store) ListWallets(ctx context.Context, sellerID int64) ([]Wallet, erro
 	}
 	defer rows.Close()
 
-	var wallets []Wallet
 	for rows.Next() {
 		wallet, err := scanWallet(rows)
 		if err != nil {
@@ -262,6 +262,7 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 }
 
 func (s *Store) ListInvoices(ctx context.Context, sellerID int64, limit int, offset int) ([]Invoice, error) {
+	invoices := make([]Invoice, 0)
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, public_id, seller_id, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		       payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
@@ -275,7 +276,6 @@ func (s *Store) ListInvoices(ctx context.Context, sellerID int64, limit int, off
 	}
 	defer rows.Close()
 
-	var invoices []Invoice
 	for rows.Next() {
 		invoice, err := scanInvoice(rows)
 		if err != nil {

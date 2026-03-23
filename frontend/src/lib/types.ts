@@ -3,7 +3,7 @@ export type Network = "TON" | "TRON" | "EVM";
 export type Seller = {
   id: number;
   telegram_id: number;
-  username: string;
+  username: string | null;
   default_network: Network;
   subscription_ends_at: string | null;
   free_invoices_used: number;
@@ -28,7 +28,7 @@ export type Invoice = {
   payable_amount: string;
   payable_network: Network;
   destination_address: string;
-  payment_comment: string;
+  payment_comment: string | null;
   status: string;
   expires_at: string;
   tx_hash?: string | null;
@@ -44,4 +44,14 @@ export type MeResponse = {
     trial_limit: number;
     trial_remaining: number;
   };
+};
+
+export type WalletListResponse = {
+  items: Wallet[] | null;
+};
+
+export type InvoiceListResponse = {
+  items: Invoice[] | null;
+  page: number;
+  page_size: number;
 };

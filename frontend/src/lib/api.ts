@@ -1,4 +1,4 @@
-import type { Invoice, MeResponse, Wallet } from "./types";
+import type { Invoice, InvoiceListResponse, MeResponse, Wallet, WalletListResponse } from "./types";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const TOKEN_KEY = "reqst_token";
@@ -54,7 +54,7 @@ export async function fetchMe(token: string) {
 }
 
 export async function fetchWallets(token: string) {
-  return request<{ items: Wallet[] }>("/api/wallets", {}, token);
+  return request<WalletListResponse>("/api/wallets", {}, token);
 }
 
 export async function createWallet(token: string, payload: { network: string; address: string }) {
@@ -69,7 +69,7 @@ export async function deleteWallet(token: string, walletId: number) {
 }
 
 export async function fetchInvoices(token: string) {
-  return request<{ items: Invoice[]; page: number; page_size: number }>("/api/invoices?page=1&page_size=50", {}, token);
+  return request<InvoiceListResponse>("/api/invoices?page=1&page_size=50", {}, token);
 }
 
 export async function createInvoice(token: string, payload: {

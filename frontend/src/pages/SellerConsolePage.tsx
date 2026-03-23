@@ -74,8 +74,8 @@ export function SellerConsolePage() {
       setSession({
         token,
         me,
-        wallets: wallets.items,
-        invoices: invoices.items,
+        wallets: wallets.items ?? [],
+        invoices: invoices.items ?? [],
       });
       setError("");
     } catch (err) {
@@ -231,7 +231,7 @@ export function SellerConsolePage() {
           <section className="panel overview-grid">
             <article className="metric-card">
               <span>Seller</span>
-              <strong>@{session.me.seller.username || session.me.seller.telegram_id}</strong>
+              <strong>@{session.me.seller.username || String(session.me.seller.telegram_id)}</strong>
               <p>ID: {session.me.seller.telegram_id}</p>
             </article>
             <article className="metric-card">
