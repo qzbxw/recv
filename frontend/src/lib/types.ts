@@ -4,6 +4,7 @@ export type Seller = {
   id: number;
   telegram_id: number;
   username: string | null;
+  email: string | null;
   default_network: Network;
   subscription_ends_at: string | null;
   free_invoices_used: number;

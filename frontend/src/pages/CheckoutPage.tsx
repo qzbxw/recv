@@ -24,7 +24,7 @@ const COPY = {
     copyComment: "Копировать payload",
     copyAmount: "Копировать сумму",
     copied: "Скопировано",
-    warning: "Переводи только точную сумму в нужной сети. Если таймер истёк, запроси новый инвойс.",
+    warning: "Переводи только точную сумму в нужной сети.",
     payloadTitle: "Payload обязателен",
     payloadHint: "Без этого comment платёж может потеряться. Для TON вставь его без единого изменения.",
     qrLoading: "Готовим QR...",
@@ -34,29 +34,20 @@ const COPY = {
     receiptLabel: "Reqst",
     service: "Услуга",
     status: "Статус",
-    officialMark: "Подтверждено Reqst",
-    archiveMark: "Архив Reqst",
-    receiptOutroPaid: "Платёж закрыт и сохранён в истории Reqst.",
-    receiptOutroExpired: "Срок оплаты истёк. Этот экран остаётся только как запись по инвойсу.",
-    footerLink: "Reqst",
+    receiptOutroPaid: "Сохрани этот чек как подтверждение оплаты.",
+    receiptOutroExpired: "Для новой оплаты нужен свежий checkout.",
+    footerLink: "Powered by Reqst",
     networkOnly: "Только эта сеть",
     paidTitle: "Оплата получена",
-    paidBody: "Платёж подтверждён. Можно возвращаться к продавцу или закрывать страницу.",
-    paidBadge: "Payment complete",
+    paidBody: "Платёж подтверждён и записан в Reqst.",
     expiredTitle: "Инвойс просрочен",
-    expiredBody: "Этот платёжный запрос уже неактуален. Не отправляй деньги по этим реквизитам.",
-    expiredBadge: "Expired invoice",
-    refreshLabel: "Обнови чат с продавцом",
-    verifyManually: "Если уже оплатил, дождись ручной проверки.",
+    expiredBody: "Этот checkout уже закрыт. Не отправляй деньги по этим реквизитам.",
     paymentDetails: "Реквизиты для оплаты",
     scanHint: "Отсканируй QR или скопируй реквизиты ниже.",
     receiptNo: "Чек",
     finalState: "Финальный статус",
-    payoutRail: "Зачисление",
-    docHintPaid: "Оплата зарегистрирована, чек можно сохранить как подтверждение.",
-    docHintExpired: "Инвойс переведён в архив и больше не подходит для перевода.",
-    expiredRail: "Окно оплаты закрыто",
-    expiredRailHint: "Нужен новый checkout, если продавец всё ещё ждёт перевод.",
+    docHintPaid: "Чек можно сохранить как подтверждение.",
+    docHintExpired: "Если оплата всё ещё нужна, запроси новый checkout.",
   },
   en: {
     loading: "Loading invoice...",
@@ -74,7 +65,7 @@ const COPY = {
     copyComment: "Copy payload",
     copyAmount: "Copy amount",
     copied: "Copied",
-    warning: "Send only the exact amount on the correct network. If the timer is over, ask for a fresh invoice.",
+    warning: "Send only the exact amount on the correct network.",
     payloadTitle: "Payload required",
     payloadHint: "Without this comment the payment may be lost. For TON, paste it exactly as shown.",
     qrLoading: "Preparing QR...",
@@ -84,29 +75,20 @@ const COPY = {
     receiptLabel: "Reqst",
     service: "Service",
     status: "Status",
-    officialMark: "Confirmed by Reqst",
-    archiveMark: "Reqst archive",
-    receiptOutroPaid: "This payment has been settled and archived in Reqst.",
-    receiptOutroExpired: "The payment window is closed. This screen remains only as the invoice record.",
-    footerLink: "Reqst",
+    receiptOutroPaid: "Keep this receipt as proof of payment.",
+    receiptOutroExpired: "Ask for a fresh checkout if payment is still needed.",
+    footerLink: "Powered by Reqst",
     networkOnly: "Only this network",
     paidTitle: "Payment received",
-    paidBody: "The payment is confirmed. You can return to the seller or close this page.",
-    paidBadge: "Payment complete",
+    paidBody: "The payment is confirmed and recorded in Reqst.",
     expiredTitle: "Invoice expired",
-    expiredBody: "This payment request is no longer valid. Do not send funds using these details.",
-    expiredBadge: "Expired invoice",
-    refreshLabel: "Refresh your chat with the seller",
-    verifyManually: "If you already paid, wait for manual review.",
+    expiredBody: "This checkout is closed. Do not send funds using these details.",
     paymentDetails: "Payment details",
     scanHint: "Scan the QR or copy the fields below.",
     receiptNo: "Receipt",
     finalState: "Final state",
-    payoutRail: "Settlement",
-    docHintPaid: "The payment has been recorded, and this receipt can be kept as proof.",
-    docHintExpired: "This invoice was moved to archive and can no longer be used for payment.",
-    expiredRail: "Payment window closed",
-    expiredRailHint: "Ask the seller for a fresh checkout if payment is still needed.",
+    docHintPaid: "You can keep this receipt as proof.",
+    docHintExpired: "Ask the seller for a fresh checkout if payment is still needed.",
   },
 } as const;
 
@@ -341,7 +323,6 @@ export function CheckoutPage() {
                 <div className="completion-paper">
                   <div className="completion-paper-topline">
                     <div className="receipt-brandline completion-brandline">
-                      <span className="receipt-brandmark" aria-hidden="true" />
                       <span>{text.receiptLabel}</span>
                     </div>
                     <span className="completion-ticket-no">
@@ -351,14 +332,10 @@ export function CheckoutPage() {
 
                   <div className="completion-head">
                     <div>
-                      <span className={`status-pill completion-stamp status-${invoice.status}`}>
-                        {isPaid ? text.paidBadge : text.expiredBadge}
-                      </span>
                       <h1>{isPaid ? text.paidTitle : text.expiredTitle}</h1>
                       <p className="hero-copy">{isPaid ? text.paidBody : text.expiredBody}</p>
                       <p className="completion-doc-hint">{isPaid ? text.docHintPaid : text.docHintExpired}</p>
                     </div>
-                    <div className="completion-mark">{isPaid ? text.officialMark : text.archiveMark}</div>
                   </div>
 
                   <div className="completion-summary-wrap">
@@ -371,26 +348,10 @@ export function CheckoutPage() {
                       </div>
                     </div>
                     <aside className="completion-sidecar">
-                      <span>{isPaid ? text.payoutRail : text.expiredRail}</span>
-                      <strong>{isPaid ? statusLabel : text.expired}</strong>
-                      <p>{isPaid ? text.receiptOutroPaid : text.expiredRailHint}</p>
-                      {isExpired ? <small>{text.verifyManually}</small> : null}
+                      <span>{text.finalState}</span>
+                      <strong>{statusLabel}</strong>
+                      <p>{isPaid ? text.receiptOutroPaid : text.receiptOutroExpired}</p>
                     </aside>
-                  </div>
-
-                  <div className="completion-divider" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
                   </div>
 
                   <div className="completion-ledger completion-ledger--hero">
@@ -399,8 +360,8 @@ export function CheckoutPage() {
                       <strong>{title}</strong>
                     </div>
                     <div>
-                      <span>{text.finalState}</span>
-                      <strong>{isPaid ? text.paidBadge : text.expiredBadge}</strong>
+                      <span>{text.network}</span>
+                      <strong>{formatNetworkLabel(invoice.payable_network)}</strong>
                     </div>
                   </div>
 
@@ -410,23 +371,24 @@ export function CheckoutPage() {
                       <strong>{invoice.public_id}</strong>
                     </div>
                     <div>
-                      <span>{text.network}</span>
-                      <strong>{formatNetworkLabel(invoice.payable_network)}</strong>
-                    </div>
-                    <div>
                       <span>{text.wallet}</span>
-                      <strong>{formatAddressPreview(invoice.destination_address)}</strong>
+                      <strong>{invoice.destination_address}</strong>
                     </div>
                     <div>
                       <span>{text.expiresAt}</span>
                       <strong>{formatDateTime(invoice.expires_at, language)}</strong>
                     </div>
+                    <div>
+                      <span>{text.status}</span>
+                      <strong>{statusLabel}</strong>
+                    </div>
                   </div>
 
-                  <div className="completion-note">
-                    <p>{isPaid ? text.receiptOutroPaid : text.receiptOutroExpired}</p>
-                    {invoice.payment_comment ? <small>{text.comment}: {invoice.payment_comment}</small> : null}
-                  </div>
+                  {invoice.payment_comment ? (
+                    <div className="completion-note">
+                      <small>{text.comment}: {invoice.payment_comment}</small>
+                    </div>
+                  ) : null}
                 </div>
               </section>
             ) : (
@@ -436,11 +398,9 @@ export function CheckoutPage() {
                     <div className="receipt-hero receipt-hero--streamlined">
                       <div className="receipt-copy">
                         <div className="receipt-brandline">
-                          <span className="receipt-brandmark" aria-hidden="true" />
                           <span>{text.receiptLabel}</span>
                         </div>
                         <div className="receipt-heading">
-                          <span className={`status-dot status-${invoice.status}`} aria-hidden="true" />
                           <span className={`status-pill receipt-status status-${invoice.status}`}>{statusLabel}</span>
                         </div>
                         <h1>{title}</h1>
@@ -503,11 +463,6 @@ export function CheckoutPage() {
                             </button>
                           ))}
                       </div>
-
-                      <div className="receipt-meta">
-                        <span>{text.expires}</span>
-                        <strong>{formatDateTime(invoice.expires_at, language)}</strong>
-                      </div>
                     </section>
                   </section>
 
@@ -539,7 +494,7 @@ export function CheckoutPage() {
 
             <footer className="checkout-footer">
               <a className="checkout-footer-link" href={BOT_URL} target="_blank" rel="noreferrer">
-                reqst · {text.footerLink}
+                {text.footerLink}
               </a>
             </footer>
           </>

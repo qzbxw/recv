@@ -22,6 +22,7 @@ export function CustomSelect<T extends string>({
   disabled = false,
 }: CustomSelectProps<T>) {
   const [open, setOpen] = useState(false);
+  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
   const rootRef = useRef<HTMLDivElement | null>(null);
   const selected = useMemo(
     () => options.find((option) => option.value === value) ?? options[0],
@@ -31,6 +32,18 @@ export function CustomSelect<T extends string>({
   useEffect(() => {
     if (!open) {
       return;
+    }
+
+    function updatePlacement() {
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) {
+        return;
+      }
+
+      const estimatedMenuHeight = Math.min(320, options.length * 68 + 18);
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      setPlacement(spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow ? "top" : "bottom");
     }
 
     function handlePointerDown(event: MouseEvent) {
@@ -45,13 +58,18 @@ export function CustomSelect<T extends string>({
       }
     }
 
+    updatePlacement();
     window.addEventListener("mousedown", handlePointerDown);
     window.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", updatePlacement);
+    window.addEventListener("scroll", updatePlacement, true);
     return () => {
       window.removeEventListener("mousedown", handlePointerDown);
       window.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", updatePlacement);
+      window.removeEventListener("scroll", updatePlacement, true);
     };
-  }, [open]);
+  }, [open, options.length]);
 
   return (
     <div ref={rootRef} className={open ? "custom-select is-open" : "custom-select"}>
@@ -69,37 +87,35 @@ export function CustomSelect<T extends string>({
           {selected?.hint ? <small>{selected.hint}</small> : null}
         </span>
         <span className="custom-select-chevron" aria-hidden="true">
-          {open ? "−" : "+"}
+          v
         </span>
       </button>
 
-      {open ? (
-        <div className="custom-select-menu">
-          <ul className="custom-select-options" role="listbox" aria-label={ariaLabel}>
-            {options.map((option) => {
-              const active = option.value === value;
-              return (
-                <li key={option.value}>
-                  <button
-                    type="button"
-                    className={active ? "custom-select-option is-active" : "custom-select-option"}
-                    onClick={() => {
-                      onChange(option.value);
-                      setOpen(false);
-                    }}
-                  >
-                    <span>
-                      <strong>{option.label}</strong>
-                      {option.hint ? <small>{option.hint}</small> : null}
-                    </span>
-                    {active ? <em>●</em> : null}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ) : null}
+      <div className={open ? `custom-select-menu custom-select-menu--${placement} is-open` : `custom-select-menu custom-select-menu--${placement}`} aria-hidden={!open}>
+        <ul className="custom-select-options" role="listbox" aria-label={ariaLabel}>
+          {options.map((option) => {
+            const active = option.value === value;
+            return (
+              <li key={option.value}>
+                <button
+                  type="button"
+                  className={active ? "custom-select-option is-active" : "custom-select-option"}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  <span>
+                    <strong>{option.label}</strong>
+                    {option.hint ? <small>{option.hint}</small> : null}
+                  </span>
+                  {active ? <em>●</em> : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

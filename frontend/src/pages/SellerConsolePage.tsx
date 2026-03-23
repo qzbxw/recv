@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { CustomSelect } from "../components/CustomSelect";
 import {
-  authenticate,
   cancelInvoice,
   clearStoredToken,
   createBillingCheckout,
@@ -13,7 +13,7 @@ import {
   fetchWallets,
   getStoredToken,
   markInvoicePaid,
-  setStoredToken,
+  updateContactEmail,
 } from "../lib/api";
 import type { Invoice, MeResponse, Network, Wallet } from "../lib/types";
 import { useUI } from "../lib/ui";
@@ -39,6 +39,18 @@ type SessionState = {
 
 type PanelKey = "overview" | "wallets" | "create" | "orders";
 
+function LiveValue({ value }: { value: string | number }) {
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    setAnimate(true);
+    const timeout = window.setTimeout(() => setAnimate(false), 520);
+    return () => window.clearTimeout(timeout);
+  }, [value]);
+
+  return <span className={animate ? "live-value is-updating" : "live-value"}>{value}</span>;
+}
+
 const COPY = {
   ru: {
     eyebrow: "Reqst",
@@ -52,11 +64,13 @@ const COPY = {
       orders: "Инвойсы",
     },
     authTitle: "Вход продавца",
-    authCopy: "Вход в консоль продавца.",
+    authCopy: "Консоль теперь живет отдельно. Для входа открой auth flow и продолжи через Telegram.",
     telegramId: "Telegram ID",
     username: "Username",
     signIn: "Войти",
     signingIn: "Входим...",
+    authAction: "Открыть auth",
+    authHint: "После входа можно привязать email прямо в профиле.",
     seller: "Продавец",
     plan: "План",
     wallets: "Кошельки",
@@ -76,7 +90,6 @@ const COPY = {
     freshLink: "Свежая ссылка",
     open: "Открыть",
     copy: "Скопировать",
-    refresh: "Обновить",
     logout: "Выйти",
     theme: { light: "Свет", dark: "Тьма" },
     language: { ru: "РУ", en: "EN" },
@@ -115,6 +128,11 @@ const COPY = {
     walletCoverageTitle: "Покрытие сетей",
     walletCoverageCopy: "Сразу видно, какие направления уже готовы к оплате.",
     sellerIdLabel: "Seller ID",
+    emailLabel: "Почта",
+    emailPlaceholder: "name@company.com",
+    saveEmail: "Сохранить почту",
+    savingEmail: "Сохраняем...",
+    emailLinked: "Почта привязана",
     defaultNetwork: "Сеть по умолчанию",
     walletReady: "Готово",
     walletMissing: "Нужно добавить",
@@ -132,11 +150,13 @@ const COPY = {
       orders: "Invoices",
     },
     authTitle: "Seller Sign-In",
-    authCopy: "Sign in to the seller console.",
+    authCopy: "The console now lives separately. Open the auth flow and continue with Telegram.",
     telegramId: "Telegram ID",
     username: "Username",
     signIn: "Enter console",
     signingIn: "Signing in...",
+    authAction: "Open auth",
+    authHint: "After sign-in, you can link an email from the profile section.",
     seller: "Seller",
     plan: "Plan",
     wallets: "Wallets",
@@ -156,7 +176,6 @@ const COPY = {
     freshLink: "Fresh link",
     open: "Open",
     copy: "Copy",
-    refresh: "Refresh",
     logout: "Logout",
     theme: { light: "Light", dark: "Dark" },
     language: { ru: "RU", en: "EN" },
@@ -195,6 +214,11 @@ const COPY = {
     walletCoverageTitle: "Network coverage",
     walletCoverageCopy: "See at a glance which payout lanes are ready to receive funds.",
     sellerIdLabel: "Seller ID",
+    emailLabel: "Email",
+    emailPlaceholder: "name@company.com",
+    saveEmail: "Save email",
+    savingEmail: "Saving...",
+    emailLinked: "Email linked",
     defaultNetwork: "Default network",
     walletReady: "Ready",
     walletMissing: "Needs wallet",
@@ -223,21 +247,21 @@ const STATUS_LABELS = {
 
 const PANEL_ORDER: PanelKey[] = ["overview", "wallets", "create", "orders"];
 
-const WALLET_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
+const WALLET_NETWORK_OPTIONS: Array<{ value: Network; label: string; hint?: string }> = [
   { value: "TON", label: "TON" },
-  { value: "TRON", label: "TRON / USDT" },
-  { value: "SOLANA", label: "SOLANA / USDC-USDT" },
-  { value: "EVM", label: "EVM shared / ETH-Base-Arbitrum-BSC" },
+  { value: "TRON", label: "TRON", hint: "USDT" },
+  { value: "SOLANA", label: "SOLANA", hint: "USDC / USDT" },
+  { value: "EVM", label: "EVM Shared", hint: "ETH, Base, Arbitrum, BSC" },
 ];
 
-const PAYABLE_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
+const PAYABLE_NETWORK_OPTIONS: Array<{ value: Network; label: string; hint?: string }> = [
   { value: "TON", label: "TON" },
-  { value: "TRON", label: "TRON / USDT" },
-  { value: "SOLANA", label: "SOLANA / USDC-USDT" },
-  { value: "BASE", label: "BASE / USDT" },
-  { value: "ARBITRUM", label: "ARBITRUM / USDT" },
-  { value: "BSC", label: "BSC / USDT" },
-  { value: "EVM", label: "ETHEREUM / ERC20" },
+  { value: "TRON", label: "TRON", hint: "USDT" },
+  { value: "SOLANA", label: "SOLANA", hint: "USDC / USDT" },
+  { value: "BASE", label: "BASE", hint: "USDT" },
+  { value: "ARBITRUM", label: "ARBITRUM", hint: "USDT" },
+  { value: "BSC", label: "BSC", hint: "USDT" },
+  { value: "EVM", label: "ETHEREUM", hint: "ERC20" },
 ];
 
 function formatInvoiceStatus(language: keyof typeof STATUS_LABELS, status: string) {
@@ -250,15 +274,19 @@ function formatNetworkLabel(network: Network) {
     ?? network;
 }
 
+function formatWalletNetworkLabel(network: Network) {
+  return WALLET_NETWORK_OPTIONS.find((option) => option.value === network)?.label ?? formatNetworkLabel(network);
+}
+
 export function SellerConsolePage() {
   const { language, theme, setLanguage, setTheme } = useUI();
   const text = COPY[language];
   const [session, setSession] = useState<SessionState | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [savingEmail, setSavingEmail] = useState(false);
   const [activePanel, setActivePanel] = useState<PanelKey>("overview");
   const [freshLink, setFreshLink] = useState("");
-  const [authForm, setAuthForm] = useState({ telegramId: "1001001", username: "reqst_dev" });
   const [walletForm, setWalletForm] = useState<{ network: Network; address: string }>({ network: "TON", address: "" });
   const [invoiceForm, setInvoiceForm] = useState({
     title: "Digital service",
@@ -267,6 +295,7 @@ export function SellerConsolePage() {
     expiresInMinutes: 30,
   });
   const [billingNetwork, setBillingNetwork] = useState<Network>("TRON");
+  const [emailForm, setEmailForm] = useState("");
 
   useEffect(() => {
     window.Telegram?.WebApp?.ready?.();
@@ -282,9 +311,23 @@ export function SellerConsolePage() {
     void loadSession(token);
   }, []);
 
-  async function loadSession(token: string) {
+  useEffect(() => {
+    if (!session?.token) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void loadSession(session.token, { silent: true });
+    }, 12000);
+
+    return () => window.clearInterval(interval);
+  }, [session?.token]);
+
+  async function loadSession(token: string, options?: { silent?: boolean }) {
     try {
-      setLoading(true);
+      if (!options?.silent) {
+        setLoading(true);
+      }
       const [me, wallets, invoices] = await Promise.all([fetchMe(token), fetchWallets(token), fetchInvoices(token)]);
       setSession({
         token,
@@ -292,36 +335,17 @@ export function SellerConsolePage() {
         wallets: wallets.items ?? [],
         invoices: invoices.items ?? [],
       });
+      setEmailForm(me.seller.email ?? "");
       setError("");
     } catch (err) {
       clearStoredToken();
       setSession(null);
       setError((err as Error).message);
     } finally {
-      setLoading(false);
+      if (!options?.silent) {
+        setLoading(false);
+      }
     }
-  }
-
-  async function handleAuth(event: FormEvent) {
-    event.preventDefault();
-    try {
-      setLoading(true);
-      const initData = window.Telegram?.WebApp?.initData;
-      const payload = initData ? { init_data: initData } : { telegram_id: Number(authForm.telegramId), username: authForm.username };
-      const result = await authenticate(payload);
-      setStoredToken(result.token);
-      await loadSession(result.token);
-    } catch (err) {
-      setError((err as Error).message);
-      setLoading(false);
-    }
-  }
-
-  async function refresh() {
-    if (!session) {
-      return;
-    }
-    await loadSession(session.token);
   }
 
   async function handleCreateWallet(event: FormEvent) {
@@ -332,7 +356,7 @@ export function SellerConsolePage() {
     try {
       await createWallet(session.token, walletForm);
       setWalletForm((current) => ({ ...current, address: "" }));
-      await refresh();
+      await loadSession(session.token, { silent: true });
       setActivePanel("wallets");
     } catch (err) {
       const message = (err as Error).message;
@@ -356,7 +380,7 @@ export function SellerConsolePage() {
         expires_in_minutes: invoiceForm.expiresInMinutes,
       });
       setFreshLink(`${window.location.origin}/checkout/${invoice.public_id}`);
-      await refresh();
+      await loadSession(session.token, { silent: true });
       setActivePanel("orders");
     } catch (err) {
       setError((err as Error).message);
@@ -372,7 +396,7 @@ export function SellerConsolePage() {
         payable_network: network,
       });
       setFreshLink(`${window.location.origin}/checkout/${invoice.public_id}`);
-      await refresh();
+      await loadSession(session.token, { silent: true });
       setActivePanel("orders");
     } catch (err) {
       setError((err as Error).message);
@@ -385,7 +409,7 @@ export function SellerConsolePage() {
     }
     try {
       await deleteWallet(session.token, walletId);
-      await refresh();
+      await loadSession(session.token, { silent: true });
     } catch (err) {
       setError((err as Error).message);
     }
@@ -401,7 +425,7 @@ export function SellerConsolePage() {
       } else {
         await cancelInvoice(session.token, invoiceId);
       }
-      await refresh();
+      await loadSession(session.token, { silent: true });
     } catch (err) {
       setError((err as Error).message);
     }
@@ -414,16 +438,40 @@ export function SellerConsolePage() {
   function handleLogout() {
     clearStoredToken();
     setSession(null);
+    setEmailForm("");
     setFreshLink("");
     setActivePanel("overview");
+  }
+
+  async function handleEmailSave(event: FormEvent) {
+    event.preventDefault();
+    if (!session) {
+      return;
+    }
+    try {
+      setSavingEmail(true);
+      const result = await updateContactEmail(session.token, { email: emailForm.trim() });
+      setSession((current) => current ? {
+        ...current,
+        me: {
+          ...current.me,
+          seller: result.seller,
+        },
+      } : current);
+      setEmailForm(result.seller.email ?? "");
+      setError("");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSavingEmail(false);
+    }
   }
 
   const checkoutOrigin = useMemo(() => window.location.origin, []);
   const latestInvoice = session?.invoices[0] ?? null;
   const trialEnded = Boolean(session && !session.me.plan.is_pro && session.me.plan.trial_remaining <= 0);
   const sellerHandle = session ? `@${session.me.seller.username || String(session.me.seller.telegram_id)}` : "";
-  const heroLink = freshLink || (latestInvoice ? `${checkoutOrigin}/checkout/${latestInvoice.public_id}` : "");
-  const heroLinkLabel = freshLink ? text.freshLink : text.recentInvoice;
+  const latestCheckoutUrl = freshLink || (latestInvoice ? `${checkoutOrigin}/checkout/${latestInvoice.public_id}` : "");
   const invoicePulse = useMemo(() => {
     if (!session) {
       return [];
@@ -453,41 +501,48 @@ export function SellerConsolePage() {
       <div className="ambient ambient-right" />
 
       <header className="topbar topbar--console">
-        <div className="topbar-brand">
-          <strong>reqst</strong>
-        </div>
+        <div className="topbar-main">
+          <div className="topbar-brand">
+            <strong>reqst</strong>
+          </div>
 
-        <div className="topbar-actions">
-          <div className="micro-actions">
-            <div className="micro-action-group" role="group" aria-label="language">
-              <button type="button" className={language === "ru" ? "micro-action active" : "micro-action"} onClick={() => setLanguage("ru")}>
-                {text.language.ru}
-              </button>
-              <span className="micro-divider">|</span>
-              <button type="button" className={language === "en" ? "micro-action active" : "micro-action"} onClick={() => setLanguage("en")}>
-                {text.language.en}
+          <div className="topbar-actions">
+            <div className="micro-actions">
+              <div className="micro-action-group" role="group" aria-label="language">
+                <button type="button" className={language === "ru" ? "micro-action active" : "micro-action"} onClick={() => setLanguage("ru")}>
+                  {text.language.ru}
+                </button>
+                <span className="micro-divider">|</span>
+                <button type="button" className={language === "en" ? "micro-action active" : "micro-action"} onClick={() => setLanguage("en")}>
+                  {text.language.en}
+                </button>
+              </div>
+              <button
+                type="button"
+                className="micro-action micro-action--icon"
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+              >
+                {theme === "light" ? "☀" : "☾"}
               </button>
             </div>
-            <button
-              type="button"
-              className="micro-action micro-action--icon"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-            >
-              {theme === "light" ? "☀" : "☾"}
-            </button>
-          </div>
-          {session ? (
-            <>
-              <button type="button" className="ghost-button compact-button" onClick={() => void refresh()}>
-                {text.refresh}
-              </button>
+            {session ? (
               <button type="button" className="ghost-button compact-button" onClick={handleLogout}>
                 {text.logout}
               </button>
-            </>
-          ) : null}
+            ) : null}
+          </div>
         </div>
+
+        {session ? (
+          <nav className="topbar-nav" aria-label="console sections">
+            {PANEL_ORDER.map((panel) => (
+              <button key={panel} type="button" className={activePanel === panel ? "switch-pill active" : "switch-pill"} onClick={() => setActivePanel(panel)}>
+                {text.tabs[panel]}
+              </button>
+            ))}
+          </nav>
+        ) : null}
       </header>
 
       {error ? <div className="alert">{error}</div> : null}
@@ -498,116 +553,15 @@ export function SellerConsolePage() {
             <h2>{text.authTitle}</h2>
             <p>{text.authCopy}</p>
           </div>
-          <form onSubmit={handleAuth} className="form-grid">
-            <label>
-              {text.telegramId}
-              <input value={authForm.telegramId} onChange={(event) => setAuthForm((current) => ({ ...current, telegramId: event.target.value }))} />
-            </label>
-            <label>
-              {text.username}
-              <input value={authForm.username} onChange={(event) => setAuthForm((current) => ({ ...current, username: event.target.value }))} />
-            </label>
-            <button disabled={loading} type="submit">
-              {loading ? text.signingIn : text.signIn}
-            </button>
-          </form>
+          <div className="console-auth-cta">
+            <Link className="lend-primary" to="/auth">
+              {text.authAction}
+            </Link>
+            <p className="muted">{text.authHint}</p>
+          </div>
         </section>
       ) : (
         <>
-          <section className="console-command console-surface">
-            <div className="console-command-main">
-              <div className="console-command-headline">
-                <div className="console-title-row">
-                  <h1>{text.heroTitle}</h1>
-                  <div className="console-title-badges">
-                    <span className="console-chip">{sellerHandle}</span>
-                    <span className="console-chip console-chip--accent">{session.me.plan.name}</span>
-                    {!session.me.plan.is_pro ? <span className="console-chip">{text.trialLeft}: {session.me.plan.trial_remaining}</span> : null}
-                  </div>
-                </div>
-              </div>
-
-              <p className="hero-copy">{text.heroCopy}</p>
-
-              <div className="console-command-actions">
-                <button type="button" onClick={() => setActivePanel("create")}>
-                  {text.generate}
-                </button>
-                <button type="button" className="ghost-button compact-button" onClick={() => setActivePanel("orders")}>
-                  {text.ordersTitle}
-                </button>
-                <button type="button" className="ghost-button compact-button" onClick={() => setActivePanel("wallets")}>
-                  {text.walletTitle}
-                </button>
-              </div>
-
-              <div className="console-summary-strip">
-                <article className="console-summary-pill">
-                  <span>{text.wallets}</span>
-                  <strong>{session.wallets.length}</strong>
-                </article>
-                <article className="console-summary-pill">
-                  <span>{text.invoices}</span>
-                  <strong>{session.invoices.length}</strong>
-                </article>
-                <article className="console-summary-pill">
-                  <span>{text.recentInvoice}</span>
-                  <strong>{latestInvoice ? latestInvoice.payable_amount : "0"}</strong>
-                </article>
-              </div>
-            </div>
-
-            <div className="console-command-side">
-              <div className="console-link-card console-link-card--spotlight">
-                <span>{heroLinkLabel}</span>
-                <strong>{heroLink ? heroLink.replace(checkoutOrigin, "") : text.noRecentInvoice}</strong>
-                {latestInvoice ? (
-                  <div className="console-inline-meta">
-                    <span className={`status-pill status-${latestInvoice.status}`}>{formatInvoiceStatus(language, latestInvoice.status)}</span>
-                    <p>{latestInvoice.title}</p>
-                  </div>
-                ) : null}
-                {heroLink ? (
-                  <div className="console-link-actions">
-                    <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(heroLink)}>
-                      {text.copy}
-                    </button>
-                    <a className="inline-link" href={heroLink} target="_blank" rel="noreferrer">
-                      {text.open}
-                    </a>
-                  </div>
-                ) : null}
-              </div>
-
-              {!session.me.plan.is_pro ? (
-                <div className="console-link-card console-link-card--billing">
-                  <span>{text.unlockPro}</span>
-                  <strong>{text.unlockPrice}</strong>
-                  <p>{trialEnded ? text.paywallBody : text.unlockCopy}</p>
-                  <div className="console-link-actions console-link-actions--billing">
-                    <CustomSelect
-                      value={billingNetwork}
-                      options={PAYABLE_NETWORK_OPTIONS}
-                      ariaLabel={text.billingNetwork}
-                      onChange={(value) => setBillingNetwork(value)}
-                    />
-                    <button type="button" className="ghost-button compact-button" onClick={() => void handleCreateBilling()}>
-                      {text.unlockNow}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </section>
-
-          <nav className="panel-switcher panel-switcher--console" aria-label="console sections">
-            {PANEL_ORDER.map((panel) => (
-              <button key={panel} type="button" className={activePanel === panel ? "switch-pill active" : "switch-pill"} onClick={() => setActivePanel(panel)}>
-                {text.tabs[panel]}
-              </button>
-            ))}
-          </nav>
-
           {activePanel === "overview" ? (
             <section className="console-layout console-layout--overview">
               <div className="console-stack">
@@ -622,25 +576,41 @@ export function SellerConsolePage() {
                   <div className="console-stat-grid console-stat-grid--profile">
                     <article className="console-stat-card">
                       <span>{text.seller}</span>
-                      <strong>{sellerHandle}</strong>
+                      <strong><LiveValue value={sellerHandle} /></strong>
                       <p>{text.sellerIdLabel}: {session.me.seller.telegram_id}</p>
                     </article>
                     <article className="console-stat-card">
                       <span>{text.plan}</span>
-                      <strong>{session.me.plan.name}</strong>
+                      <strong><LiveValue value={session.me.plan.name} /></strong>
                       <p>{!session.me.plan.is_pro ? `${text.trialLeft}: ${session.me.plan.trial_remaining}` : text.unlockPrice}</p>
                     </article>
                     <article className="console-stat-card">
                       <span>{text.defaultNetwork}</span>
-                      <strong>{formatNetworkLabel(session.me.seller.default_network)}</strong>
+                      <strong><LiveValue value={formatNetworkLabel(session.me.seller.default_network)} /></strong>
                       <p>{text.activeWallets}</p>
                     </article>
                     <article className="console-stat-card">
                       <span>{text.invoices}</span>
-                      <strong>{session.invoices.length}</strong>
+                      <strong><LiveValue value={session.invoices.length} /></strong>
                       <p>{text.totalInvoices}</p>
                     </article>
                   </div>
+
+                  <form onSubmit={handleEmailSave} className="console-email-form">
+                    <label>
+                      {text.emailLabel}
+                      <input
+                        type="email"
+                        placeholder={text.emailPlaceholder}
+                        value={emailForm}
+                        onChange={(event) => setEmailForm(event.target.value)}
+                      />
+                    </label>
+                    <button type="submit" disabled={savingEmail}>
+                      {savingEmail ? text.savingEmail : text.saveEmail}
+                    </button>
+                    {session.me.seller.email ? <p className="muted">{text.emailLinked}</p> : null}
+                  </form>
                 </article>
 
                 <article className="console-surface console-section-card">
@@ -655,7 +625,7 @@ export function SellerConsolePage() {
                     {invoicePulse.map((item) => (
                       <article key={item.key} className={`console-pulse-card status-${item.key}`}>
                         <span>{item.label}</span>
-                        <strong>{item.value}</strong>
+                        <strong><LiveValue value={item.value} /></strong>
                       </article>
                     ))}
                   </div>
@@ -699,6 +669,16 @@ export function SellerConsolePage() {
                           <p>{new Date(latestInvoice.expires_at).toLocaleString()}</p>
                         </div>
                       </div>
+                      {latestCheckoutUrl ? (
+                        <div className="console-link-actions">
+                          <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(latestCheckoutUrl)}>
+                            {text.copy}
+                          </button>
+                          <a className="inline-link" href={latestCheckoutUrl} target="_blank" rel="noreferrer">
+                            {text.open}
+                          </a>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </article>
@@ -737,7 +717,7 @@ export function SellerConsolePage() {
                   {session.wallets.map((wallet) => (
                     <div key={wallet.id} className="stack-item stack-item--console">
                       <div className="console-wallet-copy">
-                        <span>{formatNetworkLabel(wallet.network)}</span>
+                        <span>{formatWalletNetworkLabel(wallet.network)}</span>
                         <strong>{wallet.address}</strong>
                       </div>
                       <button type="button" className="ghost-button compact-button" onClick={() => void handleDeleteWallet(wallet.id)}>

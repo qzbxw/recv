@@ -63,6 +63,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api := router.Group("/api")
 	api.Use(server.authMiddleware())
 	api.GET("/me", server.handleMe)
+	api.POST("/me/contact-email", server.handleUpdateContactEmail)
 	api.GET("/wallets", server.handleListWallets)
 	api.POST("/wallets", server.handleCreateWallet)
 	api.DELETE("/wallets/:id", server.handleDeleteWallet)
@@ -107,6 +108,35 @@ func (s *Server) handleMe(c *gin.Context) {
 			"billing_days":    service.ProPlanDays,
 		},
 	})
+}
+
+func (s *Server) handleUpdateContactEmail(c *gin.Context) {
+	sc := sellerFromContext(c)
+	var body struct {
+		Email string `json:"email"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	email := strings.TrimSpace(strings.ToLower(body.Email))
+	if email != "" && !strings.Contains(email, "@") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
+		return
+	}
+
+	seller, err := s.store.UpdateSellerEmail(c.Request.Context(), sc.Seller.ID, email)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if strings.Contains(strings.ToLower(err.Error()), "duplicate key") {
+			status = http.StatusConflict
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"seller": seller})
 }
 
 func (s *Server) handleListWallets(c *gin.Context) {

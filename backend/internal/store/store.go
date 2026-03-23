@@ -49,7 +49,7 @@ func (s *Store) UpsertSellerByTelegram(ctx context.Context, telegramID int64, us
 		VALUES ($1, NULLIF($2, ''))
 		ON CONFLICT (telegram_id)
 		DO UPDATE SET username = COALESCE(NULLIF(EXCLUDED.username, ''), sellers.username)
-		RETURNING id, telegram_id, COALESCE(username, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
+		RETURNING id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
 	`, telegramID, username)
 
 	return scanSeller(row)
@@ -57,7 +57,7 @@ func (s *Store) UpsertSellerByTelegram(ctx context.Context, telegramID int64, us
 
 func (s *Store) GetSellerByID(ctx context.Context, sellerID int64) (Seller, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, telegram_id, COALESCE(username, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
+		SELECT id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
 		FROM sellers
 		WHERE id = $1
 	`, sellerID)
@@ -66,7 +66,7 @@ func (s *Store) GetSellerByID(ctx context.Context, sellerID int64) (Seller, erro
 
 func (s *Store) GetSellerByTelegramID(ctx context.Context, telegramID int64) (Seller, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, telegram_id, COALESCE(username, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
+		SELECT id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
 		FROM sellers
 		WHERE telegram_id = $1
 	`, telegramID)
@@ -82,7 +82,7 @@ func (s *Store) GrantPRO(ctx context.Context, sellerID int64, days int) (Seller,
 		UPDATE sellers
 		SET subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + ($2 || ' days')::interval
 		WHERE id = $1
-		RETURNING id, telegram_id, COALESCE(username, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
+		RETURNING id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
 	`, sellerID, days)
 	return scanSeller(row)
 }
@@ -92,8 +92,18 @@ func (s *Store) SetSellerBlocked(ctx context.Context, sellerID int64, blocked bo
 		UPDATE sellers
 		SET is_blocked = $2
 		WHERE id = $1
-		RETURNING id, telegram_id, COALESCE(username, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
+		RETURNING id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
 	`, sellerID, blocked)
+	return scanSeller(row)
+}
+
+func (s *Store) UpdateSellerEmail(ctx context.Context, sellerID int64, email string) (Seller, error) {
+	row := s.pool.QueryRow(ctx, `
+		UPDATE sellers
+		SET email = NULLIF($2, '')
+		WHERE id = $1
+		RETURNING id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), default_network, subscription_ends_at, free_invoices_used, is_blocked, created_at
+	`, sellerID, email)
 	return scanSeller(row)
 }
 
@@ -601,6 +611,7 @@ func scanSeller(row pgx.Row) (Seller, error) {
 		&seller.ID,
 		&seller.TelegramID,
 		&seller.Username,
+		&seller.Email,
 		&seller.DefaultNetwork,
 		&seller.SubscriptionEndsAt,
 		&seller.FreeInvoicesUsed,
