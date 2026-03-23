@@ -29,6 +29,7 @@ type CreateInvoiceInput struct {
 	Title            string
 	BaseAmountUSD    decimal.Decimal
 	PayableNetwork   store.Network
+	WalletID         int64
 	ExpiresInMinutes int
 }
 
@@ -63,9 +64,21 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 		return store.Invoice{}, fmt.Errorf("trial limit reached: %d invoices", trialInvoiceLimit)
 	}
 
-	wallet, err := s.store.GetActiveWalletForNetwork(ctx, seller.ID, input.PayableNetwork)
-	if err != nil {
-		return store.Invoice{}, fmt.Errorf("active wallet for network %s: %w", input.PayableNetwork, err)
+	var (
+		wallet store.Wallet
+		err    error
+	)
+	if input.WalletID > 0 {
+		wallet, err = s.store.GetWalletByID(ctx, seller.ID, input.WalletID)
+		if err != nil {
+			return store.Invoice{}, fmt.Errorf("selected wallet %d: %w", input.WalletID, err)
+		}
+		input.PayableNetwork = wallet.Network
+	} else {
+		wallet, err = s.store.GetActiveWalletForNetwork(ctx, seller.ID, input.PayableNetwork)
+		if err != nil {
+			return store.Invoice{}, fmt.Errorf("active wallet for network %s: %w", input.PayableNetwork, err)
+		}
 	}
 
 	publicID, err := s.generateUniquePublicID(ctx)

@@ -15,8 +15,12 @@ func TestClassifyInvoiceTransfer(t *testing.T) {
 		ID:            1,
 		PublicID:      "INV123",
 		PayableAmount: decimal.RequireFromString("150.013742"),
-		Status:        store.InvoiceStatusAwaitingPayment,
-		ExpiresAt:     now.Add(30 * time.Minute),
+		MatchingSuffix: func() *decimal.Decimal {
+			value := decimal.RequireFromString("0.013742")
+			return &value
+		}(),
+		Status:    store.InvoiceStatusAwaitingPayment,
+		ExpiresAt: now.Add(30 * time.Minute),
 	}
 
 	t.Run("paid exact", func(t *testing.T) {
@@ -33,6 +37,16 @@ func TestClassifyInvoiceTransfer(t *testing.T) {
 		_, classification, status := classifyInvoiceTransfer(baseInvoice, decimal.RequireFromString("150.000000"), now)
 		if classification != "underpaid" {
 			t.Fatalf("expected underpaid, got %s", classification)
+		}
+		if status != store.InvoiceStatusUnderpaid {
+			t.Fatalf("expected underpaid status, got %s", status)
+		}
+	})
+
+	t.Run("underpaid fee window", func(t *testing.T) {
+		_, classification, status := classifyInvoiceTransfer(baseInvoice, decimal.RequireFromString("149.013742"), now)
+		if classification != "underpaid_fee_window" {
+			t.Fatalf("expected underpaid_fee_window, got %s", classification)
 		}
 		if status != store.InvoiceStatusUnderpaid {
 			t.Fatalf("expected underpaid status, got %s", status)

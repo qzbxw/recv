@@ -106,5 +106,6 @@ type NotificationJob struct {
 	SellerID            int64
 	RecipientTelegramID int64
 	Message             string
+	Payload             json.RawMessage
 	Attempts            int
 }

@@ -41,7 +41,7 @@ func (s *PaymentService) ProcessObservedTransfer(ctx context.Context, transfer s
 		return PaymentResult{Classification: classification}, nil
 	}
 
-	updated, err := s.store.CompleteInvoicePayment(ctx, invoice.ID, transfer.TxHash, status, classification, transfer.ObservedAt)
+	updated, err := s.store.CompleteInvoicePayment(ctx, invoice.ID, transfer.TxHash, status, classification, transfer.Amount, transfer.ObservedAt)
 	if err != nil {
 		return PaymentResult{}, err
 	}
@@ -93,9 +93,25 @@ func classifyInvoiceTransfer(invoice store.Invoice, amount decimal.Decimal, obse
 		return &invoice, "late_payment", store.InvoiceStatusManualReview
 	}
 	if amount.LessThan(invoice.PayableAmount) {
+		if isLikelyExchangeFeeUnderpayment(invoice, amount) {
+			return &invoice, "underpaid_fee_window", store.InvoiceStatusUnderpaid
+		}
 		return &invoice, "underpaid", store.InvoiceStatusUnderpaid
 	}
 	return &invoice, "paid_exact", store.InvoiceStatusPaid
+}
+
+func isLikelyExchangeFeeUnderpayment(invoice store.Invoice, amount decimal.Decimal) bool {
+	if invoice.MatchingSuffix == nil {
+		return false
+	}
+	diff := invoice.PayableAmount.Sub(amount)
+	if diff.LessThanOrEqual(decimal.Zero) || diff.GreaterThan(decimal.RequireFromString("2.500000")) {
+		return false
+	}
+	expectedFraction := invoice.PayableAmount.Sub(invoice.PayableAmount.Truncate(0)).Round(6)
+	receivedFraction := amount.Sub(amount.Truncate(0)).Round(6)
+	return expectedFraction.Equal(receivedFraction)
 }
 
 func normalizeObservedTransfer(transfer *store.ObservedTransfer) error {

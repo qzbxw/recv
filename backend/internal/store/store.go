@@ -157,6 +157,15 @@ func (s *Store) GetActiveWalletForNetwork(ctx context.Context, sellerID int64, n
 	return scanWallet(row)
 }
 
+func (s *Store) GetWalletByID(ctx context.Context, sellerID int64, walletID int64) (Wallet, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, seller_id, network, address, is_active, created_at
+		FROM wallets
+		WHERE id = $1 AND seller_id = $2 AND is_active = TRUE
+	`, walletID, sellerID)
+	return scanWallet(row)
+}
+
 func (s *Store) CountInvoicesCreated(ctx context.Context, sellerID int64) (int, error) {
 	var count int
 	err := s.pool.QueryRow(ctx, `SELECT COUNT(1) FROM invoices WHERE seller_id = $1`, sellerID).Scan(&count)
@@ -396,15 +405,16 @@ func (s *Store) FindPotentialUnderpaidInvoice(ctx context.Context, address strin
 		WHERE destination_address = $1
 		  AND payable_network = $2
 		  AND status IN ('awaiting_payment', 'expired')
-		  AND base_amount_usd <= $3
 		  AND payable_amount > $3
-		ORDER BY created_at DESC
+		  AND payable_amount - $3 <= 2.500000
+		  AND ROUND(payable_amount - TRUNC(payable_amount), 6) = ROUND($3 - TRUNC($3), 6)
+		ORDER BY payable_amount - $3 ASC, created_at DESC
 		LIMIT 1
 	`, address, network, amount)
 	return scanInvoice(row)
 }
 
-func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, txHash string, status InvoiceStatus, classification string, paidAt time.Time) (Invoice, error) {
+func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, txHash string, status InvoiceStatus, classification string, observedAmount decimal.Decimal, paidAt time.Time) (Invoice, error) {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return Invoice{}, fmt.Errorf("begin payment completion tx: %w", err)
@@ -439,11 +449,12 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, txH
 		return Invoice{}, fmt.Errorf("load seller telegram id: %w", err)
 	}
 
-	message := buildInvoiceNotificationMessage(invoice)
+	message := buildInvoiceNotificationMessage(invoice, classification, observedAmount)
+	payload := buildInvoiceNotificationPayload(invoice, classification)
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO notification_outbox (seller_id, recipient_telegram_id, message)
-		VALUES ($1, $2, $3)
-	`, invoice.SellerID, telegramID, message); err != nil {
+		INSERT INTO notification_outbox (seller_id, recipient_telegram_id, message, payload)
+		VALUES ($1, $2, $3, $4)
+	`, invoice.SellerID, telegramID, message, payload); err != nil {
 		return Invoice{}, fmt.Errorf("queue seller notification: %w", err)
 	}
 
@@ -488,7 +499,7 @@ func (s *Store) ClaimNotificationJobs(ctx context.Context, limit int) ([]Notific
 	defer tx.Rollback(ctx)
 
 	rows, err := tx.Query(ctx, `
-		SELECT id, seller_id, recipient_telegram_id, message, attempts
+		SELECT id, seller_id, recipient_telegram_id, message, payload, attempts
 		FROM notification_outbox
 		WHERE status IN ('pending', 'failed')
 		  AND available_at <= NOW()
@@ -504,7 +515,7 @@ func (s *Store) ClaimNotificationJobs(ctx context.Context, limit int) ([]Notific
 	var jobs []NotificationJob
 	for rows.Next() {
 		var job NotificationJob
-		if err := rows.Scan(&job.ID, &job.SellerID, &job.RecipientTelegramID, &job.Message, &job.Attempts); err != nil {
+		if err := rows.Scan(&job.ID, &job.SellerID, &job.RecipientTelegramID, &job.Message, &job.Payload, &job.Attempts); err != nil {
 			return nil, fmt.Errorf("scan notification job: %w", err)
 		}
 		jobs = append(jobs, job)
@@ -616,17 +627,50 @@ func scanInvoice(row interface{ Scan(dest ...any) error }) (Invoice, error) {
 	return invoice, nil
 }
 
-func buildInvoiceNotificationMessage(invoice Invoice) string {
+func buildInvoiceNotificationMessage(invoice Invoice, classification string, observedAmount decimal.Decimal) string {
+	received := observedAmount.StringFixed(payableScale(invoice.PayableNetwork))
+	expected := invoice.PayableAmount.StringFixed(payableScale(invoice.PayableNetwork))
 	switch invoice.Status {
 	case InvoiceStatusPaid:
-		return fmt.Sprintf("Invoice %s is paid. Tx: %s", invoice.PublicID, valueOrEmpty(invoice.TxHash))
+		return fmt.Sprintf("Invoice %s is paid. Received %s %s. Tx: %s", invoice.PublicID, received, invoice.PayableNetwork, valueOrEmpty(invoice.TxHash))
 	case InvoiceStatusUnderpaid:
-		return fmt.Sprintf("Invoice %s received an underpayment and needs manual action.", invoice.PublicID)
+		if classification == "underpaid_fee_window" {
+			return fmt.Sprintf("Invoice %s likely hit an exchange fee. Received %s %s, expected %s %s. Decide whether to count it or wait for a top-up.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
+		}
+		return fmt.Sprintf("Invoice %s received %s %s instead of %s %s and needs manual action.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
 	case InvoiceStatusManualReview:
-		return fmt.Sprintf("Invoice %s received a late payment and moved to manual review.", invoice.PublicID)
+		return fmt.Sprintf("Invoice %s received %s %s after expiry and moved to manual review.", invoice.PublicID, received, invoice.PayableNetwork)
 	default:
 		return fmt.Sprintf("Invoice %s changed status to %s.", invoice.PublicID, invoice.Status)
 	}
+}
+
+func buildInvoiceNotificationPayload(invoice Invoice, classification string) json.RawMessage {
+	actions := make([]map[string]string, 0, 2)
+	switch invoice.Status {
+	case InvoiceStatusUnderpaid:
+		actions = append(actions,
+			map[string]string{"kind": "callback", "text": "Count as paid", "data": fmt.Sprintf("invoice:mark_paid:%d", invoice.ID)},
+			map[string]string{"kind": "callback", "text": "Wait for top-up", "data": fmt.Sprintf("invoice:keep_underpaid:%d", invoice.ID)},
+		)
+	case InvoiceStatusManualReview:
+		actions = append(actions,
+			map[string]string{"kind": "callback", "text": "Count as paid", "data": fmt.Sprintf("invoice:mark_paid:%d", invoice.ID)},
+			map[string]string{"kind": "callback", "text": "Keep review", "data": fmt.Sprintf("invoice:keep_review:%d", invoice.ID)},
+		)
+	}
+	if len(actions) == 0 {
+		return MustJSON(map[string]any{
+			"invoice_id": invoice.ID,
+			"public_id":  invoice.PublicID,
+		})
+	}
+	return MustJSON(map[string]any{
+		"invoice_id":      invoice.ID,
+		"public_id":       invoice.PublicID,
+		"classification":  classification,
+		"invoice_actions": actions,
+	})
 }
 
 func valueOrEmpty(value *string) string {
@@ -634,6 +678,17 @@ func valueOrEmpty(value *string) string {
 		return ""
 	}
 	return *value
+}
+
+func payableScale(network Network) int32 {
+	switch network {
+	case NetworkTON:
+		return 6
+	case NetworkTRON, NetworkEVM:
+		return 6
+	default:
+		return 6
+	}
 }
 
 func (s *Store) RawPool() *pgxpool.Pool {
