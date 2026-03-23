@@ -24,7 +24,6 @@ const COPY = {
     copyComment: "Копировать payload",
     copyAmount: "Копировать сумму",
     copied: "Скопировано",
-    openWallet: "Открыть в кошельке",
     warning: "Переводи только точную сумму в нужной сети. Если таймер истёк, запроси новый инвойс.",
     payloadTitle: "Payload обязателен",
     payloadHint: "Без этого comment платёж может потеряться. Для TON вставь его без единого изменения.",
@@ -32,7 +31,7 @@ const COPY = {
     paymentRequest: "Платёжный запрос",
     ru: "РУ",
     en: "EN",
-    receiptLabel: "Инвойс",
+    receiptLabel: "Reqst receipt",
     footerLink: "Powered by Reqst",
     networkOnly: "Только эта сеть",
     paidTitle: "Оплата получена",
@@ -60,7 +59,6 @@ const COPY = {
     copyComment: "Copy payload",
     copyAmount: "Copy amount",
     copied: "Copied",
-    openWallet: "Open in wallet",
     warning: "Send only the exact amount on the correct network. If the timer is over, ask for a fresh invoice.",
     payloadTitle: "Payload required",
     payloadHint: "Without this comment the payment may be lost. For TON, paste it exactly as shown.",
@@ -68,7 +66,7 @@ const COPY = {
     paymentRequest: "Payment request",
     ru: "RU",
     en: "EN",
-    receiptLabel: "Invoice",
+    receiptLabel: "Reqst receipt",
     footerLink: "Powered by Reqst",
     networkOnly: "Only this network",
     paidTitle: "Payment received",
@@ -228,13 +226,6 @@ export function CheckoutPage() {
   const paymentRows = invoice
     ? [
         {
-          key: "amount" as const,
-          label: text.amount,
-          value: `${invoice.payable_amount} ${invoice.payable_network}`,
-          secondary: `${text.network}: ${invoice.payable_network}`,
-          copyLabel: text.copyAmount,
-        },
-        {
           key: "address" as const,
           label: text.wallet,
           value: invoice.destination_address,
@@ -323,7 +314,6 @@ export function CheckoutPage() {
               <div className="amount-totem amount-totem--receipt">
                 <span>{text.amount}</span>
                 <strong>{invoice.payable_amount}</strong>
-                <p>{invoice.payable_network}</p>
                 <div className="network-badge">
                   <b>{invoice.payable_network}</b>
                   <small>{text.networkOnly}</small>
@@ -334,11 +324,7 @@ export function CheckoutPage() {
             <div className="checkout-grid checkout-grid--receipt">
               <section className="payment-sheet payment-sheet--receipt">
                 <div className="payment-sheet-header">
-                  {!isPaid && !isExpired && invoice.payment_uri ? (
-                    <a className="inline-link inline-link--wallet" href={invoice.payment_uri}>
-                      {text.openWallet}
-                    </a>
-                  ) : null}
+                  <span className="payment-sheet-kicker">{text.receiptLabel}</span>
                 </div>
                 <div className="payment-essentials">
                   {invoice.payment_comment ? (

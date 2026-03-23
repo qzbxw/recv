@@ -162,7 +162,30 @@ const COPY = {
   },
 } as const;
 
+const STATUS_LABELS = {
+  ru: {
+    awaiting_payment: "Ждёт оплату",
+    paid: "Оплачен",
+    expired: "Истёк",
+    underpaid: "Недоплата",
+    manual_review: "Ручная проверка",
+    draft: "Черновик",
+  },
+  en: {
+    awaiting_payment: "Awaiting payment",
+    paid: "Paid",
+    expired: "Expired",
+    underpaid: "Underpaid",
+    manual_review: "Manual review",
+    draft: "Draft",
+  },
+} as const;
+
 const PANEL_ORDER: PanelKey[] = ["overview", "wallets", "create", "orders"];
+
+function formatInvoiceStatus(language: keyof typeof STATUS_LABELS, status: string) {
+  return STATUS_LABELS[language][status as keyof (typeof STATUS_LABELS)[typeof language]] ?? status.replaceAll("_", " ");
+}
 
 export function SellerConsolePage() {
   const { language, theme, setLanguage, setTheme } = useUI();
@@ -309,13 +332,16 @@ export function SellerConsolePage() {
 
   const checkoutOrigin = useMemo(() => window.location.origin, []);
   const latestInvoice = session?.invoices[0] ?? null;
+  const sellerHandle = session ? `@${session.me.seller.username || String(session.me.seller.telegram_id)}` : "";
+  const heroLink = freshLink || (latestInvoice ? `${checkoutOrigin}/checkout/${latestInvoice.public_id}` : "");
+  const heroLinkLabel = freshLink ? text.freshLink : text.recentInvoice;
 
   return (
-    <main className="shell shell-console">
+    <main className="shell shell-console shell-console--redesigned">
       <div className="ambient ambient-left" />
       <div className="ambient ambient-right" />
 
-      <header className="topbar">
+      <header className="topbar topbar--console">
         <div className="topbar-brand">
           <span className="eyebrow">{text.eyebrow}</span>
           <strong>{text.heroTitle}</strong>
@@ -354,37 +380,6 @@ export function SellerConsolePage() {
         </div>
       </header>
 
-      <section className="hero-card hero-card--console">
-        <div className="hero-copywrap">
-          <h1>{text.heroTitle}</h1>
-          <p className="hero-copy">{text.heroCopy}</p>
-        </div>
-
-        <div className="hero-side-stack">
-          {freshLink ? (
-            <div className="hero-callout">
-              <span>{text.freshLink}</span>
-              <strong>{freshLink.replace(checkoutOrigin, "")}</strong>
-              <div className="inline-actions">
-                <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(freshLink)}>
-                  {text.copy}
-                </button>
-                <a className="inline-link" href={freshLink} target="_blank" rel="noreferrer">
-                  {text.open}
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="hero-chip-stack">
-              <div className="chip">P0 / TON</div>
-              <div className="chip">P0 / USDT TRC20</div>
-              <div className="chip">RU / EN</div>
-              <div className="chip">{theme === "light" ? text.theme.light : text.theme.dark}</div>
-            </div>
-          )}
-        </div>
-      </section>
-
       {error ? <div className="alert">{error}</div> : null}
 
       {!session ? (
@@ -409,7 +404,50 @@ export function SellerConsolePage() {
         </section>
       ) : (
         <>
-          <nav className="panel-switcher" aria-label="console sections">
+          <section className="console-hero console-surface">
+            <div className="console-hero-copy">
+              <h1>{text.heroTitle}</h1>
+              <p className="hero-copy">{text.heroCopy}</p>
+            </div>
+
+            <div className="console-hero-side">
+              <div className="console-link-card">
+                <span>{heroLinkLabel}</span>
+                <strong>{heroLink ? heroLink.replace(checkoutOrigin, "") : text.noRecentInvoice}</strong>
+                {heroLink ? (
+                  <div className="console-link-actions">
+                    <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(heroLink)}>
+                      {text.copy}
+                    </button>
+                    <a className="inline-link" href={heroLink} target="_blank" rel="noreferrer">
+                      {text.open}
+                    </a>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="console-mini-grid">
+                <article className="console-mini-card">
+                  <span>{text.seller}</span>
+                  <strong>{sellerHandle}</strong>
+                </article>
+                <article className="console-mini-card">
+                  <span>{text.plan}</span>
+                  <strong>{session.me.plan.name}</strong>
+                </article>
+                <article className="console-mini-card">
+                  <span>{text.wallets}</span>
+                  <strong>{session.wallets.length}</strong>
+                </article>
+                <article className="console-mini-card">
+                  <span>{text.invoices}</span>
+                  <strong>{session.invoices.length}</strong>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <nav className="panel-switcher panel-switcher--console" aria-label="console sections">
             {PANEL_ORDER.map((panel) => (
               <button key={panel} type="button" className={activePanel === panel ? "switch-pill active" : "switch-pill"} onClick={() => setActivePanel(panel)}>
                 {text.tabs[panel]}
@@ -418,107 +456,140 @@ export function SellerConsolePage() {
           </nav>
 
           {activePanel === "overview" ? (
-            <section className="console-grid">
-              <div className="overview-grid">
-                <article className="metric-card">
-                  <span>{text.seller}</span>
-                  <strong>@{session.me.seller.username || String(session.me.seller.telegram_id)}</strong>
-                  <p>ID: {session.me.seller.telegram_id}</p>
-                </article>
-                <article className="metric-card">
-                  <span>{text.plan}</span>
-                  <strong>{session.me.plan.name}</strong>
-                  <p>{text.trialLeft}: {session.me.plan.trial_remaining}</p>
-                </article>
-                <article className="metric-card">
-                  <span>{text.wallets}</span>
-                  <strong>{session.wallets.length}</strong>
-                  <p>{text.activeWallets}</p>
-                </article>
-                <article className="metric-card">
-                  <span>{text.invoices}</span>
-                  <strong>{session.invoices.length}</strong>
-                  <p>{text.totalInvoices}</p>
+            <section className="console-layout console-layout--overview">
+              <div className="console-stack">
+                <article className="console-surface console-overview-card">
+                  <div className="console-section-head">
+                    <div>
+                      <h2>{text.tabs.overview}</h2>
+                      <p>{text.activeWallets}</p>
+                    </div>
+                  </div>
+
+                  <div className="console-stat-grid">
+                    <article className="console-stat-card">
+                      <span>{text.seller}</span>
+                      <strong>{sellerHandle}</strong>
+                      <p>ID: {session.me.seller.telegram_id}</p>
+                    </article>
+                    <article className="console-stat-card">
+                      <span>{text.plan}</span>
+                      <strong>{session.me.plan.name}</strong>
+                      <p>{text.trialLeft}: {session.me.plan.trial_remaining}</p>
+                    </article>
+                    <article className="console-stat-card">
+                      <span>{text.wallets}</span>
+                      <strong>{session.wallets.length}</strong>
+                      <p>{text.activeWallets}</p>
+                    </article>
+                    <article className="console-stat-card">
+                      <span>{text.invoices}</span>
+                      <strong>{session.invoices.length}</strong>
+                      <p>{text.totalInvoices}</p>
+                    </article>
+                  </div>
                 </article>
               </div>
 
-              <article className="panel elevated-panel">
-                <div className="panel-header">
-                  <h2>{text.recentInvoice}</h2>
-                  <p>{latestInvoice ? latestInvoice.title : text.noRecentInvoice}</p>
-                </div>
-                {latestInvoice ? (
-                  <div className="invoice-hero-card">
+              <aside className="console-rail">
+                <article className="console-surface console-spotlight">
+                  <div className="console-section-head">
                     <div>
-                      <span className={`status-pill status-${latestInvoice.status}`}>{latestInvoice.status}</span>
-                      <h3>{latestInvoice.title}</h3>
-                      <p>{text.exact}: {latestInvoice.payable_amount} {latestInvoice.payable_network}</p>
-                      <p>{text.expires}: {new Date(latestInvoice.expires_at).toLocaleString()}</p>
-                    </div>
-                    <div className="invoice-hero-actions">
-                      <button type="button" className="ghost-button" onClick={() => navigator.clipboard.writeText(`${checkoutOrigin}/checkout/${latestInvoice.public_id}`)}>
-                        {text.copy}
-                      </button>
-                      <a className="inline-link" href={`${checkoutOrigin}/checkout/${latestInvoice.public_id}`} target="_blank" rel="noreferrer">
-                        {text.open}
-                      </a>
+                      <h2>{text.recentInvoice}</h2>
+                      <p>{latestInvoice ? latestInvoice.title : text.noRecentInvoice}</p>
                     </div>
                   </div>
-                ) : (
-                  <p className="muted">{text.noRecentInvoice}</p>
-                )}
-              </article>
+                  {latestInvoice ? (
+                    <div className="console-invoice-spotlight">
+                      <div className="console-invoice-topline">
+                        <span className={`status-pill status-${latestInvoice.status}`}>{formatInvoiceStatus(language, latestInvoice.status)}</span>
+                        <div className="invoice-amount">
+                          <strong>{latestInvoice.payable_amount}</strong>
+                          <span>{latestInvoice.payable_network}</span>
+                        </div>
+                      </div>
+                      <h3>{latestInvoice.title}</h3>
+                      <div className="console-meta-pairs">
+                        <div>
+                          <span>{text.publicId}</span>
+                          <p>{latestInvoice.public_id}</p>
+                        </div>
+                        <div>
+                          <span>{text.expires}</span>
+                          <p>{new Date(latestInvoice.expires_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className="invoice-actions invoice-actions--compact">
+                        <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(`${checkoutOrigin}/checkout/${latestInvoice.public_id}`)}>
+                          {text.copy}
+                        </button>
+                        <a className="inline-link" href={`${checkoutOrigin}/checkout/${latestInvoice.public_id}`} target="_blank" rel="noreferrer">
+                          {text.open}
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="muted">{text.noRecentInvoice}</p>
+                  )}
+                </article>
+              </aside>
             </section>
           ) : null}
 
           {activePanel === "wallets" ? (
-            <section className="panel elevated-panel">
-              <div className="panel-header">
-                <h2>{text.walletTitle}</h2>
-                <p>{text.walletCopy}</p>
-              </div>
-
-              <form onSubmit={handleCreateWallet} className="form-grid form-grid--wallets">
-                <label>
-                  {text.network}
-                  <select value={walletForm.network} onChange={(event) => setWalletForm((current) => ({ ...current, network: event.target.value as Network }))}>
-                    <option value="TON">TON</option>
-                    <option value="TRON">TRON / USDT</option>
-                    <option value="EVM">EVM / USDT</option>
-                  </select>
-                </label>
-                <label>
-                  {text.address}
-                  <input placeholder="Wallet address" value={walletForm.address} onChange={(event) => setWalletForm((current) => ({ ...current, address: event.target.value }))} />
-                </label>
-                <button type="submit">{text.saveWallet}</button>
-              </form>
-
-              <div className="stack-list">
-                {session.wallets.map((wallet) => (
-                  <div key={wallet.id} className="stack-item">
-                    <div>
-                      <strong>{wallet.network}</strong>
-                      <p>{wallet.address}</p>
-                    </div>
-                    <button type="button" className="ghost-button compact-button" onClick={() => void handleDeleteWallet(wallet.id)}>
-                      {text.disable}
-                    </button>
+            <section className="console-stack">
+              <article className="console-surface console-section-card">
+                <div className="console-section-head">
+                  <div>
+                    <h2>{text.walletTitle}</h2>
+                    <p>{text.walletCopy}</p>
                   </div>
-                ))}
-                {!session.wallets.length ? <p className="muted">{text.noWallets}</p> : null}
-              </div>
+                </div>
+
+                <form onSubmit={handleCreateWallet} className="form-grid form-grid--wallets console-form-grid">
+                  <label>
+                    {text.network}
+                    <select value={walletForm.network} onChange={(event) => setWalletForm((current) => ({ ...current, network: event.target.value as Network }))}>
+                      <option value="TON">TON</option>
+                      <option value="TRON">TRON / USDT</option>
+                      <option value="EVM">EVM / USDT</option>
+                    </select>
+                  </label>
+                  <label>
+                    {text.address}
+                    <input placeholder="Wallet address" value={walletForm.address} onChange={(event) => setWalletForm((current) => ({ ...current, address: event.target.value }))} />
+                  </label>
+                  <button type="submit">{text.saveWallet}</button>
+                </form>
+
+                <div className="stack-list stack-list--console">
+                  {session.wallets.map((wallet) => (
+                    <div key={wallet.id} className="stack-item stack-item--console">
+                      <div className="console-wallet-copy">
+                        <span>{wallet.network}</span>
+                        <strong>{wallet.address}</strong>
+                      </div>
+                      <button type="button" className="ghost-button compact-button" onClick={() => void handleDeleteWallet(wallet.id)}>
+                        {text.disable}
+                      </button>
+                    </div>
+                  ))}
+                  {!session.wallets.length ? <p className="muted">{text.noWallets}</p> : null}
+                </div>
+              </article>
             </section>
           ) : null}
 
           {activePanel === "create" ? (
-            <section className="console-grid console-grid--create">
-              <article className="panel elevated-panel">
-                <div className="panel-header">
-                  <h2>{text.createTitle}</h2>
-                  <p>{text.createCopy}</p>
+            <section className="console-layout console-layout--create">
+              <article className="console-surface console-section-card">
+                <div className="console-section-head">
+                  <div>
+                    <h2>{text.createTitle}</h2>
+                    <p>{text.createCopy}</p>
+                  </div>
                 </div>
-                <form onSubmit={handleCreateInvoice} className="form-grid">
+                <form onSubmit={handleCreateInvoice} className="form-grid console-form-grid">
                   <label>
                     {text.serviceTitle}
                     <input placeholder={language === "ru" ? "Например, Design sprint" : "For example, Design sprint"} value={invoiceForm.title} onChange={(event) => setInvoiceForm((current) => ({ ...current, title: event.target.value }))} />
@@ -543,11 +614,13 @@ export function SellerConsolePage() {
                 </form>
               </article>
 
-              <aside className="panel glass-note">
-                <div className="panel-header">
-                  <h2>{text.matchingTitle}</h2>
+              <aside className="console-surface console-note-card">
+                <div className="console-section-head">
+                  <div>
+                    <h2>{text.matchingTitle}</h2>
+                  </div>
                 </div>
-                <ul className="note-list">
+                <ul className="note-list note-list--console">
                   <li>{text.matchingTon}</li>
                   <li>{text.matchingUsdt}</li>
                   <li>{text.matchingLate}</li>
@@ -557,68 +630,72 @@ export function SellerConsolePage() {
           ) : null}
 
           {activePanel === "orders" ? (
-            <section className="panel elevated-panel">
-              <div className="panel-header">
-                <h2>{text.ordersTitle}</h2>
-                <p>{text.ordersCopy}</p>
-              </div>
+            <section className="console-stack">
+              <article className="console-surface console-section-card">
+                <div className="console-section-head">
+                  <div>
+                    <h2>{text.ordersTitle}</h2>
+                    <p>{text.ordersCopy}</p>
+                  </div>
+                </div>
 
-              <div className="stack-list">
-                {session.invoices.map((invoice) => {
-                  const checkoutUrl = `${checkoutOrigin}/checkout/${invoice.public_id}`;
-                  return (
-                    <article key={invoice.id} className="invoice-card invoice-card--rich">
-                      <div className="invoice-topline">
-                        <div>
-                          <span className={`status-pill status-${invoice.status}`}>{invoice.status}</span>
-                          <h3>{invoice.title}</h3>
-                        </div>
-                        <div className="invoice-amount">
-                          <strong>{invoice.payable_amount}</strong>
-                          <span>{invoice.payable_network}</span>
-                        </div>
-                      </div>
-
-                      <div className="invoice-meta-grid">
-                        <div>
-                          <span>{text.publicId}</span>
-                          <p>{invoice.public_id}</p>
-                        </div>
-                        <div>
-                          <span>{text.expires}</span>
-                          <p>{new Date(invoice.expires_at).toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <span>{text.address}</span>
-                          <p>{invoice.destination_address}</p>
-                        </div>
-                        {invoice.payment_comment ? (
+                <div className="stack-list stack-list--console">
+                  {session.invoices.map((invoice) => {
+                    const checkoutUrl = `${checkoutOrigin}/checkout/${invoice.public_id}`;
+                    return (
+                      <article key={invoice.id} className="invoice-card invoice-card--console">
+                        <div className="console-invoice-topline">
                           <div>
-                            <span>{text.comment}</span>
-                            <p>{invoice.payment_comment}</p>
+                            <span className={`status-pill status-${invoice.status}`}>{formatInvoiceStatus(language, invoice.status)}</span>
+                            <h3>{invoice.title}</h3>
                           </div>
-                        ) : null}
-                      </div>
+                          <div className="invoice-amount">
+                            <strong>{invoice.payable_amount}</strong>
+                            <span>{invoice.payable_network}</span>
+                          </div>
+                        </div>
 
-                      <div className="invoice-actions">
-                        <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(checkoutUrl)}>
-                          {text.copyLink}
-                        </button>
-                        <a className="inline-link" href={checkoutUrl} target="_blank" rel="noreferrer">
-                          {text.open}
-                        </a>
-                        <button type="button" className="ghost-button compact-button" onClick={() => void handleInvoiceAction(invoice.id, "cancel")} disabled={invoice.status === "paid"}>
-                          {text.cancel}
-                        </button>
-                        <button type="button" className="ghost-button compact-button" onClick={() => void handleInvoiceAction(invoice.id, "mark-paid")} disabled={invoice.status === "paid"}>
-                          {text.markPaid}
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-                {!session.invoices.length ? <p className="muted">{text.emptyOrders}</p> : null}
-              </div>
+                        <div className="console-meta-pairs console-meta-pairs--wide">
+                          <div>
+                            <span>{text.publicId}</span>
+                            <p>{invoice.public_id}</p>
+                          </div>
+                          <div>
+                            <span>{text.expires}</span>
+                            <p>{new Date(invoice.expires_at).toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span>{text.address}</span>
+                            <p>{invoice.destination_address}</p>
+                          </div>
+                          {invoice.payment_comment ? (
+                            <div>
+                              <span>{text.comment}</span>
+                              <p>{invoice.payment_comment}</p>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="invoice-actions invoice-actions--console">
+                          <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(checkoutUrl)}>
+                            {text.copyLink}
+                          </button>
+                          <a className="inline-link" href={checkoutUrl} target="_blank" rel="noreferrer">
+                            {text.open}
+                          </a>
+                          <button type="button" className="ghost-button compact-button" onClick={() => void handleInvoiceAction(invoice.id, "cancel")} disabled={invoice.status === "paid"}>
+                            {text.cancel}
+                          </button>
+                          <button type="button" className="ghost-button compact-button" onClick={() => void handleInvoiceAction(invoice.id, "mark-paid")} disabled={invoice.status === "paid"}>
+                            {text.markPaid}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                  {!session.invoices.length ? <p className="muted">{text.emptyOrders}</p> : null}
+                </div>
+              </article>
             </section>
           ) : null}
         </>
