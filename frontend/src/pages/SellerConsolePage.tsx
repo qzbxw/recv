@@ -175,7 +175,7 @@ export function SellerConsolePage() {
   const [authForm, setAuthForm] = useState({ telegramId: "1001001", username: "reqst_dev" });
   const [walletForm, setWalletForm] = useState<{ network: Network; address: string }>({ network: "TON", address: "" });
   const [invoiceForm, setInvoiceForm] = useState({
-    title: "Website audit",
+    title: "Digital service",
     baseAmountUSD: "150.00",
     payableNetwork: "TON" as Network,
     expiresInMinutes: 30,
@@ -524,7 +524,7 @@ export function SellerConsolePage() {
                 <form onSubmit={handleCreateInvoice} className="form-grid">
                   <label>
                     {text.serviceTitle}
-                    <input value={invoiceForm.title} onChange={(event) => setInvoiceForm((current) => ({ ...current, title: event.target.value }))} />
+                    <input placeholder={language === "ru" ? "Например, Design sprint" : "For example, Design sprint"} value={invoiceForm.title} onChange={(event) => setInvoiceForm((current) => ({ ...current, title: event.target.value }))} />
                   </label>
                   <label>
                     {text.amountUsd}

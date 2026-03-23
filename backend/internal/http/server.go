@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -478,7 +479,7 @@ func paymentURI(invoice store.Invoice) string {
 		if invoice.PaymentComment != nil {
 			comment = *invoice.PaymentComment
 		}
-		return "ton://transfer/" + invoice.DestinationAddress + "?amount=" + invoice.PayableAmount.Mul(decimal.NewFromInt(1_000_000_000)).StringFixed(0) + "&text=" + comment
+		return "ton://transfer/" + invoice.DestinationAddress + "?amount=" + invoice.PayableAmount.Mul(decimal.NewFromInt(1_000_000_000)).StringFixed(0) + "&text=" + url.QueryEscape(comment)
 	case store.NetworkTRON, store.NetworkEVM:
 		return invoice.DestinationAddress
 	default:
