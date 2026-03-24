@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useUI } from "../lib/ui";
 
@@ -5,259 +6,303 @@ type Variant = "dev" | "enterprise";
 
 const COPY = {
   ru: {
-    back: "Назад",
-    auth: "Войти",
-    console: "Консоль",
-    billing: "Оплатить",
-    compareTitle: "В комплекте",
-    flowTitle: "Запуск",
-    fitTitle: "Кому",
-    faqTitle: "FAQ",
+    back: "На главную",
+    auth: "Консоль",
+    billing: "Активировать план",
+    compareTitle: "Что внутри",
+    flowTitle: "Процесс запуска",
+    priceTitle: "Стоимость",
+    processingNote: "Мы используем собственную инфраструктуру для процессинга всех платежей за подписки. Никаких внешних шлюзов, только наш протокол.",
+    compareSectionTitle: "Почему Reqst?",
+    compareSectionBody: "В отличие от Cryptomus и других кастодиальных шлюзов, Reqst никогда не удерживает ваши средства. Платежи идут напрямую (Direct-to-Wallet). Вы владеете ключами, вы контролируете ликвидность.",
     dev: {
       badge: "Reqst Dev",
-      title: "API-интеграция для продуктов.",
-      body: "Self-serve доступ к API, выпуск ключей и настройка вебхуков без участия sales-отдела.",
-      price: "149 USDT / 30 дней",
-      bullets: ["3 ключа", "50k запросов/мес", "90 RPM/ключ"],
+      title: "API-интеграция для растущих продуктов.",
+      body: "Полный доступ к Seller API, вебхукам и управлению ключами. Идеально для SaaS-сервисов, маркетплейсов и внутренних инструментов автоматизации.",
+      price: "149 USDT",
+      period: "30 дней",
       stats: [
-        { value: "3", label: "ключа" },
+        { value: "3", label: "активных ключа" },
         { value: "50k", label: "запросов/мес" },
-        { value: "90 rpm", label: "лимит" },
+        { value: "90 rpm", label: "рейт-лимит" },
       ],
-      sections: [
+      features: [
         {
-          title: "Интеграция",
-          body: "Для SaaS-платформ и внутренних сервисов.",
+          title: "Public API 2.0",
+          body: "Программное создание инвойсов и управление заказами.",
         },
         {
-          title: "Мгновенно",
-          body: "Активация сразу после оплаты.",
+          title: "Webhooks",
+          body: "Мгновенные уведомления о статусах оплаты в вашу систему.",
         },
         {
-          title: "Контроль",
-          body: "Ключи и квоты в одной панели.",
+          title: "Dashboard",
+          body: "Единая панель для мониторинга лимитов и квот.",
         },
       ],
       flow: [
-        "Создание инвойса на оплату плана.",
-        "Автоматическое открытие доступа.",
-        "Выпуск ключей и настройка вебхуков.",
+        { title: "Биллинг", body: "Создайте инвойс на оплату плана в один клик." },
+        { title: "Оплата", body: "Оплатите его через Reqst Checkout в любой удобной сети." },
+        { title: "Доступ", body: "Функции API разблокируются мгновенно после подтверждения." },
       ],
-      fit: [],
-      faq: [],
-      tone: "Эффективный запуск.",
     },
     enterprise: {
       badge: "Reqst Enterprise",
-      title: "B2B инфраструктура.",
-      body: "Решение для высокой нагрузки. Расширенные лимиты и приоритетная доставка уведомлений.",
-      price: "499 USDT / 30 дней",
-      bullets: ["20 ключей", "500k запросов/мес", "600 RPM/ключ"],
+      title: "B2B инфраструктура для высокой нагрузки.",
+      body: "Решение для крупного бизнеса. Расширенные лимиты, приоритетная доставка уведомлений и поддержка командной работы.",
+      price: "499 USDT",
+      period: "30 дней",
       stats: [
         { value: "20", label: "ключей" },
         { value: "500k", label: "запросов/мес" },
-        { value: "600 rpm", label: "лимит" },
+        { value: "600 rpm", label: "лимит на ключ" },
       ],
-      sections: [
+      features: [
         {
-          title: "Нагрузка",
-          body: "Для систем с большим объемом транзакций.",
+          title: "High-Load Ready",
+          body: "Выделенные ресурсы для обработки транзакций без задержек.",
         },
         {
-          title: "Команды",
-          body: "Разделение продакшн и стейджинг окружений.",
+          title: "Team Access",
+          body: "Управление доступом для разработчиков и бухгалтерии.",
         },
         {
-          title: "Стабильность",
-          body: "Приоритетная обработка и поддержка.",
+          title: "Advanced Logic",
+          body: "Расширенная аналитика и кастомные вебхук-эндпоинты.",
         },
       ],
       flow: [
-        "Оплата Enterprise плана.",
-        "Мгновенное обновление лимитов.",
-        "Распределение ключей по сервисам.",
+        { title: "Активация", body: "Выберите Enterprise и сгенерируйте платежную ссылку." },
+        { title: "Процессинг", body: "Наша система подтвердит перевод в течение секунд." },
+        { title: "Масштаб", body: "Лимиты обновляются сразу на всем аккаунте." },
       ],
-      fit: [],
-      faq: [],
-      tone: "Критическая инфраструктура.",
     },
   },
   en: {
-    back: "Back",
-    auth: "Login",
-    console: "Console",
-    billing: "Upgrade",
-    compareTitle: "Included",
-    flowTitle: "Setup",
-    fitTitle: "Fit",
-    faqTitle: "FAQ",
+    back: "Back to Home",
+    auth: "Console",
+    billing: "Activate Plan",
+    compareTitle: "What's Included",
+    flowTitle: "Getting Started",
+    priceTitle: "Investment",
+    processingNote: "We use our own infrastructure to process every subscription payment. No external gateways — just our protocol in action.",
+    compareSectionTitle: "Why Reqst?",
+    compareSectionBody: "Unlike Cryptomus and other custodial gateways, Reqst never holds your funds. Payments go direct-to-wallet. You own the keys, you control the liquidity.",
     dev: {
       badge: "Reqst Dev",
-      title: "API for product teams.",
-      body: "Self-serve API access, key management, and webhooks without sales friction.",
-      price: "149 USDT / 30 days",
-      bullets: ["3 keys", "50k req/mo", "90 RPM/key"],
+      title: "API integration for product teams.",
+      body: "Full access to Seller API, webhooks, and key management. Perfect for SaaS platforms, marketplaces, and internal automation tools.",
+      price: "149 USDT",
+      period: "30 days",
       stats: [
-        { value: "3", label: "keys" },
-        { value: "50k", label: "req/mo" },
-        { value: "90 rpm", label: "limit" },
+        { value: "3", label: "active keys" },
+        { value: "50k", label: "req/month" },
+        { value: "90 rpm", label: "rate limit" },
       ],
-      sections: [
+      features: [
         {
-          title: "Product",
-          body: "For SaaS and internal tools.",
+          title: "Public API 2.0",
+          body: "Programmatic invoice creation and order management.",
         },
         {
-          title: "Instant",
-          body: "Access enabled after payment.",
+          title: "Webhooks",
+          body: "Instant payment status notifications for your system.",
         },
         {
-          title: "One UI",
-          body: "Keys and quotas in one place.",
+          title: "Dashboard",
+          body: "Unified panel for monitoring limits and quotas.",
         },
       ],
       flow: [
-        "Create billing checkout.",
-        "Access unlocks automatically.",
-        "Issue keys and connect webhooks.",
+        { title: "Billing", body: "Generate a billing checkout link in one click." },
+        { title: "Payment", body: "Pay via Reqst Checkout in your preferred network." },
+        { title: "Access", body: "API features unlock instantly upon confirmation." },
       ],
-      fit: [],
-      faq: [],
-      tone: "Fast integration.",
     },
     enterprise: {
       badge: "Reqst Enterprise",
-      title: "B2B Infrastructure.",
-      body: "Built for high load and multi-team setups. Expanded limits and priority delivery.",
-      price: "499 USDT / 30 days",
-      bullets: ["20 keys", "500k req/mo", "600 RPM/key"],
+      title: "B2B infrastructure for high load.",
+      body: "Built for scale. Expanded limits, priority notification delivery, and team collaboration features.",
+      price: "499 USDT",
+      period: "30 days",
       stats: [
-        { value: "20", label: "keys" },
-        { value: "500k", label: "req/mo" },
-        { value: "600 rpm", label: "limit" },
+        { value: "20", label: "api keys" },
+        { value: "500k", label: "req/month" },
+        { value: "600 rpm", label: "limit per key" },
       ],
-      sections: [
+      features: [
         {
-          title: "High Load",
-          body: "For high-volume transaction systems.",
+          title: "High-Load Ready",
+          body: "Dedicated resources for zero-latency transaction processing.",
         },
         {
-          title: "Multi-team",
-          body: "Isolate prod, staging, and services.",
+          title: "Team Access",
+          body: "Role-based management for devs and finance teams.",
         },
         {
-          title: "Reliability",
-          body: "Priority delivery and processing.",
+          title: "Advanced Logic",
+          body: "Extended analytics and custom webhook endpoints.",
         },
       ],
       flow: [
-        "Pay Enterprise checkout.",
-        "Limits update immediately.",
-        "Distribute keys across services.",
+        { title: "Activation", body: "Select Enterprise and generate your payment link." },
+        { title: "Processing", body: "Our system confirms the transfer within seconds." },
+        { title: "Scale", body: "Limits update immediately across your account." },
       ],
-      fit: [],
-      faq: [],
-      tone: "Critical ops.",
     },
   },
 } as const;
+
+
+function useReveal() {
+  const refs = useRef<(HTMLElement | null)[]>([]);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-revealed");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    refs.current.forEach((ref) => ref && observer.observe(ref));
+    return () => observer.disconnect();
+  }, []);
+  return (el: HTMLElement | null) => {
+    if (el && !refs.current.includes(el)) refs.current.push(el);
+  };
+}
 
 export function PlanPage({ variant }: { variant: Variant }) {
   const { language } = useUI();
   const text = COPY[language];
   const product = text[variant];
+  const reveal = useReveal();
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = "dark";
+    window.scrollTo(0, 0);
+  }, [variant]);
 
   return (
-    <main className="shell checkout-shell checkout-shell--wide">
-      <div className="ambient ambient-left" />
-      <div className="ambient ambient-right" />
+    <main className="lend-page">
+      <div className="lend-backdrop lend-backdrop--grid" />
+      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--left" />
+      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--right" />
 
-      <header className="topbar topbar--checkout">
-        <Link className="topbar-brand topbar-brand--minimal" to="/">
-          <strong>reqst</strong>
-        </Link>
-        <div className="topbar-actions">
-          <Link className="ghost-button compact-button" to="/">
-            {text.back}
-          </Link>
-          <Link className="lend-primary" to="/auth">
-            {text.auth}
-          </Link>
-        </div>
-      </header>
+      <div className="lend-shell">
+        <header className="lend-topbar">
+          <div className="lend-topbar-main">
+            <Link className="lend-brand" to="/">
+              <strong>reqst</strong>
+            </Link>
 
-      <div className="checkout-flow page-section-offset">
-        <section className="checkout-story">
-          <article className="checkout-card checkout-card--lux plan-page__hero-card">
-            <div className="receipt-hero receipt-hero--plan">
-              <div className="receipt-copy receipt-copy--plan">
-                <h1>{product.title}</h1>
-                <p className="hero-copy">{product.body}</p>
-              </div>
+            <div className="lend-topbar-actions">
+              <Link className="lend-secondary" to="/">{text.back}</Link>
+              <Link className="lend-primary" to="/auth">{text.auth}</Link>
             </div>
+          </div>
+        </header>
 
-            <div className="plan-page__stats plan-page__stats--plan">
-              {product.stats.map((item) => (
-                <div key={item.label} className="metric-card">
-                  <span>{item.label}</span>
-                  <strong>{item.value}</strong>
-                </div>
-              ))}
-            </div>
+        <section className="lend-hero" ref={reveal}>
+          <div className="lend-hero-copy">
+            <span className="lend-section-kicker lend-reveal--1">{product.badge}</span>
+            <h1 className="lend-reveal--2">{product.title}</h1>
+            <p className="lend-reveal--2">{product.body}</p>
 
-            <div className="plan-page__actions plan-page__actions--stacked">
-              <Link className="lend-primary lend-primary--large plan-page__action-link" to={`/console?plan=${variant}`}>
+            <div className="lend-cta-row lend-reveal--3">
+              <Link className="lend-primary" to={`/console?plan=${variant}`}>
                 {text.billing}
               </Link>
-              <Link className="lend-secondary plan-page__action-link" to="/console">
-                {text.console}
+              <Link className="lend-secondary" to="/auth">
+                {text.auth}
               </Link>
             </div>
-          </article>
-
-          <section className="payment-sheet payment-sheet--receipt">
-            <div className="payment-sheet-header">
-              <span className="payment-sheet-kicker">{text.compareTitle}</span>
+            
+            <div className="lend-architecture-card lend-reveal--4" style={{ marginTop: '2rem', minHeight: 'auto' }}>
+              <span>PROUDLY POWERED BY REQST</span>
+              <p style={{ fontSize: '0.9rem' }}>{text.processingNote}</p>
             </div>
-            <div className="payment-essentials">
-              {product.sections.map((section) => (
-                <div key={section.title} className="payment-field">
-                  <div>
-                    <label>{section.title}</label>
-                    <p className="page-muted-copy">{section.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </section>
 
-        <aside className="payment-rail">
-          <div className="amount-totem amount-totem--receipt amount-totem--rail">
-            <span>{language === "ru" ? "Стоимость" : "Price"}</span>
-            <strong className="plan-page__price-strong">{product.price.split(" / ")[0]}</strong>
-            <div className="network-badge">
-              <b>{product.price.split(" / ")[1]}</b>
-              <small>{language === "ru" ? "период" : "period"}</small>
+            <div className="lend-card lend-reveal--4" style={{ marginTop: '1rem', borderStyle: 'dashed' }}>
+              <span className="lend-section-kicker">{text.compareSectionTitle}</span>
+              <p style={{ fontSize: '0.95rem', marginTop: '0.8rem' }}>{text.compareSectionBody}</p>
             </div>
           </div>
 
-          <article className="checkout-card checkout-card--lux plan-page__side-card">
-            <span className="receipt-brandline plan-page__section-label">{text.flowTitle}</span>
-            <div className="plan-page__stack">
-              {product.flow.map((item, index) => (
-                <div key={item} className="detail-row plan-page__detail-row">
-                  <div className="plan-page__timeline-item">
-                    <strong className="plan-page__timeline-index">{String(index + 1).padStart(2, "0")}</strong>
-                    <p className="page-copy-reset">{item}</p>
-                  </div>
-                </div>
+          <aside className="lend-hero-side lend-reveal--3">
+            <div className="lend-overview-grid" style={{ gridTemplateColumns: '1fr' }}>
+              {product.stats.map((stat, i) => (
+                <article key={i} className="lend-card">
+                  <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{stat.label}</span>
+                  <h3 style={{ fontSize: '2.4rem', margin: '0.2rem 0' }}>{stat.value}</h3>
+                </article>
               ))}
             </div>
-          </article>
-        </aside>
-      </div>
+          </aside>
+        </section>
 
+        <section className="lend-split-section" ref={reveal}>
+          <div className="lend-section-copy lend-reveal--1">
+            <span className="lend-section-kicker">{text.compareTitle}</span>
+            <h2>Лимиты и возможности</h2>
+            <p>Всё необходимое для глубокой интеграции в ваш бизнес-процесс.</p>
+          </div>
+
+          <div className="lend-overview-grid lend-reveal--2" style={{ gridTemplateColumns: '1fr' }}>
+            {product.features.map((feat, i) => (
+              <article key={i} className="lend-card">
+                <h3>{feat.title}</h3>
+                <p>{feat.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="lend-stacked-section" ref={reveal}>
+          <div className="lend-section-copy lend-reveal--1" style={{ textAlign: 'center' }}>
+            <span className="lend-section-kicker">{text.flowTitle}</span>
+            <h2>Как это работает</h2>
+          </div>
+
+          <div className="lend-timeline lend-reveal--2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            {product.flow.map((step, i) => (
+              <article key={i} className="lend-step">
+                <strong>{String(i + 1).padStart(2, '0')}</strong>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="lend-final" ref={reveal}>
+          <div className="lend-reveal--1">
+            <span className="lend-section-kicker">{text.priceTitle}</span>
+            <h2 style={{ fontSize: '5rem' }}>{product.price}</h2>
+            <p style={{ fontSize: '1.2rem', opacity: 0.8, marginBottom: '2rem' }}>за {product.period}</p>
+
+            <div className="lend-cta-row">
+              <Link className="lend-primary" to={`/console?plan=${variant}`} style={{ padding: '1.2rem 2.4rem', fontSize: '1.1rem' }}>
+                {text.billing}
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <footer className="lend-footer">
+          <div className="lend-footer-links">
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+            <Link to="/dev">API</Link>
+            <Link to="/enterprise">B2B</Link>
+            <Link to="/auth">Console</Link>
+          </div>
+        </footer>
+      </div>
     </main>
   );
 }
+

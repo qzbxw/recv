@@ -137,6 +137,12 @@ const COPY = {
     developersTitle: "Developer Portal",
     developersCopy: "API keys и Webhooks.",
     developersAction: "Открыть",
+    proSpotlightTitle: "PRO Seller",
+    proSpotlightBody: "Используйте ручное создание инвойсов и Telegram бота для быстрых продаж.",
+    devSpotlightTitle: "API Active",
+    devSpotlightBody: "Ваши ключи и вебхуки активны. Используйте Developer Portal для интеграции.",
+    enterpriseSpotlightTitle: "B2B Infrastructure",
+    enterpriseSpotlightBody: "Максимальные лимиты и приоритетная поддержка включены.",
     settingsTitle: "Настройки",
     settingsCopy: "Аккаунт и интерфейс.",
     interfaceTitle: "Интерфейс",
@@ -251,6 +257,12 @@ const COPY = {
     developersTitle: "Developer Portal",
     developersCopy: "API keys and Webhooks.",
     developersAction: "Open",
+    proSpotlightTitle: "PRO Seller",
+    proSpotlightBody: "Use manual invoices and Telegram bot for quick sales.",
+    devSpotlightTitle: "API Active",
+    devSpotlightBody: "Your API keys and webhooks are ready. Use Dev Portal for integration.",
+    enterpriseSpotlightTitle: "B2B Infrastructure",
+    enterpriseSpotlightBody: "Maximum limits and priority delivery are active.",
     settingsTitle: "Settings",
     settingsCopy: "Identity and preferences.",
     interfaceTitle: "Interface",
@@ -686,6 +698,11 @@ export function SellerConsolePage() {
           <div className="topbar-brand">
             <strong>reqst</strong>
           </div>
+          {session && session.me.plan.has_api && (
+            <div className="lend-network-badge" style={{ marginLeft: '1rem', background: session.me.plan.code === 'enterprise' ? 'rgba(79, 116, 255, 0.2)' : 'rgba(255, 148, 77, 0.2)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <b style={{ color: '#fff', fontSize: '0.75rem' }}>{session.me.plan.code === 'enterprise' ? 'B2B ACTIVE' : 'API ACTIVE'}</b>
+            </div>
+          )}
         </div>
 
         {session ? (
@@ -727,6 +744,29 @@ export function SellerConsolePage() {
                       <p>{text.overviewCopy}</p>
                     </div>
                   </div>
+
+                  {session.me.plan.code !== "trial" && (
+                    <article className="console-paywall" style={{ 
+                      marginBottom: '1.5rem',
+                      background: session.me.plan.code === 'enterprise' 
+                        ? 'linear-gradient(135deg, rgba(79, 116, 255, 0.1), rgba(0,0,0,0))'
+                        : session.me.plan.code === 'dev'
+                        ? 'linear-gradient(135deg, rgba(255, 148, 77, 0.1), rgba(0,0,0,0))'
+                        : 'rgba(255, 255, 255, 0.03)',
+                      borderColor: session.me.plan.code === 'enterprise' ? 'rgba(79, 116, 255, 0.2)' : 'rgba(255, 148, 77, 0.2)'
+                    }}>
+                      <h3>{
+                        session.me.plan.code === 'enterprise' ? text.enterpriseSpotlightTitle :
+                        session.me.plan.code === 'dev' ? text.devSpotlightTitle :
+                        text.proSpotlightTitle
+                      }</h3>
+                      <p>{
+                        session.me.plan.code === 'enterprise' ? text.enterpriseSpotlightBody :
+                        session.me.plan.code === 'dev' ? text.devSpotlightBody :
+                        text.proSpotlightBody
+                      }</p>
+                    </article>
+                  )}
 
                   <div className="console-stat-grid console-stat-grid--profile">
                     <article className="console-stat-card">

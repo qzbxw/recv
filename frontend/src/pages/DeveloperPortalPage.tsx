@@ -333,315 +333,267 @@ export function DeveloperPortalPage() {
   const selectedPlanMeta = text.plans.find((plan) => plan.name.toLowerCase().includes(billingPlan));
 
   return (
-    <main className="shell checkout-shell checkout-shell--wide">
-      <div className="ambient ambient-left" />
-      <div className="ambient ambient-right" />
+    <main className="lend-page">
+      <div className="lend-backdrop lend-backdrop--grid" />
+      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--left" />
+      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--right" />
 
-      <header className="topbar topbar--checkout">
-        <Link className="topbar-brand topbar-brand--minimal" to="/">
-          <strong>reqst</strong>
-        </Link>
-        <div className="topbar-actions">
-          <Link className="ghost-button compact-button" to="/">
-            {text.back}
-          </Link>
-          <Link className="lend-secondary" to="/console">
-            {text.console}
-          </Link>
-        </div>
-      </header>
-
-      <section className="developer-portal__hero page-section-offset">
-        <div className="developer-portal__hero-copy">
-          <span className="eyebrow">Integration</span>
-          <h1>{text.title}</h1>
-          <p className="hero-copy">{text.body}</p>
-
-          <div className="developer-portal__nav-pills" aria-label="portal sections">
-            <span>{text.portalNav.access}</span>
-            <span>{text.portalNav.security}</span>
-            <span>{text.portalNav.delivery}</span>
-            <span>{text.portalNav.usage}</span>
-          </div>
-
-          <div className="developer-portal__rail developer-portal__rail--spaced">
-            <span className="receipt-brandline">{text.railTitle}</span>
-            <div className="developer-portal__rail-list developer-portal__rail-list--spaced">
-              {text.rails.map((item) => (
-                <div key={item} className="detail-row developer-portal__rail-row">
-                  <div className="developer-portal__rail-item-copy">
-                    <span />
-                    <p className="page-copy-reset">{item}</p>
-                  </div>
-                </div>
-              ))}
+      <div className="lend-shell">
+        <header className="lend-topbar">
+          <div className="lend-topbar-main">
+            <Link className="lend-brand" to="/">
+              <strong>reqst</strong>
+            </Link>
+            <div className="lend-topbar-actions">
+              <Link className="lend-secondary" to="/">{text.back}</Link>
+              <Link className="lend-primary" to="/console">{text.console}</Link>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="developer-portal__hero-stack">
-          <article className="developer-card developer-card--plans">
-            <span className="developer-card__eyebrow">{text.plansTitle}</span>
-            <h2>{text.plansBody}</h2>
-            <div className="developer-card__tile-grid">
-              {text.plans.map((plan) => (
-                <article key={plan.name} className={`developer-card__tile${selectedPlanMeta?.name === plan.name ? " is-active" : ""}`}>
-                  <strong>{plan.name}</strong>
-                  <span className="developer-card__tile-badge">{plan.badge}</span>
-                  <p>{plan.body}</p>
-                </article>
-              ))}
-            </div>
-          </article>
-        </div>
-      </section>
+        <section className="lend-hero page-section-offset">
+          <div className="lend-hero-copy">
+            <span className="lend-section-kicker">Integration</span>
+            <h1>{text.title}</h1>
+            <p>{text.body}</p>
 
-      {error ? <div className="alert page-section-offset--compact">{error}</div> : null}
-      {loading ? <p className="muted page-section-offset--compact">{language === "ru" ? "Загрузка..." : "Loading..."}</p> : null}
+            <div className="lend-cta-row" aria-label="portal sections">
+              <span className="lend-chip">{text.portalNav.access}</span>
+              <span className="lend-chip">{text.portalNav.security}</span>
+              <span className="lend-chip">{text.portalNav.delivery}</span>
+              <span className="lend-chip">{text.portalNav.usage}</span>
+            </div>
+          </div>
 
-      {!token || !me ? (
-        <div className="developer-portal__locked page-section-offset">
-          <section className="checkout-card checkout-card--lux">
-            <div className="completion-paper-topline">
-              <span className="receipt-brandline">Access Required</span>
-              <span className="completion-ticket-no">Locked</span>
-            </div>
-            <div className="developer-portal__locked-copy">
-              <h2>{text.authTitle}</h2>
-              <p className="hero-copy">{text.authBody}</p>
-              <Link className="lend-primary lend-primary--large developer-portal__cta" to="/auth">
-                {text.authAction}
-              </Link>
-            </div>
-          </section>
-
-          <section className="payment-sheet payment-sheet--receipt developer-portal__locked-sheet">
-            <div className="payment-sheet-header">
-              <span className="payment-sheet-kicker">Portal</span>
-            </div>
-            <div className="payment-essentials">
-              <div className="payment-field">
-                <div>
-                  <label>Portal Structure</label>
-                  <p className="page-muted-copy">{text.lockedBody}</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : (
-        <div className="console-grid page-section-offset">
-          <section className="console-stack">
-            <article className="checkout-card checkout-card--lux developer-portal__card">
-              <div className="completion-paper-topline">
-                <span className="receipt-brandline">{text.summaryTitle}</span>
-                <span className="completion-ticket-no">{me.plan.code.toUpperCase()}</span>
-              </div>
-              <div className="console-summary-strip console-summary-strip--two developer-portal__summary-strip">
-                <div className="metric-card">
-                  <span>{text.currentPlan}</span>
-                  <strong>{me.plan.code.toUpperCase()}</strong>
-                </div>
-                <div className="metric-card">
-                  <span>{text.currentStatus}</span>
-                  <strong style={{ color: me.plan.has_api ? "var(--ok)" : "var(--warn)" }}>
-                    {me.plan.has_api ? text.accessEnabled : text.summaryFallback}
-                  </strong>
-                </div>
+          <aside className="lend-hero-side">
+            <article className="lend-card">
+              <span className="lend-section-kicker">{text.plansTitle}</span>
+              <h3 style={{ marginTop: '1rem' }}>{text.plansBody}</h3>
+              <div className="lend-panel-grid" style={{ marginTop: '1.5rem' }}>
+                {text.plans.map((plan) => (
+                  <article key={plan.name} className="lend-stack-card" style={{ 
+                    borderColor: selectedPlanMeta?.name === plan.name ? 'rgba(255, 148, 77, 0.4)' : undefined,
+                    background: selectedPlanMeta?.name === plan.name ? 'rgba(255, 148, 77, 0.08)' : undefined
+                  }}>
+                    <span style={{ fontSize: '0.65rem' }}>{plan.badge}</span>
+                    <strong>{plan.name}</strong>
+                    <p style={{ fontSize: '0.85rem' }}>{plan.body}</p>
+                  </article>
+                ))}
               </div>
             </article>
+          </aside>
+        </section>
 
-            {!me.plan.has_api ? (
-              <article className="checkout-card checkout-card--lux developer-portal__card">
-                <div className="completion-paper-topline">
-                  <span className="receipt-brandline">Billing</span>
-                  <span className="completion-ticket-no">Upgrade</span>
-                </div>
-                <h2 className="developer-portal__section-title">{text.billingTitle}</h2>
-                <p className="hero-copy">{text.billingBody}</p>
-                <div className="developer-portal__plan-grid page-section-offset--compact">
-                  {text.plans.map((plan) => (
-                    <article key={plan.name} className={`developer-portal__plan-card${selectedPlanMeta?.name === plan.name ? " is-selected" : ""}`}>
-                      <span>{plan.badge}</span>
-                      <strong>{plan.name}</strong>
-                      <p>{plan.body}</p>
-                    </article>
-                  ))}
-                </div>
-                <div className="form-grid page-section-offset--compact">
-                  <label>
-                    {text.plan}
-                    <CustomSelect
-                      value={billingPlan}
-                      options={PLAN_OPTIONS.map((option) => ({ ...option }))}
-                      ariaLabel={text.plan}
-                      onChange={(value) => setBillingPlan(value as "dev" | "enterprise")}
-                    />
-                  </label>
-                  <label>
-                    {text.network}
-                    <CustomSelect
-                      value={billingNetwork}
-                      options={NETWORK_OPTIONS}
-                      ariaLabel={text.network}
-                      onChange={(value) => setBillingNetwork(value)}
-                    />
-                  </label>
-                </div>
-                <button type="button" className="lend-primary lend-primary--large developer-portal__cta page-section-offset--compact" onClick={() => void handleCreateCheckout()}>
-                  {text.createCheckout}
-                </button>
-                {checkoutUrl ? (
-                  <div className="payload-callout page-section-offset--tight">
-                    <span>{text.latestCheckout}</span>
-                    <div className="developer-portal__inline-copy">
-                      <code className="developer-portal__inline-code developer-portal__inline-code--small">{checkoutUrl}</code>
-                      <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(checkoutUrl)}>
-                        {text.copy}
-                      </button>
-                    </div>
+        {error ? <div className="alert page-section-offset--compact">{error}</div> : null}
+        {loading ? <p className="muted page-section-offset--compact" style={{ textAlign: 'center' }}>{language === "ru" ? "Загрузка..." : "Loading..."}</p> : null}
+
+        {!token || !me ? (
+          <div className="lend-stacked-section page-section-offset">
+            <article className="lend-final" style={{ textAlign: 'left', marginTop: 0 }}>
+              <span className="lend-section-kicker">Access Required</span>
+              <h2>{text.authTitle}</h2>
+              <p>{text.authBody}</p>
+              <div className="lend-cta-row">
+                <Link className="lend-primary" style={{ padding: '1rem 2rem' }} to="/auth">
+                  {text.authAction}
+                </Link>
+              </div>
+            </article>
+          </div>
+        ) : (
+          <div className="lend-flow page-section-offset">
+            <div className="console-stack">
+              <article className="lend-card">
+                <span className="lend-section-kicker">{text.summaryTitle}</span>
+                <div className="lend-overview-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginTop: '1.5rem' }}>
+                  <div className="lend-stack-card">
+                    <span>{text.currentPlan}</span>
+                    <strong>{me.plan.code.toUpperCase()}</strong>
                   </div>
-                ) : null}
+                  <div className="lend-stack-card">
+                    <span>{text.currentStatus}</span>
+                    <strong style={{ color: me.plan.has_api ? "var(--ok)" : "var(--warn)" }}>
+                      {me.plan.has_api ? text.accessEnabled : text.summaryFallback}
+                    </strong>
+                  </div>
+                </div>
               </article>
-            ) : (
-              <>
-                <article className="checkout-card checkout-card--lux developer-portal__card">
-                  <div className="completion-paper-topline">
-                    <span className="receipt-brandline">Usage</span>
-                    <span className="completion-ticket-no">Live</span>
-                  </div>
-                  <h2 className="developer-portal__section-title">{text.usageTitle}</h2>
-                  <p className="hero-copy">{text.usageBody}</p>
-                  <div className="console-pulse-grid console-pulse-grid--two developer-portal__pulse-grid">
-                    <div className="console-pulse-card">
-                      <span>{text.monthly}</span>
-                      <strong>{usage?.usage.monthly_requests ?? 0} / {usage?.usage.monthly_limit ?? me.plan.monthly_cap}</strong>
-                    </div>
-                    <div className="console-pulse-card">
-                      <span>{text.rpm}</span>
-                      <strong>{usage?.usage.requests_this_min ?? 0} / {usage?.usage.minute_limit ?? me.plan.rpm_limit}</strong>
-                    </div>
-                    <div className="console-pulse-card">
-                      <span>{text.keyCap}</span>
-                      <strong>{apiKeys.length} / {me.plan.api_key_limit}</strong>
-                    </div>
-                    <div className="console-pulse-card">
-                      <span>{text.hookCap}</span>
-                      <strong>{webhooks.length}</strong>
-                    </div>
-                  </div>
-                </article>
 
-                <article className="checkout-card checkout-card--lux developer-portal__card">
-                  <div className="completion-paper-topline">
-                    <span className="receipt-brandline">Security</span>
-                    <span className="completion-ticket-no">{text.keysTitle}</span>
-                  </div>
-                  <h2 className="developer-portal__section-title">{text.securityTitle}</h2>
-                  <p className="hero-copy">{text.securityBody}</p>
-                  <form onSubmit={handleCreateKey} className="form-grid page-section-offset--compact">
+              {!me.plan.has_api ? (
+                <article className="lend-card" style={{ marginTop: '1rem' }}>
+                  <span className="lend-section-kicker">Billing</span>
+                  <h3 style={{ marginTop: '1rem' }}>{text.billingTitle}</h3>
+                  <p>{text.billingBody}</p>
+                  
+                  <div className="form-grid" style={{ marginTop: '1.5rem' }}>
                     <label>
-                      {text.keyLabel}
-                      <input value={keyLabel} placeholder={text.keyPlaceholder} onChange={(event) => setKeyLabel(event.target.value)} />
+                      {text.plan}
+                      <CustomSelect
+                        value={billingPlan}
+                        options={PLAN_OPTIONS.map((option) => ({ ...option }))}
+                        ariaLabel={text.plan}
+                        onChange={(value) => setBillingPlan(value as "dev" | "enterprise")}
+                      />
                     </label>
-                    <button type="submit" className="lend-primary">{text.createKey}</button>
-                  </form>
-                  {latestSecret ? (
-                    <div className="payload-callout page-section-offset--tight">
-                      <span>{text.latestSecret}</span>
-                      <div className="developer-portal__inline-copy">
-                        <code className="developer-portal__inline-code">{latestSecret}</code>
-                        <button type="button" className="ghost-button compact-button" onClick={() => navigator.clipboard.writeText(latestSecret)}>
+                    <label>
+                      {text.network}
+                      <CustomSelect
+                        value={billingNetwork}
+                        options={NETWORK_OPTIONS}
+                        ariaLabel={text.network}
+                        onChange={(value) => setBillingNetwork(value)}
+                      />
+                    </label>
+                  </div>
+                  <button type="button" className="lend-primary" style={{ width: '100%', marginTop: '1.5rem' }} onClick={() => void handleCreateCheckout()}>
+                    {text.createCheckout}
+                  </button>
+                  {checkoutUrl ? (
+                    <div className="lend-stack-card" style={{ marginTop: '1rem', background: 'rgba(255, 255, 255, 0.05)' }}>
+                      <span>{text.latestCheckout}</span>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                        <code style={{ flex: 1, fontSize: '0.8rem', opacity: 0.8 }}>{checkoutUrl}</code>
+                        <button type="button" className="lend-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={() => navigator.clipboard.writeText(checkoutUrl)}>
                           {text.copy}
                         </button>
                       </div>
                     </div>
                   ) : null}
-                  <div className="stack-list page-section-offset--compact">
-                    {apiKeys.map((key) => (
-                      <div key={key.id} className="payment-field">
-                        <div>
-                          <label>{key.label}</label>
-                          <code>{key.prefix}***</code>
-                          <small>{key.scopes.join(", ")}</small>
-                        </div>
-                        <button type="button" className="ghost-button compact-button" onClick={() => void handleDeleteKey(key.id)}>
-                          {text.remove}
-                        </button>
-                      </div>
-                    ))}
-                    {!apiKeys.length ? <p className="muted">{text.emptyKeys}</p> : null}
-                  </div>
                 </article>
-              </>
-            )}
-          </section>
-
-          <section className="console-stack">
-            {me.plan.has_webhooks ? (
-              <article className="checkout-card checkout-card--lux developer-portal__card">
-                <div className="completion-paper-topline">
-                  <span className="receipt-brandline">Events</span>
-                  <span className="completion-ticket-no">{text.hooksTitle}</span>
-                </div>
-                <h2 className="developer-portal__section-title">{text.deliveryTitle}</h2>
-                <p className="hero-copy">{text.deliveryBody}</p>
-                <form onSubmit={handleCreateWebhook} className="form-grid page-section-offset--compact">
-                  <label>
-                    {text.hookLabel}
-                    <input
-                      value={hookForm.label}
-                      placeholder={text.hookLabelPlaceholder}
-                      onChange={(event) => setHookForm((current) => ({ ...current, label: event.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    {text.hookUrl}
-                    <input
-                      value={hookForm.url}
-                      placeholder={text.hookUrlPlaceholder}
-                      onChange={(event) => setHookForm((current) => ({ ...current, url: event.target.value }))}
-                    />
-                  </label>
-                  <button type="submit" className="lend-primary">{text.createHook}</button>
-                </form>
-                <div className="stack-list page-section-offset--compact">
-                  {webhooks.map((hook) => (
-                    <div key={hook.id} className="payment-field developer-portal__webhook-row">
-                      <div className="developer-portal__webhook-head">
-                        <div className="developer-portal__webhook-copy">
-                          <label>{hook.label}</label>
-                          <code>{hook.url}</code>
-                        </div>
-                        <button type="button" className="ghost-button compact-button" onClick={() => void handleDeleteWebhook(hook.id)}>
-                          {text.remove}
-                        </button>
+              ) : (
+                <>
+                  <article className="lend-card" style={{ marginTop: '1rem' }}>
+                    <span className="lend-section-kicker">Usage</span>
+                    <h3 style={{ marginTop: '1rem' }}>{text.usageTitle}</h3>
+                    <div className="lend-overview-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginTop: '1.5rem' }}>
+                      <div className="lend-stack-card">
+                        <span>{text.monthly}</span>
+                        <strong>{usage?.usage.monthly_requests ?? 0} / {usage?.usage.monthly_limit ?? me.plan.monthly_cap}</strong>
                       </div>
-                      <div className="payload-callout developer-portal__webhook-secret">
-                        <span>Signing Secret</span>
-                        <code>{hook.secret}</code>
+                      <div className="lend-stack-card">
+                        <span>{text.rpm}</span>
+                        <strong>{usage?.usage.requests_this_min ?? 0} / {usage?.usage.minute_limit ?? me.plan.rpm_limit}</strong>
+                      </div>
+                      <div className="lend-stack-card">
+                        <span>{text.keyCap}</span>
+                        <strong>{apiKeys.length} / {me.plan.api_key_limit}</strong>
+                      </div>
+                      <div className="lend-stack-card">
+                        <span>{text.hookCap}</span>
+                        <strong>{webhooks.length}</strong>
                       </div>
                     </div>
-                  ))}
-                  {!webhooks.length ? <p className="muted">{text.emptyHooks}</p> : null}
-                </div>
-              </article>
-            ) : null}
+                  </article>
 
-            <article className="checkout-card checkout-card--lux developer-portal__card">
-              <div className="completion-paper-topline">
-                <span className="receipt-brandline">Implementation</span>
-                <span className="completion-ticket-no">SDK</span>
-              </div>
-              <h2 className="developer-portal__section-title">{text.sampleCardTitle}</h2>
-              <p className="hero-copy">{text.sampleCardBody}</p>
-              <pre className="completion-ledger developer-portal__code-block">
-                <code>{sampleCurl}</code>
-              </pre>
-            </article>
-          </section>
-        </div>
-      )}
+                  <article className="lend-card" style={{ marginTop: '1rem' }}>
+                    <span className="lend-section-kicker">Security</span>
+                    <h3 style={{ marginTop: '1rem' }}>{text.keysTitle}</h3>
+                    <form onSubmit={handleCreateKey} className="form-grid" style={{ marginTop: '1.5rem' }}>
+                      <label>
+                        {text.keyLabel}
+                        <input value={keyLabel} placeholder={text.keyPlaceholder} onChange={(event) => setKeyLabel(event.target.value)} />
+                      </label>
+                      <button type="submit" className="lend-primary" style={{ width: '100%' }}>{text.createKey}</button>
+                    </form>
+                    {latestSecret ? (
+                      <div className="lend-stack-card" style={{ marginTop: '1rem', background: 'rgba(99, 215, 157, 0.1)', borderColor: 'rgba(99, 215, 157, 0.3)' }}>
+                        <span>{text.latestSecret}</span>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                          <code style={{ flex: 1 }}>{latestSecret}</code>
+                          <button type="button" className="lend-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={() => navigator.clipboard.writeText(latestSecret)}>
+                            {text.copy}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="lend-panel-grid" style={{ marginTop: '1.5rem' }}>
+                      {apiKeys.map((key) => (
+                        <div key={key.id} className="lend-stack-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <strong>{key.label}</strong>
+                            <code style={{ fontSize: '0.85rem', opacity: 0.7 }}>{key.prefix}***</code>
+                          </div>
+                          <button type="button" className="lend-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderColor: 'rgba(255, 137, 125, 0.3)', color: 'var(--danger)' }} onClick={() => void handleDeleteKey(key.id)}>
+                            {text.remove}
+                          </button>
+                        </div>
+                      ))}
+                      {!apiKeys.length ? <p className="muted" style={{ textAlign: 'center' }}>{text.emptyKeys}</p> : null}
+                    </div>
+                  </article>
+                </>
+              )}
+            </div>
+
+            <div className="console-stack">
+              {me.plan.has_webhooks ? (
+                <article className="lend-card">
+                  <span className="lend-section-kicker">Events</span>
+                  <h3 style={{ marginTop: '1rem' }}>{text.hooksTitle}</h3>
+                  <form onSubmit={handleCreateWebhook} className="form-grid" style={{ marginTop: '1.5rem' }}>
+                    <label>
+                      {text.hookLabel}
+                      <input
+                        value={hookForm.label}
+                        placeholder={text.hookLabelPlaceholder}
+                        onChange={(event) => setHookForm((current) => ({ ...current, label: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      {text.hookUrl}
+                      <input
+                        value={hookForm.url}
+                        placeholder={text.hookUrlPlaceholder}
+                        onChange={(event) => setHookForm((current) => ({ ...current, url: event.target.value }))}
+                      />
+                    </label>
+                    <button type="submit" className="lend-primary" style={{ width: '100%' }}>{text.createHook}</button>
+                  </form>
+                  <div className="lend-panel-grid" style={{ marginTop: '1.5rem' }}>
+                    {webhooks.map((hook) => (
+                      <div key={hook.id} className="lend-stack-card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <strong>{hook.label}</strong>
+                          <button type="button" className="lend-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', color: 'var(--danger)' }} onClick={() => void handleDeleteWebhook(hook.id)}>
+                            {text.remove}
+                          </button>
+                        </div>
+                        <code style={{ display: 'block', marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.7 }}>{hook.url}</code>
+                        <div style={{ marginTop: '1rem', padding: '0.8rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px' }}>
+                          <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.5 }}>Signing Secret</span>
+                          <code style={{ display: 'block', marginTop: '0.2rem', fontSize: '0.8rem' }}>{hook.secret}</code>
+                        </div>
+                      </div>
+                    ))}
+                    {!webhooks.length ? <p className="muted" style={{ textAlign: 'center' }}>{text.emptyHooks}</p> : null}
+                  </div>
+                </article>
+              ) : null}
+
+              <article className="lend-card" style={{ marginTop: '1rem' }}>
+                <span className="lend-section-kicker">Implementation</span>
+                <h3 style={{ marginTop: '1rem' }}>{text.sampleCardTitle}</h3>
+                <p>{text.sampleCardBody}</p>
+                <pre style={{ 
+                  marginTop: '1.5rem',
+                  padding: '1.2rem',
+                  background: '#000',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  overflowX: 'auto',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.5',
+                  color: '#ffb88b'
+                }}>
+                  <code>{sampleCurl}</code>
+                </pre>
+              </article>
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
+

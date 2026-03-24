@@ -160,7 +160,7 @@ const COPY = {
         },
         {
           question: "Как покупаются PRO, Dev и Enterprise?",
-          answer: "Через обычные Reqst checkout links. Вы создаете billing checkout внутри сервиса, оплачиваете его переводом в нужной сети, и после подтверждения план активируется автоматически.",
+          answer: "Через обычные Reqst checkout links. Мы используем собственную инфраструктуру для процессинга всех платежей за подписки. Никаких внешних шлюзов, только наш протокол. Вы создаете billing checkout внутри сервиса, оплачиваете его, и план активируется автоматически.",
         },
         {
           question: "Есть ли уже API и webhooks для разработчиков?",
@@ -351,7 +351,7 @@ const COPY = {
         },
         {
           question: "How do I buy PRO, Dev, or Enterprise?",
-          answer: "Through normal Reqst checkout links. You generate a billing checkout inside the product, pay it with a blockchain transfer in the selected network, and the plan is activated automatically after confirmation.",
+          answer: "Through normal Reqst checkout links. We use our own infrastructure to process every subscription payment. No external gateways — just our protocol in action. You generate a billing checkout inside the product, pay it, and the plan is activated automatically.",
         },
         {
           question: "Is there already an API and webhook layer for developers?",
