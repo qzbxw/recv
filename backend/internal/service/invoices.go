@@ -19,10 +19,7 @@ import (
 
 const (
 	TrialInvoiceLimit = 15
-	ProPlanDays       = 30
 )
-
-var proPlanPriceUSD = decimal.RequireFromString("39")
 
 var reqstBillingWallets = map[store.Network]string{
 	store.NetworkTON:    "UQBuzCySn6dYEHzKoGzUPmclj9Dg_m1dA-mzeDEvuF3F9x6P",
@@ -75,8 +72,8 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 		return store.Invoice{}, fmt.Errorf("unsupported network %s", input.PayableNetwork)
 	}
 
-	if !seller.IsPRO(time.Now()) && seller.FreeInvoicesUsed >= TrialInvoiceLimit {
-		return store.Invoice{}, fmt.Errorf("trial limit reached: %d invoices. Unlock PRO for 30 days at 39 USDT.", TrialInvoiceLimit)
+	if seller.EffectivePlanCode(time.Now()) == store.PlanCodeTrial && seller.FreeInvoicesUsed >= TrialInvoiceLimit {
+		return store.Invoice{}, fmt.Errorf("trial limit reached: %d invoices. Unlock a paid Reqst plan to keep generating links.", TrialInvoiceLimit)
 	}
 
 	var (
@@ -105,6 +102,7 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 		SellerID:           seller.ID,
 		Kind:               store.InvoiceKindMerchant,
 		SubscriptionDays:   0,
+		PlanCode:           "",
 		CountTowardsTrial:  true,
 		Title:              strings.TrimSpace(input.Title),
 		BaseAmountUSD:      input.BaseAmountUSD.Round(6),
@@ -114,8 +112,16 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 }
 
 func (s *InvoiceService) CreateSubscriptionInvoice(ctx context.Context, seller store.Seller, network store.Network) (store.Invoice, error) {
+	return s.CreatePlanInvoice(ctx, seller, store.PlanCodePro, network)
+}
+
+func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, seller store.Seller, planCode store.PlanCode, network store.Network) (store.Invoice, error) {
 	if seller.IsBlocked {
 		return store.Invoice{}, errors.New("seller account is blocked")
+	}
+	plan := store.ResolvePlan(planCode)
+	if plan.Code == store.PlanCodeTrial {
+		return store.Invoice{}, errors.New("trial does not require billing")
 	}
 	if !network.IsSupportedPayableNetwork() {
 		return store.Invoice{}, fmt.Errorf("unsupported network %s", network)
@@ -128,10 +134,11 @@ func (s *InvoiceService) CreateSubscriptionInvoice(ctx context.Context, seller s
 	return s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
 		SellerID:           seller.ID,
 		Kind:               store.InvoiceKindSubscription,
-		SubscriptionDays:   ProPlanDays,
+		SubscriptionDays:   plan.BillingDays,
+		PlanCode:           plan.Code,
 		CountTowardsTrial:  false,
-		Title:              "Reqst PRO · 30 days",
-		BaseAmountUSD:      proPlanPriceUSD,
+		Title:              plan.CheckoutTitle,
+		BaseAmountUSD:      plan.PriceUSD,
 		PayableNetwork:     network,
 		DestinationAddress: address,
 	}, 60)

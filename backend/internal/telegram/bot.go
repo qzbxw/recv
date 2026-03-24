@@ -127,14 +127,24 @@ func NewBotWorker(st *store.Store, invoiceService *service.InvoiceService, token
 
 func (b *BotWorker) Run(ctx context.Context) error {
 	if strings.TrimSpace(b.token) == "" {
-		b.logger.Info("telegram bot token is empty, bot worker is idle")
-		<-ctx.Done()
-		return ctx.Err()
+		b.logger.Info("telegram bot token is empty, running delivery worker without Telegram polling")
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			if err := b.flush(ctx); err != nil {
+				b.logger.Error("flush delivery jobs", "error", err)
+			}
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-ticker.C:
+			}
+		}
 	}
 
 	for {
 		if err := b.flush(ctx); err != nil {
-			b.logger.Error("flush telegram notifications", "error", err)
+			b.logger.Error("flush delivery jobs", "error", err)
 		}
 
 		updates, err := b.getUpdates(ctx)
@@ -161,18 +171,24 @@ func (b *BotWorker) Run(ctx context.Context) error {
 }
 
 func (b *BotWorker) flush(ctx context.Context) error {
-	jobs, err := b.store.ClaimNotificationJobs(ctx, 20)
-	if err != nil {
-		return err
+	if strings.TrimSpace(b.token) != "" {
+		jobs, err := b.store.ClaimNotificationJobs(ctx, 20)
+		if err != nil {
+			return err
+		}
+
+		for _, job := range jobs {
+			keyboard := b.notificationKeyboard(job.Payload)
+			if _, err := b.sendMessage(ctx, job.RecipientTelegramID, job.Message, keyboard); err != nil {
+				_ = b.store.MarkNotificationFailed(ctx, job.ID, err.Error())
+				continue
+			}
+			_ = b.store.MarkNotificationSent(ctx, job.ID)
+		}
 	}
 
-	for _, job := range jobs {
-		keyboard := b.notificationKeyboard(job.Payload)
-		if _, err := b.sendMessage(ctx, job.RecipientTelegramID, job.Message, keyboard); err != nil {
-			_ = b.store.MarkNotificationFailed(ctx, job.ID, err.Error())
-			continue
-		}
-		_ = b.store.MarkNotificationSent(ctx, job.ID)
+	if err := b.flushWebhookDeliveries(ctx); err != nil {
+		return err
 	}
 	return nil
 }
@@ -856,13 +872,13 @@ func networkButtonLabel(network store.Network) string {
 	case store.NetworkTRON:
 		return "TRON / USDT"
 	case store.NetworkSOLANA:
-		return "SOLANA / USDC-USDT"
+		return "SOLANA / USDC"
 	case store.NetworkEVM:
-		return "EVM shared"
+		return "EVM / USDC"
 	case store.NetworkBASE:
-		return "BASE / USDT"
+		return "BASE / USDC"
 	case store.NetworkARBITRUM:
-		return "ARBITRUM / USDT"
+		return "ARBITRUM / USDC"
 	case store.NetworkBSC:
 		return "BSC / USDT"
 	default:

@@ -24,6 +24,11 @@ type Config struct {
 	TonCenterBaseURL     string
 	TonCenterAPIKey      string
 	TonUSDOverride       string
+	SolanaRPCURL         string
+	EthereumRPCURL       string
+	BaseRPCURL           string
+	ArbitrumRPCURL       string
+	BSCRPCURL            string
 	SMTPHost             string
 	SMTPPort             string
 	SMTPUsername         string
@@ -47,6 +52,11 @@ func Load() (Config, error) {
 		TonCenterBaseURL:     envOrDefault("TONCENTER_BASE_URL", "https://toncenter.com/api/v2"),
 		TonCenterAPIKey:      os.Getenv("TONCENTER_API_KEY"),
 		TonUSDOverride:       os.Getenv("TON_USD_RATE"),
+		SolanaRPCURL:         envOrDefault("SOLANA_RPC_URL", "https://api.mainnet-beta.solana.com"),
+		EthereumRPCURL:       envOrDefault("ETHEREUM_RPC_URL", "https://eth.llamarpc.com"),
+		BaseRPCURL:           envOrDefault("BASE_RPC_URL", "https://base.llamarpc.com"),
+		ArbitrumRPCURL:       envOrDefault("ARBITRUM_RPC_URL", "https://arbitrum.llamarpc.com"),
+		BSCRPCURL:            envOrDefault("BSC_RPC_URL", "https://bsc.llamarpc.com"),
 		SMTPHost:             strings.TrimSpace(os.Getenv("SMTP_HOST")),
 		SMTPPort:             envOrDefault("SMTP_PORT", "587"),
 		SMTPUsername:         os.Getenv("SMTP_USERNAME"),

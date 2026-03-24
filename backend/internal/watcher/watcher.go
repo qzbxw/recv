@@ -77,6 +77,10 @@ func (w *Watcher) tick(ctx context.Context) error {
 			transfers, err = w.pollTRC20(ctx, wallet)
 		case store.NetworkTON:
 			transfers, err = w.pollTON(ctx, wallet)
+		case store.NetworkSOLANA:
+			transfers, err = w.pollSolanaStablecoin(ctx, wallet)
+		case store.NetworkEVM:
+			transfers, err = w.pollEVMStablecoin(ctx, wallet)
 		default:
 			continue
 		}

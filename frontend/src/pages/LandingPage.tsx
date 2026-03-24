@@ -441,7 +441,7 @@ export function LandingPage() {
           </nav>
 
           <div className="lend-topbar-actions">
-            <div className="lend-language-pill">
+            <div className="lend-language" role="group" aria-label="language switcher">
               <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>RU</button>
               <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
             </div>
@@ -464,13 +464,6 @@ export function LandingPage() {
               </a>
             </div>
 
-            <div className="lend-chip-grid lend-reveal--4">
-              {copy.hero.badges.map((badge) => (
-                <span key={badge} className="lend-chip">
-                  {badge}
-                </span>
-              ))}
-            </div>
           </div>
 
           <aside className="lend-hero-side lend-reveal--3" aria-label={copy.heroPanel.title}>
@@ -610,11 +603,11 @@ export function LandingPage() {
                 {copy.final.primary}
               </Link>
               <div className="lend-inline-links">
-                <Link className="lend-secondary" to="/privacy">
-                  Privacy
+                <Link className="lend-secondary" to="/dev">
+                  {copy.footer.api}
                 </Link>
-                <Link className="lend-secondary" to="/terms">
-                  Terms
+                <Link className="lend-secondary" to="/enterprise">
+                  {copy.footer.b2b}
                 </Link>
               </div>
             </div>
@@ -625,6 +618,8 @@ export function LandingPage() {
           <div className="lend-footer-links">
             <Link to="/privacy">{copy.footer.privacy}</Link>
             <Link to="/terms">{copy.footer.terms}</Link>
+            <Link to="/dev">{copy.footer.api}</Link>
+            <Link to="/enterprise">{copy.footer.b2b}</Link>
             <Link to="/auth">{copy.footer.console}</Link>
           </div>
         </footer>

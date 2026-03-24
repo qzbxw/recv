@@ -41,6 +41,7 @@ type SessionState = {
 };
 
 type PanelKey = "overview" | "wallets" | "create" | "orders";
+type BillingPlanCode = "pro" | "dev" | "enterprise";
 
 function LiveValue({ value }: { value: string | number }) {
   const [animate, setAnimate] = useState(false);
@@ -81,13 +82,14 @@ const COPY = {
     activeWallets: "Активные адреса",
     totalInvoices: "Выставлено счетов",
     trialLeft: "Осталось на триале",
-    unlockPro: "Улучшить тариф (PRO)",
-    unlockCopy: "Перейдите на безлимитный доступ и получите полный набор B2B-инструментов. Мы не берем процент от вашего оборота.",
-    unlockPrice: "39 USDT / месяц",
+    unlockPro: "Платные планы Reqst",
+    unlockCopy: "Для обычных продаж остаётся Reqst PRO, а для интеграций и B2B теперь доступны Reqst Dev и Reqst Enterprise.",
+    unlockPrice: "Self-serve billing",
+    billingPlan: "План Reqst",
     billingNetwork: "Сеть для оплаты тарифа",
-    unlockNow: "Подключить PRO",
+    unlockNow: "Создать billing checkout",
     paywallTitle: "Лимит бесплатного использования исчерпан",
-    paywallBody: "Создание новых инвойсов приостановлено. Оплатите PRO-тариф, чтобы продолжить работу без ограничений.",
+    paywallBody: "Создание новых инвойсов приостановлено. Выберите нужный платный план и оплатите его обычным Reqst checkout.",
     recentInvoice: "Последняя активность",
     noRecentInvoice: "Вы пока не создали ни одной платежной ссылки.",
     freshLink: "Прямая ссылка",
@@ -126,6 +128,9 @@ const COPY = {
     invoicePulseCopy: "Текущее состояние ваших входящих транзакций.",
     walletCoverageTitle: "Направления",
     walletCoverageCopy: "Активные сети, готовые принимать входящие переводы.",
+    developersTitle: "Reqst Dev",
+    developersCopy: "API keys, webhooks и Dev/Enterprise billing теперь живут в отдельном developer portal.",
+    developersAction: "Открыть portal",
     sellerIdLabel: "Уникальный ID",
     emailLabel: "Email-адрес",
     emailPlaceholder: "vlad@example.com",
@@ -179,13 +184,14 @@ const COPY = {
     activeWallets: "Active Wallets",
     totalInvoices: "Total Created",
     trialLeft: "Invoices Left",
-    unlockPro: "Reqst PRO",
-    unlockCopy: "Upgrade to PRO for unlimited invoices and advanced features. No per-transaction fees.",
-    unlockPrice: "39 USDT / 30 days",
+    unlockPro: "Reqst Plans",
+    unlockCopy: "Reqst PRO keeps normal seller flows, while Reqst Dev and Reqst Enterprise unlock API keys, webhooks, and higher B2B limits.",
+    unlockPrice: "Self-serve billing",
+    billingPlan: "Reqst plan",
     billingNetwork: "Payment Network",
-    unlockNow: "Upgrade to PRO",
+    unlockNow: "Create billing checkout",
     paywallTitle: "Trial Limit Reached",
-    paywallBody: "New invoices are paused. Upgrade to PRO to restore unlimited access.",
+    paywallBody: "New invoices are paused. Pick a paid Reqst plan and pay it through a normal Reqst checkout.",
     recentInvoice: "Latest Invoice",
     noRecentInvoice: "No invoices created yet.",
     freshLink: "Direct Link",
@@ -224,6 +230,9 @@ const COPY = {
     invoicePulseCopy: "Real-time overview of your invoice states.",
     walletCoverageTitle: "Payout Lanes",
     walletCoverageCopy: "Active networks ready to receive funds.",
+    developersTitle: "Reqst Dev",
+    developersCopy: "API keys, webhooks, and Dev or Enterprise billing now live in a dedicated developer portal.",
+    developersAction: "Open portal",
     sellerIdLabel: "Seller ID",
     emailLabel: "Email login",
     emailPlaceholder: "name@company.com",
@@ -291,6 +300,12 @@ const PAYABLE_NETWORK_OPTIONS: Array<{ value: Network; label: string; hint?: str
   { value: "EVM", label: "ETHEREUM" },
 ];
 
+const BILLING_PLAN_OPTIONS: Array<{ value: BillingPlanCode; label: string }> = [
+  { value: "pro", label: "Reqst PRO" },
+  { value: "dev", label: "Reqst Dev" },
+  { value: "enterprise", label: "Reqst Enterprise" },
+];
+
 function formatInvoiceStatus(language: keyof typeof STATUS_LABELS, status: string) {
   return STATUS_LABELS[language][status as keyof (typeof STATUS_LABELS)[typeof language]] ?? status.replaceAll("_", " ");
 }
@@ -325,6 +340,13 @@ export function SellerConsolePage() {
     expiresInMinutes: 30,
   });
   const [billingNetwork, setBillingNetwork] = useState<Network>("TRON");
+  const [billingPlan, setBillingPlan] = useState<BillingPlanCode>(() => {
+    const selected = new URLSearchParams(window.location.search).get("plan");
+    if (selected === "dev" || selected === "enterprise" || selected === "pro") {
+      return selected;
+    }
+    return "pro";
+  });
   const [emailForm, setEmailForm] = useState({
     email: "",
     code: "",
@@ -432,6 +454,7 @@ export function SellerConsolePage() {
     try {
       const invoice = await createBillingCheckout(session.token, {
         payable_network: network,
+        plan_code: billingPlan,
       });
       setFreshLink(`${window.location.origin}/checkout/${invoice.public_id}`);
       await loadSession(session.token, { silent: true });
@@ -603,6 +626,7 @@ export function SellerConsolePage() {
   const checkoutOrigin = useMemo(() => window.location.origin, []);
   const latestInvoice = session?.invoices[0] ?? null;
   const trialEnded = Boolean(session && !session.me.plan.is_pro && session.me.plan.trial_remaining <= 0);
+  const selectedBillingPlan = session?.me.plans.find((plan) => plan.code === billingPlan);
   const sellerHandle = session
     ? session.me.seller.username
       ? `@${session.me.seller.username}`
@@ -635,16 +659,13 @@ export function SellerConsolePage() {
           </div>
 
           <div className="topbar-actions">
-            <div className="micro-actions">
-              <div className="micro-action-group" role="group" aria-label="language">
-                <button type="button" className={language === "ru" ? "micro-action active" : "micro-action"} onClick={() => setLanguage("ru")}>
-                  {text.language.ru}
-                </button>
-                <span className="micro-divider">|</span>
-                <button type="button" className={language === "en" ? "micro-action active" : "micro-action"} onClick={() => setLanguage("en")}>
-                  {text.language.en}
-                </button>
-              </div>
+            <div className="lend-language topbar-language" role="group" aria-label="language">
+              <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>
+                RU
+              </button>
+              <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>
+                EN
+              </button>
             </div>
             {session ? (
               <button type="button" className="ghost-button compact-button" onClick={handleLogout}>
@@ -703,7 +724,7 @@ export function SellerConsolePage() {
                     <article className="console-stat-card">
                       <span>{text.plan}</span>
                       <strong><LiveValue value={session.me.plan.name} /></strong>
-                      <p>{!session.me.plan.is_pro ? `${text.trialLeft}: ${session.me.plan.trial_remaining}` : text.unlockPrice}</p>
+                      <p>{!session.me.plan.is_pro ? `${text.trialLeft}: ${session.me.plan.trial_remaining}` : `${session.me.plan.price_usd} USDT / ${session.me.plan.billing_days}d`}</p>
                     </article>
                     <article className="console-stat-card">
                       <span>{text.defaultNetwork}</span>
@@ -850,6 +871,20 @@ export function SellerConsolePage() {
                     </div>
                   ) : null}
                 </article>
+
+                <article className="console-surface console-spotlight">
+                  <div className="console-section-head">
+                    <div>
+                      <h2>{text.developersTitle}</h2>
+                      <p>{text.developersCopy}</p>
+                    </div>
+                  </div>
+                  <div className="console-link-actions">
+                    <Link className="inline-link" to={`/developers?plan=${billingPlan}`}>
+                      {text.developersAction}
+                    </Link>
+                  </div>
+                </article>
               </aside>
             </section>
           ) : null}
@@ -913,6 +948,15 @@ export function SellerConsolePage() {
                     <h3>{text.paywallTitle}</h3>
                     <p>{text.paywallBody}</p>
                     <label>
+                      {text.billingPlan}
+                      <CustomSelect
+                        value={billingPlan}
+                        options={BILLING_PLAN_OPTIONS}
+                        ariaLabel={text.billingPlan}
+                        onChange={(value) => setBillingPlan(value as BillingPlanCode)}
+                      />
+                    </label>
+                    <label>
                       {text.billingNetwork}
                       <CustomSelect
                         value={billingNetwork}
@@ -922,7 +966,7 @@ export function SellerConsolePage() {
                       />
                     </label>
                     <button type="button" onClick={() => void handleCreateBilling()}>
-                      {text.unlockNow} · {text.unlockPrice}
+                      {text.unlockNow} · {selectedBillingPlan ? `${selectedBillingPlan.price_usd} USDT / ${selectedBillingPlan.billing_days}d` : text.unlockPrice}
                     </button>
                   </div>
                 ) : (

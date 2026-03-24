@@ -1,4 +1,15 @@
-import type { Invoice, InvoiceListResponse, MeResponse, Wallet, WalletListResponse } from "./types";
+import type {
+  APIKey,
+  APIKeyListResponse,
+  DeveloperUsageResponse,
+  Invoice,
+  InvoiceListResponse,
+  MeResponse,
+  Wallet,
+  WalletListResponse,
+  WebhookEndpoint,
+  WebhookListResponse,
+} from "./types";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const TOKEN_KEY = "reqst_token";
@@ -149,11 +160,46 @@ export async function createInvoice(token: string, payload: {
 
 export async function createBillingCheckout(token: string, payload: {
   payable_network: string;
+  plan_code?: string;
 }) {
   return request<Invoice>("/api/billing/checkout", {
     method: "POST",
     body: JSON.stringify(payload),
   }, token);
+}
+
+export async function fetchDeveloperUsage(token: string) {
+  return request<DeveloperUsageResponse>("/api/developer/usage", {}, token);
+}
+
+export async function fetchAPIKeys(token: string) {
+  return request<APIKeyListResponse>("/api/developer/api-keys", {}, token);
+}
+
+export async function createAPIKey(token: string, payload: { label: string; scopes?: string[] }) {
+  return request<{ api_key: APIKey; secret: string }>("/api/developer/api-keys", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function deleteAPIKey(token: string, keyId: number) {
+  return request<void>(`/api/developer/api-keys/${keyId}`, { method: "DELETE" }, token);
+}
+
+export async function fetchWebhookEndpoints(token: string) {
+  return request<WebhookListResponse>("/api/developer/webhooks", {}, token);
+}
+
+export async function createWebhookEndpoint(token: string, payload: { label: string; url: string }) {
+  return request<{ webhook: WebhookEndpoint }>("/api/developer/webhooks", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function deleteWebhookEndpoint(token: string, endpointId: number) {
+  return request<void>(`/api/developer/webhooks/${endpointId}`, { method: "DELETE" }, token);
 }
 
 export async function cancelInvoice(token: string, invoiceId: number) {

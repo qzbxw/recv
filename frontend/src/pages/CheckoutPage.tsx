@@ -253,6 +253,8 @@ export function CheckoutPage() {
   }, [invoice, now, text.expired]);
 
   const title = invoice?.title?.trim() || text.paymentRequest;
+  const checkoutBadge = invoice?.checkout_badge || (invoice?.kind === "subscription" ? "Reqst Billing" : text.paymentRequest);
+  const checkoutVariant = invoice?.plan_code && invoice.plan_code !== "trial" ? invoice.plan_code : "merchant";
   const statusLabel = invoice ? formatStatus(language, invoice.status) : "";
   const expiresDiff = invoice ? new Date(invoice.expires_at).getTime() - now : 0;
   const isExpired = invoice ? expiresDiff <= 0 || invoice.status === "expired" : false;
@@ -291,20 +293,17 @@ export function CheckoutPage() {
         <div className="topbar-brand topbar-brand--minimal">
           <strong>reqst</strong>
         </div>
-        <div className="micro-actions">
-          <div className="micro-action-group" role="group" aria-label="language">
-            <button type="button" className={language === "ru" ? "micro-action active" : "micro-action"} onClick={() => setLanguage("ru")}>
-              {text.ru}
-            </button>
-            <span className="micro-divider">|</span>
-            <button type="button" className={language === "en" ? "micro-action active" : "micro-action"} onClick={() => setLanguage("en")}>
-              {text.en}
-            </button>
-          </div>
+        <div className="lend-language topbar-language" role="group" aria-label="language">
+          <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>
+            RU
+          </button>
+          <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>
+            EN
+          </button>
         </div>
       </header>
 
-      <section className="checkout-card checkout-card--lux">
+      <section className={`checkout-card checkout-card--lux checkout-card--${checkoutVariant}`}>
         {error ? <div className="alert">{error}</div> : null}
         {!invoice ? <p className="muted">{text.loading}</p> : null}
 
@@ -315,7 +314,7 @@ export function CheckoutPage() {
                 <div className="completion-paper">
                   <div className="completion-paper-topline">
                     <div className="receipt-brandline completion-brandline">
-                      <span>{text.receiptLabel}</span>
+                      <span>{checkoutBadge}</span>
                     </div>
                     <span className="completion-ticket-no">
                       {text.receiptNo} #{invoice.public_id}
@@ -388,13 +387,14 @@ export function CheckoutPage() {
                 <div className="checkout-flow">
                   <section className="checkout-story">
                     <div className="receipt-hero receipt-hero--streamlined">
-                      <div className="receipt-copy">
-                        <div className="receipt-brandline">
-                          <span>{text.receiptLabel}</span>
-                        </div>
-                        <div className="receipt-heading">
-                          <span className={`status-pill receipt-status status-${invoice.status}`}>{statusLabel}</span>
-                        </div>
+                    <div className="receipt-copy">
+                      <div className="receipt-brandline">
+                        <span>{checkoutBadge}</span>
+                      </div>
+                      <div className="receipt-heading">
+                        <span className={`checkout-badge checkout-badge--${checkoutVariant}`}>{checkoutBadge}</span>
+                        <span className={`status-pill receipt-status status-${invoice.status}`}>{statusLabel}</span>
+                      </div>
                         <h1>{title}</h1>
                         <div className={isExpiringSoon ? "receipt-timer receipt-timer--urgent" : "receipt-timer"}>
                           <span>{text.waitingPayment}</span>

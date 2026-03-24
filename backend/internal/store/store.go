@@ -27,6 +27,7 @@ const sellerSelectColumns = `
 	COALESCE(username, ''),
 	COALESCE(email, ''),
 	default_network,
+	plan_code,
 	subscription_ends_at,
 	free_invoices_used,
 	is_blocked,
@@ -118,7 +119,8 @@ func (s *Store) GrantPRO(ctx context.Context, sellerID int64, days int) (Seller,
 
 	row := s.pool.QueryRow(ctx, `
 		UPDATE sellers
-		SET subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + ($2 || ' days')::interval
+		SET plan_code = 'pro',
+		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + ($2 || ' days')::interval
 		WHERE id = $1
 		RETURNING `+sellerSelectColumns+`
 	`, sellerID, days)
@@ -369,6 +371,7 @@ type CreateInvoiceParams struct {
 	SellerID           int64
 	Kind               InvoiceKind
 	SubscriptionDays   int
+	PlanCode           PlanCode
 	CountTowardsTrial  bool
 	Title              string
 	BaseAmountUSD      decimal.Decimal
@@ -394,6 +397,7 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 			seller_id,
 			kind,
 			subscription_days,
+			plan_code,
 			title,
 			base_amount_usd,
 			payable_amount,
@@ -404,10 +408,10 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 			status,
 			expires_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'awaiting_payment', $12)
-		RETURNING id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'awaiting_payment', $13)
+		RETURNING id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		          payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
-	`, params.PublicID, params.SellerID, params.Kind, params.SubscriptionDays, params.Title, params.BaseAmountUSD, params.PayableAmount, params.PayableNetwork,
+	`, params.PublicID, params.SellerID, params.Kind, params.SubscriptionDays, params.PlanCode, params.Title, params.BaseAmountUSD, params.PayableAmount, params.PayableNetwork,
 		params.DestinationAddress, params.PaymentComment, params.MatchingSuffix, params.ExpiresAt)
 	invoice, err = scanInvoice(row)
 	if err != nil {
@@ -433,7 +437,7 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 func (s *Store) ListInvoices(ctx context.Context, sellerID int64, limit int, offset int) ([]Invoice, error) {
 	invoices := make([]Invoice, 0)
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		SELECT id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		       payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 		FROM invoices
 		WHERE seller_id = $1
@@ -457,7 +461,7 @@ func (s *Store) ListInvoices(ctx context.Context, sellerID int64, limit int, off
 
 func (s *Store) GetInvoiceByID(ctx context.Context, sellerID int64, invoiceID int64) (Invoice, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		SELECT id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		       payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 		FROM invoices
 		WHERE id = $1 AND seller_id = $2
@@ -467,7 +471,7 @@ func (s *Store) GetInvoiceByID(ctx context.Context, sellerID int64, invoiceID in
 
 func (s *Store) GetInvoiceByPublicID(ctx context.Context, publicID string) (Invoice, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		SELECT id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		       payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 		FROM invoices
 		WHERE public_id = $1
@@ -480,7 +484,7 @@ func (s *Store) SetInvoiceStatus(ctx context.Context, sellerID int64, invoiceID 
 		UPDATE invoices
 		SET status = $1
 		WHERE id = $2 AND seller_id = $3
-		RETURNING id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		RETURNING id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		          payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 	`, status, invoiceID, sellerID)
 	return scanInvoice(row)
@@ -497,7 +501,7 @@ func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoi
 		UPDATE invoices
 		SET status = 'paid', paid_at = NOW()
 		WHERE id = $1 AND seller_id = $2
-		RETURNING id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		RETURNING id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		          payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 	`, invoiceID, sellerID)
 	invoice, err := scanInvoice(row)
@@ -505,6 +509,9 @@ func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoi
 		return Invoice{}, err
 	}
 	if err := applyInvoicePostPaymentEffects(ctx, tx, invoice); err != nil {
+		return Invoice{}, err
+	}
+	if err := enqueueWebhookEventsTx(ctx, tx, invoice, "manual_mark_paid", invoice.PayableAmount); err != nil {
 		return Invoice{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -545,7 +552,7 @@ func (s *Store) RecordObservedTransfer(ctx context.Context, transfer ObservedTra
 
 func (s *Store) FindInvoiceByTONComment(ctx context.Context, address string, comment string) (Invoice, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		SELECT id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		       payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 		FROM invoices
 		WHERE payable_network = 'TON'
@@ -560,7 +567,7 @@ func (s *Store) FindInvoiceByTONComment(ctx context.Context, address string, com
 
 func (s *Store) FindInvoiceByExactAmount(ctx context.Context, address string, network Network, amount decimal.Decimal) (Invoice, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		SELECT id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		       payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 		FROM invoices
 		WHERE destination_address = $1
@@ -575,7 +582,7 @@ func (s *Store) FindInvoiceByExactAmount(ctx context.Context, address string, ne
 
 func (s *Store) FindPotentialUnderpaidInvoice(ctx context.Context, address string, network Network, amount decimal.Decimal) (Invoice, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		SELECT id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		       payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 		FROM invoices
 		WHERE destination_address = $1
@@ -604,7 +611,7 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, txH
 		    tx_hash = COALESCE(tx_hash, $2),
 		    paid_at = CASE WHEN $1 = 'paid' THEN $3 ELSE paid_at END
 		WHERE id = $4
-		RETURNING id, public_id, seller_id, kind, subscription_days, title, base_amount_usd, payable_amount, payable_network, destination_address,
+		RETURNING id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		          payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 	`, status, txHash, paidAt, invoiceID)
 	invoice, err = scanInvoice(row)
@@ -638,6 +645,12 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, txH
 			VALUES ($1, $2, $3, $4)
 		`, invoice.SellerID, telegramID.Int64, message, payload); err != nil {
 			return Invoice{}, fmt.Errorf("queue seller notification: %w", err)
+		}
+	}
+
+	if status == InvoiceStatusPaid || status == InvoiceStatusUnderpaid || status == InvoiceStatusManualReview {
+		if err := enqueueWebhookEventsTx(ctx, tx, invoice, classification, observedAmount); err != nil {
+			return Invoice{}, err
 		}
 	}
 
@@ -760,6 +773,7 @@ func scanSeller(row pgx.Row) (Seller, error) {
 		&seller.Username,
 		&seller.Email,
 		&seller.DefaultNetwork,
+		&seller.PlanCode,
 		&seller.SubscriptionEndsAt,
 		&seller.FreeInvoicesUsed,
 		&seller.IsBlocked,
@@ -802,6 +816,7 @@ func scanInvoice(row interface{ Scan(dest ...any) error }) (Invoice, error) {
 		&invoice.SellerID,
 		&invoice.Kind,
 		&invoice.SubscriptionDays,
+		&invoice.PlanCode,
 		&invoice.Title,
 		&invoice.BaseAmountUSD,
 		&invoice.PayableAmount,
@@ -828,11 +843,16 @@ func applyInvoicePostPaymentEffects(ctx context.Context, tx pgx.Tx, invoice Invo
 	if invoice.Kind != InvoiceKindSubscription || invoice.SubscriptionDays <= 0 {
 		return nil
 	}
+	planCode := NormalizePlanCode(string(invoice.PlanCode))
+	if planCode == PlanCodeTrial {
+		planCode = PlanCodePro
+	}
 	if _, err := tx.Exec(ctx, `
 		UPDATE sellers
-		SET subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + ($2 || ' days')::interval
+		SET plan_code = $2,
+		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + ($3 || ' days')::interval
 		WHERE id = $1
-	`, invoice.SellerID, invoice.SubscriptionDays); err != nil {
+	`, invoice.SellerID, planCode, invoice.SubscriptionDays); err != nil {
 		return fmt.Errorf("extend seller subscription: %w", err)
 	}
 	return nil
@@ -842,7 +862,12 @@ func buildInvoiceNotificationMessage(invoice Invoice, classification string, obs
 	received := observedAmount.StringFixed(payableScale(invoice.PayableNetwork))
 	expected := invoice.PayableAmount.StringFixed(payableScale(invoice.PayableNetwork))
 	if invoice.Kind == InvoiceKindSubscription && invoice.Status == InvoiceStatusPaid {
-		return fmt.Sprintf("Reqst PRO unlocked. Received %s %s. Your unlimited plan is active for %d days.", received, invoice.PayableNetwork, invoice.SubscriptionDays)
+		planCode := NormalizePlanCode(string(invoice.PlanCode))
+		if planCode == PlanCodeTrial {
+			planCode = PlanCodePro
+		}
+		plan := ResolvePlan(planCode)
+		return fmt.Sprintf("%s unlocked. Received %s %s. Your plan is active for %d days.", plan.MarketingLabel, received, invoice.PayableNetwork, invoice.SubscriptionDays)
 	}
 	switch invoice.Status {
 	case InvoiceStatusPaid:
@@ -877,14 +902,91 @@ func buildInvoiceNotificationPayload(invoice Invoice, classification string) jso
 		return MustJSON(map[string]any{
 			"invoice_id": invoice.ID,
 			"public_id":  invoice.PublicID,
+			"plan_code":  invoice.PlanCode,
 		})
 	}
 	return MustJSON(map[string]any{
 		"invoice_id":      invoice.ID,
 		"public_id":       invoice.PublicID,
+		"plan_code":       invoice.PlanCode,
 		"classification":  classification,
 		"invoice_actions": actions,
 	})
+}
+
+func enqueueWebhookEventsTx(ctx context.Context, tx pgx.Tx, invoice Invoice, classification string, observedAmount decimal.Decimal) error {
+	var seller Seller
+	row := tx.QueryRow(ctx, `
+		SELECT `+sellerSelectColumns+`
+		FROM sellers
+		WHERE id = $1
+	`, invoice.SellerID)
+	seller, err := scanSeller(row)
+	if err != nil {
+		return fmt.Errorf("load seller for webhook enqueue: %w", err)
+	}
+
+	plan := seller.EffectivePlan(time.Now())
+	if plan.WebhookRetries <= 0 {
+		return nil
+	}
+
+	eventType := invoiceWebhookEventType(invoice)
+	payload := MustJSON(map[string]any{
+		"event":           eventType,
+		"classification":  classification,
+		"observed_amount": observedAmount.StringFixed(payableScale(invoice.PayableNetwork)),
+		"invoice": map[string]any{
+			"id":                  invoice.ID,
+			"public_id":           invoice.PublicID,
+			"kind":                invoice.Kind,
+			"plan_code":           invoice.PlanCode,
+			"title":               invoice.Title,
+			"status":              invoice.Status,
+			"payable_amount":      invoice.PayableAmount.StringFixed(payableScale(invoice.PayableNetwork)),
+			"payable_network":     invoice.PayableNetwork,
+			"destination_address": invoice.DestinationAddress,
+			"payment_comment":     valueOrEmpty(invoice.PaymentComment),
+			"tx_hash":             valueOrEmpty(invoice.TxHash),
+			"paid_at":             invoice.PaidAt,
+		},
+		"sent_at": time.Now().UTC(),
+	})
+	if err := enqueueWebhookDeliveriesTx(ctx, tx, invoice.SellerID, eventType, payload, plan.WebhookRetries); err != nil {
+		return fmt.Errorf("enqueue invoice webhook deliveries: %w", err)
+	}
+
+	if invoice.Kind == InvoiceKindSubscription && invoice.Status == InvoiceStatusPaid {
+		subscriptionPayload := MustJSON(map[string]any{
+			"event": "subscription.activated",
+			"plan": map[string]any{
+				"code":         invoice.PlanCode,
+				"name":         ResolvePlan(invoice.PlanCode).Name,
+				"billing_days": invoice.SubscriptionDays,
+			},
+			"invoice_public_id": invoice.PublicID,
+			"sent_at":           time.Now().UTC(),
+		})
+		if err := enqueueWebhookDeliveriesTx(ctx, tx, invoice.SellerID, "subscription.activated", subscriptionPayload, plan.WebhookRetries); err != nil {
+			return fmt.Errorf("enqueue subscription webhook deliveries: %w", err)
+		}
+	}
+	return nil
+}
+
+func invoiceWebhookEventType(invoice Invoice) string {
+	switch invoice.Status {
+	case InvoiceStatusPaid:
+		return "invoice.paid"
+	case InvoiceStatusUnderpaid:
+		return "invoice.underpaid"
+	case InvoiceStatusManualReview:
+		return "invoice.manual_review"
+	case InvoiceStatusExpired:
+		return "invoice.expired"
+	default:
+		return "invoice.updated"
+	}
 }
 
 func valueOrEmpty(value *string) string {

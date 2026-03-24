@@ -105,6 +105,7 @@ type Seller struct {
 	Username           string     `json:"username"`
 	Email              string     `json:"email"`
 	DefaultNetwork     Network    `json:"default_network"`
+	PlanCode           PlanCode   `json:"plan_code"`
 	SubscriptionEndsAt *time.Time `json:"subscription_ends_at"`
 	FreeInvoicesUsed   int        `json:"free_invoices_used"`
 	IsBlocked          bool       `json:"is_blocked"`
@@ -113,10 +114,6 @@ type Seller struct {
 	HasPassword        bool       `json:"has_password"`
 	PasswordHash       string     `json:"-"`
 	CreatedAt          time.Time  `json:"created_at"`
-}
-
-func (s Seller) IsPRO(now time.Time) bool {
-	return s.SubscriptionEndsAt != nil && s.SubscriptionEndsAt.After(now)
 }
 
 type Wallet struct {
@@ -134,6 +131,7 @@ type Invoice struct {
 	SellerID           int64            `json:"seller_id"`
 	Kind               InvoiceKind      `json:"kind"`
 	SubscriptionDays   int              `json:"subscription_days"`
+	PlanCode           PlanCode         `json:"plan_code"`
 	Title              string           `json:"title"`
 	BaseAmountUSD      decimal.Decimal  `json:"base_amount_usd"`
 	PayableAmount      decimal.Decimal  `json:"payable_amount"`

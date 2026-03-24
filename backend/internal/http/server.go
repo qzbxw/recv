@@ -72,6 +72,13 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api.POST("/me/email-auth/request-code", server.handleEmailLinkRequest)
 	api.POST("/me/email-auth/confirm", server.handleEmailLinkConfirm)
 	api.POST("/me/telegram/link", server.handleTelegramLink)
+	api.GET("/developer/usage", server.handleDeveloperUsage)
+	api.GET("/developer/api-keys", server.handleListAPIKeys)
+	api.POST("/developer/api-keys", server.handleCreateAPIKey)
+	api.DELETE("/developer/api-keys/:id", server.handleDeleteAPIKey)
+	api.GET("/developer/webhooks", server.handleListWebhookEndpoints)
+	api.POST("/developer/webhooks", server.handleCreateWebhookEndpoint)
+	api.DELETE("/developer/webhooks/:id", server.handleDeleteWebhookEndpoint)
 	api.GET("/wallets", server.handleListWallets)
 	api.POST("/wallets", server.handleCreateWallet)
 	api.DELETE("/wallets/:id", server.handleDeleteWallet)
@@ -81,6 +88,14 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api.GET("/invoices/:id", server.handleGetInvoice)
 	api.POST("/invoices/:id/cancel", server.handleCancelInvoice)
 	api.POST("/invoices/:id/mark-paid", server.handleMarkInvoicePaid)
+
+	devAPI := router.Group("/v1")
+	devAPI.Use(server.apiKeyMiddleware())
+	devAPI.GET("/me", server.handleAPIMe)
+	devAPI.GET("/invoices", server.handleAPIListInvoices)
+	devAPI.POST("/invoices", server.handleAPICreateInvoice)
+	devAPI.GET("/invoices/:id", server.handleAPIGetInvoice)
+	devAPI.POST("/invoices/:id/cancel", server.handleAPICancelInvoice)
 
 	return router
 }
@@ -182,17 +197,26 @@ func (s *Server) handleEmailResetPassword(c *gin.Context) {
 func (s *Server) handleMe(c *gin.Context) {
 	sc := sellerFromContext(c)
 	now := time.Now()
+	plan := sc.Seller.EffectivePlan(now)
 
 	c.JSON(http.StatusOK, gin.H{
 		"seller": sc.Seller,
 		"plan": map[string]any{
-			"name":            ternary(sc.Seller.IsPRO(now), "PRO", "Trial"),
-			"is_pro":          sc.Seller.IsPRO(now),
+			"code":            plan.Code,
+			"name":            plan.Name,
+			"is_pro":          plan.Code != store.PlanCodeTrial,
+			"has_api":         plan.HasAPI,
+			"has_webhooks":    plan.HasWebhooks,
 			"trial_limit":     service.TrialInvoiceLimit,
 			"trial_remaining": max(0, service.TrialInvoiceLimit-sc.Seller.FreeInvoicesUsed),
-			"price_usd":       "39",
-			"billing_days":    service.ProPlanDays,
+			"price_usd":       plan.PriceUSDString,
+			"billing_days":    plan.BillingDays,
+			"api_key_limit":   plan.APIKeyLimit,
+			"monthly_cap":     plan.MonthlyRequestCap,
+			"rpm_limit":       plan.RequestsPerMinute,
+			"webhook_retries": plan.WebhookRetries,
 		},
+		"plans": store.ListPaidPlans(),
 	})
 }
 
@@ -662,6 +686,8 @@ func publicInvoiceResponse(invoice store.Invoice) gin.H {
 		"title":               invoice.Title,
 		"kind":                invoice.Kind,
 		"subscription_days":   invoice.SubscriptionDays,
+		"plan_code":           normalizedInvoicePlanCode(invoice),
+		"checkout_badge":      checkoutBadge(invoice),
 		"base_amount_usd":     invoice.BaseAmountUSD.StringFixed(2),
 		"payable_amount":      invoice.PayableAmount.StringFixed(payableScale(invoice.PayableNetwork)),
 		"payable_network":     invoice.PayableNetwork,
@@ -683,6 +709,7 @@ func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	sc := sellerFromContext(c)
 	var body struct {
 		PayableNetwork string `json:"payable_network"`
+		PlanCode       string `json:"plan_code"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -690,12 +717,31 @@ func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	}
 
 	network := store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork)))
-	invoice, err := s.invoiceService.CreateSubscriptionInvoice(c.Request.Context(), sc.Seller, network)
+	planCode := store.NormalizePlanCode(body.PlanCode)
+	if strings.TrimSpace(body.PlanCode) == "" {
+		planCode = store.PlanCodePro
+	}
+	invoice, err := s.invoiceService.CreatePlanInvoice(c.Request.Context(), sc.Seller, planCode, network)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusCreated, publicInvoiceResponse(invoice))
+}
+
+func checkoutBadge(invoice store.Invoice) string {
+	if invoice.Kind == store.InvoiceKindSubscription {
+		return store.ResolvePlan(normalizedInvoicePlanCode(invoice)).CheckoutBadge
+	}
+	return "Merchant Checkout"
+}
+
+func normalizedInvoicePlanCode(invoice store.Invoice) store.PlanCode {
+	code := store.NormalizePlanCode(string(invoice.PlanCode))
+	if invoice.Kind == store.InvoiceKindSubscription && code == store.PlanCodeTrial {
+		return store.PlanCodePro
+	}
+	return code
 }
 
 func paymentURI(invoice store.Invoice) string {
