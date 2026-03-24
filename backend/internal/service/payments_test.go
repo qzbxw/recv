@@ -85,3 +85,43 @@ func TestClassifyInvoiceTransfer(t *testing.T) {
 		}
 	})
 }
+
+func TestNormalizeObservedTransfer(t *testing.T) {
+	transfer := store.ObservedTransfer{
+		TxHash:             "tx-1",
+		Network:            store.NetworkTON,
+		DestinationAddress: "wallet-1",
+		Amount:             decimal.RequireFromString("1.5"),
+	}
+
+	if err := NormalizeObservedTransfer(&transfer); err != nil {
+		t.Fatalf("NormalizeObservedTransfer returned error: %v", err)
+	}
+	if transfer.ObservedAt.IsZero() {
+		t.Fatal("expected observed_at to be defaulted")
+	}
+
+	invalid := store.ObservedTransfer{
+		Network:            store.NetworkTON,
+		DestinationAddress: "wallet-1",
+		Amount:             decimal.RequireFromString("1.5"),
+	}
+	if err := NormalizeObservedTransfer(&invalid); err == nil {
+		t.Fatal("expected missing tx_hash error")
+	}
+}
+
+func TestIsLikelyExchangeFeeUnderpayment(t *testing.T) {
+	suffix := decimal.RequireFromString("0.013742")
+	invoice := store.Invoice{
+		PayableAmount:  decimal.RequireFromString("150.013742"),
+		MatchingSuffix: &suffix,
+	}
+
+	if !isLikelyExchangeFeeUnderpayment(invoice, decimal.RequireFromString("149.013742")) {
+		t.Fatal("expected amount to be classified as likely exchange fee underpayment")
+	}
+	if isLikelyExchangeFeeUnderpayment(invoice, decimal.RequireFromString("149.010000")) {
+		t.Fatal("expected different fractional part to be rejected")
+	}
+}

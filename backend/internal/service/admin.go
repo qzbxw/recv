@@ -69,6 +69,9 @@ func (s *AdminService) ParseToken(tokenString string) (AdminClaims, error) {
 	}
 
 	token, err := jwt.ParseWithClaims(tokenString, &AdminClaims{}, func(token *jwt.Token) (any, error) {
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, fmt.Errorf("unexpected signing method: %s", token.Method.Alg())
+		}
 		return s.jwtSecret, nil
 	})
 	if err != nil {

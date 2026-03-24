@@ -108,7 +108,7 @@ func (s *Store) GrantPRO(ctx context.Context, sellerID int64, days int) (Seller,
 	row := s.pool.QueryRow(ctx, `
 		UPDATE sellers
 		SET plan_code = 'pro',
-		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + ($2 || ' days')::interval
+		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + make_interval(days => $2)
 		WHERE id = $1
 		RETURNING `+sellerSelectColumns+`
 	`, sellerID, days)
@@ -605,9 +605,9 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, pre
 	var invoice Invoice
 	row := tx.QueryRow(ctx, `
 		UPDATE invoices
-		SET status = $1,
+		SET status = $1::invoice_status,
 		    tx_hash = COALESCE(tx_hash, $2),
-		    paid_at = CASE WHEN $1 = 'paid' THEN $3 ELSE paid_at END
+		    paid_at = CASE WHEN $1::invoice_status = 'paid'::invoice_status THEN $3 ELSE paid_at END
 		WHERE id = $4
 		RETURNING id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		          payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
@@ -668,6 +668,7 @@ func (s *Store) GetWatchedWallets(ctx context.Context) ([]WatchedWallet, error) 
 		SELECT DISTINCT
 			CASE
 				WHEN i.payable_network IN ('EVM', 'BASE', 'ARBITRUM', 'BSC') THEN 'EVM'::network
+				WHEN i.payable_network = 'TON_USDT' THEN 'TON_USDT'::network
 				ELSE i.payable_network
 			END AS poll_network,
 			i.payable_network,
@@ -856,7 +857,7 @@ func applyInvoicePostPaymentEffects(ctx context.Context, tx pgx.Tx, invoice Invo
 	if _, err := tx.Exec(ctx, `
 		UPDATE sellers
 		SET plan_code = $2,
-		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + ($3 || ' days')::interval
+		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + make_interval(days => $3)
 		WHERE id = $1
 	`, invoice.SellerID, planCode, invoice.SubscriptionDays); err != nil {
 		return fmt.Errorf("extend seller subscription: %w", err)

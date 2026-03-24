@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: reqst
+      POSTGRES_USER: reqst
+      POSTGRES_PASSWORD: reqst
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reqst -d reqst"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /app/backend
+    volumes:
+      - ./backend:/app/backend
+      - go_dev_mod_cache:/go/pkg/mod
+      - go_dev_build_cache:/root/.cache/go-build
+    environment:
+      APP_ENV: development
+      APP_RUNTIME: api
+      HTTP_PORT: "8080"
+      METRICS_PORT: "9090"
+      DATABASE_URL: postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable
+      JWT_SECRET: dev-jwt-secret
+      INTERNAL_TOKEN: dev-internal-token
+      ALLOW_INSECURE_DEV_AUTH: "true"
+      TELEGRAM_BOT_TOKEN: ""
+      TELEGRAM_INIT_MAX_AGE_SECONDS: "86400"
+      TON_USD_RATE: "2.50"
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin
+      ADMIN_JWT_SECRET: dev-admin-secret
+      ADMIN_SESSION_TTL: 12h
+      PUBLIC_APP_URL: http://localhost:5173
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      - api
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+      VITE_ENABLE_DEV_AUTH: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+
+volumes:
+  postgres_dev_data:
+  go_dev_mod_cache:
+  go_dev_build_cache:
+  frontend_node_modules:

@@ -122,3 +122,19 @@ func TestPollTRC20FiltersUSDT(t *testing.T) {
 		t.Fatalf("unexpected amount: %s", transfers[0].Amount)
 	}
 }
+
+func TestParseTronTimestamp(t *testing.T) {
+	expected := time.UnixMilli(1710000000123).UTC()
+	if got := parseTronTimestamp(int64(1710000000123)); !got.Equal(expected) {
+		t.Fatalf("unexpected timestamp from int64: %s", got)
+	}
+	if got := parseTronTimestamp(float64(1710000000123)); !got.Equal(expected) {
+		t.Fatalf("unexpected timestamp from float64: %s", got)
+	}
+	if got := parseTronTimestamp("1710000000123"); !got.Equal(expected) {
+		t.Fatalf("unexpected timestamp from string: %s", got)
+	}
+	if got := parseTronTimestamp(struct{}{}); !got.IsZero() {
+		t.Fatalf("expected zero timestamp for unsupported type, got %s", got)
+	}
+}

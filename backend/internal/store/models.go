@@ -13,6 +13,7 @@ type Network string
 
 const (
 	NetworkTON      Network = "TON"
+	NetworkTON_USDT Network = "TON_USDT"
 	NetworkTRON     Network = "TRON"
 	NetworkSOLANA   Network = "SOLANA"
 	NetworkEVM      Network = "EVM"
@@ -27,6 +28,8 @@ func (n Network) WalletBucket() Network {
 		return NetworkEVM
 	case NetworkSOLANA:
 		return NetworkSOLANA
+	case NetworkTON, NetworkTON_USDT:
+		return NetworkTON
 	default:
 		return n
 	}
@@ -43,7 +46,7 @@ func (n Network) IsSupportedWalletNetwork() bool {
 
 func (n Network) IsSupportedPayableNetwork() bool {
 	switch n {
-	case NetworkTON, NetworkTRON, NetworkSOLANA, NetworkEVM, NetworkBASE, NetworkARBITRUM, NetworkBSC:
+	case NetworkTON, NetworkTON_USDT, NetworkTRON, NetworkSOLANA, NetworkEVM, NetworkBASE, NetworkARBITRUM, NetworkBSC:
 		return true
 	default:
 		return false
@@ -53,7 +56,7 @@ func (n Network) IsSupportedPayableNetwork() bool {
 func ValidateWalletAddress(network Network, address string) error {
 	address = strings.TrimSpace(address)
 	switch network {
-	case NetworkTON:
+	case NetworkTON, NetworkTON_USDT:
 		if len(address) < 32 {
 			return fmt.Errorf("TON address looks too short")
 		}

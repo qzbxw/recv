@@ -1,4 +1,4 @@
-export type Network = "TON" | "TRON" | "SOLANA" | "EVM" | "BASE" | "ARBITRUM" | "BSC";
+export type Network = "TON" | "TON_USDT" | "TRON" | "SOLANA" | "EVM" | "BASE" | "ARBITRUM" | "BSC";
 
 export type Seller = {
   id: number;
@@ -38,6 +38,7 @@ export type Invoice = {
   payment_comment: string | null;
   status: string;
   expires_at: string;
+  created_at: string;
   tx_hash?: string | null;
   checkout_url: string;
   payment_uri: string;

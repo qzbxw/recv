@@ -10,102 +10,114 @@ const COPY = {
     auth: "Консоль",
     billing: "Связаться",
     discuss: "Обсудить условия",
-    compareTitle: "Технологический стек",
+    compareTitle: "Протокол",
     flowTitle: "Интеграция",
     priceTitle: "Доступ",
+    priceSubtitle: "Неограниченный оборот. Фиксированная цена.",
     codeTitle: "Пример реализации",
-    processingNote: "Мы используем проприетарную не-кастодиальную архитектуру. Все транзакции проходят через ваши ноды или наши высокопроизводительные кластеры напрямую в блокчейн.",
-    compareSectionTitle: "Техническое превосходство",
-    compareSectionBody: "В отличие от кастодиальных решений, Reqst — это программный слой (middleware), который дает вам полный контроль над жизненным циклом транзакции, исключая риски блокировок и удержания средств третьими лицами.",
+    codeSubtitle: "Готов к продакшену за считанные минуты.",
+    codeBody: "Бесшовная интеграция нашего протокола в ваш существующий рабочий процесс с помощью высокопроизводительного API.",
+    processingNote: "We use a proprietary non-custodial architecture. All transactions go through your nodes or our high-performance clusters directly to the blockchain.",
+    compareSectionTitle: "Архитектура прямого доступа",
+    compareSectionBody: "Reqst работает как прозрачный программный слой (middleware). Транзакции идут напрямую от клиента к вам, минуя промежуточные счета. Мы лишь автоматизируем мониторинг через сеть высокопроизводительных нод, исключая любые риски блокировки средств.",
     dev: {
       badge: "Reqst Developer",
-      title: "API-инфраструктура для хайлоад-проектов.",
-      body: "Полный программный контроль над приемом криптоплатежей. Seller API 2.0, WebSocket-стримы и глубокая кастомизация логики чекаута под ваш стек.",
-      priceLabel: "Индивидуально",
-      period: "на базе ваших объемов",
+      title: "Инфраструктура криптоплатежей. Контроль в ваших руках.",
+      body: "Профессиональный API v1 и Webhook-уведомления для high-load систем. Прямые выплаты Direct-to-Wallet и полная свобода от комиссий с оборота в non-custodial среде.",
+      priceLabel: "199$",
+      period: "в месяц",
       stats: [
-        { value: "0ms", label: "задержка нотификаций" },
+        { value: "0ms", label: "Латентность" },
         { value: "100%", label: "Direct-to-Wallet" },
         { value: "Full", label: "Mempool Access" },
         { value: "∞", label: "Webhook Endpoints" },
       ],
       features: [
         {
-          title: "Atomic Webhooks",
-          body: "Гарантированная доставка (at-least-once) с автоматическими ретраями и подписью каждой посылки через Ed25519.",
+          title: "Webhook Delivery",
+          body: "Гарантированная доставка (at-least-once) с автоматическими ретраями и проверкой подлинности через HMAC-SHA256.",
         },
         {
-          title: "Mempool Monitoring",
-          body: "Отслеживание транзакций до момента включения в блок. Позволяет отображать статус «Платеж обнаружен» мгновенно.",
+          title: "Mempool Tracking",
+          body: "Мониторинг транзакций в реальном времени. Обнаружение платежа происходит мгновенно, еще до подтверждения блоком.",
         },
         {
-          title: "Typed SDK & OpenAPI",
-          body: "Полная поддержка TypeScript, Go и Python. Сгенерированные клиенты для максимально быстрого старта разработки.",
+          title: "Unified API v1",
+          body: "Единый интерфейс для работы с 7+ сетями: TON, TRON, SOL, Base, Arbitrum, BSC и Ethereum (EVM).",
         },
         {
-          title: "Idempotency Keys",
-          body: "Встроенная защита от дублирования инвойсов и повторных списаний на уровне API протокола.",
+          title: "Idempotency Safety",
+          body: "Встроенная защита от дублирования транзакций и повторных списаний на уровне протокола API.",
         },
       ],
       flow: [
-        { title: "API Provisioning", body: "Генерация ключей с разграничением прав доступа (Read/Write/Admin)." },
-        { title: "Logic Mapping", body: "Настройка коллбэков и метаданных для сквозной аналитики заказов." },
-        { title: "Mainnet Sync", body: "Запуск процессинга в режиме реального времени с мониторингом состояния сети." },
+        { title: "API Key Provisioning", body: "Мгновенная генерация ключей rk_live_. Гибкое управление правами (Scopes) для безопасной интеграции в ваш бэкенд." },
+        { title: "Webhook Configuration", body: "Настройка коллбэков с подписью HMAC-SHA256. Получайте уведомления в реальном времени с автоматическими ретраями." },
+        { title: "Blockchain Monitoring", body: "Запуск автоматического процессинга. Наши вотчеры отслеживают Mempool и подтверждают платежи 24/7 без вашего участия." },
       ],
-      code: `// Create Invoice via Reqst API
-const invoice = await reqst.invoices.create({
-  amount: "149.00",
-  currency: "USDT",
-  network: "TRC20",
-  orderId: "ref_9921",
-  metadata: { userId: "user_1" },
-  webhookUrl: "https://api.yoursite.com/hook"
-});`
+      code: `// Create Invoice via Reqst API v1
+const response = await fetch("https://api.reqst.xyz/v1/invoices", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "rk_live_...",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    title: "Order #9921",
+    base_amount_usd: "149.00",
+    payable_network: "TRON", // TON, SOL, BASE, etc.
+    expires_in_minutes: 60
+  })
+});
+
+const invoice = await response.json();
+console.log("Checkout URL:", invoice.checkout_url);`
     },
     enterprise: {
       badge: "Reqst Enterprise",
-      title: "Корпоративный стандарт децентрализованных финансов.",
-      body: "Инфраструктура для масштабируемых систем с повышенными требованиями к безопасности и производительности. Индивидуальные ноды и SLA 99.9%.",
-      priceLabel: "Enterprise",
-      period: "кастомное решение",
+      title: "Корпоративный стандарт. Инфраструктура без границ.",
+      body: "Высокая пропускная способность, расширенные лимиты API и приоритетная поддержка для масштабных систем с оборотом от 1M$.",
+      priceLabel: "Custom",
+      period: "индивидуальный расчет",
       stats: [
-        { value: "SLA", label: "99.9% Uptime" },
-        { value: "Dedicated", label: "RPC Clusters" },
-        { value: "Unlimited", label: "Throughput" },
-        { value: "24/7", label: "DevOps Support" },
+        { value: "0ms", label: "Латентность" },
+        { value: "Full", label: "Mempool Access" },
+        { value: "∞", label: "Webhook Endpoints" },
+        { value: "24/7", label: "Support" },
       ],
       features: [
         {
-          title: "Isolated Infrastructure",
-          body: "Ваш трафик обрабатывается на выделенных кластерах нод, что исключает влияние других участников сети на скорость ваших транзакций.",
+          title: "High-Performance Quota",
+          body: "Расширенные лимиты для крупных систем: до 600 запросов в минуту и 500,000 запросов к API ежемесячно.",
         },
         {
-          title: "Custom Smart Contracts",
-          body: "Возможность развертывания кастомной логики распределения средств (Split-payments) на уровне протокола.",
+          title: "Mission-Critical Webhooks",
+          body: "Повышенная надежность доставки уведомлений: до 8 автоматических попыток отправки (Retries) при сбоях вашего сервера.",
         },
         {
-          title: "Advanced RBAC",
-          body: "Ролевая модель доступа для больших команд: аудит-логи всех действий, ограничение по IP и двухфакторная защита API.",
+          title: "Enhanced Key Management",
+          body: "Возможность выпуска до 20 активных API-ключей для разных отделов, сервисов или инфраструктурных задач.",
         },
         {
-          title: "Compliance-ready Logs",
-          body: "Полная выгрузка данных для бухгалтерии и финансового мониторинга в форматах CSV/JSON/SQL.",
+          title: "Priority Engineering",
+          body: "Прямой канал связи с командой разработки Reqst. Приоритетное решение технических вопросов и консультации 24/7.",
         },
       ],
       flow: [
-        { title: "Architecture Design", body: "Проектирование инфраструктуры под ваши нагрузки и требования безопасности." },
-        { title: "Deployment", body: "Развертывание выделенных ресурсов и миграция данных без простоя системы." },
-        { title: "Continuous Support", body: "Персональный инженер в канале связи для оперативного решения любых задач." },
+        { title: "Infrastructure Audit", body: "Анализ текущих потоков платежей и проектирование топологии узлов под ваши пиковые нагрузки." },
+        { title: "Dedicated Provisioning", body: "Развертывание изолированных инстансов мониторинга и настройка высокоприоритетных очередей уведомлений." },
+        { title: "Hyper-scale Launch", body: "Запуск процессинга с лимитами 600+ RPM и прямой поддержкой от команды Core-разработчиков." },
       ],
-      code: `// Enterprise Bulk Settlement
-const settlement = await reqst.payments.distribute({
-  source: "main_vault",
-  recipients: [
-    { address: "0x...", share: "0.85" },
-    { address: "0x...", share: "0.15" }
-  ],
-  strategy: "immediate_split"
-});`
+      code: `// Enterprise Webhook Verification (HMAC-SHA256)
+const crypto = require('crypto');
+
+function verify(payload, signature, secret) {
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(payload);
+  return \`v1=\${hmac.digest('hex')}\` === signature;
+}
+
+// 100% authenticity for mission-critical payments`
     },
   },
   en: {
@@ -113,102 +125,114 @@ const settlement = await reqst.payments.distribute({
     auth: "Console",
     billing: "Contact",
     discuss: "Discuss Terms",
-    compareTitle: "Tech Stack",
+    compareTitle: "Protocol",
     flowTitle: "Integration",
     priceTitle: "Access",
+    priceSubtitle: "Unlimited volume. Flat monthly fee.",
     codeTitle: "Code Implementation",
+    codeSubtitle: "Ready for production in minutes.",
+    codeBody: "Seamlessly integrate our protocol into your existing workflow using our high-performance API.",
     processingNote: "We use a proprietary non-custodial architecture. All transactions go through your nodes or our high-performance clusters directly to the blockchain.",
-    compareSectionTitle: "Technical Superiority",
-    compareSectionBody: "Unlike custodial solutions, Reqst is a software layer (middleware) that gives you total control over the transaction lifecycle, eliminating the risks of third-party freezes.",
+    compareSectionTitle: "Direct Access Architecture",
+    compareSectionBody: "Reqst operates as a transparent software layer (middleware). Transactions flow directly from client to merchant, bypassing intermediary accounts. We automate monitoring via high-performance nodes, eliminating any third-party risks.",
     dev: {
       badge: "Reqst Developer",
-      title: "API infrastructure for high-load projects.",
-      body: "Full programmatic control over crypto payments. Seller API 2.0, WebSocket streams, and deep checkout logic customization for your stack.",
-      priceLabel: "Custom",
-      period: "based on your volume",
+      title: "Crypto Payments Infrastructure. Total Control.",
+      body: "Professional API v1 and Webhook notifications for high-load projects. Direct-to-wallet payouts and zero turnover fees in a pure non-custodial environment.",
+      priceLabel: "$199",
+      period: "per month",
       stats: [
-        { value: "0ms", label: "notification latency" },
+        { value: "0ms", label: "Latency" },
         { value: "100%", label: "Direct-to-Wallet" },
         { value: "Full", label: "Mempool Access" },
         { value: "∞", label: "Webhook Endpoints" },
       ],
       features: [
         {
-          title: "Atomic Webhooks",
-          body: "Guaranteed delivery (at-least-once) with automatic retries and Ed25519 payload signing.",
+          title: "Webhook Delivery",
+          body: "Guaranteed delivery (at-least-once) with automatic retries and HMAC-SHA256 signature verification.",
         },
         {
-          title: "Mempool Monitoring",
-          body: "Track transactions before they hit the block. Show 'Payment Detected' status instantly.",
+          title: "Mempool Tracking",
+          body: "Real-time transaction monitoring. Detect incoming payments instantly, even before block confirmation.",
         },
         {
-          title: "Typed SDK & OpenAPI",
-          body: "Full support for TypeScript, Go, and Python. Generated clients for the fastest possible dev start.",
+          title: "Unified API v1",
+          body: "A single interface for 7+ networks including TON, TRON, SOL, Base, Arbitrum, BSC, and Ethereum.",
         },
         {
-          title: "Idempotency Keys",
-          body: "Built-in protection against duplicate invoices and double-spending at the protocol level.",
+          title: "Idempotency Safety",
+          body: "Built-in protection against duplicate transactions and double-spending at the API protocol level.",
         },
       ],
       flow: [
-        { title: "API Provisioning", body: "Generate keys with granular permissions (Read/Write/Admin)." },
-        { title: "Logic Mapping", body: "Configure callbacks and metadata for end-to-end order analytics." },
-        { title: "Mainnet Sync", body: "Launch real-time processing with network state monitoring." },
+        { title: "API Key Provisioning", body: "Instant rk_live_ key generation. Granular scope management for secure backend integration." },
+        { title: "Webhook Configuration", body: "Secure HMAC-SHA256 signed callbacks. Receive real-time transaction updates with automated retry logic." },
+        { title: "Blockchain Monitoring", body: "Automated payment processing. Our watchers track the Mempool and confirm transactions 24/7 autonomously." },
       ],
-      code: `// Create Invoice via Reqst API
-const invoice = await reqst.invoices.create({
-  amount: "149.00",
-  currency: "USDT",
-  network: "TRC20",
-  orderId: "ref_9921",
-  metadata: { userId: "user_1" },
-  webhookUrl: "https://api.yoursite.com/hook"
-});`
+      code: `// Create Invoice via Reqst API v1
+const response = await fetch("https://api.reqst.xyz/v1/invoices", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "rk_live_...",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    title: "Order #9921",
+    base_amount_usd: "149.00",
+    payable_network: "TRON", // TON, SOL, BASE, etc.
+    expires_in_minutes: 60
+  })
+});
+
+const invoice = await response.json();
+console.log("Checkout URL:", invoice.checkout_url);`
     },
     enterprise: {
       badge: "Reqst Enterprise",
-      title: "Corporate standard for decentralized finance.",
-      body: "Infrastructure for scalable systems with high security and performance requirements. Dedicated nodes and 99.9% SLA.",
-      priceLabel: "Enterprise",
-      period: "custom solution",
+      title: "Corporate Standard. Infrastructure Without Limits.",
+      body: "High throughput, expanded API limits, and priority support for large-scale systems with $1M+ turnover.",
+      priceLabel: "Custom",
+      period: "individual pricing",
       stats: [
-        { value: "SLA", label: "99.9% Uptime" },
-        { value: "Dedicated", label: "RPC Clusters" },
-        { value: "Unlimited", label: "Throughput" },
-        { value: "24/7", label: "DevOps Support" },
+        { value: "0ms", label: "Latency" },
+        { value: "Full", label: "Mempool Access" },
+        { value: "∞", label: "Webhook Endpoints" },
+        { value: "24/7", label: "Support" },
       ],
       features: [
         {
-          title: "Isolated Infrastructure",
-          body: "Your traffic is processed on dedicated node clusters, ensuring no 'noisy neighbor' effects on transaction speed.",
+          title: "High-Performance Quota",
+          body: "Expanded limits for large-scale systems: up to 600 requests per minute and 500,000 monthly API requests.",
         },
         {
-          title: "Custom Smart Contracts",
-          body: "Deploy custom fund distribution logic (Split-payments) directly at the protocol level.",
+          title: "Mission-Critical Webhooks",
+          body: "Enhanced notification reliability with up to 8 automatic retries if your server experiences downtime.",
         },
         {
-          title: "Advanced RBAC",
-          body: "Role-based access for large teams: full audit logs, IP whitelisting, and 2FA API protection.",
+          title: "Enhanced Key Management",
+          body: "Issue up to 20 active API keys for different departments, services, or infrastructure requirements.",
         },
         {
-          title: "Compliance-ready Logs",
-          body: "Full data exports for accounting and financial monitoring in CSV/JSON/SQL formats.",
+          title: "Priority Engineering",
+          body: "Direct communication channel with the Reqst core team. Priority technical support and 24/7 integration consulting.",
         },
       ],
       flow: [
-        { title: "Architecture Design", body: "Design infrastructure tailored to your load and security requirements." },
-        { title: "Deployment", body: "Deploy dedicated resources and migrate data with zero downtime." },
-        { title: "Continuous Support", body: "Personal engineer in your communication channel for rapid task resolution." },
+        { title: "Infrastructure Audit", body: "Analyzing current payment flows and designing node topology for your specific peak loads." },
+        { title: "Dedicated Provisioning", body: "Deploying isolated monitoring instances and configuring high-priority notification queues." },
+        { title: "Hyper-scale Launch", body: "Launching processing with 600+ RPM limits and direct support from the Core team." },
       ],
-      code: `// Enterprise Bulk Settlement
-const settlement = await reqst.payments.distribute({
-  source: "main_vault",
-  recipients: [
-    { address: "0x...", share: "0.85" },
-    { address: "0x...", share: "0.15" }
-  ],
-  strategy: "immediate_split"
-});`
+      code: `// Enterprise Webhook Verification (HMAC-SHA256)
+const crypto = require('crypto');
+
+function verify(payload, signature, secret) {
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(payload);
+  return \`v1=\${hmac.digest('hex')}\` === signature;
+}
+
+// 100% authenticity for mission-critical payments`
     },
   },
 } as const;
@@ -236,7 +260,7 @@ function useReveal() {
 }
 
 export function PlanPage({ variant }: { variant: Variant }) {
-  const { language } = useUI();
+  const { language, setLanguage } = useUI();
   const text = COPY[language];
   const product = text[variant];
   const reveal = useReveal();
@@ -260,74 +284,96 @@ export function PlanPage({ variant }: { variant: Variant }) {
             </Link>
 
             <div className="lend-topbar-actions">
-              <Link className="lend-secondary" to="/">{text.back}</Link>
+              <div className="lend-language" role="group" aria-label="language switcher">
+                <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>RU</button>
+                <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
+              </div>
               <Link className="lend-primary" to="/auth">{text.auth}</Link>
             </div>
           </div>
         </header>
 
-        <section className="lend-hero" ref={reveal}>
+        <section className={`lend-hero ${variant === "dev" || variant === "enterprise" ? "lend-hero--centered" : ""}`} ref={reveal}>
           <div className="lend-hero-copy">
             <span className="lend-section-kicker lend-reveal--1">{product.badge}</span>
             <h1 className="lend-reveal--2">{product.title}</h1>
-            <p className="lend-reveal--2" style={{ color: '#f7f0e7', opacity: 0.8 }}>{product.body}</p>
+            <p className="lend-reveal--3">{product.body}</p>
 
-            <div className="lend-cta-row lend-reveal--3">
-              <a className="lend-primary" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
-                {text.discuss}
-              </a>
-              <Link className="lend-secondary" to="/auth">
-                {text.auth}
-              </Link>
-            </div>
-            
-            <div className="lend-architecture-card lend-reveal--4" style={{ marginTop: '2.5rem', minHeight: 'auto', borderLeft: '4px solid var(--accent)', background: 'rgba(255,255,255,0.02)' }}>
-              <span style={{ color: 'var(--accent)' }}>DEVELOPER-FIRST STACK</span>
-              <p style={{ fontSize: '0.9rem', color: '#afbac4', marginTop: '0.5rem' }}>{text.processingNote}</p>
+            <div className="lend-cta-row lend-reveal--4">
+              {variant === "dev" ? (
+                <>
+                  <Link className="lend-primary" to="/auth">
+                    {language === "ru" ? "Активировать" : "Activate"}
+                  </Link>
+                  <Link className="lend-secondary" to="/auth">
+                    {language === "ru" ? "Консоль" : "Console"}
+                  </Link>
+                </>
+              ) : variant === "enterprise" ? (
+                <>
+                  <a className="lend-primary" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
+                    {language === "ru" ? "Обсудить условия" : "Discuss Terms"}
+                  </a>
+                  <Link className="lend-secondary" to="/auth">
+                    {language === "ru" ? "Консоль" : "Console"}
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <a className="lend-primary" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
+                    {text.discuss}
+                  </a>
+                  <Link className="lend-secondary" to="/auth">
+                    {text.auth}
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
-          <aside className="lend-hero-side lend-reveal--3">
-            <div className="lend-overview-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-              {product.stats.map((stat, i) => (
-                <article key={i} className="lend-card" style={{ padding: '1.8rem 1.2rem', textAlign: 'center', background: 'rgba(255,255,255,0.01)' }}>
-                  <span style={{ fontSize: '0.65rem', opacity: 0.5, letterSpacing: '0.2em' }}>{stat.label}</span>
-                  <h3 style={{ fontSize: '2.2rem', margin: '0.6rem 0', color: '#f7f0e7', fontFamily: 'Space Grotesk' }}>{stat.value}</h3>
-                </article>
-              ))}
-            </div>
-          </aside>
+          {variant !== "dev" && variant !== "enterprise" && (
+            <aside className="lend-hero-side lend-reveal--3">
+              <div className="lend-stats-grid">
+                {product.stats.map((stat, i) => (
+                  <article key={i} className={`lend-card lend-stat-card lend-reveal--${4 + i}`}>
+                    <span className="lend-stat-label">{stat.label}</span>
+                    <h3 className="lend-stat-value">{stat.value}</h3>
+                  </article>
+                ))}
+              </div>
+            </aside>
+          )}
         </section>
 
-        <section className="lend-split-section" ref={reveal} style={{ marginTop: '4rem' }}>
-          <div className="lend-section-copy lend-reveal--1" style={{ background: 'transparent', border: 'none', paddingLeft: 0 }}>
+        <section className="lend-split-section lend-plan-features" ref={reveal}>
+          <div className="lend-section-copy lend-reveal--1">
             <span className="lend-section-kicker">{text.compareTitle}</span>
-            <h2 style={{ fontSize: '3rem', marginTop: '1rem' }}>{text.compareSectionTitle}</h2>
-            <p style={{ fontSize: '1.15rem', lineHeight: '1.8' }}>{text.compareSectionBody}</p>
+            <h2>{text.compareSectionTitle}</h2>
+            <p>{text.compareSectionBody}</p>
           </div>
 
-          <div className="lend-overview-grid lend-reveal--2" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
+          <div className="lend-overview-grid lend-reveal--2">
             {product.features.map((feat, i) => (
-              <article key={i} className="lend-card" style={{ padding: '2rem' }}>
-                <h3 style={{ fontSize: '1.3rem', marginBottom: '0.8rem', color: 'var(--accent)' }}>{feat.title}</h3>
-                <p style={{ fontSize: '0.98rem', opacity: 0.8, lineHeight: '1.6' }}>{feat.body}</p>
+              <article key={i} className={`lend-card lend-plan-feature-card lend-reveal--${2 + i}`}>
+                <h3>{feat.title}</h3>
+                <p>{feat.body}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="lend-stacked-section" ref={reveal} style={{ margin: '6rem 0' }}>
-           <div className="lend-card lend-reveal--1" style={{ padding: '3rem', background: '#0a0d12', borderColor: 'rgba(255,255,255,0.1)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'center' }}>
-                <div>
+        <section className="lend-stacked-section lend-code-section" ref={reveal}>
+           <div className="lend-card lend-code-card lend-reveal--1">
+              <div className="lend-code-grid">
+                <div className="lend-reveal--2">
                   <span className="lend-section-kicker">{text.codeTitle}</span>
-                  <h2 style={{ fontSize: '2.5rem', margin: '1.5rem 0' }}>Ready for production in minutes.</h2>
-                  <p style={{ color: '#afbac4', fontSize: '1.1rem' }}>
-                    Seamlessly integrate our protocol into your existing workflow using our high-performance API.
+                  <h2>{text.codeSubtitle}</h2>
+                  <p>
+                    {text.codeBody}
                   </p>
                 </div>
-                <div style={{ background: '#010409', borderRadius: '16px', padding: '1.5rem', border: '1px solid #30363d', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-                  <pre style={{ margin: 0, color: '#79c0ff', fontSize: '0.9rem', fontFamily: 'JetBrains Mono, monospace', lineHeight: '1.6' }}>
+                <div className="lend-reveal--3 lend-code-block">
+                  <pre>
                     <code>{product.code}</code>
                   </pre>
                 </div>
@@ -335,34 +381,61 @@ export function PlanPage({ variant }: { variant: Variant }) {
            </div>
         </section>
 
-        <section className="lend-stacked-section" ref={reveal}>
-          <div className="lend-section-copy lend-reveal--1" style={{ textAlign: 'center', background: 'transparent', border: 'none' }}>
+        <section className="lend-stacked-section lend-flow-section" ref={reveal}>
+          <div className="lend-section-copy lend-reveal--1">
             <span className="lend-section-kicker">{text.flowTitle}</span>
-            <h2 style={{ fontSize: '3.2rem' }}>Seamless Integration Flow</h2>
+            <h2>Seamless Integration Flow</h2>
           </div>
 
-          <div className="lend-timeline lend-reveal--2" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
+          <div className="lend-flow-container">
             {product.flow.map((step, i) => (
-              <article key={i} className="lend-step" style={{ padding: '2.5rem 2rem', borderBottom: 'none', borderRight: i < 2 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                <strong style={{ fontSize: '1.8rem', opacity: 0.1, color: 'var(--accent)' }}>{String(i + 1).padStart(2, '0')}</strong>
-                <h3 style={{ fontSize: '1.4rem', marginTop: '0.8rem' }}>{step.title}</h3>
-                <p style={{ marginTop: '0.8rem', fontSize: '1rem', color: '#afbac4' }}>{step.body}</p>
+              <article key={i} className={`lend-card lend-flow-card lend-reveal--${2 + i}`}>
+                <div className="lend-flow-step-number">
+                  {i + 1}
+                </div>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+                
+                {i < 2 && (
+                  <div className="lend-flow-arrow">
+                    →
+                  </div>
+                )}
               </article>
             ))}
           </div>
         </section>
 
-        <section className="lend-final" ref={reveal} style={{ padding: '6rem 2rem', background: 'radial-gradient(circle at center, rgba(255, 148, 77, 0.08), transparent 70%)', marginTop: '4rem' }}>
+        <section className="lend-final lend-plan-final" ref={reveal}>
           <div className="lend-reveal--1">
             <span className="lend-section-kicker">{text.priceTitle}</span>
-            <h2 style={{ fontSize: '5.5rem', margin: '1.5rem 0', letterSpacing: '-0.04em', fontFamily: 'Space Grotesk' }}>{product.priceLabel}</h2>
-            <p style={{ fontSize: '1.5rem', opacity: 0.6, marginBottom: '3.5rem' }}>{product.period}</p>
+          </div>
+          
+          <div className="lend-reveal--2">
+            <h2 className="lend-price-value">
+              {product.priceLabel}
+            </h2>
+          </div>
+          
+          <div className="lend-reveal--3">
+            <p className="lend-price-period">
+              {product.period}
+            </p>
+            <p className="lend-price-subtitle">
+              {text.priceSubtitle}
+            </p>
+          </div>
 
-            <div className="lend-cta-row" style={{ justifyContent: 'center' }}>
-              <a className="lend-primary" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer" style={{ padding: '1.5rem 4rem', fontSize: '1.25rem', borderRadius: '18px' }}>
+          <div className="lend-cta-row lend-reveal--4">
+            {variant === "dev" ? (
+              <Link className="lend-primary lend-price-btn" to="/auth">
+                {language === "ru" ? "Активировать Reqst Dev" : "Activate Reqst Dev"}
+              </Link>
+            ) : (
+              <a className="lend-primary lend-price-btn" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
                 {text.discuss}
               </a>
-            </div>
+            )}
           </div>
         </section>
 

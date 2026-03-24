@@ -81,6 +81,8 @@ func (w *Watcher) tick(ctx context.Context) error {
 			transfers, err = w.pollTRC20(ctx, wallet)
 		case store.NetworkTON:
 			transfers, err = w.pollTON(ctx, wallet)
+		case store.NetworkTON_USDT:
+			transfers, err = w.pollTON_USDT(ctx, wallet)
 		case store.NetworkSOLANA:
 			transfers, err = w.pollSolanaStablecoin(ctx, wallet)
 		case store.NetworkEVM:
@@ -255,6 +257,82 @@ func (w *Watcher) pollTON(ctx context.Context, wallet store.WatchedWallet) ([]st
 		transfers = append(transfers, transfer)
 	}
 	metrics.ObserveUpstream("toncenter", "poll_ton", "success", time.Since(startedAt))
+	return transfers, nil
+}
+
+func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) ([]store.ObservedTransfer, error) {
+	// USDT on TON Mainnet
+	const usdtMaster = "EQCxE6mNZcc9K4DnS-4s5E6mNZcc9K4DnS-4s5E6mNZcc9k4"
+	base := strings.TrimRight(w.cfg.TonCenterBaseURL, "/")
+	endpoint := fmt.Sprintf("%s/getJettonTransfers?address=%s&limit=30", base, url.QueryEscape(wallet.Address))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	if w.cfg.TonCenterAPIKey != "" {
+		req.Header.Set("X-API-Key", w.cfg.TonCenterAPIKey)
+	}
+
+	startedAt := time.Now()
+	resp, err := w.httpClient.Do(req)
+	if err != nil {
+		metrics.ObserveUpstream("toncenter", "poll_ton_usdt", "failure", time.Since(startedAt))
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		metrics.ObserveUpstream("toncenter", "poll_ton_usdt", "failure", time.Since(startedAt))
+		return nil, fmt.Errorf("toncenter error: %s", strings.TrimSpace(string(body)))
+	}
+
+	var payload struct {
+		OK     bool `json:"ok"`
+		Result []struct {
+			UTime        int64  `json:"utime"`
+			TransactionHash string `json:"transaction_hash"`
+			Source       string `json:"source"`
+			Destination  string `json:"destination"`
+			Amount       string `json:"amount"`
+			JettonMaster string `json:"jetton_master"`
+			QueryID      int64  `json:"query_id"`
+		} `json:"result"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		metrics.ObserveUpstream("toncenter", "poll_ton_usdt", "failure", time.Since(startedAt))
+		return nil, fmt.Errorf("decode toncenter jetton: %w", err)
+	}
+
+	var transfers []store.ObservedTransfer
+	for _, item := range payload.Result {
+		// Filter by USDT master and destination address
+		if !strings.EqualFold(item.JettonMaster, usdtMaster) || !strings.EqualFold(item.Destination, wallet.Address) {
+			continue
+		}
+
+		rawAmount, err := decimal.NewFromString(item.Amount)
+		if err != nil {
+			continue
+		}
+		// USDT TON has 6 decimals
+		amount := rawAmount.Div(decimal.NewFromInt(1_000_000)).Round(6)
+		raw, _ := json.Marshal(item)
+
+		transfer := store.ObservedTransfer{
+			TxHash:             item.TransactionHash,
+			Network:            wallet.PayableNetwork,
+			DestinationAddress: wallet.Address,
+			Amount:             amount,
+			ObservedAt:         time.Unix(item.UTime, 0).UTC(),
+			RawPayload:         raw,
+		}
+		if err := service.NormalizeObservedTransfer(&transfer); err != nil {
+			continue
+		}
+		transfers = append(transfers, transfer)
+	}
+	metrics.ObserveUpstream("toncenter", "poll_ton_usdt", "success", time.Since(startedAt))
 	return transfers, nil
 }
 

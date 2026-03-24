@@ -169,6 +169,9 @@ func (s *AuthService) AuthenticateTelegramCode(ctx context.Context, input Telegr
 
 func (s *AuthService) ParseToken(tokenString string) (Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, fmt.Errorf("unexpected signing method: %s", token.Method.Alg())
+		}
 		return s.jwtSecret, nil
 	})
 	if err != nil {
@@ -294,6 +297,10 @@ func (s *AuthService) validateInitData(initData string) (int64, string, error) {
 }
 
 func (s *AuthService) validateWidgetData(queryString string) (int64, string, error) {
+	if s.telegramBotToken == "" {
+		return 0, "", errors.New("TELEGRAM_BOT_TOKEN is required for Telegram auth")
+	}
+
 	values, err := url.ParseQuery(queryString)
 	if err != nil {
 		return 0, "", fmt.Errorf("parse widget_data: %w", err)
@@ -302,6 +309,18 @@ func (s *AuthService) validateWidgetData(queryString string) (int64, string, err
 	hash := values.Get("hash")
 	if hash == "" {
 		return 0, "", errors.New("widget hash is missing")
+	}
+
+	authDateValue := values.Get("auth_date")
+	if authDateValue == "" {
+		return 0, "", errors.New("widget auth_date is missing")
+	}
+	authUnix, err := strconv.ParseInt(authDateValue, 10, 64)
+	if err != nil {
+		return 0, "", errors.New("widget auth_date is invalid")
+	}
+	if time.Since(time.Unix(authUnix, 0)) > s.telegramInitMaxAge {
+		return 0, "", errors.New("widget auth data is too old")
 	}
 
 	keys := make([]string, 0, len(values))
