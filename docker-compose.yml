@@ -29,8 +29,10 @@ services:
     environment:
       APP_RUNTIME: api
       DATABASE_URL: ${DATABASE_URL:-postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable}
+      METRICS_PORT: ${API_METRICS_PORT:-9090}
     ports:
       - "${HTTP_PORT:-8080}:8080"
+      - "${API_METRICS_PORT:-9090}:9090"
 
   blockchain_watcher:
     build:
@@ -45,6 +47,9 @@ services:
     environment:
       APP_RUNTIME: watcher
       DATABASE_URL: ${DATABASE_URL:-postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable}
+      METRICS_PORT: ${WATCHER_METRICS_PORT:-9091}
+    ports:
+      - "${WATCHER_METRICS_PORT:-9091}:9091"
 
   telegram_bot_worker:
     build:
@@ -59,6 +64,9 @@ services:
     environment:
       APP_RUNTIME: bot
       DATABASE_URL: ${DATABASE_URL:-postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable}
+      METRICS_PORT: ${BOT_METRICS_PORT:-9092}
+    ports:
+      - "${BOT_METRICS_PORT:-9092}:9092"
 
   frontend:
     build:

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"reqst/backend/internal/config"
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/service"
 	"reqst/backend/internal/store"
 
@@ -20,6 +21,7 @@ type Server struct {
 	cfg            config.Config
 	store          *store.Store
 	authService    *service.AuthService
+	adminService   *service.AdminService
 	invoiceService *service.InvoiceService
 	paymentService *service.PaymentService
 }
@@ -29,17 +31,18 @@ type sellerContext struct {
 	Seller store.Seller
 }
 
-func NewServer(cfg config.Config, st *store.Store, authService *service.AuthService, invoiceService *service.InvoiceService, paymentService *service.PaymentService) *gin.Engine {
+func NewServer(cfg config.Config, st *store.Store, authService *service.AuthService, adminService *service.AdminService, invoiceService *service.InvoiceService, paymentService *service.PaymentService) *gin.Engine {
 	server := &Server{
 		cfg:            cfg,
 		store:          st,
 		authService:    authService,
+		adminService:   adminService,
 		invoiceService: invoiceService,
 		paymentService: paymentService,
 	}
 
 	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery(), corsMiddleware())
+	router.Use(gin.Logger(), gin.Recovery(), corsMiddleware(), requestMetricsMiddleware())
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true, "service": "reqst-api"})
@@ -48,6 +51,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	router.POST("/api/auth/telegram", server.handleTelegramAuth)
 	router.POST("/api/auth/telegram/request-code", server.handleTelegramCodeRequest)
 	router.POST("/api/auth/telegram/login", server.handleTelegramCodeLogin)
+	router.POST("/api/admin/login", server.handleAdminLogin)
 	router.GET("/api/public/invoices/:public_id", server.handlePublicInvoice)
 
 	internal := router.Group("/internal")
@@ -91,53 +95,70 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	devAPI.GET("/invoices/:id", server.handleAPIGetInvoice)
 	devAPI.POST("/invoices/:id/cancel", server.handleAPICancelInvoice)
 
+	adminAPI := router.Group("/api/admin")
+	adminAPI.Use(server.adminMiddleware())
+	adminAPI.GET("/overview", server.handleAdminOverview)
+	adminAPI.GET("/invoices", server.handleAdminInvoices)
+
 	return router
 }
 
 func (s *Server) handleTelegramAuth(c *gin.Context) {
+	ctx := metrics.WithSource(c.Request.Context(), "public_auth")
 	var body service.TelegramAuthInput
 	if err := c.ShouldBindJSON(&body); err != nil {
+		metrics.IncAuthAttempt("telegram", "failure", "invalid_payload")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	result, err := s.authService.AuthenticateTelegram(c.Request.Context(), body)
+	result, err := s.authService.AuthenticateTelegram(ctx, body)
 	if err != nil {
+		metrics.IncAuthAttempt("telegram", "failure", "authenticate")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
+	metrics.IncAuthAttempt("telegram", "success", "authenticated")
 	c.JSON(http.StatusOK, result)
 }
 
 func (s *Server) handleTelegramCodeRequest(c *gin.Context) {
+	ctx := metrics.WithSource(c.Request.Context(), "public_auth")
 	var body service.TelegramCodeRequestInput
 	if err := c.ShouldBindJSON(&body); err != nil {
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "invalid_payload")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := s.authService.RequestTelegramLoginCode(c.Request.Context(), body); err != nil {
+	if err := s.authService.RequestTelegramLoginCode(ctx, body); err != nil {
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "request_code")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	metrics.IncAuthAttempt("telegram_code_request", "success", "sent")
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 func (s *Server) handleTelegramCodeLogin(c *gin.Context) {
+	ctx := metrics.WithSource(c.Request.Context(), "public_auth")
 	var body service.TelegramCodeLoginInput
 	if err := c.ShouldBindJSON(&body); err != nil {
+		metrics.IncAuthAttempt("telegram_code_login", "failure", "invalid_payload")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	result, err := s.authService.AuthenticateTelegramCode(c.Request.Context(), body)
+	result, err := s.authService.AuthenticateTelegramCode(ctx, body)
 	if err != nil {
+		metrics.IncAuthAttempt("telegram_code_login", "failure", "authenticate")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
+	metrics.IncAuthAttempt("telegram_code_login", "success", "authenticated")
 	c.JSON(http.StatusOK, result)
 }
 
@@ -399,8 +420,9 @@ func (s *Server) handleMarkInvoicePaid(c *gin.Context) {
 }
 
 func (s *Server) handlePublicInvoice(c *gin.Context) {
-	_, _ = s.store.ExpireOverdueInvoices(c.Request.Context())
-	invoice, err := s.store.GetInvoiceByPublicID(c.Request.Context(), c.Param("public_id"))
+	ctx := metrics.WithSource(c.Request.Context(), "public_checkout")
+	_, _ = s.store.ExpireOverdueInvoices(ctx)
+	invoice, err := s.store.GetInvoiceByPublicID(ctx, c.Param("public_id"))
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
@@ -413,6 +435,7 @@ func (s *Server) handlePublicInvoice(c *gin.Context) {
 }
 
 func (s *Server) handleObservedTransfers(c *gin.Context) {
+	ctx := metrics.WithSource(c.Request.Context(), "watcher_ingest")
 	var body struct {
 		Events []struct {
 			TxHash             string          `json:"tx_hash"`
@@ -428,6 +451,7 @@ func (s *Server) handleObservedTransfers(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	metrics.ObserveBatch("observed_transfers", "watcher_ingest", len(body.Events))
 
 	results := make([]service.PaymentResult, 0, len(body.Events))
 	for _, event := range body.Events {
@@ -449,7 +473,7 @@ func (s *Server) handleObservedTransfers(c *gin.Context) {
 			return
 		}
 
-		result, err := s.paymentService.ProcessObservedTransfer(c.Request.Context(), transfer)
+		result, err := s.paymentService.ProcessObservedTransfer(ctx, transfer)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -474,6 +498,7 @@ func (s *Server) handleGrantPRO(c *gin.Context) {
 
 	seller, err := s.store.GrantPRO(c.Request.Context(), sellerID, body.Days)
 	if err != nil {
+		metrics.IncAdminOperation("grant_pro", "failure")
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
@@ -481,6 +506,7 @@ func (s *Server) handleGrantPRO(c *gin.Context) {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
+	metrics.IncAdminOperation("grant_pro", "success")
 	c.JSON(http.StatusOK, gin.H{"seller": seller})
 }
 
@@ -501,6 +527,7 @@ func (s *Server) handleBlockSeller(c *gin.Context) {
 
 	seller, err := s.store.SetSellerBlocked(c.Request.Context(), sellerID, body.Blocked)
 	if err != nil {
+		metrics.IncAdminOperation("set_blocked", "failure")
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
@@ -508,6 +535,7 @@ func (s *Server) handleBlockSeller(c *gin.Context) {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
+	metrics.IncAdminOperation("set_blocked", "success")
 	c.JSON(http.StatusOK, gin.H{"seller": seller})
 }
 
@@ -515,6 +543,7 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header := strings.TrimSpace(c.GetHeader("Authorization"))
 		if !strings.HasPrefix(strings.ToLower(header), "bearer ") {
+			metrics.IncAuthAttempt("bearer_token", "failure", "missing")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing bearer token"})
 			return
 		}
@@ -522,20 +551,25 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 		token := strings.TrimSpace(header[len("Bearer "):])
 		claims, err := s.authService.ParseToken(token)
 		if err != nil {
+			metrics.IncAuthAttempt("bearer_token", "failure", "invalid")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
 		seller, err := s.store.GetSellerByID(c.Request.Context(), claims.SellerID)
 		if err != nil {
+			metrics.IncAuthAttempt("bearer_token", "failure", "seller_not_found")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "seller not found"})
 			return
 		}
 		if seller.IsBlocked {
+			metrics.IncAuthAttempt("bearer_token", "failure", "seller_blocked")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "seller account is blocked"})
 			return
 		}
 
+		c.Request = c.Request.WithContext(metrics.WithSource(c.Request.Context(), "seller_api"))
+		metrics.IncAuthAttempt("bearer_token", "success", "authenticated")
 		c.Set("seller_ctx", sellerContext{Claims: claims, Seller: seller})
 		c.Next()
 	}
@@ -544,6 +578,7 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 func (s *Server) internalTokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if s.cfg.InternalToken == "" {
+			metrics.IncAuthAttempt("internal_token", "failure", "not_configured")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "internal token is not configured"})
 			return
 		}
@@ -555,10 +590,21 @@ func (s *Server) internalTokenMiddleware() gin.HandlerFunc {
 			}
 		}
 		if token != s.cfg.InternalToken {
+			metrics.IncAuthAttempt("internal_token", "failure", "invalid")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "invalid internal token"})
 			return
 		}
+		c.Request = c.Request.WithContext(metrics.WithSource(c.Request.Context(), "internal_api"))
+		metrics.IncAuthAttempt("internal_token", "success", "authenticated")
 		c.Next()
+	}
+}
+
+func requestMetricsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		startedAt := time.Now()
+		c.Next()
+		metrics.ObserveHTTPRequest(c.Request.Method, c.FullPath(), c.Writer.Status(), time.Since(startedAt))
 	}
 }
 

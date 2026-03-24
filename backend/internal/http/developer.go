@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/service"
 	"reqst/backend/internal/store"
 
@@ -30,6 +31,7 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractAPIKey(c)
 		if token == "" {
+			metrics.IncAuthAttempt("api_key", "failure", "missing")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing API key"})
 			return
 		}
@@ -37,22 +39,26 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 		hash := hashSecret(token)
 		record, err := s.store.GetAPIKeyByTokenHash(c.Request.Context(), hash)
 		if err != nil {
+			metrics.IncAuthAttempt("api_key", "failure", "invalid")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid API key"})
 			return
 		}
 
 		seller, err := s.store.GetSellerByID(c.Request.Context(), record.SellerID)
 		if err != nil {
+			metrics.IncAuthAttempt("api_key", "failure", "seller_not_found")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "seller not found"})
 			return
 		}
 		if seller.IsBlocked {
+			metrics.IncAuthAttempt("api_key", "failure", "seller_blocked")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "seller account is blocked"})
 			return
 		}
 
 		plan := seller.EffectivePlan(time.Now())
 		if !plan.HasAPI {
+			metrics.IncLimitDecision("api_access", "denied", "plan")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "current plan does not include Reqst Dev or Reqst Enterprise API access"})
 			return
 		}
@@ -61,11 +67,13 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 		monthStart := monthWindowStart(time.Now().UTC())
 		requestsThisMinute, err := s.store.CountAPIRequestsSince(c.Request.Context(), seller.ID, &record.ID, minuteAgo)
 		if err != nil {
+			metrics.IncAuthAttempt("api_key", "failure", "count_minute_usage")
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		requestsThisMonth, err := s.store.CountAPIRequestsSince(c.Request.Context(), seller.ID, nil, monthStart)
 		if err != nil {
+			metrics.IncAuthAttempt("api_key", "failure", "count_month_usage")
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -78,14 +86,18 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 		}
 
 		if plan.RequestsPerMinute > 0 && requestsThisMinute >= plan.RequestsPerMinute {
+			metrics.IncLimitDecision("api_rate_limit", "denied", "minute")
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "minute rate limit exceeded"})
 			return
 		}
 		if plan.MonthlyRequestCap > 0 && requestsThisMonth >= plan.MonthlyRequestCap {
+			metrics.IncLimitDecision("api_quota", "denied", "month")
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "monthly API quota exceeded"})
 			return
 		}
 
+		c.Request = c.Request.WithContext(metrics.WithSource(c.Request.Context(), "developer_api"))
+		metrics.IncAuthAttempt("api_key", "success", "authenticated")
 		c.Set("seller_ctx", sellerContext{Seller: seller})
 		c.Set("api_key_ctx", apiKeyContext{Key: record})
 		c.Next()
@@ -296,6 +308,7 @@ func (s *Server) handleAPIMe(c *gin.Context) {
 
 func (s *Server) handleAPIListInvoices(c *gin.Context) {
 	if !apiKeyHasScope(c, "invoices:read") {
+		metrics.IncLimitDecision("api_scope", "denied", "invoices_read")
 		c.JSON(http.StatusForbidden, gin.H{"error": "API key scope invoices:read is required"})
 		return
 	}
@@ -318,6 +331,7 @@ func (s *Server) handleAPIListInvoices(c *gin.Context) {
 
 func (s *Server) handleAPICreateInvoice(c *gin.Context) {
 	if !apiKeyHasScope(c, "invoices:write") {
+		metrics.IncLimitDecision("api_scope", "denied", "invoices_write")
 		c.JSON(http.StatusForbidden, gin.H{"error": "API key scope invoices:write is required"})
 		return
 	}
@@ -352,6 +366,7 @@ func (s *Server) handleAPICreateInvoice(c *gin.Context) {
 
 func (s *Server) handleAPIGetInvoice(c *gin.Context) {
 	if !apiKeyHasScope(c, "invoices:read") {
+		metrics.IncLimitDecision("api_scope", "denied", "invoices_read")
 		c.JSON(http.StatusForbidden, gin.H{"error": "API key scope invoices:read is required"})
 		return
 	}
@@ -375,6 +390,7 @@ func (s *Server) handleAPIGetInvoice(c *gin.Context) {
 
 func (s *Server) handleAPICancelInvoice(c *gin.Context) {
 	if !apiKeyHasScope(c, "invoices:write") {
+		metrics.IncLimitDecision("api_scope", "denied", "invoices_write")
 		c.JSON(http.StatusForbidden, gin.H{"error": "API key scope invoices:write is required"})
 		return
 	}

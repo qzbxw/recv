@@ -1,6 +1,8 @@
 import type {
   APIKey,
   APIKeyListResponse,
+  AdminInvoiceListResponse,
+  AdminOverviewResponse,
   DeveloperUsageResponse,
   Invoice,
   InvoiceListResponse,
@@ -13,6 +15,7 @@ import type {
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const TOKEN_KEY = "reqst_token";
+const ADMIN_TOKEN_KEY = "reqst_admin_token";
 
 export function getApiBase() {
   return API_BASE;
@@ -28,6 +31,18 @@ export function setStoredToken(token: string) {
 
 export function clearStoredToken() {
   window.localStorage.removeItem(TOKEN_KEY);
+}
+
+export function getStoredAdminToken() {
+  return window.localStorage.getItem(ADMIN_TOKEN_KEY);
+}
+
+export function setStoredAdminToken(token: string) {
+  window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
+}
+
+export function clearStoredAdminToken() {
+  window.localStorage.removeItem(ADMIN_TOKEN_KEY);
 }
 
 async function request<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
@@ -176,4 +191,42 @@ export async function markInvoicePaid(token: string, invoiceId: number) {
 
 export async function fetchPublicInvoice(publicId: string) {
   return request<Invoice>(`/api/public/invoices/${publicId}`);
+}
+
+export async function loginAdmin(payload: { username: string; password: string }) {
+  return request<{ token: string; username: string }>("/api/admin/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchAdminOverview(token: string) {
+  return request<AdminOverviewResponse>("/api/admin/overview", {}, token);
+}
+
+export async function fetchAdminInvoices(token: string, params: {
+  page?: number;
+  page_size?: number;
+  status?: string;
+  kind?: string;
+  query?: string;
+}) {
+  const search = new URLSearchParams();
+  if (params.page) {
+    search.set("page", String(params.page));
+  }
+  if (params.page_size) {
+    search.set("page_size", String(params.page_size));
+  }
+  if (params.status && params.status !== "all") {
+    search.set("status", params.status);
+  }
+  if (params.kind && params.kind !== "all") {
+    search.set("kind", params.kind);
+  }
+  if (params.query?.trim()) {
+    search.set("query", params.query.trim());
+  }
+  const suffix = search.size > 0 ? `?${search.toString()}` : "";
+  return request<AdminInvoiceListResponse>(`/api/admin/invoices${suffix}`, {}, token);
 }

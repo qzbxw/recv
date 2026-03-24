@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/store"
 
 	"github.com/shopspring/decimal"
@@ -53,13 +54,23 @@ func NewInvoiceService(st *store.Store, tonRateEnv string) *InvoiceService {
 }
 
 func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller, input CreateInvoiceInput) (store.Invoice, error) {
+	source := metrics.SourceFromContext(ctx)
+	planCode := seller.EffectivePlanCode(time.Now())
+	network := input.PayableNetwork
+	if network == "" {
+		network = seller.DefaultNetwork
+	}
+
 	if seller.IsBlocked {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(network), string(planCode), "failure", "seller_blocked")
 		return store.Invoice{}, errors.New("seller account is blocked")
 	}
 	if input.Title == "" {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(network), string(planCode), "failure", "missing_title")
 		return store.Invoice{}, errors.New("title is required")
 	}
 	if !input.BaseAmountUSD.IsPositive() {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(network), string(planCode), "failure", "invalid_amount")
 		return store.Invoice{}, errors.New("base_amount_usd must be positive")
 	}
 	if input.ExpiresInMinutes <= 0 {
@@ -69,10 +80,13 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 		input.PayableNetwork = seller.DefaultNetwork
 	}
 	if !input.PayableNetwork.IsSupportedPayableNetwork() {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "unsupported_network")
 		return store.Invoice{}, fmt.Errorf("unsupported network %s", input.PayableNetwork)
 	}
 
 	if seller.EffectivePlanCode(time.Now()) == store.PlanCodeTrial && seller.FreeInvoicesUsed >= TrialInvoiceLimit {
+		metrics.IncLimitDecision("trial_invoice_cap", "denied", "reached")
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "trial_limit_reached")
 		return store.Invoice{}, fmt.Errorf("trial limit reached: %d invoices. Unlock a paid Reqst plan to keep generating links.", TrialInvoiceLimit)
 	}
 
@@ -83,22 +97,25 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 	if input.WalletID > 0 {
 		wallet, err = s.store.GetWalletByID(ctx, seller.ID, input.WalletID)
 		if err != nil {
+			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "wallet_lookup")
 			return store.Invoice{}, fmt.Errorf("selected wallet %d: %w", input.WalletID, err)
 		}
 		if input.PayableNetwork == "" {
 			input.PayableNetwork = wallet.Network
 		}
 		if wallet.Network != input.PayableNetwork.WalletBucket() {
+			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "wallet_network_mismatch")
 			return store.Invoice{}, fmt.Errorf("wallet %d does not support network %s", wallet.ID, input.PayableNetwork)
 		}
 	} else {
 		wallet, err = s.store.GetActiveWalletForNetwork(ctx, seller.ID, input.PayableNetwork.WalletBucket())
 		if err != nil {
+			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "active_wallet_lookup")
 			return store.Invoice{}, fmt.Errorf("active wallet for network %s: %w", input.PayableNetwork, err)
 		}
 	}
 
-	return s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
+	invoice, err := s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
 		SellerID:           seller.ID,
 		Kind:               store.InvoiceKindMerchant,
 		SubscriptionDays:   0,
@@ -109,6 +126,12 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 		PayableNetwork:     input.PayableNetwork,
 		DestinationAddress: wallet.Address,
 	}, input.ExpiresInMinutes)
+	if err != nil {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "create_invoice")
+		return store.Invoice{}, err
+	}
+	metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(invoice.PayableNetwork), string(planCode), "success", "created")
+	return invoice, nil
 }
 
 func (s *InvoiceService) CreateSubscriptionInvoice(ctx context.Context, seller store.Seller, network store.Network) (store.Invoice, error) {
@@ -116,22 +139,28 @@ func (s *InvoiceService) CreateSubscriptionInvoice(ctx context.Context, seller s
 }
 
 func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, seller store.Seller, planCode store.PlanCode, network store.Network) (store.Invoice, error) {
+	source := metrics.SourceFromContext(ctx)
+	planCode = store.NormalizePlanCode(string(planCode))
 	if seller.IsBlocked {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(planCode), "failure", "seller_blocked")
 		return store.Invoice{}, errors.New("seller account is blocked")
 	}
 	plan := store.ResolvePlan(planCode)
 	if plan.Code == store.PlanCodeTrial {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "trial_plan")
 		return store.Invoice{}, errors.New("trial does not require billing")
 	}
 	if !network.IsSupportedPayableNetwork() {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "unsupported_network")
 		return store.Invoice{}, fmt.Errorf("unsupported network %s", network)
 	}
 	address, ok := reqstBillingWallets[network.WalletBucket()]
 	if !ok || strings.TrimSpace(address) == "" {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "billing_wallet_missing")
 		return store.Invoice{}, fmt.Errorf("billing wallet is not configured for network %s", network)
 	}
 
-	return s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
+	invoice, err := s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
 		SellerID:           seller.ID,
 		Kind:               store.InvoiceKindSubscription,
 		SubscriptionDays:   plan.BillingDays,
@@ -142,6 +171,12 @@ func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, seller store.Sel
 		PayableNetwork:     network,
 		DestinationAddress: address,
 	}, 60)
+	if err != nil {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "create_invoice")
+		return store.Invoice{}, err
+	}
+	metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(invoice.PayableNetwork), string(plan.Code), "success", "created")
+	return invoice, nil
 }
 
 func (s *InvoiceService) createInvoiceWithDestination(ctx context.Context, params store.CreateInvoiceParams, expiresInMinutes int) (store.Invoice, error) {
@@ -245,8 +280,10 @@ func (s *InvoiceService) tonRateUSD(ctx context.Context) (decimal.Decimal, error
 	if strings.TrimSpace(s.tonRateEnv) != "" {
 		value, err := decimal.NewFromString(strings.TrimSpace(s.tonRateEnv))
 		if err != nil {
+			metrics.ObserveUpstream("ton_rate_override", "parse", "failure", 0)
 			return decimal.Zero, fmt.Errorf("TON_USD_RATE: %w", err)
 		}
+		metrics.ObserveUpstream("ton_rate_override", "parse", "success", 0)
 		return value, nil
 	}
 
@@ -254,14 +291,17 @@ func (s *InvoiceService) tonRateUSD(ctx context.Context) (decimal.Decimal, error
 	if err != nil {
 		return decimal.Zero, fmt.Errorf("build ton rate request: %w", err)
 	}
+	startedAt := time.Now()
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
+		metrics.ObserveUpstream("coingecko", "ton_rate", "failure", time.Since(startedAt))
 		return decimal.Zero, fmt.Errorf("fetch ton rate: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		metrics.ObserveUpstream("coingecko", "ton_rate", "failure", time.Since(startedAt))
 		return decimal.Zero, fmt.Errorf("fetch ton rate failed: %s", strings.TrimSpace(string(body)))
 	}
 
@@ -271,11 +311,14 @@ func (s *InvoiceService) tonRateUSD(ctx context.Context) (decimal.Decimal, error
 		} `json:"the-open-network"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		metrics.ObserveUpstream("coingecko", "ton_rate", "failure", time.Since(startedAt))
 		return decimal.Zero, fmt.Errorf("decode ton rate: %w", err)
 	}
 	value, err := decimal.NewFromString(payload.TheOpenNetwork.USD.String())
 	if err != nil {
+		metrics.ObserveUpstream("coingecko", "ton_rate", "failure", time.Since(startedAt))
 		return decimal.Zero, fmt.Errorf("parse ton rate: %w", err)
 	}
+	metrics.ObserveUpstream("coingecko", "ton_rate", "success", time.Since(startedAt))
 	return value, nil
 }

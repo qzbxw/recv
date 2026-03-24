@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/service"
 	"reqst/backend/internal/store"
 
@@ -126,6 +127,7 @@ func NewBotWorker(st *store.Store, invoiceService *service.InvoiceService, token
 }
 
 func (b *BotWorker) Run(ctx context.Context) error {
+	ctx = metrics.WithSource(ctx, "telegram_bot")
 	if strings.TrimSpace(b.token) == "" {
 		b.logger.Info("telegram bot token is empty, running delivery worker without Telegram polling")
 		ticker := time.NewTicker(10 * time.Second)
@@ -238,7 +240,12 @@ func (b *BotWorker) handleCommand(ctx context.Context, seller store.Seller, mess
 		b.resetSession(message.Chat.ID)
 		return b.renderHome(ctx, seller, message.Chat.ID, 0)
 	case "/login":
-		_, err := b.sendMessage(ctx, message.Chat.ID, "Browser login works by Telegram code.\n\n1. Open reqst auth page.\n2. Enter your @username.\n3. Request the code.\n4. Paste the code from this chat.", b.reqstKeyboard(nil))
+		msg := "🔑 Browser authentication works via Telegram verification code.\n\n" +
+			"1. Open the reqst auth page in your browser.\n" +
+			"2. Enter your @username.\n" +
+			"3. Request the verification code.\n" +
+			"4. Paste the code from this chat to sign in."
+		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.reqstKeyboard(nil))
 		return err
 	case "/invoice":
 		return b.renderInvoiceWalletPicker(ctx, seller, message.Chat.ID, 0)
@@ -247,7 +254,8 @@ func (b *BotWorker) handleCommand(ctx context.Context, seller store.Seller, mess
 	case "/upgrade":
 		return b.renderUpgrade(ctx, seller, message.Chat.ID, 0, "")
 	default:
-		_, err := b.sendMessage(ctx, message.Chat.ID, "Use /invoice to create an invoice, /wallets to manage payout addresses, or /upgrade to unlock PRO.", b.reqstKeyboard(nil))
+		msg := "Unknown command. Use /invoice to create a payment link, /wallets to manage your payout addresses, or /upgrade to unlock PRO features."
+		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.reqstKeyboard(nil))
 		return err
 	}
 }
@@ -716,19 +724,24 @@ func (b *BotWorker) getUpdates(ctx context.Context) ([]tgUpdate, error) {
 		return nil, fmt.Errorf("build telegram getUpdates request: %w", err)
 	}
 
+	startedAt := time.Now()
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
+		metrics.ObserveUpstream("telegram_bot_api", "get_updates", "failure", time.Since(startedAt))
 		return nil, fmt.Errorf("telegram getUpdates: %w", err)
 	}
 	defer resp.Body.Close()
 
 	var result tgAPIResponse[[]tgUpdate]
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		metrics.ObserveUpstream("telegram_bot_api", "get_updates", "failure", time.Since(startedAt))
 		return nil, fmt.Errorf("decode telegram getUpdates: %w", err)
 	}
 	if !result.OK {
+		metrics.ObserveUpstream("telegram_bot_api", "get_updates", "failure", time.Since(startedAt))
 		return nil, fmt.Errorf("telegram getUpdates failed: %s", result.Description)
 	}
+	metrics.ObserveUpstream("telegram_bot_api", "get_updates", "success", time.Since(startedAt))
 	return result.Result, nil
 }
 
@@ -800,22 +813,27 @@ func (b *BotWorker) callTelegram(ctx context.Context, method string, payload any
 	}
 	req.Header.Set("Content-Type", "application/json")
 
+	startedAt := time.Now()
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
+		metrics.ObserveUpstream("telegram_bot_api", method, "failure", time.Since(startedAt))
 		return fmt.Errorf("telegram %s: %w", method, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		metrics.ObserveUpstream("telegram_bot_api", method, "failure", time.Since(startedAt))
 		return fmt.Errorf("telegram %s failed: %s", method, strings.TrimSpace(string(respBody)))
 	}
 
 	var result tgAPIResponse[json.RawMessage]
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		metrics.ObserveUpstream("telegram_bot_api", method, "failure", time.Since(startedAt))
 		return fmt.Errorf("decode telegram %s: %w", method, err)
 	}
 	if !result.OK {
+		metrics.ObserveUpstream("telegram_bot_api", method, "failure", time.Since(startedAt))
 		return fmt.Errorf("telegram %s failed: %s", method, result.Description)
 	}
 	if out == nil {
@@ -825,8 +843,10 @@ func (b *BotWorker) callTelegram(ctx context.Context, method string, payload any
 		return nil
 	}
 	if err := json.Unmarshal(result.Result, out); err != nil {
+		metrics.ObserveUpstream("telegram_bot_api", method, "failure", time.Since(startedAt))
 		return fmt.Errorf("unmarshal telegram %s result: %w", method, err)
 	}
+	metrics.ObserveUpstream("telegram_bot_api", method, "success", time.Since(startedAt))
 	return nil
 }
 

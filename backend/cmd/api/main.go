@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"reqst/backend/internal/config"
 	httpapi "reqst/backend/internal/http"
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/service"
 	"reqst/backend/internal/store"
 )
@@ -23,6 +26,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	metrics.Init("api", cfg.AppEnv)
 	st, err := store.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
@@ -30,10 +35,12 @@ func main() {
 	defer st.Close()
 
 	authService := service.NewAuthService(st, cfg.JWTSecret, cfg.TelegramBotToken, cfg.AllowInsecureDevAuth, cfg.TelegramInitMaxAge)
+	adminService := service.NewAdminService(cfg.AdminUsername, cfg.AdminPasswordHash, cfg.AdminJWTSecret, cfg.AdminSessionTTL)
 	invoiceService := service.NewInvoiceService(st, cfg.TonUSDOverride)
 	paymentService := service.NewPaymentService(st)
 
-	engine := httpapi.NewServer(cfg, st, authService, invoiceService, paymentService)
+	engine := httpapi.NewServer(cfg, st, authService, adminService, invoiceService, paymentService)
+	metrics.StartServer(ctx, ":"+cfg.MetricsPort, logger)
 	server := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,
 		Handler:           engine,

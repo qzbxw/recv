@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"reqst/backend/internal/metrics"
+
 	"github.com/jackc/pgx/v5"
 )
 
@@ -93,7 +95,13 @@ func (s *Store) CreateAPIKey(ctx context.Context, sellerID int64, label string, 
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, seller_id, label, prefix, scopes, last_used_at, revoked_at, created_at
 	`, sellerID, label, prefix, tokenHash, scopes)
-	return scanAPIKey(row)
+	item, err := scanAPIKey(row)
+	if err != nil {
+		metrics.IncResourceOperation("api_key", "create", "failure")
+		return APIKey{}, err
+	}
+	metrics.IncResourceOperation("api_key", "create", "success")
+	return item, nil
 }
 
 func (s *Store) RevokeAPIKey(ctx context.Context, sellerID int64, keyID int64) error {
@@ -105,11 +113,14 @@ func (s *Store) RevokeAPIKey(ctx context.Context, sellerID int64, keyID int64) e
 		  AND revoked_at IS NULL
 	`, keyID, sellerID)
 	if err != nil {
+		metrics.IncResourceOperation("api_key", "revoke", "failure")
 		return fmt.Errorf("revoke api key: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
+		metrics.IncResourceOperation("api_key", "revoke", "not_found")
 		return ErrNotFound
 	}
+	metrics.IncResourceOperation("api_key", "revoke", "success")
 	return nil
 }
 
@@ -226,7 +237,13 @@ func (s *Store) CreateWebhookEndpoint(ctx context.Context, sellerID int64, label
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, seller_id, label, url, secret, is_active, last_delivery_at, last_success_at, created_at
 	`, sellerID, label, endpointURL, secret)
-	return scanWebhookEndpoint(row)
+	item, err := scanWebhookEndpoint(row)
+	if err != nil {
+		metrics.IncResourceOperation("webhook_endpoint", "create", "failure")
+		return WebhookEndpoint{}, err
+	}
+	metrics.IncResourceOperation("webhook_endpoint", "create", "success")
+	return item, nil
 }
 
 func (s *Store) DeactivateWebhookEndpoint(ctx context.Context, sellerID int64, endpointID int64) error {
@@ -238,11 +255,14 @@ func (s *Store) DeactivateWebhookEndpoint(ctx context.Context, sellerID int64, e
 		  AND is_active = TRUE
 	`, endpointID, sellerID)
 	if err != nil {
+		metrics.IncResourceOperation("webhook_endpoint", "deactivate", "failure")
 		return fmt.Errorf("deactivate webhook endpoint: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
+		metrics.IncResourceOperation("webhook_endpoint", "deactivate", "not_found")
 		return ErrNotFound
 	}
+	metrics.IncResourceOperation("webhook_endpoint", "deactivate", "success")
 	return nil
 }
 
@@ -309,6 +329,10 @@ func (s *Store) ClaimWebhookDeliveries(ctx context.Context, limit int) ([]Webhoo
 	for index := range items {
 		items[index].Attempts++
 	}
+	metrics.ObserveBatch("webhook_claim", metrics.SourceFromContext(ctx), len(items))
+	if len(items) > 0 {
+		metrics.IncDeliveryEvent("webhook", "claim", "success")
+	}
 	return items, nil
 }
 
@@ -330,6 +354,7 @@ func (s *Store) MarkWebhookDeliverySent(ctx context.Context, deliveryID int64, e
 	`, endpointID); err != nil {
 		return fmt.Errorf("touch webhook endpoint success: %w", err)
 	}
+	metrics.IncDeliveryEvent("webhook", "send", "success")
 	return nil
 }
 
@@ -357,6 +382,7 @@ func (s *Store) MarkWebhookDeliveryFailed(ctx context.Context, deliveryID int64,
 	`, endpointID); err != nil {
 		return fmt.Errorf("touch webhook endpoint last delivery: %w", err)
 	}
+	metrics.IncDeliveryEvent("webhook", "send", state)
 	return nil
 }
 
@@ -391,6 +417,7 @@ func enqueueWebhookDeliveriesTx(ctx context.Context, tx pgx.Tx, sellerID int64, 
 		`, endpointID, sellerID, eventType, payload, maxAttempts); err != nil {
 			return fmt.Errorf("insert webhook delivery: %w", err)
 		}
+		metrics.IncDeliveryEvent("webhook", "enqueue", "success")
 	}
 	return nil
 }

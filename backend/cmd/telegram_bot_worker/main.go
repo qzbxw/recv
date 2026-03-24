@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"reqst/backend/internal/config"
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/service"
 	"reqst/backend/internal/store"
 	"reqst/backend/internal/telegram"
@@ -30,7 +31,9 @@ func main() {
 	defer st.Close()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	metrics.Init("bot", cfg.AppEnv)
 	invoiceService := service.NewInvoiceService(st, cfg.TonUSDOverride)
+	metrics.StartServer(ctx, ":"+cfg.MetricsPort, logger)
 	worker := telegram.NewBotWorker(st, invoiceService, cfg.TelegramBotToken, cfg.PublicAppURL, logger)
 	if err := worker.Run(ctx); err != nil && err != context.Canceled {
 		log.Fatal(err)

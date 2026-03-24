@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"reqst/backend/internal/config"
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/service"
 	"reqst/backend/internal/store"
 
@@ -73,7 +75,7 @@ func (w *Watcher) pollEVMStablecoin(ctx context.Context, wallet store.WatchedWal
 		return nil, fmt.Errorf("rpc url is not configured for network %s", wallet.PayableNetwork)
 	}
 
-	latestBlockHex, err := w.callEVMRPCString(ctx, rpcURL, "eth_blockNumber", []any{})
+	latestBlockHex, err := w.callEVMRPCString(ctx, rpcURL, wallet.PayableNetwork, "eth_blockNumber", []any{})
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +103,7 @@ func (w *Watcher) pollEVMStablecoin(ctx context.Context, wallet store.WatchedWal
 		LogIndex    string   `json:"logIndex"`
 		Removed     bool     `json:"removed"`
 	}
-	if err := w.callEVMRPC(ctx, rpcURL, "eth_getLogs", []any{filter}, &logs); err != nil {
+	if err := w.callEVMRPC(ctx, rpcURL, wallet.PayableNetwork, "eth_getLogs", []any{filter}, &logs); err != nil {
 		return nil, err
 	}
 
@@ -276,7 +278,7 @@ func (w *Watcher) evmBlockTimestamp(ctx context.Context, rpcURL string, blockNum
 	var block struct {
 		Timestamp string `json:"timestamp"`
 	}
-	if err := w.callEVMRPC(ctx, rpcURL, "eth_getBlockByNumber", []any{blockNumber, false}, &block); err != nil {
+	if err := w.callEVMRPC(ctx, rpcURL, networkFromRPCURL(rpcURL, w.cfg), "eth_getBlockByNumber", []any{blockNumber, false}, &block); err != nil {
 		return time.Time{}, err
 	}
 	timestamp, err := parseHexInt(block.Timestamp)
@@ -286,20 +288,26 @@ func (w *Watcher) evmBlockTimestamp(ctx context.Context, rpcURL string, blockNum
 	return time.Unix(timestamp, 0).UTC(), nil
 }
 
-func (w *Watcher) callEVMRPCString(ctx context.Context, rpcURL string, method string, params []any) (string, error) {
+func (w *Watcher) callEVMRPCString(ctx context.Context, rpcURL string, network store.Network, method string, params []any) (string, error) {
 	var result string
-	if err := w.callEVMRPC(ctx, rpcURL, method, params, &result); err != nil {
+	if err := w.callEVMRPC(ctx, rpcURL, network, method, params, &result); err != nil {
 		return "", err
 	}
 	return result, nil
 }
 
-func (w *Watcher) callEVMRPC(ctx context.Context, rpcURL string, method string, params []any, target any) error {
-	return w.callJSONRPC(ctx, rpcURL, method, params, target)
+func (w *Watcher) callEVMRPC(ctx context.Context, rpcURL string, network store.Network, method string, params []any, target any) error {
+	startedAt := time.Now()
+	err := w.callJSONRPC(ctx, rpcURL, method, params, target)
+	metrics.ObserveRPC("evm", string(network), method, ternaryWatcherResult(err), time.Since(startedAt))
+	return err
 }
 
 func (w *Watcher) callSolanaRPC(ctx context.Context, rpcURL string, method string, params []any, target any) error {
-	return w.callJSONRPC(ctx, rpcURL, method, params, target)
+	startedAt := time.Now()
+	err := w.callJSONRPC(ctx, rpcURL, method, params, target)
+	metrics.ObserveRPC("solana", string(store.NetworkSOLANA), method, ternaryWatcherResult(err), time.Since(startedAt))
+	return err
 }
 
 func (w *Watcher) callJSONRPC(ctx context.Context, rpcURL string, method string, params []any, target any) error {
@@ -388,4 +396,26 @@ func hexAmountToDecimal(raw string, decimals int32) (decimal.Decimal, error) {
 	}
 	scale := decimal.NewFromInt(10).Pow(decimal.NewFromInt32(decimals))
 	return amount.Div(scale), nil
+}
+
+func ternaryWatcherResult(err error) string {
+	if err != nil {
+		return "failure"
+	}
+	return "success"
+}
+
+func networkFromRPCURL(rpcURL string, cfg config.Config) store.Network {
+	switch rpcURL {
+	case cfg.EthereumRPCURL:
+		return store.NetworkEVM
+	case cfg.BaseRPCURL:
+		return store.NetworkBASE
+	case cfg.ArbitrumRPCURL:
+		return store.NetworkARBITRUM
+	case cfg.BSCRPCURL:
+		return store.NetworkBSC
+	default:
+		return store.NetworkEVM
+	}
 }

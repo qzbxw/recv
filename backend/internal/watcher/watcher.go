@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"reqst/backend/internal/config"
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/service"
 	"reqst/backend/internal/store"
 
@@ -57,6 +58,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 }
 
 func (w *Watcher) tick(ctx context.Context) error {
+	ctx = metrics.WithSource(ctx, "watcher")
 	expired, err := w.store.ExpireOverdueInvoices(ctx)
 	if err != nil {
 		return err
@@ -72,6 +74,8 @@ func (w *Watcher) tick(ctx context.Context) error {
 
 	for _, wallet := range wallets {
 		var transfers []store.ObservedTransfer
+		startedAt := time.Now()
+		result := "success"
 		switch wallet.PollNetwork {
 		case store.NetworkTRON:
 			transfers, err = w.pollTRC20(ctx, wallet)
@@ -85,9 +89,13 @@ func (w *Watcher) tick(ctx context.Context) error {
 			continue
 		}
 		if err != nil {
+			result = "failure"
+			metrics.ObserveWatcherPoll(string(wallet.PayableNetwork), result, time.Since(startedAt), 0)
 			w.logger.Warn("wallet poll failed", "network", wallet.PayableNetwork, "address", wallet.Address, "error", err)
 			continue
 		}
+		metrics.ObserveWatcherPoll(string(wallet.PayableNetwork), result, time.Since(startedAt), len(transfers))
+		metrics.ObserveBatch("watcher_transfers", string(wallet.PayableNetwork), len(transfers))
 
 		for _, transfer := range transfers {
 			result, err := w.paymentService.ProcessObservedTransfer(ctx, transfer)
@@ -118,14 +126,17 @@ func (w *Watcher) pollTRC20(ctx context.Context, wallet store.WatchedWallet) ([]
 		req.Header.Set("TRON-PRO-API-KEY", w.cfg.TronGridAPIKey)
 	}
 
+	startedAt := time.Now()
 	resp, err := w.httpClient.Do(req)
 	if err != nil {
+		metrics.ObserveUpstream("trongrid", "poll_trc20", "failure", time.Since(startedAt))
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		metrics.ObserveUpstream("trongrid", "poll_trc20", "failure", time.Since(startedAt))
 		return nil, fmt.Errorf("trongrid error: %s", strings.TrimSpace(string(body)))
 	}
 
@@ -142,6 +153,7 @@ func (w *Watcher) pollTRC20(ctx context.Context, wallet store.WatchedWallet) ([]
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		metrics.ObserveUpstream("trongrid", "poll_trc20", "failure", time.Since(startedAt))
 		return nil, fmt.Errorf("decode trongrid: %w", err)
 	}
 
@@ -172,6 +184,7 @@ func (w *Watcher) pollTRC20(ctx context.Context, wallet store.WatchedWallet) ([]
 		}
 		transfers = append(transfers, transfer)
 	}
+	metrics.ObserveUpstream("trongrid", "poll_trc20", "success", time.Since(startedAt))
 	return transfers, nil
 }
 
@@ -186,14 +199,17 @@ func (w *Watcher) pollTON(ctx context.Context, wallet store.WatchedWallet) ([]st
 		req.Header.Set("X-API-Key", w.cfg.TonCenterAPIKey)
 	}
 
+	startedAt := time.Now()
 	resp, err := w.httpClient.Do(req)
 	if err != nil {
+		metrics.ObserveUpstream("toncenter", "poll_ton", "failure", time.Since(startedAt))
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		metrics.ObserveUpstream("toncenter", "poll_ton", "failure", time.Since(startedAt))
 		return nil, fmt.Errorf("toncenter error: %s", strings.TrimSpace(string(body)))
 	}
 
@@ -211,6 +227,7 @@ func (w *Watcher) pollTON(ctx context.Context, wallet store.WatchedWallet) ([]st
 		} `json:"result"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		metrics.ObserveUpstream("toncenter", "poll_ton", "failure", time.Since(startedAt))
 		return nil, fmt.Errorf("decode toncenter: %w", err)
 	}
 
@@ -237,6 +254,7 @@ func (w *Watcher) pollTON(ctx context.Context, wallet store.WatchedWallet) ([]st
 		}
 		transfers = append(transfers, transfer)
 	}
+	metrics.ObserveUpstream("toncenter", "poll_ton", "success", time.Since(startedAt))
 	return transfers, nil
 }
 

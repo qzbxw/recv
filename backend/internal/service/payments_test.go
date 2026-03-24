@@ -74,4 +74,14 @@ func TestClassifyInvoiceTransfer(t *testing.T) {
 			t.Fatalf("expected manual_review status, got %s", status)
 		}
 	})
+
+	t.Run("overpaid", func(t *testing.T) {
+		_, classification, status := classifyInvoiceTransfer(baseInvoice, decimal.RequireFromString("151.013742"), now)
+		if classification != "overpaid" {
+			t.Fatalf("expected overpaid, got %s", classification)
+		}
+		if status != store.InvoiceStatusManualReview {
+			t.Fatalf("expected manual_review status, got %s", status)
+		}
+	})
 }

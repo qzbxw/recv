@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"reqst/backend/internal/metrics"
 )
 
 func (b *BotWorker) flushWebhookDeliveries(ctx context.Context) error {
@@ -51,12 +53,19 @@ func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, s
 	req.Header.Set("X-Reqst-Timestamp", timestamp)
 	req.Header.Set("X-Reqst-Signature", signature)
 
+	startedAt := time.Now()
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
+		metrics.ObserveUpstream("seller_webhook", eventType, "failure", time.Since(startedAt))
 		return 0, err
 	}
 	defer resp.Body.Close()
 	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1024))
+	result := "success"
+	if resp.StatusCode >= http.StatusBadRequest {
+		result = "failure"
+	}
+	metrics.ObserveUpstream("seller_webhook", eventType, result, time.Since(startedAt))
 	return resp.StatusCode, nil
 }
 

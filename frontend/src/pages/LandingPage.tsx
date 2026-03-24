@@ -7,27 +7,27 @@ const BOT_URL = "https://t.me/reqstxyz_bot";
 const COPY = {
   ru: {
     nav: {
-      overview: "Продукт",
-      capabilities: "Возможности",
+      overview: "О продукте",
+      capabilities: "Технологии",
       networks: "Сети",
       faq: "FAQ",
-      bot: "Telegram бот",
+      bot: "Telegram-бот",
       console: "Вход",
     },
     hero: {
-      title: "Ваш бизнес на крипто-автопилоте.",
+      title: "Принимайте крипто-платежи без посредников.",
       body:
-        "Принимайте платежи напрямую на свои кошельки. Reqst автоматизирует чекаут, подтверждение транзакций и уведомления, пока вы фокусируетесь на росте.",
+        "Автоматизированный прием криптовалюты напрямую на ваши кошельки. Полный контроль, мгновенные уведомления и честная модель без комиссий с оборота.",
       subcopy:
-        "Non-custodial. Без посредников. Без скрытых комиссий с оборота. Только порядок и полный контроль.",
-      primary: "Запустить сейчас",
+        "Non-custodial решение для бизнеса. Ваши деньги — только на ваших адресах.",
+      primary: "Начать работу",
       secondary: "Открыть в Telegram",
-      badges: ["Direct-to-Wallet", "Telegram Native", "0% Transaction Fee", "API Ready", "B2B Scale"],
+      badges: ["Direct-to-Wallet", "Telegram Native", "0% комиссии", "Ready-to-use API", "B2B решение"],
     },
     heroPanel: {
       eyebrow: "live demo",
-      title: "Попробуйте демо-чекаут",
-      body: "Посмотрите на процесс оплаты глазами клиента: таймер, QR-код, детали сети и плавная смена статусов на живом примере.",
+      title: "Демонстрация оплаты",
+      body: "Посмотрите, как выглядит процесс оплаты для вашего клиента: от выбора сети до моментального подтверждения транзакции.",
       amount: "149 USDT",
       invoice: "REQST-DEMO-149",
       status: "Ожидает оплату",
@@ -38,9 +38,9 @@ const COPY = {
     },
     overview: {
       kicker: "ОБЗОР",
-      title: "Порядок в финансах начинается здесь.",
+      title: "Профессиональный прием платежей.",
       body:
-        "Reqst превращает хаотичные переводы по адресу в прозрачный бизнес-процесс. Больше никакой ручной сверки и бесконечных скриншотов от клиентов.",
+        "Reqst превращает прямые переводы в структурированный бизнес-процесс. Забудьте о ручной сверке транзакций и бесконечных скриншотах в чатах.",
       cards: [
         {
           title: "Для бизнеса",
@@ -57,14 +57,14 @@ const COPY = {
       ],
     },
     capabilities: {
-      kicker: "ВОЗМОЖНОСТИ",
-      title: "Всё, что нужно для масштабирования.",
-      body: "Инструменты, созданные для экономии времени и исключения ошибок.",
+      kicker: "ТЕХНОЛОГИИ",
+      title: "Инфраструктура для вашего роста.",
+      body: "Все необходимые инструменты для работы с крипто-платежами в одной платформе.",
       items: [
         {
           kicker: "01",
           title: "Прямые выплаты",
-          body: "Средства никогда не задерживаются у нас. Они летят сразу на ваш адрес.",
+          body: "Средства поступают сразу на ваш кошелек. Мы не удерживаем ваши деньги ни на секунду.",
         },
         {
           kicker: "02",
@@ -73,8 +73,8 @@ const COPY = {
         },
         {
           kicker: "03",
-          title: "Обработка ошибок",
-          body: "Система автоматически распознает недоплаты и переплаты, уведомляя вас.",
+          title: "Интеллектуальный мониторинг",
+          body: "Система автоматически распознает частичную оплату, переплаты и переводы в неверных сетях.",
         },
         {
           kicker: "04",
@@ -83,32 +83,32 @@ const COPY = {
         },
         {
           kicker: "05",
-          title: "Фикс вместо процента",
-          body: "Никаких комиссий с вашего оборота. Только прозрачная подписка за сервис.",
+          title: "Модель фиксированной подписки",
+          body: "Никаких процентов с вашего оборота. Платите только за использование сервиса, а не за свой успех.",
         },
         {
           kicker: "06",
-          title: "B2B Решения",
+          title: "B2B-решения",
           body: "Готовность к высоким нагрузкам и командной работе над проектами.",
         },
       ],
     },
     compare: {
-      kicker: "ОТЛИЧИЯ",
+      kicker: "ЭВОЛЮЦИЯ",
       title: "Забудьте про ручной поиск транзакций.",
-      body: "Как меняется ваша жизнь с переходом на Reqst.",
+      body: "Как меняется работа с платежами после перехода на Reqst.",
       rows: [
         {
-          legacy: "Ожидание скриншотов и ручная проверка эксплорера.",
-          reqst: "Автоматическое подтверждение и мгновенный вебхук.",
+          legacy: "Ручной поиск транзакций в эксплорере и ожидание скриншотов.",
+          reqst: "Автоматическое подтверждение и мгновенные Webhook-уведомления.",
         },
         {
-          legacy: "Бесконечные споры о суммах и сетях перевода.",
-          reqst: "Клиент видит точные инструкции и QR на одной странице.",
+          legacy: "Ошибки клиентов: не та сеть, неверная сумма, отсутствие комментария.",
+          reqst: "Четкие инструкции, QR-коды и автоматическая обработка ошибок.",
         },
         {
-          legacy: "Скрытые комиссии платежных шлюзов (до 5-10%).",
-          reqst: "Честная модель подписки без поборов с каждой продажи.",
+          legacy: "Комиссии платежных шлюзов, съедающие до 10% вашей прибыли.",
+          reqst: "Прозрачная подписка без скрытых платежей и сборов с транзакций.",
         },
       ],
     },
@@ -146,33 +146,33 @@ const COPY = {
       },
     },
     faq: {
-      kicker: "ВОПРОСЫ",
-      title: "Ответы на частые вопросы.",
+      kicker: "FAQ",
+      title: "Ответы на вопросы.",
       body: "Коротко о том, как устроены продажи, биллинг и API внутри Reqst.",
       items: [
         {
           question: "Reqst хранит мои деньги или приватные ключи?",
-          answer: "Нет. Reqst работает в non-custodial модели: покупатель платит сразу на ваш адрес, а сервис только строит checkout, отслеживает входящий перевод и обновляет статус инвойса.",
+          answer: "Нет. Reqst — это non-custodial сервис. Покупатель переводит средства напрямую на ваш кошелек. Мы лишь обеспечиваем интерфейс оплаты, мониторинг блокчейна и уведомления о статусе платежа.",
         },
         {
-          question: "Какие тарифы теперь есть?",
-          answer: "Базовый seller-flow живет в Reqst PRO. Для команд, которым нужны API keys, webhooks и интеграции, есть Reqst Dev. Для более высоких лимитов, большего числа ключей и усиленного B2B-сценария есть Reqst Enterprise.",
+          question: "Какие тарифы доступны?",
+          answer: "PRO covers the core seller flow. Reqst Dev adds API keys, webhooks, and developer-facing integration tools. Reqst Enterprise pushes the same model further with higher limits, more keys, and a stronger B2B operating setup.",
         },
         {
-          question: "Как покупаются PRO, Dev и Enterprise?",
+          question: "Как оплатить PRO, Dev или Enterprise?",
           answer: "Через обычные Reqst checkout links. Мы используем собственную инфраструктуру для процессинга всех платежей за подписки. Никаких внешних шлюзов, только наш протокол. Вы создаете billing checkout внутри сервиса, оплачиваете его, и план активируется автоматически.",
         },
         {
-          question: "Есть ли уже API и webhooks для разработчиков?",
-          answer: "Да. В Reqst Dev и Reqst Enterprise доступны API keys, seller API для создания и чтения инвойсов, usage limits, rate limiting и webhook endpoints для событий оплаты и активации подписки.",
+          question: "Доступны ли API и вебхуки?",
+          answer: "Да. В Reqst Dev и Reqst Enterprise доступны API-ключи, Seller API для создания и чтения инвойсов, управление лимитами и Webhook-эндпоинты для событий оплаты и активации подписки.",
         },
         {
-          question: "Какие сети реально мониторятся автоматически?",
-          answer: "Сейчас Reqst автоматически отслеживает TON, TRON, Solana и EVM-family сети вроде Ethereum, Base, Arbitrum и BSC. Для разных сетей используется подходящий upstream: где удобно RPC, где удобнее специализированный индексирующий API.",
+          question: "Какие сети отслеживаются автоматически?",
+          answer: "На данный момент Reqst автоматически отслеживает TON, TRON, Solana и EVM-сети (Ethereum, Base, Arbitrum, BSC). Для каждой сети мы используем наиболее надежные методы индексации транзакций.",
         },
         {
-          question: "Что если клиент отправил не ту сумму или не в ту сеть?",
-          answer: "Точный happy path система подтверждает автоматически, а спорные сценарии вроде underpaid, late payment или manual review помечаются отдельно в консоли, чтобы вы могли принять решение вручную без потери контекста.",
+          question: "Что если клиент отправил неверную сумму или не в ту сеть?",
+          answer: "Система автоматически подтверждает корректные платежи. Если клиент отправил неверную сумму или совершил платеж слишком поздно, транзакция будет помечена соответствующим статусом в консоли для вашего решения.",
         },
       ],
     },
@@ -180,7 +180,7 @@ const COPY = {
       kicker: "ЗАПУСК",
       title: "Готовы автоматизировать свои продажи?",
       body:
-        "Присоединяйтесь к сотням продавцов, которые уже перевели свой прием крипты на профессиональный уровень.",
+        "Присоединяйтесь к продавцам, которые уже перевели свой прием крипты на профессиональный уровень.",
       primary: "Создать первый инвойс",
       secondary: "Документация",
     },
@@ -199,37 +199,37 @@ const COPY = {
   en: {
     nav: {
       overview: "Product",
-      capabilities: "Features",
+      capabilities: "Technology",
       networks: "Networks",
       faq: "FAQ",
       bot: "Bot",
       console: "Login",
     },
     hero: {
-      title: "Your business on crypto autopilot.",
+      title: "Accept crypto payments directly to your wallet.",
       body:
-        "Accept payments directly to your wallets. Reqst automates checkout, transaction tracking, and notifications while you focus on growth.",
+        "Automate checkout, transaction tracking, and notifications. Full control, zero middlemen, and a fair flat-fee model with no percentage-based charges.",
       subcopy:
-        "Non-custodial by design. No middlemen. No hidden fees on your turnover. Just order and total control.",
-      primary: "Launch Now",
+        "Non-custodial infrastructure for business. Your money, your keys, your control.",
+      primary: "Get Started",
       secondary: "Open in Telegram",
-      badges: ["Direct-to-Wallet", "Telegram Native", "0% Transaction Fee", "API Ready", "B2B Scale"],
+      badges: ["Direct-to-Wallet", "Telegram Native", "0% Fee", "Ready-to-use API", "B2B Scale"],
     },
     heroPanel: {
       eyebrow: "live demo",
-      title: "Open the mock checkout",
-      body: "Show the buyer flow live: countdown, QR, payment details, and a polished payment status on a dedicated page.",
+      title: "Demo Checkout",
+      body: "Experience the flow as your customer: from network selection to instant transaction confirmation.",
       amount: "149 USDT",
       invoice: "REQST-DEMO-149",
       status: "Awaiting payment",
-      primary: "View checkout",
-      secondary: "Open console",
+      primary: "Open Checkout",
+      secondary: "Open Console",
       helper: "Perfect for demos, onboarding, and a strong first product impression.",
       chips: ["TON", "TRON", "Base", "Live status"],
     },
     overview: {
       kicker: "OVERVIEW",
-      title: "Financial order starts here.",
+      title: "Professional Payment Processing.",
       body:
         "Reqst turns chaotic wallet transfers into a transparent business process. No more manual verification or endless screenshots from clients.",
       cards: [
@@ -248,14 +248,14 @@ const COPY = {
       ],
     },
     capabilities: {
-      kicker: "FEATURES",
-      title: "Everything you need to scale.",
-      body: "Tools designed to save time and eliminate human errors.",
+      kicker: "TECHNOLOGY",
+      title: "Infrastructure built to scale.",
+      body: "All the tools you need to handle crypto payments in one platform.",
       items: [
         {
           kicker: "01",
           title: "Direct Payouts",
-          body: "Funds never sit with us. They go straight from the customer to your wallet.",
+          body: "Funds never touch our platform. They go straight from the customer to your designated address.",
         },
         {
           kicker: "02",
@@ -264,8 +264,8 @@ const COPY = {
         },
         {
           kicker: "03",
-          title: "Error Handling",
-          body: "Automated detection of underpayments and overpayments with instant alerts.",
+          title: "Intelligent Monitoring",
+          body: "Automated detection of partial payments, overpayments, and transfers in wrong networks.",
         },
         {
           kicker: "04",
@@ -275,7 +275,7 @@ const COPY = {
         {
           kicker: "05",
           title: "Flat Pricing",
-          body: "No transaction fees. Just a transparent subscription for the service.",
+          body: "Stop paying percentage fees on your turnover. One transparent subscription, no matter how much you process.",
         },
         {
           kicker: "06",
@@ -285,21 +285,21 @@ const COPY = {
       ],
     },
     compare: {
-      kicker: "THE DIFFERENCE",
+      kicker: "EVOLUTION",
       title: "Stop chasing transactions manually.",
-      body: "How your life changes after switching to Reqst.",
+      body: "How your workflow changes after switching to Reqst.",
       rows: [
         {
-          legacy: "Waiting for screenshots and manual explorer checks.",
-          reqst: "Automated confirmation and instant webhooks.",
+          legacy: "Manual explorer checks and waiting for payment screenshots.",
+          reqst: "Automated confirmation and instant Webhook notifications.",
         },
         {
-          legacy: "Endless disputes over amounts and network details.",
-          reqst: "Client sees precise instructions and QR on one page.",
+          legacy: "Customer errors: wrong network, incorrect amount, missing comment.",
+          reqst: "Clear instructions, QR codes, and automated error handling.",
         },
         {
-          legacy: "Hidden gateway fees (up to 5-10% per sale).",
-          reqst: "Fair subscription model with no transaction taxes.",
+          legacy: "Hidden gateway fees eating up to 10% of your profit.",
+          reqst: "Transparent subscription with no hidden charges or transaction taxes.",
         },
       ],
     },
@@ -343,27 +343,27 @@ const COPY = {
       items: [
         {
           question: "Does Reqst custody funds or private keys?",
-          answer: "No. Reqst is non-custodial: the buyer pays directly to your payout wallet, while the service handles checkout UX, incoming transfer monitoring, and invoice status updates.",
+          answer: "No. Reqst is non-custodial: the buyer pays directly to your payout wallet, while the service handles checkout UX, blockchain monitoring, and status updates.",
         },
         {
-          question: "What plans are available now?",
+          question: "What plans are available?",
           answer: "Reqst PRO covers the core seller flow. Reqst Dev adds API keys, webhooks, and developer-facing integration tools. Reqst Enterprise pushes the same model further with higher limits, more keys, and a stronger B2B operating setup.",
         },
         {
-          question: "How do I buy PRO, Dev, or Enterprise?",
-          answer: "Through normal Reqst checkout links. We use our own infrastructure to process every subscription payment. No external gateways — just our protocol in action. You generate a billing checkout inside the product, pay it, and the plan is activated automatically.",
+          question: "How do I pay for PRO, Dev, or Enterprise?",
+          answer: "Through normal Reqst checkout links. We use our own infrastructure to process every subscription payment. No external gateways — just our protocol in action.",
         },
         {
-          question: "Is there already an API and webhook layer for developers?",
-          answer: "Yes. Reqst Dev and Reqst Enterprise include API keys, a seller API for invoice creation and retrieval, usage caps, rate limits, and webhook endpoints for payment and subscription events.",
+          question: "Is there an API and webhook layer available?",
+          answer: "Yes. Reqst Dev and Reqst Enterprise include API keys, a Seller API for invoice management, usage caps, and webhook endpoints for payment events.",
         },
         {
-          question: "Which networks are monitored automatically today?",
-          answer: "Reqst currently auto-monitors TON, TRON, Solana, and the EVM family including Ethereum, Base, Arbitrum, and BSC. The service uses the most practical upstream per network, whether that means direct RPC or a higher-level indexed API.",
+          question: "Which networks are monitored automatically?",
+          answer: "Reqst currently auto-monitors TON, TRON, Solana, and the EVM family including Ethereum, Base, Arbitrum, and BSC. We use the most reliable indexing methods per network.",
         },
         {
-          question: "What if the buyer sends the wrong amount or uses the wrong route?",
-          answer: "Clean matches are confirmed automatically, while edge cases like underpaid transfers, late payments, or manual-review scenarios are clearly flagged in the console so your team can resolve them with context.",
+          question: "What if the buyer sends the wrong amount or uses the wrong network?",
+          answer: "Clean matches are confirmed automatically. If the user sends an incorrect amount or pays too late, the transaction is flagged in the console for your review.",
         },
       ],
     },
@@ -371,7 +371,7 @@ const COPY = {
       kicker: "GET STARTED",
       title: "Ready to automate your sales?",
       body:
-        "Join hundreds of sellers who have already professionalized their crypto intake.",
+        "Join sellers who have already professionalized their crypto intake.",
       primary: "Create First Invoice",
       secondary: "Documentation",
     },

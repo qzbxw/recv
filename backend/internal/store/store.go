@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"reqst/backend/internal/db"
+	"reqst/backend/internal/metrics"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -111,7 +112,12 @@ func (s *Store) GrantPRO(ctx context.Context, sellerID int64, days int) (Seller,
 		WHERE id = $1
 		RETURNING `+sellerSelectColumns+`
 	`, sellerID, days)
-	return scanSeller(row)
+	seller, err := scanSeller(row)
+	if err != nil {
+		return Seller{}, err
+	}
+	metrics.IncResourceOperation("seller_subscription", "grant_pro", "success")
+	return seller, nil
 }
 
 func (s *Store) SetSellerBlocked(ctx context.Context, sellerID int64, blocked bool) (Seller, error) {
@@ -121,7 +127,12 @@ func (s *Store) SetSellerBlocked(ctx context.Context, sellerID int64, blocked bo
 		WHERE id = $1
 		RETURNING `+sellerSelectColumns+`
 	`, sellerID, blocked)
-	return scanSeller(row)
+	seller, err := scanSeller(row)
+	if err != nil {
+		return Seller{}, err
+	}
+	metrics.IncResourceOperation("seller", "set_blocked", "success")
+	return seller, nil
 }
 
 func (s *Store) UpdateSellerEmail(ctx context.Context, sellerID int64, email string) (Seller, error) {
@@ -131,7 +142,13 @@ func (s *Store) UpdateSellerEmail(ctx context.Context, sellerID int64, email str
 		WHERE id = $1
 		RETURNING `+sellerSelectColumns+`
 	`, sellerID, email)
-	return scanSeller(row)
+	seller, err := scanSeller(row)
+	if err != nil {
+		metrics.IncResourceOperation("seller_email", "update", "failure")
+		return Seller{}, err
+	}
+	metrics.IncResourceOperation("seller_email", "update", "success")
+	return seller, nil
 }
 
 func (s *Store) StoreTelegramAuthCode(ctx context.Context, sellerID int64, codeHash string, expiresAt time.Time) error {
@@ -230,7 +247,13 @@ func (s *Store) CreateWallet(ctx context.Context, sellerID int64, network Networ
 		DO UPDATE SET is_active = TRUE
 		RETURNING id, seller_id, network, address, is_active, created_at
 	`, sellerID, network, address)
-	return scanWallet(row)
+	wallet, err := scanWallet(row)
+	if err != nil {
+		metrics.IncResourceOperation("wallet", "create", "failure")
+		return Wallet{}, err
+	}
+	metrics.IncResourceOperation("wallet", "create", "success")
+	return wallet, nil
 }
 
 func (s *Store) DeactivateWallet(ctx context.Context, sellerID int64, walletID int64) error {
@@ -240,11 +263,14 @@ func (s *Store) DeactivateWallet(ctx context.Context, sellerID int64, walletID i
 		WHERE id = $1 AND seller_id = $2
 	`, walletID, sellerID)
 	if err != nil {
+		metrics.IncResourceOperation("wallet", "deactivate", "failure")
 		return fmt.Errorf("deactivate wallet: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
+		metrics.IncResourceOperation("wallet", "deactivate", "not_found")
 		return ErrNotFound
 	}
+	metrics.IncResourceOperation("wallet", "deactivate", "success")
 	return nil
 }
 
@@ -378,6 +404,7 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 	if err := tx.Commit(ctx); err != nil {
 		return Invoice{}, fmt.Errorf("commit create invoice tx: %w", err)
 	}
+	metrics.IncInvoiceTransition(metrics.SourceFromContext(ctx), string(invoice.Kind), "new", string(invoice.Status), "created")
 	return invoice, nil
 }
 
@@ -434,7 +461,12 @@ func (s *Store) SetInvoiceStatus(ctx context.Context, sellerID int64, invoiceID 
 		RETURNING id, public_id, seller_id, kind, subscription_days, plan_code, title, base_amount_usd, payable_amount, payable_network, destination_address,
 		          payment_comment, matching_suffix, status, expires_at, tx_hash, paid_at, created_at
 	`, status, invoiceID, sellerID)
-	return scanInvoice(row)
+	invoice, err := scanInvoice(row)
+	if err != nil {
+		return Invoice{}, err
+	}
+	metrics.IncInvoiceTransition(metrics.SourceFromContext(ctx), string(invoice.Kind), "unknown", string(status), "manual_status_update")
+	return invoice, nil
 }
 
 func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoiceID int64) (Invoice, error) {
@@ -443,6 +475,19 @@ func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoi
 		return Invoice{}, fmt.Errorf("begin manual mark paid tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
+
+	var previousStatus InvoiceStatus
+	if err := tx.QueryRow(ctx, `
+		SELECT status
+		FROM invoices
+		WHERE id = $1 AND seller_id = $2
+		FOR UPDATE
+	`, invoiceID, sellerID).Scan(&previousStatus); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Invoice{}, ErrNotFound
+		}
+		return Invoice{}, fmt.Errorf("load invoice before manual mark paid: %w", err)
+	}
 
 	row := tx.QueryRow(ctx, `
 		UPDATE invoices
@@ -464,6 +509,11 @@ func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoi
 	if err := tx.Commit(ctx); err != nil {
 		return Invoice{}, fmt.Errorf("commit manual mark paid tx: %w", err)
 	}
+	source := metrics.SourceFromContext(ctx)
+	metrics.IncInvoiceTransition(source, string(invoice.Kind), string(previousStatus), string(invoice.Status), "manual_mark_paid")
+	if invoice.Kind == InvoiceKindSubscription {
+		metrics.IncInvoiceOperation("activate_subscription", source, string(invoice.Kind), string(invoice.PayableNetwork), string(invoice.PlanCode), "success", "manual_mark_paid")
+	}
 	return invoice, nil
 }
 
@@ -477,6 +527,7 @@ func (s *Store) ExpireOverdueInvoices(ctx context.Context) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("expire overdue invoices: %w", err)
 	}
+	metrics.ObserveBatch("expired_invoices", metrics.SourceFromContext(ctx), int(tag.RowsAffected()))
 	return tag.RowsAffected(), nil
 }
 
@@ -544,7 +595,7 @@ func (s *Store) FindPotentialUnderpaidInvoice(ctx context.Context, address strin
 	return scanInvoice(row)
 }
 
-func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, txHash string, status InvoiceStatus, classification string, observedAmount decimal.Decimal, paidAt time.Time) (Invoice, error) {
+func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, previousStatus InvoiceStatus, txHash string, status InvoiceStatus, classification string, observedAmount decimal.Decimal, paidAt time.Time) (Invoice, error) {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return Invoice{}, fmt.Errorf("begin payment completion tx: %w", err)
@@ -603,6 +654,11 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, txH
 
 	if err := tx.Commit(ctx); err != nil {
 		return Invoice{}, fmt.Errorf("commit payment completion: %w", err)
+	}
+	source := metrics.SourceFromContext(ctx)
+	metrics.IncInvoiceTransition(source, string(invoice.Kind), string(previousStatus), string(invoice.Status), classification)
+	if invoice.Kind == InvoiceKindSubscription && invoice.Status == InvoiceStatusPaid {
+		metrics.IncInvoiceOperation("activate_subscription", source, string(invoice.Kind), string(invoice.PayableNetwork), string(invoice.PlanCode), "success", classification)
 	}
 	return invoice, nil
 }
@@ -682,6 +738,10 @@ func (s *Store) ClaimNotificationJobs(ctx context.Context, limit int) ([]Notific
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("commit notification claim: %w", err)
 	}
+	metrics.ObserveBatch("notification_claim", metrics.SourceFromContext(ctx), len(jobs))
+	if len(jobs) > 0 {
+		metrics.IncDeliveryEvent("telegram", "claim", "success")
+	}
 	return jobs, nil
 }
 
@@ -694,6 +754,7 @@ func (s *Store) MarkNotificationSent(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("mark notification sent: %w", err)
 	}
+	metrics.IncDeliveryEvent("telegram", "send", "success")
 	return nil
 }
 
@@ -708,6 +769,7 @@ func (s *Store) MarkNotificationFailed(ctx context.Context, id int64, message st
 	if err != nil {
 		return fmt.Errorf("mark notification failed: %w", err)
 	}
+	metrics.IncDeliveryEvent("telegram", "send", "failed")
 	return nil
 }
 
@@ -805,26 +867,31 @@ func applyInvoicePostPaymentEffects(ctx context.Context, tx pgx.Tx, invoice Invo
 func buildInvoiceNotificationMessage(invoice Invoice, classification string, observedAmount decimal.Decimal) string {
 	received := observedAmount.StringFixed(payableScale(invoice.PayableNetwork))
 	expected := invoice.PayableAmount.StringFixed(payableScale(invoice.PayableNetwork))
+
 	if invoice.Kind == InvoiceKindSubscription && invoice.Status == InvoiceStatusPaid {
 		planCode := NormalizePlanCode(string(invoice.PlanCode))
 		if planCode == PlanCodeTrial {
 			planCode = PlanCodePro
 		}
 		plan := ResolvePlan(planCode)
-		return fmt.Sprintf("%s unlocked. Received %s %s. Your plan is active for %d days.", plan.MarketingLabel, received, invoice.PayableNetwork, invoice.SubscriptionDays)
+		return fmt.Sprintf("✅ Subscription activated: %s. Received %s %s. Valid for %d days.", plan.MarketingLabel, received, invoice.PayableNetwork, invoice.SubscriptionDays)
 	}
+
 	switch invoice.Status {
 	case InvoiceStatusPaid:
-		return fmt.Sprintf("Invoice %s is paid. Received %s %s. Tx: %s", invoice.PublicID, received, invoice.PayableNetwork, valueOrEmpty(invoice.TxHash))
+		return fmt.Sprintf("✅ Payment confirmed for invoice %s. Received %s %s.", invoice.PublicID, received, invoice.PayableNetwork)
 	case InvoiceStatusUnderpaid:
 		if classification == "underpaid_fee_window" {
-			return fmt.Sprintf("Invoice %s was likely affected by an exchange fee. Received %s %s, expected %s %s. Choose whether to accept the payment or wait for the remaining balance.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
+			return fmt.Sprintf("⚠️ Partial payment (likely fee-related): invoice %s received %s %s, expected %s %s. Please review and decide whether to accept.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
 		}
-		return fmt.Sprintf("Invoice %s received %s %s instead of %s %s. Manual action required.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
+		return fmt.Sprintf("⚠️ Underpayment detected: invoice %s received %s %s (expected %s %s). Manual review required.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
 	case InvoiceStatusManualReview:
-		return fmt.Sprintf("Invoice %s received %s %s after expiration. Status set to Manual Review.", invoice.PublicID, received, invoice.PayableNetwork)
+		if classification == "overpaid" {
+			return fmt.Sprintf("⚠️ Overpayment detected: invoice %s received %s %s, expected %s %s. Status set to Manual Review.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
+		}
+		return fmt.Sprintf("⏳ Late payment: invoice %s received %s %s after expiration. Status set to Manual Review.", invoice.PublicID, received, invoice.PayableNetwork)
 	default:
-		return fmt.Sprintf("Invoice %s changed status to %s.", invoice.PublicID, invoice.Status)
+		return fmt.Sprintf("🔔 Invoice %s status updated to %s.", invoice.PublicID, invoice.Status)
 	}
 }
 

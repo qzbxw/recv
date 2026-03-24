@@ -134,3 +134,84 @@ export type APIKeyListResponse = {
 export type WebhookListResponse = {
   items: WebhookEndpoint[] | null;
 };
+
+export type AdminInvoice = {
+  id: number;
+  public_id: string;
+  seller_id: number;
+  seller_username: string;
+  seller_email: string;
+  kind: "merchant" | "subscription";
+  plan_code: string;
+  title: string;
+  base_amount_usd: string;
+  payable_amount: string;
+  payable_network: Network;
+  destination_address: string;
+  payment_comment: string;
+  status: string;
+  classification: string;
+  tx_hash: string;
+  expires_at: string;
+  paid_at: string | null;
+  created_at: string;
+  checkout_url: string;
+};
+
+export type AdminOverviewResponse = {
+  generated_at: string;
+  totals: {
+    invoices_total: number;
+    paid_total: number;
+    awaiting_total: number;
+    underpaid_total: number;
+    manual_review_total: number;
+    expired_total: number;
+    merchant_paid_total: number;
+    subscription_paid_total: number;
+    gross_paid_usd: string;
+    merchant_paid_usd: string;
+    subscription_paid_usd: string;
+    open_invoice_usd: string;
+    sellers_total: number;
+    active_subscribers: number;
+    blocked_sellers: number;
+    wallets_total: number;
+    api_keys_active: number;
+    webhook_endpoints: number;
+  };
+  daily_sales: Array<{
+    date: string;
+    paid_usd: string;
+    merchant_paid_usd: string;
+    subscription_paid_usd: string;
+    paid_count: number;
+    created_count: number;
+    underpaid_count: number;
+    manual_review_count: number;
+  }>;
+  network_breakdown: Array<{
+    network: Network;
+    paid_usd: string;
+    paid_count: number;
+    total_count: number;
+  }>;
+  status_breakdown: Array<{
+    status: string;
+    count: number;
+    usd: string;
+  }>;
+  plan_breakdown: Array<{
+    plan_code: string;
+    paid_usd: string;
+    paid_count: number;
+  }>;
+  recent_sales: AdminInvoice[];
+};
+
+export type AdminInvoiceListResponse = {
+  items: AdminInvoice[];
+  total: number;
+  page: number;
+  page_size: number;
+};

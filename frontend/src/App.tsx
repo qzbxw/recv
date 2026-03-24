@@ -3,6 +3,7 @@ import { UIProvider } from "./lib/ui";
 import { getStoredToken } from "./lib/api";
 import { buildAuthHref } from "./lib/routing";
 import { CheckoutPage } from "./pages/CheckoutPage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { AuthPortalPage } from "./pages/AuthPortalPage";
 import { DeveloperPortalPage } from "./pages/DeveloperPortalPage";
 import { LandingPage } from "./pages/LandingPage";
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/lend" element={<Navigate to="/" replace />} />
         <Route path="/auth" element={<AuthPortalPage />} />
+        <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/console" element={<ProtectedConsoleRoute />} />
         <Route path="/developers" element={<DeveloperPortalPage />} />
         <Route path="/dev" element={<PlanPage variant="dev" />} />

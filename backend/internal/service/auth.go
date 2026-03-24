@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/store"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -74,76 +75,95 @@ func NewAuthService(st *store.Store, jwtSecret string, telegramBotToken string, 
 func (s *AuthService) AuthenticateTelegram(ctx context.Context, input TelegramAuthInput) (AuthResult, error) {
 	telegramID, username, err := s.resolveTelegramIdentity(input)
 	if err != nil {
+		metrics.IncAuthAttempt("telegram_identity", "failure", "resolve_identity")
 		return AuthResult{}, err
 	}
 
 	seller, err := s.store.UpsertSellerByTelegram(ctx, telegramID, username)
 	if err != nil {
+		metrics.IncAuthAttempt("telegram_identity", "failure", "upsert_seller")
 		return AuthResult{}, fmt.Errorf("upsert seller: %w", err)
 	}
+	metrics.IncAuthAttempt("telegram_identity", "success", "resolved")
 	return s.issueAuthResult(seller)
 }
 
 func (s *AuthService) RequestTelegramLoginCode(ctx context.Context, input TelegramCodeRequestInput) error {
 	username, err := normalizeTelegramUsername(input.Username)
 	if err != nil {
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "normalize_username")
 		return err
 	}
 	if strings.TrimSpace(s.telegramBotToken) == "" {
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "bot_token_missing")
 		return errors.New("TELEGRAM_BOT_TOKEN is required for Telegram auth")
 	}
 
 	seller, err := s.store.GetSellerByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
+			metrics.IncAuthAttempt("telegram_code_request", "failure", "seller_not_found")
 			return errors.New("Telegram username not found. Open @reqstxyz_bot, press Start, then request the code again")
 		}
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "load_seller")
 		return fmt.Errorf("load seller by username: %w", err)
 	}
 	if seller.TelegramID == nil {
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "telegram_unlinked")
 		return errors.New("Telegram account is not linked yet. Open @reqstxyz_bot and press Start first")
 	}
 
 	code, err := randomDigits(6)
 	if err != nil {
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "generate_code")
 		return fmt.Errorf("generate auth code: %w", err)
 	}
 
 	expiresAt := time.Now().Add(telegramLoginCodeTTL)
 	if err := s.store.StoreTelegramAuthCode(ctx, seller.ID, hashTelegramCode(seller.ID, code), expiresAt); err != nil {
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "store_code")
 		return fmt.Errorf("store telegram auth code: %w", err)
 	}
 
 	if err := s.sendTelegramLoginCode(ctx, *seller.TelegramID, username, code, expiresAt); err != nil {
+		metrics.IncAuthAttempt("telegram_code_request", "failure", "send_code")
 		return fmt.Errorf("send telegram auth code: %w", err)
 	}
+	metrics.IncAuthAttempt("telegram_code_request", "success", "sent")
 	return nil
 }
 
 func (s *AuthService) AuthenticateTelegramCode(ctx context.Context, input TelegramCodeLoginInput) (AuthResult, error) {
 	username, err := normalizeTelegramUsername(input.Username)
 	if err != nil {
+		metrics.IncAuthAttempt("telegram_code_login", "failure", "normalize_username")
 		return AuthResult{}, err
 	}
 	code := strings.TrimSpace(input.Code)
 	if code == "" {
+		metrics.IncAuthAttempt("telegram_code_login", "failure", "missing_code")
 		return AuthResult{}, errors.New("verification code is required")
 	}
 
 	seller, err := s.store.GetSellerByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
+			metrics.IncAuthAttempt("telegram_code_login", "failure", "seller_not_found")
 			return AuthResult{}, errors.New("Telegram username not found. Open @reqstxyz_bot, press Start, then request the code again")
 		}
+		metrics.IncAuthAttempt("telegram_code_login", "failure", "load_seller")
 		return AuthResult{}, fmt.Errorf("load seller by username: %w", err)
 	}
 
 	if err := s.store.ConsumeTelegramAuthCode(ctx, seller.ID, hashTelegramCode(seller.ID, code)); err != nil {
 		if errors.Is(err, store.ErrNotFound) {
+			metrics.IncAuthAttempt("telegram_code_login", "failure", "invalid_code")
 			return AuthResult{}, errors.New("verification code is invalid or expired")
 		}
+		metrics.IncAuthAttempt("telegram_code_login", "failure", "consume_code")
 		return AuthResult{}, fmt.Errorf("consume telegram auth code: %w", err)
 	}
+	metrics.IncAuthAttempt("telegram_code_login", "success", "verified")
 	return s.issueAuthResult(seller)
 }
 
@@ -152,13 +172,16 @@ func (s *AuthService) ParseToken(tokenString string) (Claims, error) {
 		return s.jwtSecret, nil
 	})
 	if err != nil {
+		metrics.IncAuthAttempt("jwt_parse", "failure", "parse")
 		return Claims{}, fmt.Errorf("parse token: %w", err)
 	}
 
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
+		metrics.IncAuthAttempt("jwt_parse", "failure", "invalid")
 		return Claims{}, errors.New("invalid token")
 	}
+	metrics.IncAuthAttempt("jwt_parse", "success", "valid")
 	return *claims, nil
 }
 
@@ -169,8 +192,10 @@ func (s *AuthService) issueAuthResult(seller store.Seller) (AuthResult, error) {
 
 	token, err := s.issueToken(seller)
 	if err != nil {
+		metrics.IncAuthAttempt("issue_token", "failure", "sign")
 		return AuthResult{}, err
 	}
+	metrics.IncAuthAttempt("issue_token", "success", "signed")
 
 	return AuthResult{
 		Token:  token,
@@ -417,12 +442,14 @@ func (s *AuthService) sendTelegramLoginCode(ctx context.Context, chatID int64, u
 
 	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 	if err != nil {
+		metrics.ObserveUpstream("telegram_bot_api", "send_login_code", "failure", 0)
 		return fmt.Errorf("telegram sendMessage: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		metrics.ObserveUpstream("telegram_bot_api", "send_login_code", "failure", 0)
 		return fmt.Errorf("telegram sendMessage failed: %s", strings.TrimSpace(string(respBody)))
 	}
 
@@ -431,10 +458,13 @@ func (s *AuthService) sendTelegramLoginCode(ctx context.Context, chatID int64, u
 		Description string `json:"description"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		metrics.ObserveUpstream("telegram_bot_api", "send_login_code", "failure", 0)
 		return fmt.Errorf("decode telegram sendMessage: %w", err)
 	}
 	if !result.OK {
+		metrics.ObserveUpstream("telegram_bot_api", "send_login_code", "failure", 0)
 		return fmt.Errorf("telegram sendMessage failed: %s", result.Description)
 	}
+	metrics.ObserveUpstream("telegram_bot_api", "send_login_code", "success", 0)
 	return nil
 }

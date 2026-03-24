@@ -9,7 +9,9 @@ import (
 
 type Config struct {
 	AppEnv               string
+	AppRuntime           string
 	HTTPPort             string
+	MetricsPort          string
 	DatabaseURL          string
 	JWTSecret            string
 	InternalToken        string
@@ -28,11 +30,16 @@ type Config struct {
 	BaseRPCURL           string
 	ArbitrumRPCURL       string
 	BSCRPCURL            string
+	AdminUsername        string
+	AdminPasswordHash    string
+	AdminJWTSecret       string
+	AdminSessionTTL      time.Duration
 }
 
 func Load() (Config, error) {
 	cfg := Config{
 		AppEnv:               envOrDefault("APP_ENV", "development"),
+		AppRuntime:           envOrDefault("APP_RUNTIME", "api"),
 		HTTPPort:             envOrDefault("HTTP_PORT", "8080"),
 		DatabaseURL:          os.Getenv("DATABASE_URL"),
 		JWTSecret:            os.Getenv("JWT_SECRET"),
@@ -50,7 +57,11 @@ func Load() (Config, error) {
 		BaseRPCURL:           envOrDefault("BASE_RPC_URL", "https://base.llamarpc.com"),
 		ArbitrumRPCURL:       envOrDefault("ARBITRUM_RPC_URL", "https://arbitrum.llamarpc.com"),
 		BSCRPCURL:            envOrDefault("BSC_RPC_URL", "https://bsc.llamarpc.com"),
+		AdminUsername:        os.Getenv("ADMIN_USERNAME"),
+		AdminPasswordHash:    os.Getenv("ADMIN_PASSWORD_HASH"),
+		AdminJWTSecret:       envOrDefault("ADMIN_JWT_SECRET", os.Getenv("JWT_SECRET")),
 	}
+	cfg.MetricsPort = envOrDefault("METRICS_PORT", defaultMetricsPort(cfg.AppRuntime))
 
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DATABASE_URL is required")
@@ -68,7 +79,24 @@ func Load() (Config, error) {
 	}
 	cfg.WatcherPollInterval = pollInterval
 
+	adminSessionTTL, err := time.ParseDuration(envOrDefault("ADMIN_SESSION_TTL", "12h"))
+	if err != nil {
+		return Config{}, fmt.Errorf("ADMIN_SESSION_TTL: %w", err)
+	}
+	cfg.AdminSessionTTL = adminSessionTTL
+
 	return cfg, nil
+}
+
+func defaultMetricsPort(runtime string) string {
+	switch runtime {
+	case "watcher":
+		return "9091"
+	case "bot":
+		return "9092"
+	default:
+		return "9090"
+	}
 }
 
 func envOrDefault(name string, fallback string) string {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/store"
 
 	"github.com/shopspring/decimal"
@@ -25,26 +26,33 @@ func NewPaymentService(st *store.Store) *PaymentService {
 }
 
 func (s *PaymentService) ProcessObservedTransfer(ctx context.Context, transfer store.ObservedTransfer) (PaymentResult, error) {
+	source := metrics.SourceFromContext(ctx)
 	inserted, err := s.store.RecordObservedTransfer(ctx, transfer)
 	if err != nil {
+		metrics.ObservePayment(source, string(transfer.Network), "record_failed", "none", false, transfer.Amount.InexactFloat64())
 		return PaymentResult{}, err
 	}
 	if !inserted {
+		metrics.ObservePayment(source, string(transfer.Network), "duplicate", "none", false, transfer.Amount.InexactFloat64())
 		return PaymentResult{Classification: "duplicate"}, nil
 	}
 
 	invoice, classification, status, err := s.matchTransfer(ctx, transfer)
 	if err != nil {
+		metrics.ObservePayment(source, string(transfer.Network), "match_failed", "none", false, transfer.Amount.InexactFloat64())
 		return PaymentResult{}, err
 	}
 	if invoice == nil {
+		metrics.ObservePayment(source, string(transfer.Network), classification, "none", false, transfer.Amount.InexactFloat64())
 		return PaymentResult{Classification: classification}, nil
 	}
 
-	updated, err := s.store.CompleteInvoicePayment(ctx, invoice.ID, transfer.TxHash, status, classification, transfer.Amount, transfer.ObservedAt)
+	updated, err := s.store.CompleteInvoicePayment(ctx, invoice.ID, invoice.Status, transfer.TxHash, status, classification, transfer.Amount, transfer.ObservedAt)
 	if err != nil {
+		metrics.ObservePayment(source, string(transfer.Network), classification, string(status), true, transfer.Amount.InexactFloat64())
 		return PaymentResult{}, err
 	}
+	metrics.ObservePayment(source, string(transfer.Network), classification, string(updated.Status), true, transfer.Amount.InexactFloat64())
 	return PaymentResult{
 		Invoice:        &updated,
 		Classification: classification,
@@ -97,6 +105,9 @@ func classifyInvoiceTransfer(invoice store.Invoice, amount decimal.Decimal, obse
 			return &invoice, "underpaid_fee_window", store.InvoiceStatusUnderpaid
 		}
 		return &invoice, "underpaid", store.InvoiceStatusUnderpaid
+	}
+	if amount.GreaterThan(invoice.PayableAmount) {
+		return &invoice, "overpaid", store.InvoiceStatusManualReview
 	}
 	return &invoice, "paid_exact", store.InvoiceStatusPaid
 }

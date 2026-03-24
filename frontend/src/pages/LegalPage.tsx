@@ -24,7 +24,7 @@ const COPY = {
       kicker: "PRIVACY POLICY",
       title: "Privacy Policy для reqst",
       summary:
-        "Это рабочий черновик privacy-страницы под текущий MVP. Он отражает реальное поведение кода: авторизацию через Telegram, кошельки продавцов, метаданные инвойсов, публичные страницы оплаты, мониторинг платежей и уведомления. Перед публикацией просто замените реквизиты оператора и финальные юридические параметры.",
+        "Настоящая Политика конфиденциальности описывает принципы обработки и защиты персональных данных пользователей сервиса Reqst. Мы обеспечиваем прозрачность процессов авторизации через Telegram, мониторинга блокчейн-транзакций и уведомлений о статусах платежей.",
       updatedLabel: "Последнее обновление",
       operatorLabel: "Оператор сервиса",
       draftTitle: "Что заполнить перед публикацией",
@@ -121,7 +121,7 @@ const COPY = {
       kicker: "PRIVACY POLICY",
       title: "Privacy Policy for reqst",
       summary:
-        "This is a working draft privacy page for the current MVP. It reflects the actual code paths: Telegram auth, seller wallets, invoice metadata, public checkout, payment monitoring, and seller notifications. Replace the operator details and final legal settings before publishing.",
+        "This Privacy Policy outlines how Reqst collects, uses, and protects your information. We are committed to transparency in our Telegram-based authentication, blockchain monitoring, and payment notification processes.",
       updatedLabel: "Last updated",
       operatorLabel: "Service operator",
       draftTitle: "Fill these items before publishing",
@@ -220,7 +220,7 @@ const COPY = {
       kicker: "TERMS OF SERVICE",
       title: "Terms of Service для reqst",
       summary:
-        "Это черновик пользовательских условий под фактический продукт: панель управления, ссылки на оплату, сопоставление платежей, подписка PRO и некастодиальная модель. Документ уже готов по структуре, но вам нужно подставить свои реквизиты, правила возврата и юрисдикцию.",
+        "Данные Условия использования регулируют порядок предоставления сервиса Reqst, включая функционал панели управления, формирование платежных ссылок и мониторинг транзакций. Использование сервиса подразумевает полное согласие с изложенными правилами.",
       updatedLabel: "Последнее обновление",
       operatorLabel: "Оператор сервиса",
       draftTitle: "Что заполнить перед публикацией",
@@ -311,7 +311,7 @@ const COPY = {
       kicker: "TERMS OF SERVICE",
       title: "Terms of Service for reqst",
       summary:
-        "This is a working terms draft for the actual product: seller console, checkout links, payment matching, PRO subscription, and a non-custodial model. The structure is ready, but you still need to insert your operator details, refund rules, and governing law.",
+        "These Terms of Service govern your use of the Reqst platform, including the seller dashboard, checkout link generation, and transaction monitoring features. By using our service, you agree to comply with these terms.",
       updatedLabel: "Last updated",
       operatorLabel: "Service operator",
       draftTitle: "Fill these items before publishing",
