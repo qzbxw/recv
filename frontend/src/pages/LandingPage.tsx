@@ -561,25 +561,14 @@ export function LandingPage() {
             <p>{copy.networks.body}</p>
           </div>
 
-          <div className="lend-network-layout lend-reveal--2">
-            <div className="lend-network-grid">
-              {copy.networks.rails.map((rail) => (
-                <article key={rail.title} className="lend-network-card">
-                  <div className="lend-network-badge">{rail.name}</div>
-                  <h3>{rail.title}</h3>
-                  <p>{rail.body}</p>
-                </article>
-              ))}
-            </div>
-
-            <aside className="lend-soon-card">
-              <span className="lend-section-kicker">{copy.networks.soon.title}</span>
-              <div className="lend-soon-tags">
-                <strong>{copy.networks.soon.api}</strong>
-                <strong>{copy.networks.soon.b2b}</strong>
-              </div>
-              <p>{copy.networks.soon.body}</p>
-            </aside>
+          <div className="lend-network-grid lend-reveal--2">
+            {copy.networks.rails.map((rail) => (
+              <article key={rail.title} className="lend-network-card">
+                <div className="lend-network-badge">{rail.name}</div>
+                <h3>{rail.title}</h3>
+                <p>{rail.body}</p>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -590,14 +579,17 @@ export function LandingPage() {
             <p>{copy.faq.body}</p>
           </div>
 
-          <div className="lend-faq-grid lend-reveal--2">
+          <div className="lend-faq-stack lend-reveal--2">
             {copy.faq.items.map((item, index) => {
               const isOpen = index === openFaq;
               return (
                 <article key={item.question} className={`lend-faq-item${isOpen ? " is-open" : ""}`}>
                   <button type="button" className="lend-faq-trigger" onClick={() => setOpenFaq(isOpen ? -1 : index)}>
                     <span>{item.question}</span>
-                    <strong aria-hidden="true">{isOpen ? "−" : "+"}</strong>
+                    <div className="lend-faq-icon">
+                      <div className="lend-faq-icon-line" />
+                      <div className="lend-faq-icon-line" />
+                    </div>
                   </button>
                   <div className="lend-faq-answer-wrapper">
                     <div className="lend-faq-answer">
