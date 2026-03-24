@@ -52,11 +52,26 @@ export function AuthPortalPage() {
   const hasTelegramInitData = useMemo(() => Boolean(window.Telegram?.WebApp?.initData), []);
   const hasSession = Boolean(getStoredToken());
 
+  // 1. If we already have a session, go to console immediately
   useEffect(() => {
-    // We only need the widget if we are NOT in the WebApp
-    if (hasTelegramInitData) return;
+    if (hasSession) {
+      navigate("/console", { replace: true });
+    }
+  }, [hasSession, navigate]);
+
+  // 2. If we are inside Telegram WebApp, try auto-login once
+  useEffect(() => {
+    if (hasTelegramInitData && !hasSession) {
+      void performAuth();
+    }
+  }, [hasTelegramInitData, hasSession]);
+
+  useEffect(() => {
+    // We only need the widget if we are NOT in the WebApp and NO session
+    if (hasTelegramInitData || hasSession) return;
 
     const script = document.createElement("script");
+...
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.setAttribute("data-telegram-login", BOT_NAME);
     script.setAttribute("data-size", "large");
