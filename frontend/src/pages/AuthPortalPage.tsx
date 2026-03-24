@@ -49,8 +49,22 @@ export function AuthPortalPage() {
   const text = COPY[language];
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const hasTelegramInitData = useMemo(() => Boolean(window.Telegram?.WebApp?.initData), []);
   const hasSession = Boolean(getStoredToken());
+  const [initData, setInitData] = useState(window.Telegram?.WebApp?.initData || "");
+
+  useEffect(() => {
+    if (!initData) {
+      const interval = setInterval(() => {
+        const data = window.Telegram?.WebApp?.initData;
+        if (data) {
+          setInitData(data);
+          clearInterval(interval);
+        }
+      }, 50);
+      setTimeout(() => clearInterval(interval), 2000); // Stop after 2s
+      return () => clearInterval(interval);
+    }
+  }, [initData]);
 
   // 1. If we already have a session, go to console immediately
   useEffect(() => {
@@ -61,14 +75,14 @@ export function AuthPortalPage() {
 
   // 2. If we are inside Telegram WebApp, try auto-login once
   useEffect(() => {
-    if (hasTelegramInitData && !hasSession) {
-      void performAuth();
+    if (initData && !hasSession) {
+      void performAuth(initData);
     }
-  }, [hasTelegramInitData, hasSession]);
+  }, [initData, hasSession]);
 
   useEffect(() => {
     // We only need the widget if we are NOT in the WebApp and NO session
-    if (hasTelegramInitData || hasSession) return;
+    if (initData || hasSession) return;
 
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-widget.js?22";
@@ -103,17 +117,17 @@ export function AuthPortalPage() {
       if (container) container.innerHTML = "";
       delete (window as any).onTelegramAuth;
     };
-  }, [navigate, hasTelegramInitData, hasSession]);
+  }, [navigate, initData, hasSession]);
 
-  async function performAuth() {
+  async function performAuth(manualInitData?: string) {
     try {
       setLoading(true);
       setError("");
-      const initData = window.Telegram?.WebApp?.initData;
-      if (!initData) {
+      const sessionInitData = manualInitData || window.Telegram?.WebApp?.initData;
+      if (!sessionInitData) {
         throw new Error("No Telegram session found");
       }
-      const result = await authenticate({ init_data: initData });
+      const result = await authenticate({ init_data: sessionInitData });
       setStoredToken(result.token);
       navigate("/console");
     } catch (err) {
@@ -157,7 +171,7 @@ export function AuthPortalPage() {
                 <p>{text.telegramBody}</p>
               </div>
               <div className="auth-card__actions">
-                {hasTelegramInitData ? (
+                {initData ? (
                   <button 
                     type="button" 
                     className="lend-primary lend-primary--large"
