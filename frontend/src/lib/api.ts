@@ -60,36 +60,15 @@ export async function authenticateTelegram(payload: { init_data?: string; widget
   });
 }
 
-export async function loginWithEmail(payload: { email: string; password: string }) {
-  return request<{ token: string; seller: MeResponse["seller"] }>("/api/auth/email/login", {
+export async function requestTelegramLoginCode(payload: { username: string }) {
+  return request<{ ok: boolean }>("/api/auth/telegram/request-code", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function requestEmailRegistrationCode(payload: { email: string }) {
-  return request<{ ok: boolean }>("/api/auth/email/request-code", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function registerWithEmail(payload: { email: string; code: string; password: string }) {
-  return request<{ token: string; seller: MeResponse["seller"] }>("/api/auth/email/register", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function requestPasswordResetCode(payload: { email: string }) {
-  return request<{ ok: boolean }>("/api/auth/email/request-password-reset", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function resetPassword(payload: { email: string; code: string; new_password: string }) {
-  return request<{ token: string; seller: MeResponse["seller"] }>("/api/auth/email/reset-password", {
+export async function loginWithTelegramCode(payload: { username: string; code: string }) {
+  return request<{ token: string; seller: MeResponse["seller"] }>("/api/auth/telegram/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -101,27 +80,6 @@ export async function fetchMe(token: string) {
 
 export async function updateContactEmail(token: string, payload: { email: string }) {
   return request<{ seller: MeResponse["seller"] }>("/api/me/contact-email", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, token);
-}
-
-export async function requestEmailLinkCode(token: string, payload: { email: string }) {
-  return request<{ ok: boolean }>("/api/me/email-auth/request-code", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, token);
-}
-
-export async function confirmEmailLink(token: string, payload: { email: string; code: string; password: string }) {
-  return request<{ seller: MeResponse["seller"] }>("/api/me/email-auth/confirm", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, token);
-}
-
-export async function linkTelegram(token: string, payload: { init_data?: string; widget_data?: string; telegram_id?: number; username?: string }) {
-  return request<{ seller: MeResponse["seller"] }>("/api/me/telegram/link", {
     method: "POST",
     body: JSON.stringify(payload),
   }, token);

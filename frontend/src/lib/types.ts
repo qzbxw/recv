@@ -10,9 +10,7 @@ export type Seller = {
   subscription_ends_at: string | null;
   free_invoices_used: number;
   is_blocked: boolean;
-  email_verified_at: string | null;
   telegram_linked_at: string | null;
-  has_password: boolean;
   created_at: string;
 };
 

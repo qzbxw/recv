@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -29,12 +28,6 @@ type Config struct {
 	BaseRPCURL           string
 	ArbitrumRPCURL       string
 	BSCRPCURL            string
-	SMTPHost             string
-	SMTPPort             string
-	SMTPUsername         string
-	SMTPPassword         string
-	SMTPFromEmail        string
-	SMTPFromName         string
 }
 
 func Load() (Config, error) {
@@ -57,12 +50,6 @@ func Load() (Config, error) {
 		BaseRPCURL:           envOrDefault("BASE_RPC_URL", "https://base.llamarpc.com"),
 		ArbitrumRPCURL:       envOrDefault("ARBITRUM_RPC_URL", "https://arbitrum.llamarpc.com"),
 		BSCRPCURL:            envOrDefault("BSC_RPC_URL", "https://bsc.llamarpc.com"),
-		SMTPHost:             strings.TrimSpace(os.Getenv("SMTP_HOST")),
-		SMTPPort:             envOrDefault("SMTP_PORT", "587"),
-		SMTPUsername:         os.Getenv("SMTP_USERNAME"),
-		SMTPPassword:         os.Getenv("SMTP_PASSWORD"),
-		SMTPFromEmail:        strings.TrimSpace(os.Getenv("SMTP_FROM_EMAIL")),
-		SMTPFromName:         strings.TrimSpace(envOrDefault("SMTP_FROM_NAME", "reqst")),
 	}
 
 	if cfg.DatabaseURL == "" {

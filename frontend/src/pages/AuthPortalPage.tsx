@@ -3,19 +3,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   authenticateTelegram,
   getStoredToken,
-  loginWithEmail,
-  registerWithEmail,
-  requestEmailRegistrationCode,
-  requestPasswordResetCode,
-  resetPassword,
+  loginWithTelegramCode,
+  requestTelegramLoginCode,
   setStoredToken,
 } from "../lib/api";
 import { sanitizeNextPath } from "../lib/routing";
 import { useUI } from "../lib/ui";
 
 const BOT_URL = "https://t.me/reqstxyz_bot";
-
-type EmailMode = "login" | "register" | "reset";
 
 declare global {
   interface Window {
@@ -32,68 +27,52 @@ declare global {
 const COPY = {
   ru: {
     title: "Вход в Reqst",
-    body: "Используйте почту для входа или Telegram Mini App для быстрого доступа.",
-    telegramTitle: "Telegram",
-    telegramBody: "Вход в один клик через Mini App.",
-    openBot: "Открыть бота",
-    continueTelegram: "Войти через Telegram",
-    signingIn: "Авторизация...",
-    landing: "На главную",
-    console: "В панель управления",
-    emailTitle: "Почта и пароль",
-    emailBody: "Классический вход через email.",
-    emailModes: {
-      login: "Вход",
-      register: "Регистрация",
-      reset: "Сброс",
-    },
-    email: "Email",
-    emailPlaceholder: "name@example.com",
-    password: "Пароль",
-    passwordPlaceholder: "Минимум 8 символов",
-    newPassword: "Новый пароль",
+    body: "Основной вход теперь только через Telegram: введите свой username, получите код в боте и подтвердите вход.",
+    browserTitle: "Telegram код",
+    browserBody: "Сценарий для браузера и консоли без Login Widget.",
+    username: "Telegram username",
+    usernamePlaceholder: "@yourname",
     code: "Код",
     codePlaceholder: "123456",
-    sendCode: "Код",
-    sendingCode: "...",
+    sendCode: "Получить код",
+    sendingCode: "Отправка...",
     loginAction: "Войти",
-    registerAction: "Создать аккаунт",
-    resetAction: "Обновить пароль",
-    codeSent: "Код отправлен на почту.",
-    browserHint: "В браузере используйте email.",
-    redirectHint: "Вы будете перенаправлены после входа.",
+    signingIn: "Авторизация...",
+    codeSent: "Код отправлен в Telegram.",
+    browserHint: "Сначала откройте бота и нажмите Start, чтобы мы могли написать вам в личку.",
+    browserSteps: "Шаги: открыть бота, ввести @username, получить код, вставить его сюда.",
+    botStart: "Откройте",
+    botStartSuffix: "и нажмите Start.",
+    telegramTitle: "Telegram Mini App",
+    telegramBody: "Если вы уже внутри Telegram, вход произойдет автоматически.",
+    openBot: "Открыть бота",
+    continueTelegram: "Войти через Telegram",
+    landing: "На главную",
+    redirectHint: "После входа откроется нужный раздел.",
   },
   en: {
     title: "Sign in to Reqst",
-    body: "Use email for browser access or Telegram for quick entry.",
-    telegramTitle: "Telegram",
-    telegramBody: "Instant access via Mini App.",
-    openBot: "Open Bot",
-    continueTelegram: "Login with Telegram",
-    signingIn: "Wait...",
-    landing: "Home",
-    console: "Console",
-    emailTitle: "Email",
-    emailBody: "Sign in with your email and password.",
-    emailModes: {
-      login: "Login",
-      register: "Sign up",
-      reset: "Reset",
-    },
-    email: "Email",
-    emailPlaceholder: "you@example.com",
-    password: "Password",
-    passwordPlaceholder: "8+ characters",
-    newPassword: "New password",
+    body: "Reqst now uses Telegram as the main auth method: enter your username, receive a code from the bot, and confirm sign-in.",
+    browserTitle: "Telegram code",
+    browserBody: "Browser and console sign-in without the Login Widget.",
+    username: "Telegram username",
+    usernamePlaceholder: "@yourname",
     code: "Code",
     codePlaceholder: "123456",
     sendCode: "Get code",
-    sendingCode: "...",
+    sendingCode: "Sending...",
     loginAction: "Login",
-    registerAction: "Sign up",
-    resetAction: "Reset",
-    codeSent: "Code sent to your email.",
-    browserHint: "Email is the main path in browsers.",
+    signingIn: "Signing in...",
+    codeSent: "Code sent to Telegram.",
+    browserHint: "Open the bot and press Start first so we can message your account.",
+    browserSteps: "Flow: open the bot, enter your @username, request the code, and paste it here.",
+    botStart: "Open",
+    botStartSuffix: "and press Start first.",
+    telegramTitle: "Telegram Mini App",
+    telegramBody: "If you're already inside Telegram, sign-in happens automatically.",
+    openBot: "Open Bot",
+    continueTelegram: "Login with Telegram",
+    landing: "Home",
     redirectHint: "You will be redirected after sign-in.",
   },
 } as const;
@@ -107,12 +86,9 @@ export function AuthPortalPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
-  const [emailMode, setEmailMode] = useState<EmailMode>("login");
   const [form, setForm] = useState({
-    email: "",
-    password: "",
+    username: "",
     code: "",
-    newPassword: "",
   });
   const hasSession = Boolean(getStoredToken());
   const [initData, setInitData] = useState(window.Telegram?.WebApp?.initData || "");
@@ -166,59 +142,12 @@ export function AuthPortalPage() {
     }
   }
 
-  async function handleEmailSubmit(event: FormEvent) {
-    event.preventDefault();
-    try {
-      setLoading(true);
-      setError("");
-      setMessage("");
-
-      if (emailMode === "login") {
-        const result = await loginWithEmail({
-          email: form.email.trim(),
-          password: form.password,
-        });
-        setStoredToken(result.token);
-        navigate(nextPath, { replace: true });
-        return;
-      }
-
-      if (emailMode === "register") {
-        const result = await registerWithEmail({
-          email: form.email.trim(),
-          code: form.code.trim(),
-          password: form.password,
-        });
-        setStoredToken(result.token);
-        navigate(nextPath, { replace: true });
-        return;
-      }
-
-      const result = await resetPassword({
-        email: form.email.trim(),
-        code: form.code.trim(),
-        new_password: form.newPassword,
-      });
-      setStoredToken(result.token);
-      navigate(nextPath, { replace: true });
-    } catch (err) {
-      setError((err as Error).message);
-      setLoading(false);
-    }
-  }
-
   async function handleSendCode() {
     try {
       setSendingCode(true);
       setError("");
       setMessage("");
-
-      if (emailMode === "register") {
-        await requestEmailRegistrationCode({ email: form.email.trim() });
-      } else {
-        await requestPasswordResetCode({ email: form.email.trim() });
-      }
-
+      await requestTelegramLoginCode({ username: form.username.trim() });
       setMessage(text.codeSent);
     } catch (err) {
       setError((err as Error).message);
@@ -227,17 +156,23 @@ export function AuthPortalPage() {
     }
   }
 
-  function setMode(mode: EmailMode) {
-    setEmailMode(mode);
-    setError("");
-    setMessage("");
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    try {
+      setLoading(true);
+      setError("");
+      setMessage("");
+      const result = await loginWithTelegramCode({
+        username: form.username.trim(),
+        code: form.code.trim(),
+      });
+      setStoredToken(result.token);
+      navigate(nextPath, { replace: true });
+    } catch (err) {
+      setError((err as Error).message);
+      setLoading(false);
+    }
   }
-
-  const emailActionLabel = emailMode === "login"
-    ? text.loginAction
-    : emailMode === "register"
-      ? text.registerAction
-      : text.resetAction;
 
   return (
     <main className="shell checkout-shell">
@@ -259,99 +194,64 @@ export function AuthPortalPage() {
         <div className="auth-portal__copy auth-portal__copy--compact">
           <h1>{text.title}</h1>
           <p>{text.body}</p>
+          <p className="auth-portal__hint">{text.browserSteps}</p>
+          <p className="auth-portal__hint">
+            {text.botStart} <a href={BOT_URL} target="_blank" rel="noreferrer">@reqstxyz_bot</a> {text.botStartSuffix}
+          </p>
           {nextPath !== "/console" ? <p className="auth-portal__hint">{text.redirectHint}</p> : null}
         </div>
 
         <article className="checkout-card checkout-card--lux auth-card auth-card--email auth-card--primary">
           <div className="completion-paper-topline">
             <span className="receipt-brandline">Primary</span>
-            <span className="completion-ticket-no">Email</span>
+            <span className="completion-ticket-no">Browser</span>
           </div>
           <div className="auth-card__content">
-            <h2>{text.emailTitle}</h2>
-            <p className="hero-copy">{text.emailBody}</p>
+            <h2>{text.browserTitle}</h2>
+            <p className="hero-copy">{text.browserBody}</p>
+            <p className="auth-portal__hint">{text.browserHint}</p>
+            <p className="auth-portal__hint">
+              <a href={BOT_URL} target="_blank" rel="noreferrer">@reqstxyz_bot</a>
+            </p>
           </div>
 
-          <div className="auth-mode-switch" role="tablist">
-                {(["login", "register", "reset"] as EmailMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    className={emailMode === mode ? "switch-pill active" : "switch-pill"}
-                    onClick={() => setMode(mode)}
-                  >
-                    {text.emailModes[mode]}
-                  </button>
-                ))}
-          </div>
-
-          <form className="auth-card__form form-grid" onSubmit={handleEmailSubmit}>
+          <form className="auth-card__form form-grid" onSubmit={handleSubmit}>
             <label>
-              {text.email}
+              {text.username}
               <input
-                type="email"
-                placeholder={text.emailPlaceholder}
-                value={form.email}
-                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                type="text"
+                placeholder={text.usernamePlaceholder}
+                value={form.username}
+                onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
               />
             </label>
 
-            {emailMode === "login" ? (
+            <div className="auth-inline-action">
               <label>
-                {text.password}
+                {text.code}
                 <input
-                  type="password"
-                  placeholder={text.passwordPlaceholder}
-                  value={form.password}
-                  onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={text.codePlaceholder}
+                  value={form.code}
+                  onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
                 />
               </label>
-            ) : (
-              <>
-                <div className="auth-inline-action">
-                  <label>
-                    {text.code}
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder={text.codePlaceholder}
-                      value={form.code}
-                      onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
-                    />
-                  </label>
-                  <button type="button" className="ghost-button compact-button" disabled={sendingCode} onClick={() => void handleSendCode()}>
-                    {sendingCode ? text.sendingCode : text.sendCode}
-                  </button>
-                </div>
-
-                {emailMode === "register" ? (
-                  <label>
-                    {text.password}
-                    <input
-                      type="password"
-                      placeholder={text.passwordPlaceholder}
-                      value={form.password}
-                      onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                    />
-                  </label>
-                ) : (
-                  <label>
-                    {text.newPassword}
-                    <input
-                      type="password"
-                      placeholder={text.passwordPlaceholder}
-                      value={form.newPassword}
-                      onChange={(event) => setForm((current) => ({ ...current, newPassword: event.target.value }))}
-                    />
-                  </label>
-                )}
-              </>
-            )}
+              <button type="button" className="ghost-button compact-button" disabled={sendingCode} onClick={() => void handleSendCode()}>
+                {sendingCode ? text.sendingCode : text.sendCode}
+              </button>
+            </div>
 
             <button type="submit" className="lend-primary lend-primary--large" disabled={loading}>
-              {loading ? text.signingIn : emailActionLabel}
+              {loading ? text.signingIn : text.loginAction}
             </button>
           </form>
+
+          <div className="auth-card__actions">
+            <a className="lend-secondary" href={BOT_URL} target="_blank" rel="noreferrer">
+              {text.openBot}
+            </a>
+          </div>
 
           {message ? <div className="auth-feedback auth-feedback--success">{message}</div> : null}
           {error ? <div className="alert">{error}</div> : null}
@@ -365,7 +265,6 @@ export function AuthPortalPage() {
           <div className="auth-card__content">
             <h2>{text.telegramTitle}</h2>
             <p className="hero-copy">{text.telegramBody}</p>
-            <p className="auth-portal__hint">{text.browserHint}</p>
           </div>
           <div className="auth-card__actions">
             {initData ? (

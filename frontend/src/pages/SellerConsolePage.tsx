@@ -4,7 +4,6 @@ import { CustomSelect } from "../components/CustomSelect";
 import {
   cancelInvoice,
   clearStoredToken,
-  confirmEmailLink,
   createBillingCheckout,
   createInvoice,
   createWallet,
@@ -13,13 +12,14 @@ import {
   fetchMe,
   fetchWallets,
   getStoredToken,
-  linkTelegram,
   markInvoicePaid,
-  requestEmailLinkCode,
+  updateContactEmail,
 } from "../lib/api";
 import { buildAuthHref } from "../lib/routing";
 import type { Invoice, MeResponse, Network, Wallet } from "../lib/types";
 import { useUI } from "../lib/ui";
+
+const BOT_URL = "https://t.me/reqstxyz_bot";
 
 declare global {
   interface Window {
@@ -30,7 +30,6 @@ declare global {
         expand?: () => void;
       };
     };
-    onTelegramLinkAuth?: (user: Record<string, string | number>) => Promise<void>;
   }
 }
 
@@ -75,7 +74,7 @@ const COPY = {
     signIn: "Войти",
     signingIn: "Вход...",
     authAction: "Войти",
-    authHint: "Email можно привязать в настройках.",
+    authHint: "Откройте @reqstxyz_bot, нажмите Start и затем войдите через Telegram-код на странице /auth.",
     seller: "Аккаунт",
     plan: "Тариф",
     wallets: "Кошельки",
@@ -157,19 +156,19 @@ const COPY = {
     passwordPlaceholder: "8+ символов",
     codeLabel: "Код",
     codePlaceholder: "123456",
-    saveEmail: "Привязать Email",
+    saveEmail: "Сохранить Email",
     savingEmail: "...",
     sendCode: "Код",
     sendingCode: "...",
-    emailLinked: "Email привязан.",
-    emailAccessTitle: "Email",
-    emailAccessCopy: "Вход по почте и паролю.",
-    emailAccessReady: "Email активен.",
+    emailLinked: "Email сохранен.",
+    emailAccessTitle: "Контактный email",
+    emailAccessCopy: "Не используется для входа. Только для контакта и будущих уведомлений.",
+    emailAccessReady: "Используется только как контакт.",
     telegramAccessTitle: "Telegram",
-    telegramAccessCopy: "Привязка Telegram аккаунта.",
+    telegramAccessCopy: "Telegram теперь является единственным способом входа в Reqst.",
     telegramLinked: "Привязан",
     telegramMissing: "Не привязан",
-    telegramLinkHint: "Привяжите аккаунт через виджет.",
+    telegramLinkHint: "Откройте @reqstxyz_bot, нажмите Start, затем на /auth введите @username и подтвердите код из бота.",
     telegramLinkAction: "Привязать",
     accessCodeSent: "Код отправлен.",
     defaultNetwork: "Сеть",
@@ -195,7 +194,7 @@ const COPY = {
     signIn: "Enter",
     signingIn: "Wait...",
     authAction: "Login",
-    authHint: "Email can be linked in settings.",
+    authHint: "Open @reqstxyz_bot, press Start, then use the Telegram code flow on /auth.",
     seller: "Account",
     plan: "Plan",
     wallets: "Wallets",
@@ -277,19 +276,19 @@ const COPY = {
     passwordPlaceholder: "8+ characters",
     codeLabel: "Code",
     codePlaceholder: "123456",
-    saveEmail: "Link Email",
+    saveEmail: "Save Email",
     savingEmail: "...",
     sendCode: "Code",
     sendingCode: "...",
-    emailLinked: "Email linked.",
-    emailAccessTitle: "Email",
-    emailAccessCopy: "Login with email/password.",
-    emailAccessReady: "Email active.",
+    emailLinked: "Email saved.",
+    emailAccessTitle: "Contact email",
+    emailAccessCopy: "Not used for login. Only for contact and future notifications.",
+    emailAccessReady: "Stored as contact info only.",
     telegramAccessTitle: "Telegram",
-    telegramAccessCopy: "Connect Telegram account.",
+    telegramAccessCopy: "Telegram is now the only sign-in method for Reqst.",
     telegramLinked: "Linked",
     telegramMissing: "Not linked",
-    telegramLinkHint: "Link account via widget.",
+    telegramLinkHint: "Open @reqstxyz_bot, press Start, then use /auth in the browser: enter your @username and confirm the code from the bot.",
     telegramLinkAction: "Link",
     accessCodeSent: "Code sent.",
     defaultNetwork: "Network",
@@ -367,8 +366,6 @@ export function SellerConsolePage() {
   const [accountMessage, setAccountMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingEmail, setSavingEmail] = useState(false);
-  const [sendingEmailCode, setSendingEmailCode] = useState(false);
-  const [linkingTelegram, setLinkingTelegram] = useState(false);
   const [activePanel, setActivePanel] = useState<PanelKey>("overview");
   const [freshLink, setFreshLink] = useState("");
   const [walletForm, setWalletForm] = useState<{ network: Network; address: string }>({ network: "TON", address: "" });
@@ -541,26 +538,9 @@ export function SellerConsolePage() {
     setSession(null);
     setEmailForm({ email: "", code: "", password: "" });
     setFreshLink("");
-      setActivePanel("overview");
-      setAccountMessage("");
-      navigate("/auth", { replace: true });
-  }
-
-  async function handleEmailCodeRequest() {
-    if (!session) {
-      return;
-    }
-    try {
-      setSendingEmailCode(true);
-      await requestEmailLinkCode(session.token, { email: emailForm.email.trim() });
-      setError("");
-      setAccountMessage(text.accessCodeSent);
-    } catch (err) {
-      setError((err as Error).message);
-      setAccountMessage("");
-    } finally {
-      setSendingEmailCode(false);
-    }
+    setActivePanel("overview");
+    setAccountMessage("");
+    navigate("/auth", { replace: true });
   }
 
   async function handleEmailSave(event: FormEvent) {
@@ -570,10 +550,8 @@ export function SellerConsolePage() {
     }
     try {
       setSavingEmail(true);
-      const result = await confirmEmailLink(session.token, {
+      const result = await updateContactEmail(session.token, {
         email: emailForm.email.trim(),
-        code: emailForm.code.trim(),
-        password: emailForm.password,
       });
       setSession((current) => current ? {
         ...current,
@@ -595,72 +573,6 @@ export function SellerConsolePage() {
       setAccountMessage("");
     } finally {
       setSavingEmail(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!session || session.me.seller.telegram_id) {
-      const existing = document.getElementById("console-telegram-link-container");
-      if (existing) {
-        existing.innerHTML = "";
-      }
-      delete window.onTelegramLinkAuth;
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.setAttribute("data-telegram-login", "reqstxyz_bot");
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-radius", "12");
-    script.setAttribute("data-onauth", "onTelegramLinkAuth(user)");
-    script.setAttribute("data-request-access", "write");
-    script.async = true;
-
-    const container = document.getElementById("console-telegram-link-container");
-    if (container) {
-      container.innerHTML = "";
-      container.appendChild(script);
-    }
-
-    window.onTelegramLinkAuth = async (user) => {
-      const params = new URLSearchParams();
-      Object.entries(user).forEach(([key, value]) => params.append(key, String(value)));
-      await handleTelegramLink(params.toString());
-    };
-
-    return () => {
-      if (container) {
-        container.innerHTML = "";
-      }
-      delete window.onTelegramLinkAuth;
-    };
-  }, [session?.token, session?.me.seller.telegram_id]);
-
-  async function handleTelegramLink(widgetData?: string) {
-    if (!session) {
-      return;
-    }
-    try {
-      setLinkingTelegram(true);
-      const initData = widgetData ? undefined : window.Telegram?.WebApp?.initData;
-      const result = await linkTelegram(session.token, widgetData
-        ? { widget_data: widgetData }
-        : { init_data: initData });
-      setSession((current) => current ? {
-        ...current,
-        me: {
-          ...current.me,
-          seller: result.seller,
-        },
-      } : current);
-      setError("");
-      setAccountMessage(text.telegramLinked);
-    } catch (err) {
-      setError((err as Error).message);
-      setAccountMessage("");
-    } finally {
-      setLinkingTelegram(false);
     }
   }
 
@@ -730,6 +642,9 @@ export function SellerConsolePage() {
               {text.authAction}
             </Link>
             <p className="muted">{text.authHint}</p>
+            <p className="muted">
+              <a href={BOT_URL} target="_blank" rel="noreferrer">@reqstxyz_bot</a>
+            </p>
           </div>
         </section>
       ) : (
@@ -1104,51 +1019,27 @@ export function SellerConsolePage() {
                         <p>{text.emailAccessCopy}</p>
                       </div>
 
-                      {session.me.seller.has_password && session.me.seller.email_verified_at ? (
+                      <form onSubmit={handleEmailSave} className="console-email-form console-email-form--credentials">
+                        <label>
+                          {text.emailLabel}
+                          <input
+                            type="email"
+                            placeholder={text.emailPlaceholder}
+                            value={emailForm.email}
+                            onChange={(event) => setEmailForm((current) => ({ ...current, email: event.target.value }))}
+                          />
+                        </label>
+                        <button type="submit" disabled={savingEmail}>
+                          {savingEmail ? text.savingEmail : text.saveEmail}
+                        </button>
+                      </form>
+
+                      {session.me.seller.email ? (
                         <div className="console-access-status">
                           <strong>{session.me.seller.email}</strong>
                           <p>{text.emailAccessReady}</p>
                         </div>
-                      ) : (
-                        <form onSubmit={handleEmailSave} className="console-email-form console-email-form--credentials">
-                          <label>
-                            {text.emailLabel}
-                            <input
-                              type="email"
-                              placeholder={text.emailPlaceholder}
-                              value={emailForm.email}
-                              onChange={(event) => setEmailForm((current) => ({ ...current, email: event.target.value }))}
-                            />
-                          </label>
-                          <div className="console-email-form__row">
-                            <label>
-                              {text.codeLabel}
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                placeholder={text.codePlaceholder}
-                                value={emailForm.code}
-                                onChange={(event) => setEmailForm((current) => ({ ...current, code: event.target.value }))}
-                              />
-                            </label>
-                            <button type="button" className="ghost-button" disabled={sendingEmailCode} onClick={() => void handleEmailCodeRequest()}>
-                              {sendingEmailCode ? text.sendingCode : text.sendCode}
-                            </button>
-                          </div>
-                          <label>
-                            {text.passwordLabel}
-                            <input
-                              type="password"
-                              placeholder={text.passwordPlaceholder}
-                              value={emailForm.password}
-                              onChange={(event) => setEmailForm((current) => ({ ...current, password: event.target.value }))}
-                            />
-                          </label>
-                          <button type="submit" disabled={savingEmail}>
-                            {savingEmail ? text.savingEmail : text.saveEmail}
-                          </button>
-                        </form>
-                      )}
+                      ) : null}
                     </article>
 
                     <article className="console-access-card">
@@ -1163,15 +1054,10 @@ export function SellerConsolePage() {
                           <p>@{session.me.seller.username || session.me.seller.telegram_id}</p>
                         </div>
                       ) : (
-                        <div className="console-telegram-link">
-                          <p className="muted">{text.telegramLinkHint}</p>
-                          {window.Telegram?.WebApp?.initData ? (
-                            <button type="button" disabled={linkingTelegram} onClick={() => void handleTelegramLink()}>
-                              {linkingTelegram ? text.signingIn : text.telegramLinkAction}
-                            </button>
-                          ) : (
-                            <div id="console-telegram-link-container" className="auth-widget-wrapper" />
-                          )}
+                        <div className="console-access-status">
+                          <strong>{text.telegramMissing}</strong>
+                          <p>{text.telegramLinkHint}</p>
+                          <p><a href={BOT_URL} target="_blank" rel="noreferrer">@reqstxyz_bot</a></p>
                         </div>
                       )}
                     </article>

@@ -31,10 +31,7 @@ const sellerSelectColumns = `
 	subscription_ends_at,
 	free_invoices_used,
 	is_blocked,
-	email_verified_at,
 	telegram_linked_at,
-	COALESCE(password_hash, ''),
-	(password_hash IS NOT NULL AND BTRIM(password_hash) <> ''),
 	created_at
 `
 
@@ -75,16 +72,6 @@ func (s *Store) UpsertSellerByTelegram(ctx context.Context, telegramID int64, us
 	return scanSeller(row)
 }
 
-func (s *Store) CreateSellerWithEmail(ctx context.Context, email string, passwordHash string, verifiedAt time.Time) (Seller, error) {
-	row := s.pool.QueryRow(ctx, `
-		INSERT INTO sellers (email, password_hash, email_verified_at)
-		VALUES (NULLIF($1, ''), $2, $3)
-		RETURNING `+sellerSelectColumns+`
-	`, email, passwordHash, verifiedAt)
-
-	return scanSeller(row)
-}
-
 func (s *Store) GetSellerByID(ctx context.Context, sellerID int64) (Seller, error) {
 	row := s.pool.QueryRow(ctx, `
 		SELECT `+sellerSelectColumns+`
@@ -103,12 +90,12 @@ func (s *Store) GetSellerByTelegramID(ctx context.Context, telegramID int64) (Se
 	return scanSeller(row)
 }
 
-func (s *Store) GetSellerByEmail(ctx context.Context, email string) (Seller, error) {
+func (s *Store) GetSellerByUsername(ctx context.Context, username string) (Seller, error) {
 	row := s.pool.QueryRow(ctx, `
 		SELECT `+sellerSelectColumns+`
 		FROM sellers
-		WHERE LOWER(email) = LOWER($1)
-	`, email)
+		WHERE LOWER(username) = LOWER($1)
+	`, username)
 	return scanSeller(row)
 }
 
@@ -147,109 +134,69 @@ func (s *Store) UpdateSellerEmail(ctx context.Context, sellerID int64, email str
 	return scanSeller(row)
 }
 
-func (s *Store) SetSellerEmailCredentials(ctx context.Context, sellerID int64, email string, passwordHash string, verifiedAt time.Time) (Seller, error) {
-	row := s.pool.QueryRow(ctx, `
-		UPDATE sellers
-		SET email = NULLIF($2, ''),
-		    password_hash = $3,
-		    email_verified_at = $4
-		WHERE id = $1
-		RETURNING `+sellerSelectColumns+`
-	`, sellerID, email, passwordHash, verifiedAt)
-	return scanSeller(row)
-}
-
-func (s *Store) ResetSellerPassword(ctx context.Context, sellerID int64, passwordHash string) (Seller, error) {
-	row := s.pool.QueryRow(ctx, `
-		UPDATE sellers
-		SET password_hash = $2
-		WHERE id = $1
-		RETURNING `+sellerSelectColumns+`
-	`, sellerID, passwordHash)
-	return scanSeller(row)
-}
-
-func (s *Store) LinkTelegramToSeller(ctx context.Context, sellerID int64, telegramID int64, username string) (Seller, error) {
-	row := s.pool.QueryRow(ctx, `
-		UPDATE sellers
-		SET telegram_id = $2,
-		    username = COALESCE(NULLIF($3, ''), username),
-		    telegram_linked_at = COALESCE(telegram_linked_at, NOW())
-		WHERE id = $1
-		RETURNING `+sellerSelectColumns+`
-	`, sellerID, telegramID, username)
-	return scanSeller(row)
-}
-
-func (s *Store) StoreEmailAuthCode(ctx context.Context, sellerID *int64, email string, purpose string, codeHash string, expiresAt time.Time) error {
+func (s *Store) StoreTelegramAuthCode(ctx context.Context, sellerID int64, codeHash string, expiresAt time.Time) error {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return fmt.Errorf("begin store email auth code tx: %w", err)
+		return fmt.Errorf("begin store telegram auth code tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
 	if _, err := tx.Exec(ctx, `
-		UPDATE email_auth_codes
+		UPDATE telegram_auth_codes
 		SET consumed_at = NOW()
-		WHERE LOWER(email) = LOWER($1)
-		  AND purpose = $2
+		WHERE seller_id = $1
 		  AND consumed_at IS NULL
-	`, email, purpose); err != nil {
-		return fmt.Errorf("expire active email auth codes: %w", err)
+	`, sellerID); err != nil {
+		return fmt.Errorf("expire active telegram auth codes: %w", err)
 	}
 
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO email_auth_codes (seller_id, email, purpose, code_hash, expires_at)
-		VALUES ($1, $2, $3, $4, $5)
-	`, sellerID, email, purpose, codeHash, expiresAt); err != nil {
-		return fmt.Errorf("insert email auth code: %w", err)
+		INSERT INTO telegram_auth_codes (seller_id, code_hash, expires_at)
+		VALUES ($1, $2, $3)
+	`, sellerID, codeHash, expiresAt); err != nil {
+		return fmt.Errorf("insert telegram auth code: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit email auth code: %w", err)
+		return fmt.Errorf("commit telegram auth code: %w", err)
 	}
 	return nil
 }
 
-func (s *Store) ConsumeEmailAuthCode(ctx context.Context, email string, purpose string, codeHash string) (*int64, error) {
+func (s *Store) ConsumeTelegramAuthCode(ctx context.Context, sellerID int64, codeHash string) error {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("begin consume email auth code tx: %w", err)
+		return fmt.Errorf("begin consume telegram auth code tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
-	var sellerID sql.NullInt64
+	var id int64
 	row := tx.QueryRow(ctx, `
-		UPDATE email_auth_codes
+		UPDATE telegram_auth_codes
 		SET consumed_at = NOW()
 		WHERE id = (
 			SELECT id
-			FROM email_auth_codes
-			WHERE LOWER(email) = LOWER($1)
-			  AND purpose = $2
-			  AND code_hash = $3
+			FROM telegram_auth_codes
+			WHERE seller_id = $1
+			  AND code_hash = $2
 			  AND consumed_at IS NULL
 			  AND expires_at > NOW()
 			ORDER BY created_at DESC
 			LIMIT 1
 			FOR UPDATE
 		)
-		RETURNING seller_id
-	`, email, purpose, codeHash)
-	if err := row.Scan(&sellerID); errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrNotFound
+		RETURNING id
+	`, sellerID, codeHash)
+	if err := row.Scan(&id); errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
 	} else if err != nil {
-		return nil, fmt.Errorf("consume email auth code: %w", err)
+		return fmt.Errorf("consume telegram auth code: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("commit consume email auth code: %w", err)
+		return fmt.Errorf("commit consume telegram auth code: %w", err)
 	}
-	if sellerID.Valid {
-		value := sellerID.Int64
-		return &value, nil
-	}
-	return nil, nil
+	return nil
 }
 
 func (s *Store) ListWallets(ctx context.Context, sellerID int64) ([]Wallet, error) {
@@ -777,10 +724,7 @@ func scanSeller(row pgx.Row) (Seller, error) {
 		&seller.SubscriptionEndsAt,
 		&seller.FreeInvoicesUsed,
 		&seller.IsBlocked,
-		&seller.EmailVerifiedAt,
 		&seller.TelegramLinkedAt,
-		&seller.PasswordHash,
-		&seller.HasPassword,
 		&seller.CreatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {

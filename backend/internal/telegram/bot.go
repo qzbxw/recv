@@ -237,6 +237,9 @@ func (b *BotWorker) handleCommand(ctx context.Context, seller store.Seller, mess
 	case "/start", "/menu":
 		b.resetSession(message.Chat.ID)
 		return b.renderHome(ctx, seller, message.Chat.ID, 0)
+	case "/login":
+		_, err := b.sendMessage(ctx, message.Chat.ID, "Browser login works by Telegram code.\n\n1. Open reqst auth page.\n2. Enter your @username.\n3. Request the code.\n4. Paste the code from this chat.", b.reqstKeyboard(nil))
+		return err
 	case "/invoice":
 		return b.renderInvoiceWalletPicker(ctx, seller, message.Chat.ID, 0)
 	case "/wallets":
@@ -521,7 +524,7 @@ func (b *BotWorker) renderHome(ctx context.Context, seller store.Seller, chatID 
 	}
 
 	text := fmt.Sprintf(
-		"reqst seller bot\n\nSeller: @%s\nWallets: %d\nLatest: %s\n\nUse the buttons below or open reqst.",
+		"reqst seller bot\n\nSeller: @%s\nWallets: %d\nLatest: %s\n\nUse the buttons below, open reqst, or run /login to get browser sign-in instructions.",
 		valueOrFallback(seller.Username, sellerTelegramLabel(seller.TelegramID)),
 		len(wallets),
 		latest,
