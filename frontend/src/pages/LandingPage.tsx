@@ -431,36 +431,18 @@ export function LandingPage() {
             <strong>reqst</strong>
           </Link>
 
-          <nav className="lend-topnav" aria-label="landing sections">
-            <a className="lend-nav-link" href="#overview">
-              {copy.nav.overview}
-            </a>
-            <a className="lend-nav-link" href="#capabilities">
-              {copy.nav.capabilities}
-            </a>
-            <a className="lend-nav-link" href="#networks">
-              {copy.nav.networks}
-            </a>
-            <a className="lend-nav-link" href="#faq">
-              {copy.nav.faq}
-            </a>
+          <nav className="lend-topnav">
+            <a className="lend-nav-link" href="#overview">{copy.nav.overview}</a>
+            <a className="lend-nav-link" href="#capabilities">{copy.nav.capabilities}</a>
+            <a className="lend-nav-link" href="#networks">{copy.nav.networks}</a>
           </nav>
 
           <div className="lend-topbar-actions">
-            <div className="lend-language" role="group" aria-label="language switcher">
-              <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>
-                РУ
-              </button>
-              <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>
-                EN
-              </button>
+            <div className="lend-language-pill">
+              <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>RU</button>
+              <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
             </div>
-            <a className="lend-nav-link lend-nav-link--bot" href={BOT_URL} target="_blank" rel="noreferrer">
-              {copy.nav.bot}
-            </a>
-            <Link className="lend-primary" to="/auth">
-              {copy.nav.console}
-            </Link>
+            <Link className="lend-primary" to="/auth">{copy.nav.console}</Link>
           </div>
         </header>
 
@@ -611,8 +593,10 @@ export function LandingPage() {
                     <span>{item.question}</span>
                     <strong aria-hidden="true">{isOpen ? "−" : "+"}</strong>
                   </button>
-                  <div className="lend-faq-answer" hidden={!isOpen}>
-                    <p>{item.answer}</p>
+                  <div className="lend-faq-answer-wrapper">
+                    <div className="lend-faq-answer">
+                      <p>{item.answer}</p>
+                    </div>
                   </div>
                 </article>
               );
@@ -641,22 +625,10 @@ export function LandingPage() {
         </section>
 
         <footer className="lend-footer">
-          <div className="lend-footer-copy">
-            <strong>{copy.footer.title}</strong>
-            <p>{copy.footer.body}</p>
-          </div>
-
-          <div className="lend-footer-meta">
-            <div className="lend-footer-links">
-              <Link to="/privacy">{copy.footer.privacy}</Link>
-              <Link to="/terms">{copy.footer.terms}</Link>
-              <Link to="/auth">{copy.footer.console}</Link>
-            </div>
-
-            <div className="lend-footer-roadmap" aria-label={copy.footer.status}>
-              <span>{copy.footer.api}</span>
-              <span>{copy.footer.b2b}</span>
-            </div>
+          <div className="lend-footer-links">
+            <Link to="/privacy">{copy.footer.privacy}</Link>
+            <Link to="/terms">{copy.footer.terms}</Link>
+            <Link to="/auth">{copy.footer.console}</Link>
           </div>
         </footer>
       </div>

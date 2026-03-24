@@ -30,6 +30,7 @@ type AuthService struct {
 
 type TelegramAuthInput struct {
 	InitData   string `json:"init_data"`
+	WidgetData string `json:"widget_data"` // From Telegram Login Widget
 	TelegramID int64  `json:"telegram_id"`
 	Username   string `json:"username"`
 }
@@ -57,7 +58,20 @@ func NewAuthService(st *store.Store, jwtSecret string, telegramBotToken string, 
 }
 
 func (s *AuthService) Authenticate(ctx context.Context, input TelegramAuthInput) (AuthResult, error) {
-	telegramID, username, err := s.resolveTelegramIdentity(input)
+	var telegramID int64
+	var username string
+	var err error
+
+	if strings.TrimSpace(input.InitData) != "" {
+		telegramID, username, err = s.validateInitData(input.InitData)
+	} else if strings.TrimSpace(input.WidgetData) != "" {
+		telegramID, username, err = s.validateWidgetData(input.WidgetData)
+	} else if s.allowInsecureDev && input.TelegramID > 0 {
+		telegramID, username = input.TelegramID, strings.TrimSpace(input.Username)
+	} else {
+		return AuthResult{}, errors.New("telegram authentication data is required")
+	}
+
 	if err != nil {
 		return AuthResult{}, err
 	}
@@ -119,18 +133,6 @@ func (s *AuthService) issueToken(seller store.Seller) (string, error) {
 	return signed, nil
 }
 
-func (s *AuthService) resolveTelegramIdentity(input TelegramAuthInput) (int64, string, error) {
-	if strings.TrimSpace(input.InitData) != "" {
-		return s.validateInitData(input.InitData)
-	}
-
-	if s.allowInsecureDev && input.TelegramID > 0 {
-		return input.TelegramID, strings.TrimSpace(input.Username), nil
-	}
-
-	return 0, "", errors.New("telegram init_data is required")
-}
-
 func (s *AuthService) validateInitData(initData string) (int64, string, error) {
 	if s.telegramBotToken == "" {
 		return 0, "", errors.New("TELEGRAM_BOT_TOKEN is required for Telegram auth")
@@ -184,6 +186,52 @@ func (s *AuthService) validateInitData(initData string) (int64, string, error) {
 	}
 
 	return user.ID, strings.TrimSpace(user.Username), nil
+}
+
+func (s *AuthService) validateWidgetData(queryString string) (int64, string, error) {
+	values, err := url.ParseQuery(queryString)
+	if err != nil {
+		return 0, "", fmt.Errorf("parse widget_data: %w", err)
+	}
+
+	hash := values.Get("hash")
+	if hash == "" {
+		return 0, "", errors.New("widget hash is missing")
+	}
+
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		if k != "hash" {
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+
+	var dataParts []string
+	for _, k := range keys {
+		dataParts = append(dataParts, fmt.Sprintf("%s=%s", k, values.Get(k)))
+	}
+	dataCheckString := strings.Join(dataParts, "\n")
+
+	sha := sha256.New()
+	sha.Write([]byte(s.telegramBotToken))
+	secretKey := sha.Sum(nil)
+
+	mac := hmac.New(sha256.New, secretKey)
+	mac.Write([]byte(dataCheckString))
+	expectedHash := hex.EncodeToString(mac.Sum(nil))
+
+	if !hmac.Equal([]byte(hash), []byte(expectedHash)) {
+		return 0, "", errors.New("widget signature mismatch")
+	}
+
+	idStr := values.Get("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return 0, "", fmt.Errorf("invalid telegram id in widget: %w", err)
+	}
+
+	return id, values.Get("username"), nil
 }
 
 func telegramDataCheckString(values url.Values) string {

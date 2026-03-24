@@ -42,7 +42,7 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   return (await response.json()) as T;
 }
 
-export async function authenticate(payload: { init_data?: string; telegram_id?: number; username?: string }) {
+export async function authenticate(payload: { init_data?: string; widget_data?: string; telegram_id?: number; username?: string }) {
   return request<{ token: string; seller: MeResponse["seller"] }>("/api/auth/telegram", {
     method: "POST",
     body: JSON.stringify(payload),

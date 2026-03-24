@@ -1,9 +1,10 @@
-import { FormEvent, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authenticate, getStoredToken, setStoredToken } from "../lib/api";
 import { useUI } from "../lib/ui";
 
 const BOT_URL = "https://t.me/reqstxyz_bot";
+const BOT_NAME = "reqstxyz_bot";
 
 declare global {
   interface Window {
@@ -22,27 +23,23 @@ const COPY = {
     title: "Вход в reqst",
     body: "Используйте ваш аккаунт Telegram для безопасного входа в панель управления продавца.",
     telegramTitle: "Авторизация через Telegram",
-    telegramBody: "Нажмите кнопку ниже, чтобы войти в консоль. Если вы заходите не из Telegram, мы предложим открыть бота для подтверждения личности.",
+    telegramBody: "Если вы заходите с сайта, используйте кнопку ниже. Внутри Telegram-приложения вход произойдет автоматически.",
     openBot: "Открыть бота",
     continueTelegram: "Войти через Telegram",
     signingIn: "Входим...",
     landing: "На главную",
     console: "В консоль",
-    devAccess: "Вход для разработчиков (Manual ID)",
-    devEnter: "Войти по ID",
   },
   en: {
     title: "Sign in to reqst",
     body: "Use your Telegram account to securely access your seller dashboard.",
     telegramTitle: "Telegram Authentication",
-    telegramBody: "Click the button below to enter the console. If you are browsing outside of Telegram, you can use our bot to verify your identity.",
+    telegramBody: "If you are browsing the website, use the button below. Inside the Telegram app, login is automatic.",
     openBot: "Open Bot",
     continueTelegram: "Login with Telegram",
     signingIn: "Signing in...",
     landing: "Back to Home",
     console: "Open Console",
-    devAccess: "Developer Access (Manual ID)",
-    devEnter: "Enter by ID",
   },
 } as const;
 
@@ -50,22 +47,59 @@ export function AuthPortalPage() {
   const navigate = useNavigate();
   const { language } = useUI();
   const text = COPY[language];
-  const [authForm, setAuthForm] = useState({ telegramId: "1001001", username: "reqst_dev" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showDev, setShowDev] = useState(false);
   const hasTelegramInitData = useMemo(() => Boolean(window.Telegram?.WebApp?.initData), []);
   const hasSession = Boolean(getStoredToken());
+
+  useEffect(() => {
+    // We only need the widget if we are NOT in the WebApp
+    if (hasTelegramInitData) return;
+
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-widget.js?22";
+    script.setAttribute("data-telegram-login", BOT_NAME);
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-radius", "12");
+    script.setAttribute("data-onauth", "onTelegramAuth(user)");
+    script.setAttribute("data-request-access", "write");
+    script.async = true;
+
+    const container = document.getElementById("telegram-login-container");
+    if (container) {
+      container.appendChild(script);
+    }
+
+    (window as any).onTelegramAuth = async (user: any) => {
+      const params = new URLSearchParams();
+      Object.entries(user).forEach(([k, v]) => params.append(k, String(v)));
+      
+      try {
+        setLoading(true);
+        const result = await authenticate({ widget_data: params.toString() });
+        setStoredToken(result.token);
+        navigate("/console");
+      } catch (err) {
+        setError((err as Error).message);
+        setLoading(false);
+      }
+    };
+
+    return () => {
+      if (container) container.innerHTML = "";
+      delete (window as any).onTelegramAuth;
+    };
+  }, [navigate, hasTelegramInitData]);
 
   async function performAuth() {
     try {
       setLoading(true);
       setError("");
       const initData = window.Telegram?.WebApp?.initData;
-      const payload = initData
-        ? { init_data: initData }
-        : { telegram_id: Number(authForm.telegramId), username: authForm.username };
-      const result = await authenticate(payload);
+      if (!initData) {
+        throw new Error("No Telegram session found");
+      }
+      const result = await authenticate({ init_data: initData });
       setStoredToken(result.token);
       navigate("/console");
     } catch (err) {
@@ -109,41 +143,24 @@ export function AuthPortalPage() {
                 <p>{text.telegramBody}</p>
               </div>
               <div className="auth-card__actions">
-                <button 
-                  type="button" 
-                  className="lend-primary lend-primary--large"
-                  disabled={loading} 
-                  onClick={() => void performAuth()}
-                >
-                  {loading ? text.signingIn : text.continueTelegram}
-                </button>
+                {hasTelegramInitData ? (
+                  <button 
+                    type="button" 
+                    className="lend-primary lend-primary--large"
+                    disabled={loading} 
+                    onClick={() => void performAuth()}
+                  >
+                    {loading ? text.signingIn : text.continueTelegram}
+                  </button>
+                ) : (
+                  <div id="telegram-login-container" className="auth-widget-wrapper" />
+                )}
                 <a className="lend-secondary" href={BOT_URL} target="_blank" rel="noreferrer">
                   {text.openBot}
                 </a>
               </div>
               {error ? <div className="alert">{error}</div> : null}
             </article>
-          </div>
-
-          <div className="auth-portal__dev-trigger">
-            <button type="button" className="ghost-link" onClick={() => setShowDev(!showDev)}>
-              {text.devAccess}
-            </button>
-            {showDev && (
-              <div className="dev-form-mini">
-                <input 
-                  value={authForm.telegramId} 
-                  placeholder="ID"
-                  onChange={(e) => setAuthForm(c => ({ ...c, telegramId: e.target.value }))} 
-                />
-                <input 
-                  value={authForm.username} 
-                  placeholder="Username"
-                  onChange={(e) => setAuthForm(c => ({ ...c, username: e.target.value }))} 
-                />
-                <button onClick={() => void performAuth()}>{text.devEnter}</button>
-              </div>
-            )}
           </div>
         </section>
       </div>
