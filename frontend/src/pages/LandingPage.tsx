@@ -446,23 +446,25 @@ export function LandingPage() {
 
       <div className="lend-shell">
         <header className="lend-topbar">
-          <Link className="lend-brand" to="/">
-            <strong>reqst</strong>
-          </Link>
+          <div className="lend-topbar-main">
+            <Link className="lend-brand" to="/">
+              <strong>reqst</strong>
+            </Link>
+
+            <div className="lend-topbar-actions">
+              <div className="lend-language" role="group" aria-label="language switcher">
+                <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>RU</button>
+                <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
+              </div>
+              <Link className="lend-primary" to="/auth">{copy.nav.console}</Link>
+            </div>
+          </div>
 
           <nav className="lend-topnav">
             <a className="lend-nav-link" href="#overview">{copy.nav.overview}</a>
             <a className="lend-nav-link" href="#capabilities">{copy.nav.capabilities}</a>
             <a className="lend-nav-link" href="#networks">{copy.nav.networks}</a>
           </nav>
-
-          <div className="lend-topbar-actions">
-            <div className="lend-language" role="group" aria-label="language switcher">
-              <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>RU</button>
-              <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
-            </div>
-            <Link className="lend-primary" to="/auth">{copy.nav.console}</Link>
-          </div>
         </header>
 
         <section className="lend-hero" ref={reveal}>
@@ -578,14 +580,14 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="faq" className="lend-stacked-section" ref={reveal}>
-          <div className="lend-section-copy lend-reveal--1">
+        <section id="faq" className="lend-split-section lend-reveal--1" ref={reveal}>
+          <div className="lend-section-copy" style={{ position: "sticky", top: "6.5rem", height: "fit-content" }}>
             <span className="lend-section-kicker">{copy.faq.kicker}</span>
             <h2>{copy.faq.title}</h2>
             <p>{copy.faq.body}</p>
           </div>
 
-          <div className="lend-faq-stack lend-reveal--2">
+          <div className="lend-faq-stack">
             {copy.faq.items.map((item, index) => {
               const isOpen = index === openFaq;
               const answerId = `landing-faq-answer-${index}`;
@@ -598,7 +600,10 @@ export function LandingPage() {
                     aria-controls={answerId}
                     onClick={() => setOpenFaq(isOpen ? -1 : index)}
                   >
-                    <span>{item.question}</span>
+                    <div style={{ display: "grid", gap: "0.4rem" }}>
+                      <span className="receipt-brandline" style={{ fontSize: "0.7rem" }}>PROTOCOL Q&A</span>
+                      <span className="lend-faq-question-text">{item.question}</span>
+                    </div>
                     <div className="lend-faq-icon">
                       <div className="lend-faq-icon-line" />
                       <div className="lend-faq-icon-line" />

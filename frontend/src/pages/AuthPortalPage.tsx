@@ -30,23 +30,23 @@ declare global {
 
 const COPY = {
   ru: {
-    title: "Вход в рабочий кабинет Reqst",
-    body: "Страница авторизации теперь должна не стыдить, а быстро заводить в продукт. Здесь два нормальных сценария: моментальный вход через Telegram и обычный доступ по почте с паролем.",
-    telegramTitle: "Быстрый вход через Telegram",
-    telegramBody: "Если вы уже внутри Telegram, вход займёт пару секунд. Если сайт открыт в браузере, сначала зайдите в бота и откройте Mini App оттуда.",
+    title: "Авторизация в системе Reqst",
+    body: "Моментальный доступ через Telegram или классическая связка почты и пароля для работы в браузере.",
+    telegramTitle: "Вход через Telegram",
+    telegramBody: "Если сайт открыт в браузере, сначала запустите Mini App через официального бота для автоматической привязки сессии.",
     openBot: "Открыть Telegram бота",
-    continueTelegram: "Войти через Telegram",
-    signingIn: "Вход в аккаунт...",
+    continueTelegram: "Продолжить через Telegram",
+    signingIn: "Авторизация...",
     landing: "На главную",
     console: "В панель управления",
     emailTitle: "Почта и пароль",
-    emailBody: "Подходит для обычной работы из браузера: вход, регистрация и восстановление доступа собраны в одном блоке.",
+    emailBody: "Стандартный метод доступа для ежедневной работы из любой точки мира.",
     emailModes: {
       login: "Вход",
       register: "Регистрация",
       reset: "Сброс пароля",
     },
-    email: "Ваш Email",
+    email: "Email",
     emailPlaceholder: "name@example.com",
     password: "Пароль",
     passwordPlaceholder: "Минимум 8 символов",
@@ -55,31 +55,31 @@ const COPY = {
     codePlaceholder: "123456",
     sendCode: "Получить код",
     sendingCode: "Отправка...",
-    loginAction: "Войти в панель",
-    registerAction: "Создать аккаунт",
-    resetAction: "Сбросить пароль",
-    codeSent: "Код подтверждения отправлен. Пожалуйста, проверьте папку 'Входящие' или 'Спам'.",
-    asideTitle: "Что даёт кабинет",
+    loginAction: "Войти",
+    registerAction: "Зарегистрироваться",
+    resetAction: "Обновить пароль",
+    codeSent: "Код подтвержден и отправлен. Проверьте почту (включая папку Спам).",
+    asideTitle: "Возможности аккаунта",
     asideCards: [
       {
-        title: "Платежи под контролем",
-        body: "Создавайте инвойсы, следите за оплатой и не тратьте время на ручную сверку переводов.",
+        title: "Контроль транзакций",
+        body: "Создание инвойсов, мониторинг входящих платежей и автоматическая сверка статусов.",
       },
       {
-        title: "Один вход для всех сценариев",
-        body: "Telegram удобен для быстрого старта, а почта с паролем нормальна для ежедневной работы из браузера.",
+        title: "Единый профиль",
+        body: "Telegram для быстрого старта и почта для штатной работы в браузере внутри одного аккаунта.",
       },
       {
-        title: "Тот же строгий контур",
-        body: "После входа доступны кабинет продавца, интеграционный раздел и все ссылки на оплату без прыжков между разными страницами.",
+        title: "Рабочий контур",
+        body: "Прямой доступ к панели продавца, разделу интеграции и биллингу планов из одного окна.",
       },
     ],
     asidePoints: [
-      "Прямой приём оплат на ваш кошелёк.",
+      "Прямой приём платежей на ваш кошелёк.",
       "Автоматическое подтверждение статусов.",
-      "Доступ к Dev и Enterprise из того же аккаунта.",
+      "Управление Dev и Enterprise планами.",
     ],
-    browserHint: "Если вы в браузере, используйте почту или сначала откройте Mini App через бота.",
+    browserHint: "При работе из браузера рекомендуется использовать почту или Mini App.",
   },
   en: {
     title: "Sign in to reqst",
@@ -275,91 +275,90 @@ export function AuthPortalPage() {
       : text.resetAction;
 
   return (
-    <main className="auth-portal">
-      <div className="auth-portal__glow auth-portal__glow--left" />
-      <div className="auth-portal__glow auth-portal__glow--right" />
+    <main className="shell checkout-shell">
+      <div className="ambient ambient-left" />
+      <div className="ambient ambient-right" />
 
-      <div className="auth-portal__shell">
-        <header className="auth-portal__topbar">
-          <Link className="lend-brand" to="/">
-            <strong>reqst</strong>
+      <header className="topbar topbar--checkout">
+        <Link className="topbar-brand topbar-brand--minimal" to="/">
+          <strong>reqst</strong>
+        </Link>
+        <div className="topbar-actions">
+          <Link className="ghost-button compact-button" to="/">
+            {text.landing}
           </Link>
-          <div className="auth-portal__links">
-            <Link className="lend-nav-link" to="/">
-              {text.landing}
-            </Link>
-            {hasSession ? (
-              <Link className="lend-primary" to="/console">
-                {text.console}
-              </Link>
-            ) : null}
+        </div>
+      </header>
+
+      <div className="auth-portal__grid">
+        <section className="auth-portal__aside">
+          <div className="auth-portal__copy">
+            <span className="eyebrow">Reqst Access</span>
+            <h1>{text.title}</h1>
+            <p>{text.body}</p>
           </div>
-        </header>
 
-        <section className="auth-portal__hero">
-          <div className="auth-portal__grid">
-            <aside className="auth-portal__aside">
-              <div className="auth-portal__copy">
-                <span className="plan-page__badge">Reqst Access</span>
-                <h1>{text.title}</h1>
-                <p>{text.body}</p>
-                <p className="auth-portal__hint">{text.browserHint}</p>
+          <div className="auth-portal__aside-cards">
+            {text.asideCards.map((card) => (
+              <article key={card.title} className="console-link-card">
+                <span>Access Layer</span>
+                <strong>{card.title}</strong>
+                <p>{card.body}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="auth-portal__signal-list">
+            <span>{text.asideTitle}</span>
+            <div className="auth-portal__signals">
+              {text.asidePoints.map((item) => (
+                <article key={item} className="auth-portal__signal">
+                  <span />
+                  <p>{item}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="auth-portal__cards">
+          <div className="auth-portal__stack">
+            <article className="checkout-card checkout-card--lux auth-card--telegram">
+              <div className="completion-paper-topline">
+                <span className="receipt-brandline">Fast Access</span>
+                <span className="completion-ticket-no">Telegram</span>
               </div>
-
-              <div className="auth-portal__aside-cards">
-                {text.asideCards.map((card) => (
-                  <article key={card.title} className="auth-aside-card">
-                    <h2>{card.title}</h2>
-                    <p>{card.body}</p>
-                  </article>
-                ))}
-              </div>
-
-              <div className="auth-portal__signal-list">
-                <span>{text.asideTitle}</span>
-                {text.asidePoints.map((item) => (
-                  <article key={item} className="auth-portal__signal">
-                    <span />
-                    <p>{item}</p>
-                  </article>
-                ))}
-              </div>
-            </aside>
-
-            <div className="auth-portal__cards">
-            <article className="auth-card auth-card--telegram">
               <div className="auth-card__content">
                 <h2>{text.telegramTitle}</h2>
-                <p>{text.telegramBody}</p>
+                <p className="hero-copy">{text.telegramBody}</p>
+                <p className="auth-portal__hint">{text.browserHint}</p>
               </div>
               <div className="auth-card__actions">
                 {initData ? (
                   <button
                     type="button"
                     className="lend-primary lend-primary--large"
+                    style={{ width: "100%" }}
                     disabled={loading}
                     onClick={() => void performTelegramAuth()}
                   >
                     {loading ? text.signingIn : text.continueTelegram}
                   </button>
                 ) : (
-                  <a className="lend-primary lend-primary--large" href={BOT_URL} target="_blank" rel="noreferrer">
+                  <a className="lend-primary lend-primary--large" style={{ width: "100%" }} href={BOT_URL} target="_blank" rel="noreferrer">
                     {text.openBot}
                   </a>
                 )}
-                <a className="lend-secondary" href={BOT_URL} target="_blank" rel="noreferrer">
-                  Telegram
-                </a>
               </div>
             </article>
 
-            <article className="auth-card auth-card--email">
-              <div className="auth-card__content">
-                <h2>{text.emailTitle}</h2>
-                <p>{text.emailBody}</p>
+            <article className="checkout-card checkout-card--lux auth-card--email">
+              <div className="completion-paper-topline">
+                <span className="receipt-brandline">Standard Access</span>
+                <span className="completion-ticket-no">Email</span>
               </div>
-
-              <div className="auth-mode-switch" role="tablist" aria-label="email auth mode">
+              
+              <div className="auth-mode-switch" role="tablist" style={{ marginTop: "1.5rem" }}>
                 {(["login", "register", "reset"] as EmailMode[]).map((mode) => (
                   <button
                     key={mode}
@@ -372,7 +371,7 @@ export function AuthPortalPage() {
                 ))}
               </div>
 
-              <form className="auth-card__form auth-card__form--stacked" onSubmit={handleEmailSubmit}>
+              <form className="auth-card__form form-grid" style={{ marginTop: "1.5rem" }} onSubmit={handleEmailSubmit}>
                 <label>
                   {text.email}
                   <input
@@ -395,20 +394,22 @@ export function AuthPortalPage() {
                   </label>
                 ) : (
                   <>
-                    <div className="auth-inline-action">
+                    <div className="auth-inline-action" style={{ display: "grid", gap: "0.5rem" }}>
                       <label>
                         {text.code}
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          placeholder={text.codePlaceholder}
-                          value={form.code}
-                          onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
-                        />
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder={text.codePlaceholder}
+                            value={form.code}
+                            onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
+                          />
+                          <button type="button" className="ghost-button compact-button" style={{ whiteSpace: "nowrap" }} disabled={sendingCode} onClick={() => void handleSendCode()}>
+                            {sendingCode ? text.sendingCode : text.sendCode}
+                          </button>
+                        </div>
                       </label>
-                      <button type="button" className="ghost-button" disabled={sendingCode} onClick={() => void handleSendCode()}>
-                        {sendingCode ? text.sendingCode : text.sendCode}
-                      </button>
                     </div>
 
                     {emailMode === "register" ? (
@@ -436,17 +437,17 @@ export function AuthPortalPage() {
                 )}
 
                 <button type="submit" className="lend-primary lend-primary--large" disabled={loading}>
-                    {loading ? text.signingIn : emailActionLabel}
-                  </button>
+                  {loading ? text.signingIn : emailActionLabel}
+                </button>
               </form>
-            </article>
-            </div>
-          </div>
 
-          {message ? <div className="auth-feedback auth-feedback--success">{message}</div> : null}
-          {error ? <div className="alert">{error}</div> : null}
+              {message ? <div className="auth-feedback auth-feedback--success" style={{ marginTop: "1rem" }}>{message}</div> : null}
+              {error ? <div className="alert" style={{ marginTop: "1rem" }}>{error}</div> : null}
+            </article>
+          </div>
         </section>
       </div>
     </main>
   );
 }
+

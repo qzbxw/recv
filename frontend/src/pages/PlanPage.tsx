@@ -15,10 +15,10 @@ const COPY = {
     faqTitle: "Частые вопросы",
     dev: {
       badge: "Reqst Dev",
-      title: "Плотный API-слой для команд, которые встраивают приём крипты в свой продукт.",
-      body: "Reqst Dev закрывает рабочий контур без переписки с продажниками: создаёте оплату, активируете доступ, выпускаете ключи, подключаете уведомления и сразу встраиваете выставление инвойсов в свой сервис.",
+      title: "API-интеграция для продуктовых команд.",
+      body: "Self-serve решение для быстрого запуска приема крипто-платежей. Мгновенная активация доступа, выпуск ключей и настройка вебхуков без участия sales-отдела.",
       price: "149 USDT / 30 дней",
-      bullets: ["До 3 активных ключей", "До 50 000 запросов в месяц", "До 90 запросов в минуту на ключ", "Уведомления и управление из одной панели"],
+      bullets: ["До 3 активных ключей", "До 50 000 запросов в месяц", "До 90 запросов в минуту на ключ", "Единая панель управления нагрузкой"],
       stats: [
         { value: "3", label: "активных ключа" },
         { value: "50k", label: "запросов в месяц" },
@@ -26,50 +26,50 @@ const COPY = {
       ],
       sections: [
         {
-          title: "Для продуктовых команд",
-          body: "Подходит, когда нужно не просто принимать оплату вручную, а встроить инвойсы в свой личный кабинет, SaaS или внутреннюю админку.",
+          title: "Продуктовые команды",
+          body: "Решение для глубокой интеграции в личные кабинеты, SaaS-платформы или внутренние админ-панели.",
         },
         {
-          title: "Быстрый запуск",
-          body: "Доступ активируется через обычную оплату внутри Reqst, без согласований, длинных анкет и ожидания ответа от sales.",
+          title: "Мгновенный старт",
+          body: "Активация доступа происходит автоматически после оплаты инвойса внутри Reqst. Никаких анкет и долгих согласований.",
         },
         {
-          title: "Нормальный операционный контур",
-          body: "Ключи, квоты, лимиты, ссылки на оплату и точки уведомлений находятся в одном кабинете и не расползаются по разным сервисам.",
+          title: "Единый рабочий контур",
+          body: "Ключи, квоты, лимиты, биллинг и точки уведомлений собраны в одном интерфейсе управления.",
         },
       ],
       flow: [
-        "Заходите в кабинет и создаёте оплату за план.",
-        "После подтверждения платежа доступ к API открывается автоматически.",
-        "Выпускаете ключ, подключаете адрес уведомлений и начинаете создавать инвойсы из своего продукта.",
+        "Авторизация в кабинете и создание инвойса за план.",
+        "Автоматическое открытие доступа после подтверждения платежа.",
+        "Выпуск API-ключа и настройка адреса для вебхуков.",
       ],
       fit: [
-        "Сервисам с подпиской, где нужно автоматически выставлять инвойсы клиентам.",
-        "Командам, которые хотят связать оплату, статусы и свои внутренние процессы.",
-        "Интеграторам, которым нужен готовый слой приёма крипты без своего блокчейн-мониторинга.",
+        "Сервисы по подписке, требующие автоматизации выставления счетов.",
+        "Команды, интегрирующие статус оплаты в логику своего продукта.",
+        "Интеграторы, которым нужен надежный блокчейн-мониторинг без разработки своего решения.",
       ],
       faq: [
         {
-          question: "Нужен ли отдельный договор или созвон?",
-          answer: "Нет. Это самостоятельный план: оплатили, получили доступ, начали работу.",
+          question: "Нужен ли договор или звонок с sales-отделом?",
+          answer: "Нет. План активируется самостоятельно через интерфейс Reqst.",
         },
         {
-          question: "Куда приходят деньги клиентов?",
-          answer: "Сразу на ваш адрес. Reqst не хранит средства и не удерживает расчёты у себя.",
+          question: "Где хранятся средства клиентов?",
+          answer: "Средства поступают напрямую на ваши реквизиты. Reqst не участвует в расчетах и не удерживает балансы.",
         },
         {
-          question: "Что есть кроме самих запросов к API?",
-          answer: "Управление ключами, лимитами, уведомлениями и всеми связанными оплатами остаётся в том же кабинете.",
+          question: "Какие инструменты доступны кроме API?",
+          answer: "Управление лимитами, отслеживание нагрузки, настройка точек доставки уведомлений и мониторинг связанных оплат.",
         },
       ],
-      tone: "План для запуска интеграции без лишней бюрократии.",
+      tone: "Эффективный запуск интеграции без бюрократии.",
     },
     enterprise: {
       badge: "Reqst Enterprise",
-      title: "Строгий B2B-контур для команд, которым уже тесно в обычном API-плане.",
-      body: "Reqst Enterprise нужен там, где больше потоков, больше ключей, больше внутренних сервисов и выше требования к предсказуемости. Тот же прямой приём оплаты на ваши кошельки, но с более широкими лимитами и более уверенной рабочей схемой.",
+      title: "Инфраструктурный уровень для масштабирования.",
+      body: "Решение для высокой нагрузки и командной работы. Расширенные лимиты, приоритетная доставка уведомлений и полный контроль операционного контура.",
       price: "499 USDT / 30 дней",
-      bullets: ["До 20 активных ключей", "До 500 000 запросов в месяц", "До 600 запросов в минуту на ключ", "Приоритетный контур уведомлений и сопровождения"],
+      bullets: ["До 20 активных ключей", "До 500 000 запросов в месяц", "До 600 запросов в минуту на ключ", "Приоритетный контур доставки и поддержки"],
       stats: [
         { value: "20", label: "активных ключей" },
         { value: "500k", label: "запросов в месяц" },
@@ -77,43 +77,43 @@ const COPY = {
       ],
       sections: [
         {
-          title: "Для высокой нагрузки",
-          body: "Подходит, когда инвойсы создаются из нескольких сервисов сразу, а история оплат и статусы нужны в стабильном потоке без ручного контроля.",
+          title: "Высокая нагрузка",
+          body: "Поддержка стабильного потока инвойсов и автоматических обновлений статусов в реальном времени.",
         },
         {
-          title: "Для командной работы",
-          body: "Если у вас несколько направлений, разные окружения или несколько продуктов, запас по ключам и лимитам перестаёт быть мелочью и становится реальной рабочей потребностью.",
+          title: "Разделение окружений",
+          body: "Запас по ключам позволяет изолировать продакшн, стейджинг и различные продуктовые направления.",
         },
         {
-          title: "Для операционной устойчивости",
-          body: "Более широкий лимит, усиленный маршрут уведомлений и приоритетная обработка нужны там, где сбой в оплатах уже влияет на выручку, поддержку и клиентский опыт.",
+          title: "Операционная устойчивость",
+          body: "Широкие лимиты и приоритетная обработка для критичных бизнес-процессов, где важна скорость каждой транзакции.",
         },
       ],
       flow: [
-        "Создаёте оплату за Enterprise прямо внутри Reqst.",
-        "После оплаты кабинет автоматически получает расширенные лимиты и доступ к полному набору инструментов.",
-        "Разводите ключи по окружениям, сервисам и продуктам без постоянной борьбы за остаток квот.",
+        "Активация Enterprise плана через штатный биллинг Reqst.",
+        "Мгновенное обновление лимитов и открытие доступа к полному функционалу.",
+        "Распределение ключей по сервисам и настройка приоритетных эндпоинтов.",
       ],
       fit: [
-        "Платформам с большим числом оплат и несколькими внутренними сервисами.",
-        "Командам, которым нужно разделять доступы между продом, тестом и разными направлениями.",
-        "Проектам, где уведомления и подтверждение статусов уже критичны для ежедневной операционки.",
+        "Платформы с большим объемом ежедневных транзакций.",
+        "Команды с необходимостью разделения доступов между отделами или продуктами.",
+        "Проекты, в которых скорость доставки вебхуков критична для работы сервиса.",
       ],
       faq: [
         {
-          question: "Это уже кастомная продажа через отдел продаж?",
-          answer: "Нет. Страница остаётся self-serve: вы сами активируете план через оплату внутри Reqst.",
+          question: "Это кастомное решение через отдел продаж?",
+          answer: "Нет. Это по-прежнему self-serve план с автоматической активацией через оплату.",
         },
         {
-          question: "Чем Enterprise отличается на практике?",
-          answer: "Главное отличие не в названии, а в запасе по лимитам, числу ключей и устойчивости контура для большой команды.",
+          question: "В чем главное преимущество перед Dev-планом?",
+          answer: "В повышенной устойчивости контура, расширенном запасе квот и приоритетной обработке событий.",
         },
         {
-          question: "Это подходит только для очень больших компаний?",
-          answer: "Нет. План нужен не по размеру бренда, а по реальной сложности процессов и объёму нагрузки.",
+          question: "Подходит ли план для небольших команд?",
+          answer: "Да, если сложность внутренних процессов или объем трафика требуют повышенной стабильности.",
         },
       ],
-      tone: "План для зрелой команды, где оплата уже часть критичной инфраструктуры.",
+      tone: "Решение для команд, где платежи — критическая часть инфраструктуры.",
     },
   },
   en: {
@@ -236,112 +236,137 @@ export function PlanPage({ variant }: { variant: Variant }) {
   const product = text[variant];
 
   return (
-    <main className={`plan-page plan-page--${variant}`}>
-      <div className="plan-page__glow plan-page__glow--left" />
-      <div className="plan-page__glow plan-page__glow--right" />
+    <main className="shell checkout-shell checkout-shell--wide">
+      <div className="ambient ambient-left" />
+      <div className="ambient ambient-right" />
 
-      <header className="plan-page__topbar">
-        <Link className="lend-brand" to="/">
+      <header className="topbar topbar--checkout">
+        <Link className="topbar-brand topbar-brand--minimal" to="/">
           <strong>reqst</strong>
         </Link>
-        <div className="plan-page__topbar-links">
-          <Link className="lend-nav-link" to="/">
+        <div className="topbar-actions">
+          <Link className="ghost-button compact-button" to="/">
             {text.back}
           </Link>
-          <Link className="lend-nav-link" to="/auth">
+          <Link className="lend-primary" to="/auth">
             {text.auth}
           </Link>
         </div>
       </header>
 
-      <section className="plan-page__hero">
-        <div className="plan-page__copy">
-          <span className="plan-page__badge">{product.badge}</span>
-          <h1>{product.title}</h1>
-          <p>{product.body}</p>
-          <p className="plan-page__tone">{product.tone}</p>
+      <div className="checkout-flow" style={{ marginTop: "1.5rem" }}>
+        <section className="checkout-story">
+          <article className="checkout-card checkout-card--lux">
+            <div className="receipt-hero">
+              <div className="receipt-copy">
+                <div className="receipt-brandline">
+                  <span>Reqst Protocol</span>
+                </div>
+                <div className="receipt-heading">
+                  <span className={`checkout-badge checkout-badge--${variant}`}>{product.badge}</span>
+                  <span className="status-pill receipt-status">Active Layer</span>
+                </div>
+                <h1>{product.title}</h1>
+                <p className="hero-copy">{product.body}</p>
+                <div className="receipt-docmeta">
+                  <div>
+                    <span>Type</span>
+                    <strong>SaaS Integration</strong>
+                  </div>
+                  <div>
+                    <span>SLA</span>
+                    <strong>99.9% Delivery</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <div className="plan-page__stats">
-            {product.stats.map((item) => (
-              <article key={item.label} className="plan-page__stat">
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            ))}
+            <div className="plan-page__stats" style={{ marginTop: "2rem", gridTemplateColumns: "repeat(3, 1fr)" }}>
+              {product.stats.map((item) => (
+                <div key={item.label} className="metric-card">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+
+            <div className="plan-page__actions" style={{ marginTop: "2rem" }}>
+              <Link className="lend-primary lend-primary--large" style={{ width: "100%", textAlign: "center" }} to={`/console?plan=${variant}`}>
+                {text.billing}
+              </Link>
+              <Link className="lend-secondary" style={{ width: "100%", textAlign: "center", marginTop: "0.5rem" }} to="/console">
+                {text.console}
+              </Link>
+            </div>
+          </article>
+
+          <section className="payment-sheet payment-sheet--receipt">
+            <div className="payment-sheet-header">
+              <span className="payment-sheet-kicker">{text.compareTitle}</span>
+            </div>
+            <div className="payment-essentials">
+              {product.sections.map((section) => (
+                <div key={section.title} className="payment-field">
+                  <div>
+                    <label>{section.title}</label>
+                    <p style={{ margin: "0.3rem 0 0", color: "var(--muted)", fontSize: "0.9rem" }}>{section.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </section>
+
+        <aside className="payment-rail">
+          <div className="amount-totem amount-totem--receipt amount-totem--rail">
+            <span>{language === "ru" ? "Стоимость" : "Price"}</span>
+            <strong style={{ fontSize: "2.4rem" }}>{product.price.split(" / ")[0]}</strong>
+            <div className="network-badge">
+              <b>{product.price.split(" / ")[1]}</b>
+              <small>{language === "ru" ? "период доступа" : "access period"}</small>
+            </div>
           </div>
 
-          <strong className="plan-page__price">{product.price}</strong>
+          <article className="checkout-card checkout-card--lux" style={{ padding: "1.25rem" }}>
+            <span className="receipt-brandline" style={{ marginBottom: "1rem" }}>{text.flowTitle}</span>
+            <div className="plan-page__stack">
+              {product.flow.map((item, index) => (
+                <div key={item} className="detail-row" style={{ marginBottom: "0.75rem", background: "transparent" }}>
+                  <div style={{ display: "flex", gap: "1rem" }}>
+                    <strong style={{ color: "var(--accent)" }}>{String(index + 1).padStart(2, "0")}</strong>
+                    <p style={{ margin: 0, fontSize: "0.9rem" }}>{item}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
 
-          <div className="plan-page__actions">
-            <Link className="lend-primary" to={`/console?plan=${variant}`}>
-              {text.billing}
-            </Link>
-            <Link className="lend-secondary" to="/console">
-              {text.console}
-            </Link>
-          </div>
-        </div>
+          <article className="checkout-card checkout-card--lux" style={{ padding: "1.25rem" }}>
+            <span className="receipt-brandline" style={{ marginBottom: "1rem" }}>{text.fitTitle}</span>
+            <div className="plan-page__fit-list">
+              {product.fit.map((item) => (
+                <div key={item} className="detail-row" style={{ marginBottom: "0.5rem", background: "transparent", border: "0", padding: "0" }}>
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "start" }}>
+                    <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "var(--accent)", marginTop: "0.6rem", flexShrink: 0 }} />
+                    <p style={{ margin: 0, fontSize: "0.9rem" }}>{item}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
+        </aside>
+      </div>
 
-        <div className="plan-page__card">
-          {product.bullets.map((bullet) => (
-            <article key={bullet} className="plan-page__bullet">
-              <span />
-              <p>{bullet}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="plan-page__section">
+      <section className="plan-page__section" style={{ marginTop: "3rem" }}>
         <div className="plan-page__section-heading">
-          <span className="plan-page__badge">{text.compareTitle}</span>
-          <h2>{variant === "enterprise" ? "Где Enterprise даёт запас" : "Что вы получаете сразу"}</h2>
+          <span className="eyebrow">{text.faqTitle}</span>
+          <h2>{variant === "enterprise" ? "Protocol FAQ" : "Integration FAQ"}</h2>
         </div>
-        <div className="plan-page__grid">
-          {product.sections.map((section) => (
-            <article key={section.title} className="plan-page__panel">
-              <h3>{section.title}</h3>
-              <p>{section.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="plan-page__section plan-page__section--split">
-        <article className="plan-page__panel">
-          <span className="plan-page__eyebrow">{text.flowTitle}</span>
-          <div className="plan-page__stack">
-            {product.flow.map((item, index) => (
-              <article key={item} className="plan-page__timeline">
-                <strong>{String(index + 1).padStart(2, "0")}</strong>
-                <p>{item}</p>
-              </article>
-            ))}
-          </div>
-        </article>
-
-        <article className="plan-page__panel">
-          <span className="plan-page__eyebrow">{text.fitTitle}</span>
-          <div className="plan-page__fit-list">
-            {product.fit.map((item) => (
-              <article key={item} className="plan-page__fit-item">
-                <span />
-                <p>{item}</p>
-              </article>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="plan-page__section">
-        <div className="plan-page__section-heading">
-          <span className="plan-page__badge">{text.faqTitle}</span>
-          <h2>{variant === "enterprise" ? "Без витрины ради витрины, только по делу" : "Ответы перед запуском интеграции"}</h2>
-        </div>
-        <div className="plan-page__faq-grid">
+        <div className="plan-page__faq-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
           {product.faq.map((item) => (
-            <article key={item.question} className="plan-page__panel plan-page__panel--faq">
-              <h3>{item.question}</h3>
+            <article key={item.question} className="console-link-card">
+              <span>Question</span>
+              <strong style={{ fontSize: "1.1rem", marginBottom: "0.5rem", display: "block" }}>{item.question}</strong>
               <p>{item.answer}</p>
             </article>
           ))}
@@ -350,3 +375,4 @@ export function PlanPage({ variant }: { variant: Variant }) {
     </main>
   );
 }
+
