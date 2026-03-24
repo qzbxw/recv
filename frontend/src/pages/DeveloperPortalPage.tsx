@@ -33,63 +33,91 @@ const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
 
 const COPY = {
   ru: {
-    title: "Reqst Developers",
-    body: "Управляйте API keys, webhooks и Dev/Enterprise-подпиской из отдельного кабинета. Все покупки проходят через обычные Reqst checkout links.",
-    authTitle: "Вход нужен для Dev/B2B кабинета",
-    authBody: "Авторизуйтесь тем же seller-аккаунтом, чтобы выпускать ключи, подключать webhooks и покупать Reqst Dev или Reqst Enterprise.",
+    title: "Панель интеграции Reqst",
+    body: "Здесь живёт весь контур для API, ключей, уведомлений и оплаты Dev или Enterprise. Логика простая: активируете план, получаете доступ и управляете интеграцией из одной плотной панели.",
+    authTitle: "Нужен вход в рабочий кабинет",
+    authBody: "Авторизуйтесь тем же аккаунтом продавца, чтобы выпускать ключи, подключать адреса уведомлений и покупать Dev или Enterprise без отдельной переписки.",
     authAction: "Войти в Reqst",
     back: "Главная",
-    console: "Seller Console",
-    upgradeTitle: "Включите Dev API или Enterprise",
-    upgradeBody: "Пока у аккаунта нет API-доступа. Купите нужный план через Reqst checkout и после оплаты API откроется автоматически.",
+    console: "Панель продавца",
+    upgradeTitle: "Включите Dev или Enterprise",
+    upgradeBody: "У аккаунта пока нет доступа к интеграциям. Оплатите подходящий план через обычную ссылку Reqst, и доступ откроется автоматически после подтверждения транзакции.",
     plan: "План",
     network: "Сеть оплаты",
-    createCheckout: "Создать checkout",
-    usageTitle: "API Usage",
-    usageBody: "Текущее состояние квот, rate limits и активных интеграций.",
-    keysTitle: "API Keys",
-    keysBody: "Полный ключ показывается один раз после создания.",
-    hooksTitle: "Webhooks",
-    hooksBody: "Reqst подписывает доставку заголовком X-Reqst-Signature.",
+    createCheckout: "Создать оплату",
+    usageTitle: "Нагрузка и лимиты",
+    usageBody: "Текущее состояние квот, минутной нагрузки и числа активных подключений.",
+    keysTitle: "Ключи доступа",
+    keysBody: "Полный секрет показывается только один раз в момент выпуска, дальше остаётся только короткий префикс.",
+    hooksTitle: "Адреса уведомлений",
+    hooksBody: "Reqst подписывает каждую доставку заголовком X-Reqst-Signature, чтобы вы могли проверить источник.",
     keyLabel: "Название ключа",
-    keyPlaceholder: "Production backend",
-    createKey: "Создать API key",
-    hookLabel: "Название endpoint",
-    hookLabelPlaceholder: "Payments webhook",
-    hookUrl: "Webhook URL",
+    keyPlaceholder: "Продакшн-сервис",
+    createKey: "Выпустить ключ",
+    hookLabel: "Название адреса",
+    hookLabelPlaceholder: "Оплаты продакшн",
+    hookUrl: "Адрес уведомлений",
     hookUrlPlaceholder: "https://app.example.com/webhooks/reqst",
-    createHook: "Добавить webhook",
+    createHook: "Добавить адрес",
     remove: "Удалить",
     copy: "Копировать",
-    latestSecret: "Новый API ключ",
-    latestCheckout: "Последний billing checkout",
+    latestSecret: "Новый ключ",
+    latestCheckout: "Последняя ссылка на оплату",
     sampleTitle: "Пример запроса",
-    sampleBody: "Создание invoice через Reqst Dev API.",
+    sampleBody: "Базовый запрос на создание инвойса через API Reqst.",
     monthly: "Запросов за месяц",
-    rpm: "Текущая минутная нагрузка",
+    rpm: "Нагрузка за минуту",
     keyCap: "Активные ключи",
-    hookCap: "Webhook endpoints",
-    emptyKeys: "Активных API keys пока нет.",
-    emptyHooks: "Webhook endpoints пока не добавлены.",
+    hookCap: "Адреса уведомлений",
+    emptyKeys: "Ключей доступа пока нет.",
+    emptyHooks: "Адреса уведомлений пока не добавлены.",
+    heroCards: [
+      {
+        title: "Один кабинет вместо хаоса",
+        body: "Покупка плана, выпуск ключей, квоты и адреса уведомлений собраны в одном месте и не размазаны по разным экранам.",
+      },
+      {
+        title: "Прямой запуск без sales-слоя",
+        body: "План активируется через обычную оплату внутри Reqst. После подтверждения кабинет сразу открывает нужные лимиты.",
+      },
+      {
+        title: "Нормальная операционная база",
+        body: "Можно держать отдельные ключи под сервисы, отслеживать текущую нагрузку и не гадать, почему интеграция упёрлась в лимит.",
+      },
+    ],
+    railTitle: "Что здесь можно сделать",
+    currentPlan: "План",
+    currentStatus: "Статус",
+    accessEnabled: "Доступ открыт",
+    rails: [
+      "Активировать Dev или Enterprise через оплату в нужной сети.",
+      "Выпустить отдельные ключи под сервисы и окружения.",
+      "Подключить адреса уведомлений для событий оплаты.",
+      "Видеть текущую загрузку и лимиты без ручной сверки.",
+    ],
+    lockedTitle: "До входа это выглядит так",
+    lockedBody: "Сначала авторизация, потом рабочие инструменты. Но структура кабинета и логика активации уже прозрачны: ничего лишнего, только контур интеграции.",
+    summaryTitle: "Состояние кабинета",
+    summaryFallback: "Доступ к интеграциям пока не активирован",
   },
   en: {
-    title: "Reqst Developers",
-    body: "Manage API keys, webhooks, and Dev or Enterprise billing from a dedicated portal. Every upgrade still goes through normal Reqst checkout links.",
-    authTitle: "Sign in to access the Dev/B2B portal",
-    authBody: "Use the same seller account to issue API keys, add webhooks, and buy Reqst Dev or Reqst Enterprise.",
+    title: "Reqst Integration Portal",
+    body: "This page combines plan activation, API keys, delivery endpoints, and usage visibility in one working surface.",
+    authTitle: "Sign in to access the integration portal",
+    authBody: "Use the same seller account to issue keys, connect delivery endpoints, and buy Dev or Enterprise without a separate sales flow.",
     authAction: "Sign in to Reqst",
     back: "Home",
     console: "Seller Console",
-    upgradeTitle: "Enable Dev API or Enterprise",
-    upgradeBody: "This account does not have API access yet. Buy a plan through a normal Reqst checkout and the API will unlock automatically after payment.",
+    upgradeTitle: "Enable Dev or Enterprise",
+    upgradeBody: "This account does not have integration access yet. Buy a plan through a normal Reqst billing link and access will unlock automatically after payment.",
     plan: "Plan",
     network: "Payment network",
-    createCheckout: "Create checkout",
-    usageTitle: "API Usage",
-    usageBody: "Current quotas, rate limits, and active integrations.",
-    keysTitle: "API Keys",
+    createCheckout: "Create billing link",
+    usageTitle: "Usage and limits",
+    usageBody: "Current quotas, minute load, and active integrations.",
+    keysTitle: "Access keys",
     keysBody: "A full secret is shown only once after creation.",
-    hooksTitle: "Webhooks",
+    hooksTitle: "Delivery endpoints",
     hooksBody: "Reqst signs webhook deliveries with the X-Reqst-Signature header.",
     keyLabel: "Key label",
     keyPlaceholder: "Production backend",
@@ -111,6 +139,34 @@ const COPY = {
     hookCap: "Webhook endpoints",
     emptyKeys: "No active API keys yet.",
     emptyHooks: "No webhook endpoints yet.",
+    heroCards: [
+      {
+        title: "One operating surface",
+        body: "Billing activation, key issuance, quotas, and delivery endpoints live in one place.",
+      },
+      {
+        title: "Self-serve plan activation",
+        body: "Buy the plan through a normal Reqst payment flow and unlock access automatically after confirmation.",
+      },
+      {
+        title: "Clear operational visibility",
+        body: "Track current usage and split credentials across services without guessing where the limit is.",
+      },
+    ],
+    railTitle: "What you can do here",
+    currentPlan: "Plan",
+    currentStatus: "Status",
+    accessEnabled: "Access enabled",
+    rails: [
+      "Activate Dev or Enterprise through a normal payment flow.",
+      "Issue separate keys for services and environments.",
+      "Connect delivery endpoints for payment events.",
+      "Watch current load and quota usage in one panel.",
+    ],
+    lockedTitle: "What the portal covers",
+    lockedBody: "Sign-in comes first, but the structure is straightforward: billing, credentials, delivery endpoints, and usage state.",
+    summaryTitle: "Portal state",
+    summaryFallback: "Integration access is not active yet",
   },
 } as const;
 
@@ -241,7 +297,7 @@ export function DeveloperPortalPage() {
       "curl -X POST https://your-domain.tld/v1/invoices \\",
       `  -H "Authorization: Bearer ${secret}" \\`,
       '  -H "Content-Type: application/json" \\',
-      '  -d \'{"title":"Enterprise retainer","base_amount_usd":"2500.00","payable_network":"TRON","expires_in_minutes":60}\'',
+      '  -d \'{"title":"Подписка на сервис","base_amount_usd":"2500.00","payable_network":"TRON","expires_in_minutes":60}\'',
     ].join("\n");
   }, [latestSecret]);
 
@@ -265,25 +321,77 @@ export function DeveloperPortalPage() {
       </header>
 
       <section className="developer-portal__hero">
-        <span className="plan-page__badge">Reqst Dev / Enterprise</span>
-        <h1>{text.title}</h1>
-        <p>{text.body}</p>
+        <div className="developer-portal__hero-copy">
+          <span className="plan-page__badge">Reqst Dev / Enterprise</span>
+          <h1>{text.title}</h1>
+          <p>{text.body}</p>
+
+          <div className="developer-portal__rail">
+            <span>{text.railTitle}</span>
+            <div className="developer-portal__rail-list">
+              {text.rails.map((item) => (
+                <article key={item} className="developer-portal__rail-item">
+                  <span />
+                  <p>{item}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="developer-portal__hero-stack">
+          {text.heroCards.map((card) => (
+            <article key={card.title} className="developer-portal__hero-card">
+              <h2>{card.title}</h2>
+              <p>{card.body}</p>
+            </article>
+          ))}
+        </div>
       </section>
 
       {error ? <div className="alert">{error}</div> : null}
       {loading ? <p className="muted">{language === "ru" ? "Загрузка..." : "Loading..."}</p> : null}
 
       {!token || !me ? (
-        <section className="developer-portal__auth">
-          <h2>{text.authTitle}</h2>
-          <p>{text.authBody}</p>
-          <Link className="lend-primary" to="/auth">
-            {text.authAction}
-          </Link>
-        </section>
+        <div className="developer-portal__locked">
+          <section className="developer-portal__auth">
+            <h2>{text.authTitle}</h2>
+            <p>{text.authBody}</p>
+            <Link className="lend-primary" to="/auth">
+              {text.authAction}
+            </Link>
+          </section>
+
+          <section className="developer-card developer-card--intro">
+            <span className="developer-card__eyebrow">{text.lockedTitle}</span>
+            <p>{text.lockedBody}</p>
+            <div className="developer-card__tile-grid">
+              {text.rails.map((item, index) => (
+                <article key={item} className="developer-card__tile">
+                  <strong>{String(index + 1).padStart(2, "0")}</strong>
+                  <p>{item}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
       ) : (
         <div className="developer-portal__grid">
           <section className="developer-portal__column">
+            <article className="developer-card developer-card--summary">
+              <span className="developer-card__eyebrow">{text.summaryTitle}</span>
+                <div className="developer-metrics">
+                <div className="developer-metric">
+                  <span>{text.currentPlan}</span>
+                  <strong>{me.plan.code.toUpperCase()}</strong>
+                </div>
+                <div className="developer-metric">
+                  <span>{text.currentStatus}</span>
+                  <strong>{me.plan.has_api ? text.accessEnabled : text.summaryFallback}</strong>
+                </div>
+              </div>
+            </article>
+
             {!me.plan.has_api ? (
               <article className="developer-card">
                 <h2>{text.upgradeTitle}</h2>

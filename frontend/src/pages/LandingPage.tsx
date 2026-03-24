@@ -157,23 +157,31 @@ const COPY = {
     faq: {
       kicker: "FAQ",
       title: "Ответы на частые вопросы.",
-      body: "Всё, что вы хотели знать о Reqst.",
+      body: "Коротко о том, как устроены продажи, биллинг и API внутри Reqst.",
       items: [
         {
-          question: "Безопасно ли это?",
-          answer: "Абсолютно. Мы не имеем доступа к вашим приватным ключам. Вы указываете только публичный адрес для приема платежей.",
+          question: "Reqst хранит мои деньги или приватные ключи?",
+          answer: "Нет. Reqst работает в non-custodial модели: покупатель платит сразу на ваш адрес, а сервис только строит checkout, отслеживает входящий перевод и обновляет статус инвойса.",
         },
         {
-          question: "Какие комиссии?",
-          answer: "Reqst не берет комиссию с ваших транзакций. Вы платите только фиксированную стоимость подписки за использование сервиса.",
+          question: "Какие тарифы теперь есть?",
+          answer: "Базовый seller-flow живет в Reqst PRO. Для команд, которым нужны API keys, webhooks и интеграции, есть Reqst Dev. Для более высоких лимитов, большего числа ключей и усиленного B2B-сценария есть Reqst Enterprise.",
         },
         {
-          question: "Как быстро приходят деньги?",
-          answer: "Мгновенно. Как только транзакция подтверждается в блокчейне, она уже на вашем кошельке. Мы лишь уведомляем об этом.",
+          question: "Как покупаются PRO, Dev и Enterprise?",
+          answer: "Через обычные Reqst checkout links. Вы создаете billing checkout внутри сервиса, оплачиваете его переводом в нужной сети, и после подтверждения план активируется автоматически.",
         },
         {
-          question: "Что если клиент ошибся?",
-          answer: "Система пометит платеж как требующий внимания (Review Required). Вы увидите это в консоли и сможете принять решение вручную.",
+          question: "Есть ли уже API и webhooks для разработчиков?",
+          answer: "Да. В Reqst Dev и Reqst Enterprise доступны API keys, seller API для создания и чтения инвойсов, usage limits, rate limiting и webhook endpoints для событий оплаты и активации подписки.",
+        },
+        {
+          question: "Какие сети реально мониторятся автоматически?",
+          answer: "Сейчас Reqst автоматически отслеживает TON, TRON, Solana и EVM-family сети вроде Ethereum, Base, Arbitrum и BSC. Для разных сетей используется подходящий upstream: где удобно RPC, где удобнее специализированный индексирующий API.",
+        },
+        {
+          question: "Что если клиент отправил не ту сумму или не в ту сеть?",
+          answer: "Точный happy path система подтверждает автоматически, а спорные сценарии вроде underpaid, late payment или manual review помечаются отдельно в консоли, чтобы вы могли принять решение вручную без потери контекста.",
         },
       ],
     },
@@ -349,23 +357,31 @@ const COPY = {
     faq: {
       kicker: "FAQ",
       title: "Frequently Asked Questions.",
-      body: "Everything you need to know about Reqst.",
+      body: "A quick overview of how billing, payouts, and the Dev API work inside Reqst.",
       items: [
         {
-          question: "Is it safe?",
-          answer: "Absolutely. We never touch your private keys. You only provide your public payout addresses.",
+          question: "Does Reqst custody funds or private keys?",
+          answer: "No. Reqst is non-custodial: the buyer pays directly to your payout wallet, while the service handles checkout UX, incoming transfer monitoring, and invoice status updates.",
         },
         {
-          question: "What are the fees?",
-          answer: "Reqst charges zero transaction fees. You only pay a flat subscription fee for the service.",
+          question: "What plans are available now?",
+          answer: "Reqst PRO covers the core seller flow. Reqst Dev adds API keys, webhooks, and developer-facing integration tools. Reqst Enterprise pushes the same model further with higher limits, more keys, and a stronger B2B operating setup.",
         },
         {
-          question: "How fast are the payouts?",
-          answer: "Instant. As soon as the transaction is confirmed on-chain, it's in your wallet. We just notify you.",
+          question: "How do I buy PRO, Dev, or Enterprise?",
+          answer: "Through normal Reqst checkout links. You generate a billing checkout inside the product, pay it with a blockchain transfer in the selected network, and the plan is activated automatically after confirmation.",
         },
         {
-          question: "What if a client sends the wrong amount?",
-          answer: "The system flags it as 'Review Required' in your console, so you can handle it manually.",
+          question: "Is there already an API and webhook layer for developers?",
+          answer: "Yes. Reqst Dev and Reqst Enterprise include API keys, a seller API for invoice creation and retrieval, usage caps, rate limits, and webhook endpoints for payment and subscription events.",
+        },
+        {
+          question: "Which networks are monitored automatically today?",
+          answer: "Reqst currently auto-monitors TON, TRON, Solana, and the EVM family including Ethereum, Base, Arbitrum, and BSC. The service uses the most practical upstream per network, whether that means direct RPC or a higher-level indexed API.",
+        },
+        {
+          question: "What if the buyer sends the wrong amount or uses the wrong route?",
+          answer: "Clean matches are confirmed automatically, while edge cases like underpaid transfers, late payments, or manual-review scenarios are clearly flagged in the console so your team can resolve them with context.",
         },
       ],
     },
@@ -572,16 +588,27 @@ export function LandingPage() {
           <div className="lend-faq-stack lend-reveal--2">
             {copy.faq.items.map((item, index) => {
               const isOpen = index === openFaq;
+              const answerId = `landing-faq-answer-${index}`;
               return (
                 <article key={item.question} className={`lend-faq-item${isOpen ? " is-open" : ""}`}>
-                  <button type="button" className="lend-faq-trigger" onClick={() => setOpenFaq(isOpen ? -1 : index)}>
+                  <button
+                    type="button"
+                    className="lend-faq-trigger"
+                    aria-expanded={isOpen}
+                    aria-controls={answerId}
+                    onClick={() => setOpenFaq(isOpen ? -1 : index)}
+                  >
                     <span>{item.question}</span>
                     <div className="lend-faq-icon">
                       <div className="lend-faq-icon-line" />
                       <div className="lend-faq-icon-line" />
                     </div>
                   </button>
-                  <div className="lend-faq-answer-wrapper">
+                  <div
+                    id={answerId}
+                    className={`lend-faq-answer-wrapper${isOpen ? " is-open" : ""}`}
+                    aria-hidden={!isOpen}
+                  >
                     <div className="lend-faq-answer">
                       <p>{item.answer}</p>
                     </div>

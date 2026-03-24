@@ -13,7 +13,6 @@ import {
 import { useUI } from "../lib/ui";
 
 const BOT_URL = "https://t.me/reqstxyz_bot";
-const BOT_NAME = "reqstxyz_bot";
 
 type EmailMode = "login" | "register" | "reset";
 
@@ -26,23 +25,22 @@ declare global {
         expand?: () => void;
       };
     };
-    onTelegramAuth?: (user: Record<string, string | number>) => Promise<void>;
   }
 }
 
 const COPY = {
   ru: {
-    title: "Вход в панель Reqst",
-    body: "Используйте Telegram для быстрого входа или настройте доступ через email и пароль. Вы сможете связать оба способа в настройках своего профиля.",
-    telegramTitle: "Авторизация через Telegram",
-    telegramBody: "Внутри Telegram Mini App вход происходит мгновенно. На сайте виджет только авторизует, а бот открывается отдельной кнопкой ниже.",
+    title: "Вход в рабочий кабинет Reqst",
+    body: "Страница авторизации теперь должна не стыдить, а быстро заводить в продукт. Здесь два нормальных сценария: моментальный вход через Telegram и обычный доступ по почте с паролем.",
+    telegramTitle: "Быстрый вход через Telegram",
+    telegramBody: "Если вы уже внутри Telegram, вход займёт пару секунд. Если сайт открыт в браузере, сначала зайдите в бота и откройте Mini App оттуда.",
     openBot: "Открыть Telegram бота",
-    continueTelegram: "Продолжить через Telegram",
+    continueTelegram: "Войти через Telegram",
     signingIn: "Вход в аккаунт...",
     landing: "На главную",
     console: "В панель управления",
-    emailTitle: "Email и пароль",
-    emailBody: "Обычный вход по почте без зависимости только от Telegram.",
+    emailTitle: "Почта и пароль",
+    emailBody: "Подходит для обычной работы из браузера: вход, регистрация и восстановление доступа собраны в одном блоке.",
     emailModes: {
       login: "Вход",
       register: "Регистрация",
@@ -61,12 +59,33 @@ const COPY = {
     registerAction: "Создать аккаунт",
     resetAction: "Сбросить пароль",
     codeSent: "Код подтверждения отправлен. Пожалуйста, проверьте папку 'Входящие' или 'Спам'.",
+    asideTitle: "Что даёт кабинет",
+    asideCards: [
+      {
+        title: "Платежи под контролем",
+        body: "Создавайте инвойсы, следите за оплатой и не тратьте время на ручную сверку переводов.",
+      },
+      {
+        title: "Один вход для всех сценариев",
+        body: "Telegram удобен для быстрого старта, а почта с паролем нормальна для ежедневной работы из браузера.",
+      },
+      {
+        title: "Тот же строгий контур",
+        body: "После входа доступны кабинет продавца, интеграционный раздел и все ссылки на оплату без прыжков между разными страницами.",
+      },
+    ],
+    asidePoints: [
+      "Прямой приём оплат на ваш кошелёк.",
+      "Автоматическое подтверждение статусов.",
+      "Доступ к Dev и Enterprise из того же аккаунта.",
+    ],
+    browserHint: "Если вы в браузере, используйте почту или сначала откройте Mini App через бота.",
   },
   en: {
     title: "Sign in to reqst",
     body: "Use Telegram or email/password. Both methods can belong to the same account once you link them in the profile.",
     telegramTitle: "Telegram",
-    telegramBody: "Inside Telegram Mini App the session signs in automatically. On the website the widget only authorizes, while the button below opens the bot separately.",
+    telegramBody: "Telegram sign-in works only from inside Telegram itself. If you opened the site in a browser, open the bot first and launch the Mini App from there.",
     openBot: "Open Bot",
     continueTelegram: "Login with Telegram",
     signingIn: "Signing in...",
@@ -92,6 +111,27 @@ const COPY = {
     registerAction: "Create account",
     resetAction: "Reset password",
     codeSent: "Code sent. Check your inbox and finish the flow in this form.",
+    asideTitle: "What the account unlocks",
+    asideCards: [
+      {
+        title: "Payments under control",
+        body: "Create invoices, track incoming transfers, and avoid manual verification work.",
+      },
+      {
+        title: "One account for both paths",
+        body: "Telegram is fast inside the app, while email and password work cleanly in the browser.",
+      },
+      {
+        title: "A stricter working surface",
+        body: "The same account gives access to the seller console, the integration portal, and billing links.",
+      },
+    ],
+    asidePoints: [
+      "Direct-to-wallet payment intake.",
+      "Automatic status confirmation.",
+      "Dev and Enterprise access from the same account.",
+    ],
+    browserHint: "If you are in a browser, use email or open the Mini App from the bot first.",
   },
 } as const;
 
@@ -143,39 +183,6 @@ export function AuthPortalPage() {
     }
   }, [initData, hasSession]);
 
-  useEffect(() => {
-    if (initData || hasSession) {
-      return undefined;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.setAttribute("data-telegram-login", BOT_NAME);
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-radius", "12");
-    script.setAttribute("data-onauth", "onTelegramAuth(user)");
-    script.setAttribute("data-request-access", "write");
-    script.async = true;
-
-    const container = document.getElementById("telegram-login-container");
-    if (container) {
-      container.appendChild(script);
-    }
-
-    window.onTelegramAuth = async (user) => {
-      const params = new URLSearchParams();
-      Object.entries(user).forEach(([key, value]) => params.append(key, String(value)));
-      await performTelegramWidgetAuth(params.toString());
-    };
-
-    return () => {
-      if (container) {
-        container.innerHTML = "";
-      }
-      delete window.onTelegramAuth;
-    };
-  }, [hasSession, initData]);
-
   async function performTelegramAuth(manualInitData?: string) {
     try {
       setLoading(true);
@@ -186,20 +193,6 @@ export function AuthPortalPage() {
         throw new Error("No Telegram session found");
       }
       const result = await authenticateTelegram({ init_data: sessionInitData });
-      setStoredToken(result.token);
-      navigate("/console");
-    } catch (err) {
-      setError((err as Error).message);
-      setLoading(false);
-    }
-  }
-
-  async function performTelegramWidgetAuth(widgetData: string) {
-    try {
-      setLoading(true);
-      setError("");
-      setMessage("");
-      const result = await authenticateTelegram({ widget_data: widgetData });
       setStoredToken(result.token);
       navigate("/console");
     } catch (err) {
@@ -304,12 +297,36 @@ export function AuthPortalPage() {
         </header>
 
         <section className="auth-portal__hero">
-          <div className="auth-portal__copy">
-            <h1>{text.title}</h1>
-            <p>{text.body}</p>
-          </div>
-
           <div className="auth-portal__grid">
+            <aside className="auth-portal__aside">
+              <div className="auth-portal__copy">
+                <span className="plan-page__badge">Reqst Access</span>
+                <h1>{text.title}</h1>
+                <p>{text.body}</p>
+                <p className="auth-portal__hint">{text.browserHint}</p>
+              </div>
+
+              <div className="auth-portal__aside-cards">
+                {text.asideCards.map((card) => (
+                  <article key={card.title} className="auth-aside-card">
+                    <h2>{card.title}</h2>
+                    <p>{card.body}</p>
+                  </article>
+                ))}
+              </div>
+
+              <div className="auth-portal__signal-list">
+                <span>{text.asideTitle}</span>
+                {text.asidePoints.map((item) => (
+                  <article key={item} className="auth-portal__signal">
+                    <span />
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+            </aside>
+
+            <div className="auth-portal__cards">
             <article className="auth-card auth-card--telegram">
               <div className="auth-card__content">
                 <h2>{text.telegramTitle}</h2>
@@ -326,10 +343,12 @@ export function AuthPortalPage() {
                     {loading ? text.signingIn : text.continueTelegram}
                   </button>
                 ) : (
-                  <div id="telegram-login-container" className="auth-widget-wrapper" />
+                  <a className="lend-primary lend-primary--large" href={BOT_URL} target="_blank" rel="noreferrer">
+                    {text.openBot}
+                  </a>
                 )}
                 <a className="lend-secondary" href={BOT_URL} target="_blank" rel="noreferrer">
-                  {text.openBot}
+                  Telegram
                 </a>
               </div>
             </article>
@@ -421,6 +440,7 @@ export function AuthPortalPage() {
                   </button>
               </form>
             </article>
+            </div>
           </div>
 
           {message ? <div className="auth-feedback auth-feedback--success">{message}</div> : null}

@@ -424,7 +424,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
           <div className="lend-topbar-actions">
             <div className="lend-language" role="group" aria-label="language switcher">
               <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>
-                РУ
+                RU
               </button>
               <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>
                 EN
