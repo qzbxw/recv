@@ -14,7 +14,7 @@ import {
   getApiBase,
   getStoredToken,
 } from "../lib/api";
-import type { APIKey, DeveloperUsageResponse, MeResponse, Network, Plan, WebhookEndpoint } from "../lib/types";
+import type { APIKey, DeveloperUsageResponse, MeResponse, Network, WebhookEndpoint } from "../lib/types";
 import { useUI } from "../lib/ui";
 
 const PLAN_OPTIONS = [

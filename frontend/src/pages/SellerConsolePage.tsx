@@ -134,9 +134,11 @@ const COPY = {
     plansTitle: "Ваш тариф",
     plansCopy: "Управление подпиской и выбор условий обслуживания.",
     plansAction: "Биллинг",
+    plansUpgradeTitle: "Повысить уровень",
+    plansUpgradeCopy: "Разблокируйте API, вебхуки и повышенные лимиты.",
     developersTitle: "Developer Portal",
     developersCopy: "API keys и Webhooks.",
-    developersAction: "Открыть",
+    developersAction: "Открыть API Docs",
     proSpotlightTitle: "Тариф PRO",
     proSpotlightBody: "Вам доступно ручное создание инвойсов и управление через Telegram-бота для быстрых продаж.",
     devSpotlightTitle: "Тариф Dev (API Active)",
@@ -242,9 +244,11 @@ const COPY = {
     plansTitle: "Plan",
     plansCopy: "Subscription and billing.",
     plansAction: "Billing",
+    plansUpgradeTitle: "Upgrade Level",
+    plansUpgradeCopy: "Unlock API, webhooks, and higher limits.",
     developersTitle: "Developer Portal",
     developersCopy: "API keys and Webhooks.",
-    developersAction: "Open",
+    developersAction: "Open API Docs",
     proSpotlightTitle: "PRO Seller",
     proSpotlightBody: "Use manual invoices and Telegram bot for quick sales.",
     devSpotlightTitle: "API Active",
@@ -631,6 +635,30 @@ export function SellerConsolePage() {
                       <span>{text.totalInvoices}</span>
                       <strong><LiveValue value={session.invoices.length} /></strong>
                       <p>{text.totalInvoicesSummary}</p>
+                    </article>
+                  </div>
+
+                  <div className="console-overview-actions" style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                    <article className="console-surface" style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)' }}>
+                      <h3>{text.plansUpgradeTitle}</h3>
+                      <p style={{ fontSize: '0.9rem', color: '#afbac4', margin: '0.5rem 0 1rem' }}>{text.plansUpgradeCopy}</p>
+                      <button className="ghost-button compact-button" onClick={() => setActivePanel("create")}>
+                        {text.plansAction}
+                      </button>
+                    </article>
+                    <article className="console-surface" style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)' }}>
+                      <h3>{text.developersTitle}</h3>
+                      <p style={{ fontSize: '0.9rem', color: '#afbac4', margin: '0.5rem 0 1rem' }}>{text.developersCopy}</p>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Link to="/developers" className="ghost-button compact-button">
+                          {text.developersAction}
+                        </Link>
+                        {session.me.plan.has_api && (
+                          <Link to="/developers" className="inline-link" style={{ padding: '0.5rem 0.8rem', fontSize: '0.85rem' }}>
+                            {text.open}
+                          </Link>
+                        )}
+                      </div>
                     </article>
                   </div>
                 </article>
