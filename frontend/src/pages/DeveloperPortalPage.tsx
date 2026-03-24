@@ -324,9 +324,9 @@ export function DeveloperPortalPage() {
   const sampleCurl = useMemo(() => {
     const secret = latestSecret || "rk_live_your_key";
     return [
-      "curl -X POST https://api.reqst.xyz/v1/invoices \",
-      `  -H "Authorization: Bearer ${secret}" \`,
-      '  -H "Content-Type: application/json" \',
+      "curl -X POST https://api.reqst.xyz/v1/invoices \\",
+      `  -H "Authorization: Bearer ${secret}" \\`,
+      '  -H "Content-Type: application/json" \\',
       '  -d \'{"title":"Product Subscription","base_amount_usd":"25.00","payable_network":"TRON"}\'',
     ].join("\n");
   }, [latestSecret]);
