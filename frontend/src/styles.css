@@ -243,6 +243,8 @@ code {
 
 .checkout-shell {
   min-height: 100vh;
+  padding-inline: clamp(1rem, 2.4vw, 1.6rem);
+  padding-bottom: 1.5rem;
 }
 
 .checkout-shell--wide {
@@ -496,6 +498,10 @@ code {
   border-radius: 30px;
   box-shadow: var(--shadow);
   animation: rise-in 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.checkout-card {
+  padding: clamp(1.1rem, 2.4vw, 1.5rem);
 }
 
 .hero-card {
@@ -1142,6 +1148,7 @@ code {
 .amount-totem--receipt {
   min-width: 220px;
   gap: 0.75rem;
+  padding: 1.2rem 1.2rem 1.15rem;
 }
 
 .checkout-grid--receipt {
@@ -1155,6 +1162,7 @@ code {
   grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
   gap: 1.2rem;
   align-items: start;
+  padding: 0.3rem;
 }
 
 .checkout-story,
@@ -1163,9 +1171,14 @@ code {
   gap: 1rem;
 }
 
+.checkout-story {
+  padding-right: 0.35rem;
+}
+
 .payment-rail {
   position: sticky;
   top: 6.4rem;
+  padding-left: 0.35rem;
 }
 
 .qr-stage {
@@ -1180,6 +1193,7 @@ code {
   justify-self: start;
   width: fit-content;
   max-width: 100%;
+  padding: 0.2rem 0.3rem 0 0.1rem;
 }
 
 .qr-caption {
@@ -1385,7 +1399,7 @@ code {
 
 .payment-sheet--receipt {
   gap: 1rem;
-  padding: 0.2rem 0;
+  padding: 0.35rem 0.3rem 0.25rem;
 }
 
 .payment-sheet-header {
@@ -1525,8 +1539,49 @@ code {
 
 .topbar--console {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.65rem;
   align-items: stretch;
+  padding-block: 0.72rem;
+}
+
+.topbar--console .topbar-main {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.topbar--console .topbar-brand {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
+}
+
+.topbar-nav--console {
+  display: flex;
+  gap: 0.5rem;
+  width: calc(100% + 0.2rem);
+  margin-inline: -0.1rem;
+  padding: 0.1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.topbar-nav--console::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar-nav--console .switch-pill {
+  flex: 0 0 auto;
+  min-height: 2.35rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .live-value {
@@ -2188,6 +2243,14 @@ code {
     border-radius: 24px;
   }
 
+  .checkout-shell {
+    padding-inline: 0.95rem;
+  }
+
+  .checkout-card {
+    padding: 1.15rem;
+  }
+
   .topbar-brand strong {
     font-size: 1rem;
   }
@@ -2432,6 +2495,7 @@ code {
 
   .payment-sheet--receipt {
     gap: 0.85rem;
+    padding-inline: 0.15rem;
   }
 
   .amount-totem--rail {
@@ -3803,7 +3867,7 @@ html {
 .lend-faq-stack {
   display: grid;
   gap: 0.8rem;
-  max-width: 920px;
+  max-width: 1180px;
   width: 100%;
   margin: 0;
 }
@@ -5992,6 +6056,12 @@ html {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .topbar-nav--console {
+    display: flex;
+    grid-template-columns: none;
+    gap: 0.45rem;
+  }
+
   .payment-field,
   .stack-item,
   .invoice-topline,
@@ -6082,6 +6152,15 @@ html {
     padding: 0.68rem 0.72rem;
   }
 
+  .checkout-shell {
+    padding-inline: 0.82rem;
+    padding-bottom: 1rem;
+  }
+
+  .checkout-card {
+    padding: 0.95rem;
+  }
+
   .topbar-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -6094,41 +6173,26 @@ html {
     justify-content: center;
   }
 
-  .topbar-nav--console {
-    position: fixed;
-    left: 0.72rem;
-    right: 0.72rem;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.72rem);
-    z-index: 30;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+  .topbar--console {
+    gap: 0.55rem;
+    padding-block: 0.62rem;
+  }
+
+  .topbar--console .topbar-main {
     gap: 0.45rem;
-    padding: 0.5rem;
-    border-radius: 24px;
-    background: color-mix(in srgb, var(--paper) 90%, transparent);
-    border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.38);
-    backdrop-filter: blur(18px);
+  }
+
+  .topbar-nav--console {
+    width: calc(100% + 0.1rem);
+    margin-inline: -0.05rem;
+    padding: 0.05rem;
+    gap: 0.4rem;
   }
 
   .topbar-nav--console .switch-pill {
-    min-height: 56px;
-    padding: 0.5rem 0.35rem;
-    border-radius: 18px;
-    font-size: 0.72rem;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-    white-space: normal;
-    background: transparent;
-    border-color: transparent;
-  }
-
-  .topbar-nav--console .switch-pill.active {
-    background: color-mix(in srgb, var(--accent-soft) 34%, var(--paper-strong));
-    border-color: color-mix(in srgb, var(--accent) 18%, transparent);
-  }
-
-  .shell-console--redesigned {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.8rem);
+    min-height: 2.15rem;
+    padding: 0.46rem 0.72rem;
+    font-size: 0.82rem;
   }
 
   .topbar--console .topbar-actions button,
@@ -6136,6 +6200,20 @@ html {
   .topbar--checkout .topbar-actions .lend-primary,
   .topbar--checkout .topbar-actions .lend-secondary {
     width: 100%;
+  }
+
+  .checkout-flow {
+    padding: 0.12rem 0;
+  }
+
+  .checkout-story,
+  .payment-rail {
+    padding: 0;
+  }
+
+  .payment-sheet--receipt,
+  .qr-stage--receipt {
+    padding-inline: 0;
   }
 
   .console-coverage-row,
