@@ -127,17 +127,17 @@ function formatStatus(language: keyof typeof STATUS_LABELS, status: string) {
 function formatNetworkLabel(network: Invoice["payable_network"]) {
   switch (network) {
     case "TRON":
-      return "TRON / USDT";
+      return "TRON";
     case "SOLANA":
-      return "SOLANA / USDC-USDT";
+      return "SOLANA";
     case "EVM":
-      return "ETHEREUM / ERC20";
+      return "ETHEREUM";
     case "BASE":
-      return "BASE / USDT";
+      return "BASE";
     case "ARBITRUM":
-      return "ARBITRUM / USDT";
+      return "ARBITRUM";
     case "BSC":
-      return "BSC / USDT";
+      return "BSC";
     default:
       return network;
   }
@@ -163,6 +163,17 @@ export function CheckoutPage() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [now, setNow] = useState(Date.now());
   const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "">("");
+
+  useEffect(() => {
+    const previousTheme = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = "light";
+    if (theme !== "light") {
+      setTheme("light");
+    }
+    return () => {
+      document.documentElement.dataset.theme = previousTheme || "light";
+    };
+  }, [setTheme, theme]);
 
   useEffect(() => {
     let active = true;
@@ -301,14 +312,6 @@ export function CheckoutPage() {
               {text.en}
             </button>
           </div>
-          <button
-            type="button"
-            className="micro-action micro-action--icon"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-          >
-            {theme === "light" ? "☀" : "☾"}
-          </button>
         </div>
       </header>
 

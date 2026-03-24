@@ -35,14 +35,14 @@ const COPY = {
     title: "Вход в панель Reqst",
     body: "Используйте Telegram для быстрого входа или настройте доступ через email и пароль. Вы сможете связать оба способа в настройках своего профиля.",
     telegramTitle: "Авторизация через Telegram",
-    telegramBody: "Внутри Telegram Mini App вход происходит мгновенно. С веб-сайта вы можете войти через официальный виджет или нашего бота.",
+    telegramBody: "Внутри Telegram Mini App вход происходит мгновенно. На сайте виджет только авторизует, а бот открывается отдельной кнопкой ниже.",
     openBot: "Открыть Telegram бота",
     continueTelegram: "Продолжить через Telegram",
     signingIn: "Вход в аккаунт...",
     landing: "На главную",
     console: "В панель управления",
     emailTitle: "Email и пароль",
-    emailBody: "Классический способ входа. Позволяет не зависеть от мессенджера и восстанавливать доступ через почту.",
+    emailBody: "Обычный вход по почте без зависимости только от Telegram.",
     emailModes: {
       login: "Вход",
       register: "Регистрация",
@@ -66,14 +66,14 @@ const COPY = {
     title: "Sign in to reqst",
     body: "Use Telegram or email/password. Both methods can belong to the same account once you link them in the profile.",
     telegramTitle: "Telegram",
-    telegramBody: "Inside Telegram Mini App the session signs in automatically. On the website you can use the widget or open the bot directly.",
+    telegramBody: "Inside Telegram Mini App the session signs in automatically. On the website the widget only authorizes, while the button below opens the bot separately.",
     openBot: "Open Bot",
     continueTelegram: "Login with Telegram",
     signingIn: "Signing in...",
     landing: "Back to Home",
     console: "Open Console",
     emailTitle: "Email + password",
-    emailBody: "Create an account with a code from email, sign in with a password, and recover access even if Telegram is not your only entry point.",
+    emailBody: "Regular email sign-in without relying only on Telegram.",
     emailModes: {
       login: "Login",
       register: "Sign up",
@@ -417,8 +417,8 @@ export function AuthPortalPage() {
                 )}
 
                 <button type="submit" className="lend-primary lend-primary--large" disabled={loading}>
-                  {loading ? text.signingIn : emailActionLabel}
-                </button>
+                    {loading ? text.signingIn : emailActionLabel}
+                  </button>
               </form>
             </article>
           </div>

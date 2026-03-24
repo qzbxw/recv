@@ -121,7 +121,7 @@ const COPY = {
     markPaid: "Подтвердить вручную",
     quickActions: "Действия",
     accountTitle: "Управление аккаунтом",
-    accountCopy: "Настройки доступа, уведомлений и тарифного плана.",
+    accountCopy: "Способы входа и базовые настройки аккаунта.",
     invoicePulseTitle: "Аналитика за 24ч",
     invoicePulseCopy: "Текущее состояние ваших входящих транзакций.",
     walletCoverageTitle: "Направления",
@@ -138,11 +138,11 @@ const COPY = {
     sendCode: "Выслать код",
     sendingCode: "Отправка...",
     emailLinked: "Вход через email и пароль успешно настроен.",
-    emailAccessTitle: "Email-авторизация",
-    emailAccessCopy: "Добавьте вход через почту, чтобы не зависеть только от сессии Telegram.",
+    emailAccessTitle: "Вход по email",
+    emailAccessCopy: "Добавьте почту и пароль для обычного входа.",
     emailAccessReady: "Email-авторизация активна для этого профиля.",
-    telegramAccessTitle: "Telegram-аккаунт",
-    telegramAccessCopy: "Свяжите ваш профиль с Telegram, чтобы управлять заказами через бота и получать мгновенные уведомления.",
+    telegramAccessTitle: "Telegram",
+    telegramAccessCopy: "Подключите Telegram к этому же аккаунту.",
     telegramLinked: "Telegram привязан",
     telegramMissing: "Telegram не привязан",
     telegramLinkHint: "Используйте виджет авторизации ниже для привязки вашего аккаунта.",
@@ -219,7 +219,7 @@ const COPY = {
     markPaid: "Confirm Paid",
     quickActions: "Actions",
     accountTitle: "Profile",
-    accountCopy: "Manage your seller identity and subscription settings.",
+    accountCopy: "Sign-in methods and basic account settings.",
     invoicePulseTitle: "Stats",
     invoicePulseCopy: "Real-time overview of your invoice states.",
     walletCoverageTitle: "Payout Lanes",
@@ -236,11 +236,11 @@ const COPY = {
     sendCode: "Send code",
     sendingCode: "Sending...",
     emailLinked: "Email/password access is already active for this account",
-    emailAccessTitle: "Email + password",
-    emailAccessCopy: "Add email/password to the current account so you can sign in without relying only on Telegram.",
+    emailAccessTitle: "Email login",
+    emailAccessCopy: "Add email and password for regular sign-in.",
     emailAccessReady: "Email login is already active for this account.",
     telegramAccessTitle: "Telegram",
-    telegramAccessCopy: "Link Telegram to this account so the same seller profile works in the bot and with email/password.",
+    telegramAccessCopy: "Connect Telegram to the same account.",
     telegramLinked: "Telegram linked",
     telegramMissing: "Telegram not linked yet",
     telegramLinkHint: "Use the Telegram Login Widget below to attach Telegram to the current account.",
@@ -276,19 +276,19 @@ const PANEL_ORDER: PanelKey[] = ["overview", "wallets", "create", "orders"];
 
 const WALLET_NETWORK_OPTIONS: Array<{ value: Network; label: string; hint?: string }> = [
   { value: "TON", label: "TON" },
-  { value: "TRON", label: "TRON", hint: "USDT" },
-  { value: "SOLANA", label: "SOLANA", hint: "USDT" },
-  { value: "EVM", label: "EVM Shared", hint: "USDT / ETH" },
+  { value: "TRON", label: "TRON" },
+  { value: "SOLANA", label: "SOLANA" },
+  { value: "EVM", label: "ETHEREUM" },
 ];
 
 const PAYABLE_NETWORK_OPTIONS: Array<{ value: Network; label: string; hint?: string }> = [
   { value: "TON", label: "TON" },
-  { value: "TRON", label: "TRON", hint: "USDT" },
-  { value: "SOLANA", label: "SOLANA", hint: "USDT" },
-  { value: "BASE", label: "BASE", hint: "USDT" },
-  { value: "ARBITRUM", label: "ARBITRUM", hint: "USDT" },
-  { value: "BSC", label: "BSC", hint: "USDT" },
-  { value: "EVM", label: "ETHEREUM", hint: "USDT / ETH" },
+  { value: "TRON", label: "TRON" },
+  { value: "SOLANA", label: "SOLANA" },
+  { value: "BASE", label: "BASE" },
+  { value: "ARBITRUM", label: "ARBITRUM" },
+  { value: "BSC", label: "BSC" },
+  { value: "EVM", label: "ETHEREUM" },
 ];
 
 function formatInvoiceStatus(language: keyof typeof STATUS_LABELS, status: string) {
@@ -611,17 +611,6 @@ export function SellerConsolePage() {
         : session.me.seller.email
     : "";
   const latestCheckoutUrl = freshLink || (latestInvoice ? `${checkoutOrigin}/checkout/${latestInvoice.public_id}` : "");
-  const invoicePulse = useMemo(() => {
-    if (!session) {
-      return [];
-    }
-
-    return [
-      { key: "awaiting_payment", label: formatInvoiceStatus(language, "awaiting_payment"), value: session.invoices.filter((invoice) => invoice.status === "awaiting_payment").length },
-      { key: "manual_review", label: formatInvoiceStatus(language, "manual_review"), value: session.invoices.filter((invoice) => invoice.status === "manual_review").length },
-      { key: "paid", label: formatInvoiceStatus(language, "paid"), value: session.invoices.filter((invoice) => invoice.status === "paid").length },
-    ];
-  }, [language, session]);
   const walletCoverage = useMemo(() => {
     if (!session) {
       return [];
@@ -738,7 +727,7 @@ export function SellerConsolePage() {
 
                   <div className="console-access-grid">
                     <article className="console-access-card">
-                      <div>
+                      <div className="console-access-head">
                         <h3>{text.emailAccessTitle}</h3>
                         <p>{text.emailAccessCopy}</p>
                       </div>
@@ -791,7 +780,7 @@ export function SellerConsolePage() {
                     </article>
 
                     <article className="console-access-card">
-                      <div>
+                      <div className="console-access-head">
                         <h3>{text.telegramAccessTitle}</h3>
                         <p>{text.telegramAccessCopy}</p>
                       </div>
@@ -817,23 +806,6 @@ export function SellerConsolePage() {
                   </div>
                 </article>
 
-                <article className="console-surface console-section-card">
-                  <div className="console-section-head">
-                    <div>
-                      <h2>{text.invoicePulseTitle}</h2>
-                      <p>{text.invoicePulseCopy}</p>
-                    </div>
-                  </div>
-
-                  <div className="console-pulse-grid">
-                    {invoicePulse.map((item) => (
-                      <article key={item.key} className={`console-pulse-card status-${item.key}`}>
-                        <span>{item.label}</span>
-                        <strong><LiveValue value={item.value} /></strong>
-                      </article>
-                    ))}
-                  </div>
-                </article>
               </div>
 
               <aside className="console-rail">

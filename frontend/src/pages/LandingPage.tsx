@@ -133,7 +133,7 @@ const COPY = {
         },
         {
           name: "TRON",
-          title: "TRON / USDT",
+          title: "TRON",
           body: "Классика стейблкоинов с низкими комиссиями и высокой скоростью.",
         },
         {
@@ -325,7 +325,7 @@ const COPY = {
         },
         {
           name: "TRON",
-          title: "TRON / USDT",
+          title: "TRON",
           body: "The stablecoin classic with low fees and high reliability.",
         },
         {
