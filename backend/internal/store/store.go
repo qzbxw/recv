@@ -667,9 +667,9 @@ func (s *Store) GetWatchedWallets(ctx context.Context) ([]WatchedWallet, error) 
 	rows, err := s.pool.Query(ctx, `
 		SELECT DISTINCT
 			CASE
-				WHEN i.payable_network IN ('EVM', 'BASE', 'ARBITRUM', 'BSC') THEN 'EVM'::network
-				WHEN i.payable_network = 'TON_USDT' THEN 'TON_USDT'::network
-				ELSE i.payable_network
+				WHEN i.payable_network IN ('EVM', 'BASE', 'ARBITRUM', 'BSC') THEN 'EVM'
+				WHEN i.payable_network::text = 'TON_USDT' THEN 'TON_USDT'
+				ELSE i.payable_network::text
 			END AS poll_network,
 			i.payable_network,
 			i.destination_address
