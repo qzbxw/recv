@@ -48,7 +48,7 @@ function RouteTitleManager() {
   useEffect(() => {
     const titles = PAGE_TITLES[language];
     const path = location.pathname;
-    let title = titles.fallback;
+    let title: string = titles.fallback;
 
     if (path === "/" || path === "/lend") {
       title = titles.home;
