@@ -4784,6 +4784,382 @@ html {
   margin: 1rem 0;
 }
 
+.lend-dogfood-section {
+  position: relative;
+  overflow: visible;
+  padding: 1.5rem 0 0.5rem;
+}
+
+/* Универсальный интерактивный глянец */
+.lend-spotlight-card {
+  position: relative;
+  overflow: hidden;
+  --mouse-x: -50%;
+  --mouse-y: -50%;
+}
+
+.lend-card-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    400px circle at var(--mouse-x) var(--mouse-y),
+    rgba(255, 255, 255, 0.06),
+    transparent 40%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.lend-spotlight-card:hover .lend-card-spotlight {
+  opacity: 1;
+}
+
+.lend-dogfood-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.lend-dogfood-item {
+  padding: 3rem 2rem;
+  border-radius: 32px;
+  border: 1px solid var(--line-strong);
+  background: 
+    radial-gradient(circle at 50% 0%, rgba(255, 148, 77, 0.03), transparent 60%),
+    rgba(10, 12, 18, 0.6);
+  backdrop-filter: blur(15px);
+  position: relative;
+  overflow: hidden;
+  transition: 
+    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1), 
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.5s ease;
+}
+
+/* Эффект пролетающего глянца (блика) */
+.lend-dogfood-item::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02),
+    transparent
+  );
+  transform: skewX(-25deg);
+  transition: 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.lend-dogfood-item:hover::after {
+  left: 150%;
+}
+
+.lend-dogfood-item:hover {
+  border-color: rgba(255, 148, 77, 0.5);
+  background: 
+    radial-gradient(circle at 50% 0%, rgba(255, 148, 77, 0.08), transparent 70%),
+    rgba(14, 17, 25, 0.8);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(255, 148, 77, 0.05),
+    inset 0 0 15px rgba(255, 148, 77, 0.02);
+}
+
+.lend-dogfood-item h3 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.5rem;
+  margin: 1rem 0;
+  letter-spacing: -0.02em;
+  transition: color 0.4s ease;
+}
+
+.lend-dogfood-item:hover h3 {
+  color: #fff;
+}
+
+.lend-dogfood-item p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+  transition: color 0.4s ease;
+}
+
+.lend-dogfood-item:hover p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.lend-dogfood-item .lend-section-kicker {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.65rem;
+  color: var(--accent);
+  opacity: 0.6;
+  transition: all 0.4s ease;
+}
+
+.lend-dogfood-item:hover .lend-section-kicker {
+  opacity: 1;
+  letter-spacing: 0.2em;
+}
+
+.lend-dogfood-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.8);
+  width: 120%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(255, 148, 77, 0.12), transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lend-dogfood-item:hover .lend-dogfood-glow {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.1);
+}
+
+
+.lend-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.lend-pricing-card {
+  padding: 3.5rem 2.5rem;
+  border-radius: 40px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Бегущий блик для тарифов */
+.lend-pricing-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02),
+    transparent
+  );
+  transform: skewX(-25deg);
+  transition: 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.lend-pricing-card:hover::after {
+  left: 150%;
+}
+
+.lend-pricing-card--pro:hover {
+  border-color: var(--accent-strong);
+  transform: scale(1.02) translateY(-8px);
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 148, 77, 0.15);
+}
+
+.lend-pricing-badge {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+}
+
+.lend-pricing-card h3 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+  color: var(--muted);
+}
+
+.lend-pricing-card--pro h3 {
+  color: #fff;
+}
+
+.lend-price {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 2rem;
+  color: #fff;
+}
+
+.lend-price span {
+  font-size: 1.25rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.lend-pricing-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex-grow: 1;
+}
+
+.lend-pricing-card li {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.lend-pricing-card--pro li {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.lend-pricing-card .lend-primary,
+.lend-pricing-card .lend-secondary {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 1024px) {
+  .lend-pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .lend-pricing-card--pro {
+    transform: none;
+  }
+}
+
+/* Staggered text reveal */
+.dogfood-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.is-revealed .dogfood-reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dogfood-reveal--1 { transition-delay: 0.1s; }
+.dogfood-reveal--2 { transition-delay: 0.3s; }
+.dogfood-reveal--3 { transition-delay: 0.5s; }
+
+/* Эффект сканирующего луча */
+.lend-dogfood-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    135deg, 
+    transparent 40%, 
+    rgba(255, 148, 77, 0.4) 50%, 
+    transparent 60%
+  );
+  background-size: 300% 300%;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: dogfood-border-beam 6s linear infinite;
+  transition: animation-duration 0.6s ease;
+}
+
+.lend-dogfood-card:hover::after {
+  animation-duration: 2.5s;
+  background-image: linear-gradient(
+    135deg, 
+    transparent 40%, 
+    rgba(255, 148, 77, 0.8) 50%, 
+    transparent 60%
+  );
+}
+
+@keyframes dogfood-border-beam {
+  0% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* Внутренние декоративные элементы */
+.lend-dogfood-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 40%;
+  background: radial-gradient(circle, rgba(255, 148, 77, 0.15), transparent 75%);
+  filter: blur(60px);
+  pointer-events: none;
+  animation: dogfood-pulse 4s ease-in-out infinite alternate;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.lend-dogfood-card:hover .lend-dogfood-glow {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.2);
+  background: radial-gradient(circle, rgba(255, 148, 77, 0.25), transparent 75%);
+}
+
+@keyframes dogfood-pulse {
+  from { opacity: 0.4; transform: translateX(-50%) scale(0.95); }
+  to { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+}
+
+.lend-dogfood-card .lend-section-kicker {
+  display: inline-flex;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 148, 77, 0.1);
+  border: 1px solid rgba(255, 148, 77, 0.2);
+  border-radius: 999px;
+  margin-bottom: 2rem;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.lend-dogfood-card h2 b {
+  color: #fff;
+  background: linear-gradient(to bottom, #fff, var(--muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lend-dogfood-card p span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .lend-card,
 .lend-dogfood,
 .lend-step,
@@ -4796,11 +5172,6 @@ html {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(12, 15, 21, 0.95), rgba(7, 9, 13, 0.98));
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: 
-    transform 600ms cubic-bezier(0.22, 1, 0.36, 1), 
-    border-color 600ms cubic-bezier(0.22, 1, 0.36, 1), 
-    box-shadow 600ms cubic-bezier(0.22, 1, 0.36, 1), 
-    background 600ms ease;
   overflow: hidden;
 }
 
@@ -4827,16 +5198,6 @@ html {
 
 .lend-card:hover::after {
   left: 150%;
-}
-
-.lend-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(255, 148, 77, 0.5);
-  background: linear-gradient(180deg, rgba(16, 20, 28, 0.96), rgba(9, 11, 16, 0.98));
-  box-shadow: 
-    0 24px 60px rgba(0, 0, 0, 0.4), 
-    inset 0 -10px 20px -10px rgba(255, 148, 77, 0.15),
-    0 0 20px rgba(255, 148, 77, 0.03);
 }
 
 .lend-card {
@@ -5218,14 +5579,26 @@ html {
   animation: none;
 }
 
-.lend-card, .lend-panel-card, .lend-network-card, .lend-faq-item {
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+.lend-card, .lend-panel-card, .lend-network-card, .lend-faq-item, .lend-pricing-card {
+  transition: all 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.lend-card:hover, .lend-network-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  border-color: rgba(255, 139, 77, 0.4);
-  box-shadow: 0 20px 40px rgba(255, 139, 77, 0.1), 0 0 20px rgba(0,0,0,0.4);
+.lend-card:hover, .lend-network-card:hover, .lend-pricing-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(255, 148, 77, 0.45);
+  box-shadow: 
+    0 40px 80px rgba(0, 0, 0, 0.5), 
+    inset 0 -10px 20px -10px rgba(255, 148, 77, 0.2),
+    0 0 30px rgba(255, 148, 77, 0.05);
+  background: linear-gradient(180deg, rgba(16, 20, 28, 0.96), rgba(9, 11, 16, 0.98));
+}
+
+.lend-card:hover .lend-dogfood-glow,
+.lend-network-card:hover .lend-dogfood-glow,
+.lend-pricing-card:hover .lend-dogfood-glow,
+.lend-dogfood-item:hover .lend-dogfood-glow {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.15);
 }
 
 .lend-panel-card:hover {

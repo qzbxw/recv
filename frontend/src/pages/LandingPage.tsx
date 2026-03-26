@@ -137,6 +137,47 @@ const COPY = {
         body: "Мы постоянно расширяем возможности для крупного бизнеса.",
       },
     },
+    dogfooding: {
+      kicker: "ПРОВЕРЕНО НА СЕБЕ",
+      title: "Создано для себя. Масштабировано для вас.",
+      cards: [
+        {
+          title: "100% Нагрузки",
+          body: "Каждый цент, заработанный Reqst, проходит через этот же движок. Мы не используем сторонние шлюзы."
+        },
+        {
+          title: "Главный мерчант",
+          body: "Мы — свой самый требовательный клиент. Если функция не идеальна для нас, она не попадет к вам."
+        },
+        {
+          title: "Инженерная точность",
+          body: "Мы отшлифовали логику на тысячах собственных транзакций, предусмотрев любые аномалии в сетях еще до публичного запуска."
+        }
+      ]
+    },
+    pricing: {
+      kicker: "ТАРИФЫ",
+      title: "Гибкая подписка под любой масштаб.",
+      pro: {
+        name: "Reqst PRO",
+        price: "39",
+        trial: "Первые 15 чекаутов — бесплатно",
+        features: ["Безлимитные продажи", "Ручное подтверждение недоплат", "0% комиссия (Direct-to-Wallet)", "Мгновенные уведомления"],
+        cta: "Начать работу"
+      },
+      api: {
+        name: "Reqst API",
+        price: "199",
+        features: ["Полный REST API доступ", "Webhook уведомления", "Автоматизация оплат", "Интеграция в ваш бэкэнд"],
+        cta: "Подробнее об API"
+      },
+      enterprise: {
+        name: "Enterprise",
+        price: "Custom",
+        features: ["Индивидуальные RPM лимиты", "Персональная поддержка", "B2B контракты", "SLA гарантии"],
+        cta: "Связаться с нами"
+      }
+    },
     faq: {
       kicker: "FAQ",
       title: "Детали протокола.",
@@ -311,6 +352,47 @@ const COPY = {
         body: "Constantly expanding features for enterprise businesses.",
       },
     },
+    dogfooding: {
+      kicker: "SKIN IN THE GAME",
+      title: "Built for Us. Scaled for You.",
+      cards: [
+        {
+          title: "100% Load",
+          body: "Every cent earned by Reqst flows through this exact engine. We don’t use third-party gateways."
+        },
+        {
+          title: "Anchor Merchant",
+          body: "We are our own most demanding customer. If a feature isn’t perfect for us, it doesn't reach you."
+        },
+        {
+          title: "Hardened Logic",
+          body: "Optimized through thousands of internal transactions to handle every complex blockchain edge case with precision."
+        }
+      ]
+    },
+    pricing: {
+      kicker: "PRICING",
+      title: "Flexible scale. Zero commissions.",
+      pro: {
+        name: "Reqst PRO",
+        price: "39",
+        trial: "First 15 checkouts for free",
+        features: ["Unlimited Invoice Sales", "Underpayment Manual Override", "0% Fees (Direct-to-Wallet)", "Instant Payout Alerts"],
+        cta: "Get Started"
+      },
+      api: {
+        name: "Reqst API",
+        price: "199",
+        features: ["Full REST API Access", "Webhook Automation", "Backend Integration", "Automated Payments"],
+        cta: "Explore API"
+      },
+      enterprise: {
+        name: "Enterprise",
+        price: "Custom",
+        features: ["Custom RPM Rate Limits", "Priority B2B Support", "Enterprise Contracts", "SLA Guarantees"],
+        cta: "Contact Sales"
+      }
+    },
     faq: {
       kicker: "FAQ",
       title: "Protocol Details.",
@@ -383,6 +465,14 @@ export function LandingPage() {
   const [openFaq, setOpenFaq] = useState(0);
   const reveal = useReveal();
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   useEffect(() => {
     document.documentElement.dataset.theme = "dark";
   }, []);
@@ -454,7 +544,9 @@ export function LandingPage() {
 
           <div className="lend-overview-grid lend-reveal--2">
             {copy.overview.cards.map((card) => (
-              <article key={card.title} className="lend-card lend-card--overview">
+              <article key={card.title} className="lend-card lend-card--overview lend-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="lend-card-spotlight" />
+                <div className="lend-dogfood-glow" />
                 <h3>{card.title}</h3>
                 <p>{card.body}</p>
               </article>
@@ -471,7 +563,9 @@ export function LandingPage() {
 
           <div className="lend-feature-grid lend-feature-grid--expanded lend-reveal--2">
             {copy.capabilities.items.map((feature, index) => (
-              <article key={feature.title} className="lend-card lend-card--feature">
+              <article key={feature.title} className="lend-card lend-card--feature lend-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="lend-card-spotlight" />
+                <div className="lend-dogfood-glow" />
                 <span>{feature.kicker}</span>
                 <h3>{feature.title}</h3>
                 <p>{feature.body}</p>
@@ -513,7 +607,9 @@ export function LandingPage() {
 
           <div className="lend-network-grid lend-reveal--2">
             {copy.networks.rails.map((rail) => (
-              <article key={rail.title} className="lend-network-card">
+              <article key={rail.title} className="lend-network-card lend-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="lend-card-spotlight" />
+                <div className="lend-dogfood-glow" />
                 <div className="lend-network-badge">{rail.name}</div>
                 <h3>{rail.title}</h3>
                 <p>{rail.body}</p>
@@ -521,8 +617,83 @@ export function LandingPage() {
             ))}
           </div>
         </section>
+<section className="lend-stacked-section lend-dogfood-section" ref={reveal}>
+  <div className="lend-section-copy lend-reveal--1">
+    <span className="lend-section-kicker">{copy.dogfooding.kicker}</span>
+    <h2>{copy.dogfooding.title}</h2>
+  </div>
 
-        <section id="faq" className="lend-faq-section" ref={reveal}>
+  <div className="lend-dogfood-grid lend-reveal--2">
+    {copy.dogfooding.cards.map((card, idx) => (
+      <div 
+        key={card.title} 
+        className="lend-dogfood-item lend-spotlight-card" 
+        onMouseMove={handleMouseMove}
+      >
+        <div className="lend-card-spotlight" />
+        <div className="lend-dogfood-glow" />
+        <div className="lend-dogfood-content">
+          <span className="lend-section-kicker">0{idx + 1}</span>
+          <h3>{card.title}</h3>
+          <p>{card.body}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+      </section>
+
+      <section id="pricing" className="lend-stacked-section" ref={reveal}>
+        <div className="lend-section-copy lend-reveal--1">
+          <span className="lend-section-kicker">{copy.pricing.kicker}</span>
+          <h2>{copy.pricing.title}</h2>
+        </div>
+
+        <div className="lend-pricing-grid lend-reveal--2">
+          <div className="lend-pricing-card lend-pricing-card--pro lend-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="lend-card-spotlight" />
+            <div className="lend-dogfood-glow" />
+            <div className="lend-pricing-badge">{copy.pricing.pro.trial}</div>
+            <h3>{copy.pricing.pro.name}</h3>
+            <div className="lend-price">
+              <span>$</span>
+              {copy.pricing.pro.price}
+              <span>/mo</span>
+            </div>
+            <ul>
+              {copy.pricing.pro.features.map(f => <li key={f}>{f}</li>)}
+            </ul>
+            <Link className="lend-primary" to="/auth">{copy.pricing.pro.cta}</Link>
+          </div>
+
+          <div className="lend-pricing-card lend-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="lend-card-spotlight" />
+            <div className="lend-dogfood-glow" />
+            <h3>{copy.pricing.api.name}</h3>
+            <div className="lend-price">
+              <span>$</span>{copy.pricing.api.price}<span>/mo</span>
+            </div>
+            <ul>
+              {copy.pricing.api.features.map(f => <li key={f}>{f}</li>)}
+            </ul>
+            <Link className="lend-secondary" to="/dev">{copy.pricing.api.cta}</Link>
+          </div>
+
+          <div className="lend-pricing-card lend-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="lend-card-spotlight" />
+            <div className="lend-dogfood-glow" />
+            <h3>{copy.pricing.enterprise.name}</h3>
+            <div className="lend-price">
+              {copy.pricing.enterprise.price}
+            </div>
+            <ul style={{ marginTop: copy.pricing.enterprise.price === 'Custom' ? '2.5rem' : '0' }}>
+              {copy.pricing.enterprise.features.map(f => <li key={f}>{f}</li>)}
+            </ul>
+            <Link className="lend-secondary" to="/enterprise">{copy.pricing.enterprise.cta}</Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="lend-faq-section" ref={reveal}>
           <div className="lend-section-copy lend-faq-copy lend-reveal--1">
             <span className="lend-section-kicker">{copy.faq.kicker}</span>
             <h2>{copy.faq.title}</h2>
