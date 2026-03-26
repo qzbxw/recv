@@ -2,6 +2,7 @@ import type {
   APIKey,
   APIKeyListResponse,
   AdminInvoiceListResponse,
+  AdminBillingCheckoutResponse,
   AdminOverviewResponse,
   DeveloperUsageResponse,
   Invoice,
@@ -229,4 +230,15 @@ export async function fetchAdminInvoices(token: string, params: {
   }
   const suffix = search.size > 0 ? `?${search.toString()}` : "";
   return request<AdminInvoiceListResponse>(`/api/admin/invoices${suffix}`, {}, token);
+}
+
+export async function createAdminBillingCheckout(token: string, sellerId: number, payload: {
+  plan_code: "pro" | "dev" | "enterprise";
+  payable_network: string;
+  base_amount_usd?: string;
+}) {
+  return request<AdminBillingCheckoutResponse>(`/api/admin/sellers/${sellerId}/billing-checkout`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
 }

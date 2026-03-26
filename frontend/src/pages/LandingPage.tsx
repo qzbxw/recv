@@ -14,7 +14,7 @@ const COPY = {
         "Non-custodial инфраструктура. Ваши деньги никогда не касаются наших счетов.",
       primary: "Запустить прием платежей",
       secondary: "Открыть в Telegram",
-      badges: ["Direct-to-Wallet", "Telegram Native", "0% комиссии", "Ready-to-use API", "B2B решение"],
+      badges: ["Direct-to-Wallet", "Telegram Native", "0% комиссии", "API Beta", "B2B решение"],
     },
     heroPanel: {
       eyebrow: "live demo",
@@ -132,7 +132,7 @@ const COPY = {
       ],
       soon: {
         title: "Скоро",
-        api: "Public API 2.0",
+        api: "Public API 2.0 Beta",
         b2b: "Командный доступ",
         body: "Мы постоянно расширяем возможности для крупного бизнеса.",
       },
@@ -166,7 +166,7 @@ const COPY = {
         cta: "Начать работу"
       },
       api: {
-        name: "Reqst API",
+        name: "Reqst API Beta",
         price: "199",
         features: ["Полный REST API доступ", "Webhook уведомления", "Автоматизация оплат", "Интеграция в ваш бэкэнд"],
         cta: "Подробнее об API"
@@ -229,7 +229,7 @@ const COPY = {
         "Non-custodial infrastructure. Your money never touches our accounts.",
       primary: "Start Accepting Payments",
       secondary: "Open in Telegram",
-      badges: ["Direct-to-Wallet", "Telegram Native", "0% Fee", "Ready-to-use API", "B2B Scale"],
+      badges: ["Direct-to-Wallet", "Telegram Native", "0% Fee", "API Beta", "B2B Scale"],
     },
     heroPanel: {
       eyebrow: "live demo",
@@ -347,7 +347,7 @@ const COPY = {
       ],
       soon: {
         title: "Coming Soon",
-        api: "Public API 2.0",
+        api: "Public API 2.0 Beta",
         b2b: "Team Access",
         body: "Constantly expanding features for enterprise businesses.",
       },
@@ -381,7 +381,7 @@ const COPY = {
         cta: "Get Started"
       },
       api: {
-        name: "Reqst API",
+        name: "Reqst API Beta",
         price: "199",
         features: ["Full REST API Access", "Webhook Automation", "Backend Integration", "Automated Payments"],
         cta: "Explore API"
@@ -763,6 +763,7 @@ export function LandingPage() {
           <div className="lend-footer-links">
             <Link to="/privacy">{copy.footer.privacy}</Link>
             <Link to="/terms">{copy.footer.terms}</Link>
+            <Link to="/developers">Docs</Link>
             <Link to="/dev">{copy.footer.api}</Link>
             <Link to="/enterprise">{copy.footer.b2b}</Link>
             <Link to="/auth">{copy.footer.console}</Link>

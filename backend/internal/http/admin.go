@@ -1,14 +1,18 @@
 package http
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/service"
 	"reqst/backend/internal/store"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 )
 
 type adminContext struct {
@@ -132,6 +136,89 @@ func (s *Server) handleAdminInvoices(c *gin.Context) {
 		"total":     items.Total,
 		"page":      items.Page,
 		"page_size": items.PageSize,
+	})
+}
+
+func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
+	sellerID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid seller id"})
+		return
+	}
+
+	var body struct {
+		PlanCode       string `json:"plan_code"`
+		PayableNetwork string `json:"payable_network"`
+		BaseAmountUSD  string `json:"base_amount_usd"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	seller, err := s.store.GetSellerByID(c.Request.Context(), sellerID)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, store.ErrNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	planCode := store.NormalizePlanCode(body.PlanCode)
+	if planCode == store.PlanCodeTrial {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "trial does not require billing"})
+		return
+	}
+
+	network := store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork)))
+	if !network.IsSupportedPayableNetwork() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported network"})
+		return
+	}
+
+	var overridePrice *decimal.Decimal
+	if planCode == store.PlanCodeEnterprise {
+		trimmedAmount := strings.TrimSpace(body.BaseAmountUSD)
+		if trimmedAmount == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "base_amount_usd is required for enterprise"})
+			return
+		}
+		parsedAmount, err := decimal.NewFromString(trimmedAmount)
+		if err != nil || !parsedAmount.IsPositive() {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid base_amount_usd"})
+			return
+		}
+		overridePrice = &parsedAmount
+	}
+
+	ctx := metrics.WithSource(c.Request.Context(), "admin_api")
+	invoice, err := s.invoiceService.CreatePlanInvoiceWithPrice(ctx, seller, planCode, network, overridePrice)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	plan := store.ResolvePlan(planCode)
+	priceLabel := plan.PriceUSDString
+	if overridePrice != nil {
+		priceLabel = overridePrice.StringFixed(2)
+	}
+	c.JSON(http.StatusCreated, gin.H{
+		"seller": gin.H{
+			"id":       seller.ID,
+			"username": seller.Username,
+			"email":    seller.Email,
+		},
+		"plan": gin.H{
+			"code":         plan.Code,
+			"name":         plan.Name,
+			"price_usd":    priceLabel,
+			"billing_days": plan.BillingDays,
+			"generated_at": time.Now().UTC(),
+		},
+		"invoice": publicInvoiceResponse(invoice),
 	})
 }
 

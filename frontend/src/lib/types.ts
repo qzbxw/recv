@@ -216,3 +216,19 @@ export type AdminInvoiceListResponse = {
   page: number;
   page_size: number;
 };
+
+export type AdminBillingCheckoutResponse = {
+  seller: {
+    id: number;
+    username: string;
+    email: string;
+  };
+  plan: {
+    code: "pro" | "dev" | "enterprise";
+    name: string;
+    price_usd: string;
+    billing_days: number;
+    generated_at: string;
+  };
+  invoice: Invoice;
+};

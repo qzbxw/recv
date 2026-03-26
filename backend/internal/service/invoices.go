@@ -139,6 +139,10 @@ func (s *InvoiceService) CreateSubscriptionInvoice(ctx context.Context, seller s
 }
 
 func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, seller store.Seller, planCode store.PlanCode, network store.Network) (store.Invoice, error) {
+	return s.CreatePlanInvoiceWithPrice(ctx, seller, planCode, network, nil)
+}
+
+func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, seller store.Seller, planCode store.PlanCode, network store.Network, overridePriceUSD *decimal.Decimal) (store.Invoice, error) {
 	source := metrics.SourceFromContext(ctx)
 	planCode = store.NormalizePlanCode(string(planCode))
 	if seller.IsBlocked {
@@ -154,6 +158,14 @@ func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, seller store.Sel
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "unsupported_network")
 		return store.Invoice{}, fmt.Errorf("unsupported network %s", network)
 	}
+	baseAmountUSD := plan.PriceUSD
+	if overridePriceUSD != nil {
+		baseAmountUSD = overridePriceUSD.Round(6)
+	}
+	if !baseAmountUSD.IsPositive() {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "invalid_price")
+		return store.Invoice{}, errors.New("subscription price must be positive")
+	}
 	address, ok := reqstBillingWallets[network.WalletBucket()]
 	if !ok || strings.TrimSpace(address) == "" {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "billing_wallet_missing")
@@ -167,7 +179,7 @@ func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, seller store.Sel
 		PlanCode:           plan.Code,
 		CountTowardsTrial:  false,
 		Title:              plan.CheckoutTitle,
-		BaseAmountUSD:      plan.PriceUSD,
+		BaseAmountUSD:      baseAmountUSD,
 		PayableNetwork:     network,
 		DestinationAddress: address,
 	}, 60)

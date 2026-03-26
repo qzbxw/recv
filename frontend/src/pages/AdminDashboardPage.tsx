@@ -1,13 +1,14 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   clearStoredAdminToken,
+  createAdminBillingCheckout,
   fetchAdminInvoices,
   fetchAdminOverview,
   getStoredAdminToken,
   loginAdmin,
   setStoredAdminToken,
 } from "../lib/api";
-import type { AdminInvoice, AdminInvoiceListResponse, AdminOverviewResponse } from "../lib/types";
+import type { AdminBillingCheckoutResponse, AdminInvoice, AdminInvoiceListResponse, AdminOverviewResponse } from "../lib/types";
 
 type Filters = {
   status: string;
@@ -297,6 +298,14 @@ export function AdminDashboardPage() {
   const [error, setError] = useState("");
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [loggingIn, setLoggingIn] = useState(false);
+  const [billingForm, setBillingForm] = useState({
+    sellerId: "",
+    planCode: "dev",
+    payableNetwork: "TRON",
+    baseAmountUSD: "",
+  });
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingResult, setBillingResult] = useState<AdminBillingCheckoutResponse | null>(null);
   const [filters, setFilters] = useState<Filters>({
     status: "all",
     kind: "all",
@@ -389,6 +398,37 @@ export function AdminDashboardPage() {
       setError((err as Error).message);
     } finally {
       setLoggingIn(false);
+    }
+  }
+
+  async function handleCreateBillingCheckout(event: FormEvent) {
+    event.preventDefault();
+    if (!token) {
+      return;
+    }
+
+    try {
+      setBillingLoading(true);
+      const sellerId = Number(billingForm.sellerId.trim());
+      if (!Number.isInteger(sellerId) || sellerId <= 0) {
+        throw new Error("Seller ID must be a positive integer");
+      }
+
+      const payload = {
+        plan_code: billingForm.planCode as "pro" | "dev" | "enterprise",
+        payable_network: billingForm.payableNetwork,
+        base_amount_usd: billingForm.planCode === "enterprise" ? billingForm.baseAmountUSD.trim() : undefined,
+      };
+
+      const result = await createAdminBillingCheckout(token, sellerId, payload);
+      setBillingResult(result);
+      setError("");
+      void loadOverview(token, true);
+      void loadInvoices(token, filters, true);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBillingLoading(false);
     }
   }
 
@@ -533,6 +573,64 @@ export function AdminDashboardPage() {
               {overview ? <BreakdownBars title="Revenue by plan bucket" subtitle="Plan Mix" items={planBars} /> : null}
               {overview ? <RecentSales items={overview.recent_sales} /> : null}
             </div>
+          </section>
+
+          <section className="admin-sales-board" style={{ marginBottom: "1.5rem" }}>
+            <div className="admin-sales-head">
+              <div>
+                <span className="admin-eyebrow">Manual Billing</span>
+                <h2>Create account checkout</h2>
+              </div>
+            </div>
+            <form className="admin-sales-filters" onSubmit={handleCreateBillingCheckout}>
+              <input
+                value={billingForm.sellerId}
+                onChange={(event) => setBillingForm((current) => ({ ...current, sellerId: event.target.value }))}
+                placeholder="Seller ID"
+                inputMode="numeric"
+              />
+              <select
+                value={billingForm.planCode}
+                onChange={(event) => setBillingForm((current) => ({ ...current, planCode: event.target.value }))}
+              >
+                <option value="pro">Reqst PRO</option>
+                <option value="dev">Reqst Dev</option>
+                <option value="enterprise">Reqst Enterprise</option>
+              </select>
+              <select
+                value={billingForm.payableNetwork}
+                onChange={(event) => setBillingForm((current) => ({ ...current, payableNetwork: event.target.value }))}
+              >
+                <option value="TON">TON</option>
+                <option value="TRON">TRON</option>
+                <option value="SOLANA">SOLANA</option>
+                <option value="EVM">EVM</option>
+                <option value="BASE">BASE</option>
+                <option value="ARBITRUM">ARBITRUM</option>
+                <option value="BSC">BSC</option>
+              </select>
+              {billingForm.planCode === "enterprise" ? (
+                <input
+                  value={billingForm.baseAmountUSD}
+                  onChange={(event) => setBillingForm((current) => ({ ...current, baseAmountUSD: event.target.value }))}
+                  placeholder="Custom USD amount"
+                  inputMode="decimal"
+                />
+              ) : null}
+              <button type="submit" className="admin-ghost-button" disabled={billingLoading}>
+                {billingLoading ? "Creating..." : "Create checkout"}
+              </button>
+            </form>
+            {billingResult ? (
+              <div className="admin-sales-summary">
+                <span>
+                  {billingResult.plan.name} for {billingResult.seller.username ? `@${billingResult.seller.username}` : `seller #${billingResult.seller.id}`}
+                </span>
+                <a href={billingResult.invoice.checkout_url} target="_blank" rel="noreferrer">
+                  {billingResult.invoice.public_id}
+                </a>
+              </div>
+            ) : null}
           </section>
 
           <section className="admin-sales-board">

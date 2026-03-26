@@ -38,7 +38,7 @@ const COPY = {
     hero: {
       kicker: "Developer Platform",
       title: "Стройте будущее платежей",
-      subtitle: "Профессиональные инструменты для интеграции криптоплатежей. Полноценное API v1 для автоматизации вашего бизнеса.",
+      subtitle: "Профессиональные инструменты для интеграции криптоплатежей. API v1 Beta для автоматизации вашего бизнеса.",
     },
     nav: {
       docs: "Документация",
@@ -83,7 +83,7 @@ const COPY = {
       contactSupport: "Узнать про Enterprise",
     },
     api: {
-      title: "Справочник API v1",
+      title: "Справочник API v1 Beta",
       subtitle: "Базовый URL для всех запросов",
       authTitle: "Аутентификация",
       authDesc: "Все запросы должны содержать заголовок Authorization: Bearer <API_KEY>.",
@@ -105,7 +105,7 @@ const COPY = {
     hero: {
       kicker: "Developer Platform",
       title: "Build the future of payments",
-      subtitle: "Professional tools for integrating crypto payments. Comprehensive API v1 to automate your business.",
+      subtitle: "Professional tools for integrating crypto payments. API v1 Beta to automate your business.",
     },
     nav: {
       docs: "Documentation",
@@ -150,7 +150,7 @@ const COPY = {
       contactSupport: "Learn about Enterprise",
     },
     api: {
-      title: "API Reference v1",
+      title: "API Reference v1 Beta",
       subtitle: "Base URL for all requests",
       authTitle: "Authentication",
       authDesc: "All requests must include the Authorization: Bearer <API_KEY> header.",

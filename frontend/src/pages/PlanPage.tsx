@@ -16,20 +16,20 @@ const COPY = {
     priceSubtitle: "Неограниченный оборот. Фиксированная цена.",
     codeTitle: "Пример реализации",
     codeSubtitle: "Готов к продакшену за считанные минуты.",
-    codeBody: "Бесшовная интеграция нашего протокола в ваш существующий рабочий процесс с помощью высокопроизводительного API.",
+    codeBody: "Бесшовная интеграция нашего протокола в ваш существующий рабочий процесс с помощью высокопроизводительного API Beta.",
     processingNote: "We use a proprietary non-custodial architecture. All transactions go through your nodes or our high-performance clusters directly to the blockchain.",
     compareSectionTitle: "Архитектура прямого доступа",
     compareSectionBody: "Reqst работает как прозрачный программный слой (middleware). Транзакции идут напрямую от клиента к вам, минуя промежуточные счета. Мы лишь автоматизируем мониторинг через сеть высокопроизводительных нод, исключая любые риски блокировки средств.",
     dev: {
       badge: "Reqst Developer",
       title: "Инфраструктура криптоплатежей. Контроль в ваших руках.",
-      body: "Профессиональный API v1 и Webhook-уведомления для high-load систем. Прямые выплаты Direct-to-Wallet и полная свобода от комиссий с оборота в non-custodial среде.",
+      body: "Профессиональный API v1 Beta и Webhook-уведомления для high-load систем. Прямые выплаты Direct-to-Wallet и полная свобода от комиссий с оборота в non-custodial среде.",
       priceLabel: "199$",
       period: "в месяц",
       stats: [
         { value: "0ms", label: "Латентность" },
         { value: "100%", label: "Direct-to-Wallet" },
-        { value: "Full", label: "Mempool Access" },
+        { value: "Full", label: "Real-time Access" },
         { value: "∞", label: "Webhook Endpoints" },
       ],
       features: [
@@ -38,11 +38,11 @@ const COPY = {
           body: "Гарантированная доставка (at-least-once) с автоматическими ретраями и проверкой подлинности через HMAC-SHA256.",
         },
         {
-          title: "Mempool Tracking",
+          title: "Real-time Monitoring",
           body: "Мониторинг транзакций в реальном времени. Обнаружение платежа происходит мгновенно, еще до подтверждения блоком.",
         },
         {
-          title: "Unified API v1",
+          title: "Unified API v1 Beta",
           body: "Единый интерфейс для работы с 7+ сетями: TON, TRON, SOL, Base, Arbitrum, BSC и Ethereum (EVM).",
         },
         {
@@ -53,9 +53,9 @@ const COPY = {
       flow: [
         { title: "API Key Provisioning", body: "Мгновенная генерация ключей rk_live_. Гибкое управление правами (Scopes) для безопасной интеграции в ваш бэкенд." },
         { title: "Webhook Configuration", body: "Настройка коллбэков с подписью HMAC-SHA256. Получайте уведомления в реальном времени с автоматическими ретраями." },
-        { title: "Blockchain Monitoring", body: "Запуск автоматического процессинга. Наши вотчеры отслеживают Mempool и подтверждают платежи 24/7 без вашего участия." },
+        { title: "Blockchain Monitoring", body: "Запуск автоматического процессинга. Наши вотчеры отслеживают транзакции и подтверждают платежи 24/7 без вашего участия." },
       ],
-      code: `// Create Invoice via Reqst API v1
+      code: `// Create Invoice via Reqst API v1 Beta
 const response = await fetch("https://api.reqst.xyz/v1/invoices", {
   method: "POST",
   headers: {
@@ -81,7 +81,7 @@ console.log("Checkout URL:", invoice.checkout_url);`
       period: "индивидуальный расчет",
       stats: [
         { value: "0ms", label: "Латентность" },
-        { value: "Full", label: "Mempool Access" },
+        { value: "Full", label: "Real-time Access" },
         { value: "∞", label: "Webhook Endpoints" },
         { value: "24/7", label: "Support" },
       ],
@@ -131,20 +131,20 @@ function verify(payload, signature, secret) {
     priceSubtitle: "Unlimited volume. Flat monthly fee.",
     codeTitle: "Code Implementation",
     codeSubtitle: "Ready for production in minutes.",
-    codeBody: "Seamlessly integrate our protocol into your existing workflow using our high-performance API.",
+    codeBody: "Seamlessly integrate our protocol into your existing workflow using our high-performance API Beta.",
     processingNote: "We use a proprietary non-custodial architecture. All transactions go through your nodes or our high-performance clusters directly to the blockchain.",
     compareSectionTitle: "Direct Access Architecture",
     compareSectionBody: "Reqst operates as a transparent software layer (middleware). Transactions flow directly from client to merchant, bypassing intermediary accounts. We automate monitoring via high-performance nodes, eliminating any third-party risks.",
     dev: {
       badge: "Reqst Developer",
       title: "Crypto Payments Infrastructure. Total Control.",
-      body: "Professional API v1 and Webhook notifications for high-load projects. Direct-to-wallet payouts and zero turnover fees in a pure non-custodial environment.",
+      body: "Professional API v1 Beta and Webhook notifications for high-load projects. Direct-to-wallet payouts and zero turnover fees in a pure non-custodial environment.",
       priceLabel: "$199",
       period: "per month",
       stats: [
         { value: "0ms", label: "Latency" },
         { value: "100%", label: "Direct-to-Wallet" },
-        { value: "Full", label: "Mempool Access" },
+        { value: "Full", label: "Real-time Access" },
         { value: "∞", label: "Webhook Endpoints" },
       ],
       features: [
@@ -153,11 +153,11 @@ function verify(payload, signature, secret) {
           body: "Guaranteed delivery (at-least-once) with automatic retries and HMAC-SHA256 signature verification.",
         },
         {
-          title: "Mempool Tracking",
+          title: "Real-time Monitoring",
           body: "Real-time transaction monitoring. Detect incoming payments instantly, even before block confirmation.",
         },
         {
-          title: "Unified API v1",
+          title: "Unified API v1 Beta",
           body: "A single interface for 7+ networks including TON, TRON, SOL, Base, Arbitrum, BSC, and Ethereum.",
         },
         {
@@ -168,9 +168,9 @@ function verify(payload, signature, secret) {
       flow: [
         { title: "API Key Provisioning", body: "Instant rk_live_ key generation. Granular scope management for secure backend integration." },
         { title: "Webhook Configuration", body: "Secure HMAC-SHA256 signed callbacks. Receive real-time transaction updates with automated retry logic." },
-        { title: "Blockchain Monitoring", body: "Automated payment processing. Our watchers track the Mempool and confirm transactions 24/7 autonomously." },
+        { title: "Blockchain Monitoring", body: "Automated payment processing. Our watchers track transactions and confirm payments 24/7 autonomously." },
       ],
-      code: `// Create Invoice via Reqst API v1
+      code: `// Create Invoice via Reqst API v1 Beta
 const response = await fetch("https://api.reqst.xyz/v1/invoices", {
   method: "POST",
   headers: {
@@ -196,7 +196,7 @@ console.log("Checkout URL:", invoice.checkout_url);`
       period: "individual pricing",
       stats: [
         { value: "0ms", label: "Latency" },
-        { value: "Full", label: "Mempool Access" },
+        { value: "Full", label: "Real-time Access" },
         { value: "∞", label: "Webhook Endpoints" },
         { value: "24/7", label: "Support" },
       ],
@@ -443,6 +443,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
           <div className="lend-footer-links">
             <Link to="/privacy">Privacy</Link>
             <Link to="/terms">Terms</Link>
+            <Link to="/developers">Docs</Link>
             <Link to="/dev">API</Link>
             <Link to="/enterprise">B2B</Link>
             <Link to="/auth">Console</Link>

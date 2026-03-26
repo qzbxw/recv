@@ -99,6 +99,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	adminAPI.Use(server.adminMiddleware())
 	adminAPI.GET("/overview", server.handleAdminOverview)
 	adminAPI.GET("/invoices", server.handleAdminInvoices)
+	adminAPI.POST("/sellers/:id/billing-checkout", server.handleAdminCreateBillingCheckout)
 
 	return router
 }

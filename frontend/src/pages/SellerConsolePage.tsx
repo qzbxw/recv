@@ -65,7 +65,7 @@ const COPY = {
     },
     promo: {
       title: "Разблокируйте Reqst PRO",
-      subtitle: "Получите полный доступ к API, неограниченным вебхукам и приоритетному мониторингу транзакций.",
+      subtitle: "Получите полный доступ к API Beta, неограниченным вебхукам и приоритетному мониторингу транзакций.",
       action: "Перейти на PRO",
     },
     overview: {
@@ -118,8 +118,8 @@ const COPY = {
     },
     developer: {
       title: "Инструменты разработчика",
-      subtitle: "API ключи и вебхуки для автоматизации вашего бизнеса.",
-      keysTitle: "API Ключи",
+      subtitle: "API Beta ключи и вебхуки для автоматизации вашего бизнеса.",
+      keysTitle: "API Beta Ключи",
       keysSubtitle: "Используйте эти ключи для аутентификации запросов к нашему API.",
       addKey: "Создать ключ",
       keyLabel: "Название ключа",
@@ -170,7 +170,7 @@ const COPY = {
     },
     promo: {
       title: "Unlock Reqst PRO",
-      subtitle: "Get full API access, unlimited webhooks, and priority blockchain monitoring for your business.",
+      subtitle: "Get full API Beta access, unlimited webhooks, and priority blockchain monitoring for your business.",
       action: "Upgrade to PRO",
     },
     overview: {
@@ -223,8 +223,8 @@ const COPY = {
     },
     developer: {
       title: "Developer Tools",
-      subtitle: "API Keys and Webhooks to automate your business workflow.",
-      keysTitle: "API Keys",
+      subtitle: "API Beta Keys and Webhooks to automate your business workflow.",
+      keysTitle: "API Beta Keys",
       keysSubtitle: "Use these keys to authenticate your requests to our API.",
       addKey: "Create Key",
       keyLabel: "Key Label",
@@ -806,7 +806,7 @@ export function SellerConsolePage() {
                   </div>
                   <div style={{ marginBottom: "2rem", display: "flex", gap: "1rem" }}>
                     <Link to="/developers" className="dev-btn dev-btn--secondary" style={{ fontSize: "0.85rem", padding: "0.6rem 1rem" }}>
-                      {language === "ru" ? "Документация API" : "API Reference"}
+                      {language === "ru" ? "Документация API Beta" : "API Beta Reference"}
                     </Link>
                   </div>
                   <form onSubmit={onCreateKey} className="dev-form">

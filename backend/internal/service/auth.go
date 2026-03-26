@@ -215,7 +215,7 @@ func (s *AuthService) issueToken(seller store.Seller) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        randomID(),
 			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(72 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(30 * 24 * time.Hour)),
 			Subject:   strconv.FormatInt(seller.ID, 10),
 		},
 	}
