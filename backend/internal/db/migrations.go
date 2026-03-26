@@ -14,63 +14,84 @@ import (
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
-func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
-	if _, err := pool.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS schema_migrations (
-			version TEXT PRIMARY KEY,
-			applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-		)
-	`); err != nil {
-		return fmt.Errorf("create schema_migrations: %w", err)
-	}
+const migrationsLockID int64 = 684367921451409332
 
-	entries, err := migrationFiles.ReadDir("migrations")
+func withMigrationLock(ctx context.Context, pool *pgxpool.Pool, fn func(*pgxpool.Conn) error) error {
+	conn, err := pool.Acquire(ctx)
 	if err != nil {
-		return fmt.Errorf("read migrations: %w", err)
+		return fmt.Errorf("acquire migration connection: %w", err)
 	}
+	defer conn.Release()
 
-	versions := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".sql") {
-			continue
-		}
-		versions = append(versions, entry.Name())
+	if _, err := conn.Exec(ctx, `SELECT pg_advisory_lock($1)`, migrationsLockID); err != nil {
+		return fmt.Errorf("acquire migration lock: %w", err)
 	}
-	sort.Strings(versions)
+	defer func() {
+		_, _ = conn.Exec(context.Background(), `SELECT pg_advisory_unlock($1)`, migrationsLockID)
+	}()
 
-	for _, version := range versions {
-		var exists bool
-		if err := pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)`, version).Scan(&exists); err != nil {
-			return fmt.Errorf("check migration %s: %w", version, err)
-		}
-		if exists {
-			continue
+	return fn(conn)
+}
+
+func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
+	return withMigrationLock(ctx, pool, func(conn *pgxpool.Conn) error {
+		if _, err := conn.Exec(ctx, `
+			CREATE TABLE IF NOT EXISTS schema_migrations (
+				version TEXT PRIMARY KEY,
+				applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+			)
+		`); err != nil {
+			return fmt.Errorf("create schema_migrations: %w", err)
 		}
 
-		sqlBytes, err := migrationFiles.ReadFile("migrations/" + version)
+		entries, err := migrationFiles.ReadDir("migrations")
 		if err != nil {
-			return fmt.Errorf("read migration %s: %w", version, err)
+			return fmt.Errorf("read migrations: %w", err)
 		}
 
-		tx, err := pool.BeginTx(ctx, pgx.TxOptions{})
-		if err != nil {
-			return fmt.Errorf("begin migration tx %s: %w", version, err)
+		versions := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".sql") {
+				continue
+			}
+			versions = append(versions, entry.Name())
+		}
+		sort.Strings(versions)
+
+		for _, version := range versions {
+			var exists bool
+			if err := conn.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)`, version).Scan(&exists); err != nil {
+				return fmt.Errorf("check migration %s: %w", version, err)
+			}
+			if exists {
+				continue
+			}
+
+			sqlBytes, err := migrationFiles.ReadFile("migrations/" + version)
+			if err != nil {
+				return fmt.Errorf("read migration %s: %w", version, err)
+			}
+
+			tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
+			if err != nil {
+				return fmt.Errorf("begin migration tx %s: %w", version, err)
+			}
+
+			if _, err := tx.Exec(ctx, string(sqlBytes)); err != nil {
+				_ = tx.Rollback(ctx)
+				return fmt.Errorf("apply migration %s: %w", version, err)
+			}
+
+			if _, err := tx.Exec(ctx, `INSERT INTO schema_migrations (version) VALUES ($1)`, version); err != nil {
+				_ = tx.Rollback(ctx)
+				return fmt.Errorf("record migration %s: %w", version, err)
+			}
+
+			if err := tx.Commit(ctx); err != nil {
+				return fmt.Errorf("commit migration %s: %w", version, err)
+			}
 		}
 
-		if _, err := tx.Exec(ctx, string(sqlBytes)); err != nil {
-			_ = tx.Rollback(ctx)
-			return fmt.Errorf("apply migration %s: %w", version, err)
-		}
-
-		if _, err := tx.Exec(ctx, `INSERT INTO schema_migrations (version) VALUES ($1)`, version); err != nil {
-			_ = tx.Rollback(ctx)
-			return fmt.Errorf("record migration %s: %w", version, err)
-		}
-
-		if err := tx.Commit(ctx); err != nil {
-			return fmt.Errorf("commit migration %s: %w", version, err)
-		}
-	}
-
-	return nil
+		return nil
+	})
 }
