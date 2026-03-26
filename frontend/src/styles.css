@@ -6664,10 +6664,12 @@ html {
   .lend-feature-grid--expanded,
   .lend-network-grid,
   .lend-case-grid,
+  .lend-dogfood-grid,
   .lend-architecture-grid,
   .lend-faq-grid,
   .lend-compare-row {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .lend-topbar,
@@ -6871,6 +6873,19 @@ html {
   .lend-section-copy,
   .lend-final {
     padding: 1rem;
+  }
+
+  .lend-dogfood-item {
+    padding: 2rem 1.5rem;
+  }
+
+  .lend-dogfood-item h3 {
+    font-size: 1.25rem;
+    margin: 0.75rem 0;
+  }
+
+  .lend-dogfood-item p {
+    font-size: 0.94rem;
   }
 
   .lend-compare-row {
