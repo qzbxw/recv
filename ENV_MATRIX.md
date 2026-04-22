@@ -1,0 +1,46 @@
+# Environment Variable Matrix
+
+The required environment variables vary based on the deployment environment: `dev`, `staging`, and `prod`.
+
+| Variable | Description | `dev` | `staging` | `prod` |
+| :--- | :--- | :--- | :--- | :--- |
+| **App Configuration** |
+| `APP_ENV` | Application environment (`development`, `staging`, `production`) | `development` | `staging` | `production` |
+| `HTTP_PORT` | Port for the API | Optional (8080) | Required | Required |
+| `JWT_SECRET` | Secret for user sessions | Dev secret | Strong secret | Strong secret |
+| `INTERNAL_TOKEN` | Token for internal service communication | Dev token | Strong token | Strong token |
+| `ALLOW_INSECURE_DEV_AUTH` | Allows bypassing standard auth for dev | `true` | `false` | `false` |
+| `PUBLIC_APP_URL` | Public URL for the frontend application | `http://localhost:3000` | Staging URL | `https://reqst.xyz` |
+| **Database** |
+| `DATABASE_URL` | Full connection string to PostgreSQL | Required | Required | Required |
+| `POSTGRES_DB` | Database name | Required | Required | Required |
+| `POSTGRES_USER` | Database user | Required | Required | Required |
+| `POSTGRES_PASSWORD` | Database password | Required | Required | Required |
+| `POSTGRES_HOST` | Database host | `postgres` | Required | Required |
+| `POSTGRES_PORT` | Database port | `5432` | Required | Required |
+| **Blockchain RPCs & APIs** |
+| `TRONGRID_BASE_URL` | Base URL for Tron API | Required | Required | Required |
+| `TRONGRID_API_KEY` | Tron API Key | Optional | Required | Required |
+| `TONCENTER_BASE_URL` | Base URL for TON API | Required | Required | Required |
+| `TONCENTER_API_KEY` | TON API Key | Optional | Required | Required |
+| `SOLANA_RPC_URL` | Solana RPC endpoint | Required | Required | Required |
+| `ETHEREUM_RPC_URL` | Ethereum RPC endpoint | Required | Required | Required |
+| `BASE_RPC_URL` | Base RPC endpoint | Required | Required | Required |
+| `ARBITRUM_RPC_URL` | Arbitrum RPC endpoint | Required | Required | Required |
+| `BSC_RPC_URL` | Binance Smart Chain RPC endpoint | Required | Required | Required |
+| **Telegram Bot** |
+| `TELEGRAM_BOT_TOKEN` | Token for the Telegram worker | Optional/Mocked | Required | Required |
+| `TELEGRAM_INIT_MAX_AGE_SECONDS` | WebApp initialization max age | Optional (86400)| Required | Required |
+| **Admin** |
+| `ADMIN_USERNAME` | Administrator username | Required | Required | Required |
+| `ADMIN_PASSWORD` | Administrator password | Required | Required | Required |
+| `ADMIN_JWT_SECRET` | Secret for admin sessions | Dev secret | Strong secret | Strong secret |
+| **SMTP / Email** |
+| `SMTP_HOST` | SMTP server host | Optional/Mocked | Required | Required |
+| `SMTP_PORT` | SMTP server port | Optional/Mocked | Required | Required |
+| `SMTP_USERNAME` | SMTP username | Optional/Mocked | Required | Required |
+| `SMTP_PASSWORD` | SMTP password | Optional/Mocked | Required | Required |
+| `SMTP_FROM_EMAIL` | Sender email address | Optional/Mocked | Required | Required |
+| **Frontend** |
+| `NEXT_PUBLIC_API_URL` | API base URL for Next.js app | `http://localhost:3000`| Staging URL | `https://reqst.xyz/api` |
+| `VITE_API_BASE_URL` | API base URL for Vite app | `http://localhost:3000`| Staging URL | `https://reqst.xyz/api` |
