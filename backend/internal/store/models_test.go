@@ -135,3 +135,29 @@ func TestMustJSON(t *testing.T) {
 func ptrTime(value time.Time) *time.Time {
 	return &value
 }
+
+func TestResolvePlan(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    PlanCode
+		expected PlanCode
+	}{
+		{name: "valid trial", input: PlanCodeTrial, expected: PlanCodeTrial},
+		{name: "valid pro", input: PlanCodePro, expected: PlanCodePro},
+		{name: "valid dev", input: PlanCodeDev, expected: PlanCodeDev},
+		{name: "valid enterprise", input: PlanCodeEnterprise, expected: PlanCodeEnterprise},
+		{name: "uppercase valid", input: "PRO", expected: PlanCodePro},
+		{name: "padded valid", input: "  dev  ", expected: PlanCodeDev},
+		{name: "unknown fallback to trial", input: "unknown", expected: PlanCodeTrial},
+		{name: "empty string fallback to trial", input: "", expected: PlanCodeTrial},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := ResolvePlan(tc.input)
+			if got.Code != tc.expected {
+				t.Errorf("ResolvePlan(%q) = %v; want %v", tc.input, got.Code, tc.expected)
+			}
+		})
+	}
+}
