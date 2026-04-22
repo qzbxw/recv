@@ -299,7 +299,7 @@ func adminInvoiceResponseItems(items []store.AdminInvoiceRecord) []gin.H {
 			"expires_at":          item.ExpiresAt,
 			"paid_at":             item.PaidAt,
 			"created_at":          item.CreatedAt,
-			"checkout_url":        "/checkout/" + item.PublicID,
+			"checkout_url":        "/app/checkout/" + item.PublicID,
 		})
 	}
 	return out

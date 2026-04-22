@@ -1,12 +1,17 @@
 import { MetadataRoute } from "next";
 
+function publicSiteUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://reqst.xyz").replace(/\/+$/, "");
+}
+
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = publicSiteUrl();
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/internal/"],
+      disallow: ["/api/", "/internal/", "/app/"],
     },
-    sitemap: "https://reqst.com/sitemap.xml",
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

@@ -673,7 +673,7 @@ func publicInvoiceResponse(invoice store.Invoice) gin.H {
 		"expires_at":          invoice.ExpiresAt,
 		"created_at":          invoice.CreatedAt,
 		"tx_hash":             invoice.TxHash,
-		"checkout_url":        "/checkout/" + invoice.PublicID,
+		"checkout_url":        "/app/checkout/" + invoice.PublicID,
 		"payment_uri":         paymentURI(invoice),
 	}
 }

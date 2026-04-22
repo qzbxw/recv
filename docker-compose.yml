@@ -30,6 +30,7 @@ services:
       APP_RUNTIME: api
       DATABASE_URL: ${DATABASE_URL:-postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable}
       METRICS_PORT: ${API_METRICS_PORT:-9090}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://reqst.xyz}
     ports:
       - "${HTTP_PORT:-8080}:8080"
       - "${API_METRICS_PORT:-9090}:9090"
@@ -72,6 +73,10 @@ services:
     build:
       context: .
       dockerfile: frontend-public/Dockerfile
+      args:
+        PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://reqst.xyz}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://reqst.xyz}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://reqst.xyz}
     restart: unless-stopped
     depends_on:
       - api
@@ -81,14 +86,13 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://reqst.xyz}
     restart: unless-stopped
     depends_on:
       - api
       - frontend_public
     ports:
       - "3000:80"
-      - "5173:80"
 
 volumes:
   postgres_data:

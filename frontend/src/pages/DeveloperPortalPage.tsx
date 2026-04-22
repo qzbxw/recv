@@ -14,6 +14,7 @@ import {
   getApiBase,
   getStoredToken,
 } from "../lib/api";
+import { buildCheckoutUrl } from "../lib/routing";
 import type { APIKey, DeveloperUsageResponse, MeResponse, Network, WebhookEndpoint } from "../lib/types";
 import { useUI } from "../lib/ui";
 
@@ -293,7 +294,7 @@ export function DeveloperPortalPage() {
     if (!token) return;
     try {
       const invoice = await createBillingCheckout(token, { payable_network: billingNetwork, plan_code: billingPlan });
-      setCheckoutUrl(`${window.location.origin}/checkout/${invoice.public_id}`);
+      setCheckoutUrl(buildCheckoutUrl(invoice.public_id));
     } catch (err) { setError((err as Error).message); }
   };
 
@@ -344,7 +345,7 @@ export function DeveloperPortalPage() {
         public_id: "REQST-9N2QK7",
         title: "Product Subscription",
         status: "awaiting_payment",
-        checkout_url: "http://reqst.me/checkout/REQST-9N2QK7",
+        checkout_url: "https://reqst.xyz/app/checkout/REQST-9N2QK7",
         base_amount_usd: "25.00",
         payable_amount: "25.000000",
         payable_network: "TRON"

@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://reqst.xyz/</loc></url>
-  <url><loc>https://reqst.xyz/dev</loc></url>
-  <url><loc>https://reqst.xyz/enterprise</loc></url>
-  <url><loc>https://reqst.xyz/developers</loc></url>
-  <url><loc>https://reqst.xyz/privacy</loc></url>
-  <url><loc>https://reqst.xyz/terms</loc></url>
+  <url><loc>https://reqst.xyz/en</loc></url>
+  <url><loc>https://reqst.xyz/en/dev</loc></url>
+  <url><loc>https://reqst.xyz/en/enterprise</loc></url>
+  <url><loc>https://reqst.xyz/en/blog</loc></url>
+  <url><loc>https://reqst.xyz/en/privacy</loc></url>
+  <url><loc>https://reqst.xyz/en/terms</loc></url>
+  <url><loc>https://reqst.xyz/ru</loc></url>
+  <url><loc>https://reqst.xyz/ru/dev</loc></url>
+  <url><loc>https://reqst.xyz/ru/enterprise</loc></url>
+  <url><loc>https://reqst.xyz/ru/blog</loc></url>
+  <url><loc>https://reqst.xyz/ru/privacy</loc></url>
+  <url><loc>https://reqst.xyz/ru/terms</loc></url>
 </urlset>

@@ -49,7 +49,7 @@ func Load() (Config, error) {
 		InternalToken:        os.Getenv("INTERNAL_TOKEN"),
 		TelegramBotToken:     os.Getenv("TELEGRAM_BOT_TOKEN"),
 		AllowInsecureDevAuth: boolEnv("ALLOW_INSECURE_DEV_AUTH", false),
-		PublicAppURL:         envOrDefault("PUBLIC_APP_URL", "http://localhost:5173"),
+		PublicAppURL:         envOrDefault("PUBLIC_APP_URL", "http://localhost:3000"),
 		TronGridBaseURL:      envOrDefault("TRONGRID_BASE_URL", "https://api.trongrid.io"),
 		TronGridAPIKey:       os.Getenv("TRONGRID_API_KEY"),
 		TonCenterBaseURL:     envOrDefault("TONCENTER_BASE_URL", "https://toncenter.com/api/v2"),

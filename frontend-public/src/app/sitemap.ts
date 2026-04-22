@@ -1,7 +1,13 @@
 import { MetadataRoute } from "next";
 
+export const revalidate = 3600;
+
+function publicSiteUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://reqst.xyz").replace(/\/+$/, "");
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://reqst.com";
+  const baseUrl = publicSiteUrl();
   const locales = ["en", "ru"];
 
   const routes = [
@@ -24,7 +30,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let blogRoutes: MetadataRoute.Sitemap = [];
   try {
-    // Use the API URL from environment if available, otherwise fallback
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://api:8080";
     const res = await fetch(`${apiBase}/api/public/blog`, { next: { revalidate: 3600 } });
     if (res.ok) {

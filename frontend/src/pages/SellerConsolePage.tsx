@@ -22,7 +22,7 @@ import {
   markInvoicePaid,
   updateContactEmail,
 } from "../lib/api";
-import { buildAuthHref } from "../lib/routing";
+import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routing";
 import type { APIKey, Invoice, MeResponse, Network, Wallet, WebhookEndpoint, Plan } from "../lib/types";
 import { useUI } from "../lib/ui";
 
@@ -490,7 +490,7 @@ export function SellerConsolePage() {
         payable_network: billingForm.network,
         plan_code: billingForm.plan,
       });
-      setCheckoutUrl(`${window.location.origin}/checkout/${inv.public_id}`);
+      setCheckoutUrl(buildCheckoutUrl(inv.public_id));
     } catch (err) { setError((err as Error).message); }
   }
 
@@ -646,10 +646,10 @@ export function SellerConsolePage() {
                             </div>
                           </div>
                           <div className="dev-resource-card__actions" onClick={e => e.stopPropagation()}>
-                            <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => handleCopy(`${window.location.origin}/checkout/${inv.public_id}`, `quick-${inv.id}`)}>
+                            <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `quick-${inv.id}`)}>
                                {copiedId === `quick-${inv.id}` ? t.common.copied : 'URL'}
                             </button>
-                            <a href={`/checkout/${inv.public_id}`} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--compact">
+                            <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--compact">
                                {language === 'ru' ? 'Счёт' : 'View'}
                             </a>
                             <div className="dev-resource-card__date">
@@ -737,10 +737,10 @@ export function SellerConsolePage() {
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                        <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1 }} onClick={() => handleCopy(`${window.location.origin}/checkout/${inv.public_id}`, `inv-${inv.id}`)}>
+                        <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1 }} onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `inv-${inv.id}`)}>
                           {copiedId === `inv-${inv.id}` ? t.common.copied : t.invoices.copyLink}
                         </button>
-                        <a href={`/checkout/${inv.public_id}`} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary" style={{ flexGrow: 1, textAlign: "center" }}>{t.invoices.view}</a>
+                        <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary" style={{ flexGrow: 1, textAlign: "center" }}>{t.invoices.view}</a>
                         {inv.status === "awaiting_payment" && (
                           <>
                             <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1, color: "var(--success)" }} onClick={() => void onInvoiceAction(inv.id, "mark_paid")}>{t.invoices.confirm}</button>

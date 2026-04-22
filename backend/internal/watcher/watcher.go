@@ -342,6 +342,9 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 }
 
 func (w *Watcher) filterTransfersAfterCheckpoint(ctx context.Context, wallet store.WatchedWallet, transfers []store.ObservedTransfer, lastBlock int64) []store.ObservedTransfer {
+	if w.store == nil {
+		return transfers
+	}
 	checkpoint, err := w.store.GetWatcherCheckpoint(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Address)
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		w.logger.Warn("load watcher checkpoint failed", "network", wallet.PayableNetwork, "address", wallet.Address, "error", err)

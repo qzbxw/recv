@@ -182,7 +182,7 @@ function createDemoInvoice(): Invoice {
     expires_at: expiresAt,
     created_at: now.toISOString(),
     tx_hash: null,
-    checkout_url: "/checkout/demo",
+    checkout_url: "/app/checkout/demo",
     payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=149000000000&text=REQST-DEMO-149",
   };
 }

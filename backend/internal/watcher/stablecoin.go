@@ -88,9 +88,11 @@ func (w *Watcher) pollEVMStablecoin(ctx context.Context, wallet store.WatchedWal
 		return nil, nil
 	}
 	fromBlock := toBlock - w.cfg.WatcherBackfillBlocks
-	checkpoint, err := w.store.GetWatcherCheckpoint(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Address)
-	if err == nil && checkpoint.LastBlock > 0 {
-		fromBlock = checkpoint.LastBlock + 1
+	if w.store != nil {
+		checkpoint, err := w.store.GetWatcherCheckpoint(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Address)
+		if err == nil && checkpoint.LastBlock > 0 {
+			fromBlock = checkpoint.LastBlock + 1
+		}
 	}
 	if fromBlock < 0 {
 		fromBlock = 0

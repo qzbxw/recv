@@ -60,6 +60,8 @@ services:
       - ./frontend-public:/app
       - frontend_public_node_modules:/app/node_modules
     environment:
+      PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
       NEXT_PUBLIC_API_URL: http://localhost:3000
     # Ports are internal only
 

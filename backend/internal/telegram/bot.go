@@ -853,12 +853,17 @@ func (b *BotWorker) callTelegram(ctx context.Context, method string, payload any
 func (b *BotWorker) appURL(path string) string {
 	base := strings.TrimRight(strings.TrimSpace(b.publicAppURL), "/")
 	if base == "" {
-		base = "http://localhost:5173"
+		base = "http://localhost:3000"
 	}
 	if path == "" {
 		return base
 	}
-	return base + "/" + strings.TrimLeft(path, "/")
+	cleanPath := "/" + strings.TrimLeft(path, "/")
+	baseHasAppPrefix := strings.HasSuffix(base, "/app")
+	if !baseHasAppPrefix && !strings.HasPrefix(cleanPath, "/app/") && cleanPath != "/app" {
+		cleanPath = "/app" + cleanPath
+	}
+	return base + cleanPath
 }
 
 func shortAddress(address string) string {

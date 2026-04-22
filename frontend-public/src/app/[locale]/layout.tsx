@@ -8,7 +8,7 @@ export default async function LocaleLayout(props: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await props.params;
-  
+
   return (
     <div lang={locale} className={inter.className}>
       <UIProvider initialLanguage={locale as "ru" | "en"}>

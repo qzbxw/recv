@@ -671,7 +671,7 @@ func validateWebhookURL(raw string, appEnv string) error {
 	if isProduction && (hostLower == "localhost" || strings.HasSuffix(hostLower, ".localhost")) {
 		return errors.New("webhook url host is not allowed in production")
 	}
-	if ip := net.ParseIP(host); ip != nil && isBlockedWebhookIP(ip) {
+	if ip := net.ParseIP(host); isProduction && ip != nil && isBlockedWebhookIP(ip) {
 		return errors.New("webhook url IP range is not allowed")
 	}
 	return nil

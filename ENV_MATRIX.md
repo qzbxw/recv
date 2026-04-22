@@ -10,7 +10,7 @@ The required environment variables vary based on the deployment environment: `de
 | `JWT_SECRET` | Secret for user sessions | Dev secret | Strong secret | Strong secret |
 | `INTERNAL_TOKEN` | Token for internal service communication | Dev token | Strong token | Strong token |
 | `ALLOW_INSECURE_DEV_AUTH` | Allows bypassing standard auth for dev | `true` | `false` | `false` |
-| `PUBLIC_APP_URL` | Public URL for the frontend application | `http://localhost:3000` | Staging URL | `https://reqst.xyz` |
+| `PUBLIC_APP_URL` | Public origin for generated app links, checkout links, bot URLs, and webhook-facing payload URLs. Do not include `/app` or `/api`. | `http://localhost:3000` | Staging origin | `https://reqst.xyz` |
 | **Database** |
 | `DATABASE_URL` | Full connection string to PostgreSQL | Required | Required | Required |
 | `POSTGRES_DB` | Database name | Required | Required | Required |
@@ -42,5 +42,6 @@ The required environment variables vary based on the deployment environment: `de
 | `SMTP_PASSWORD` | SMTP password | Optional/Mocked | Required | Required |
 | `SMTP_FROM_EMAIL` | Sender email address | Optional/Mocked | Required | Required |
 | **Frontend** |
-| `NEXT_PUBLIC_API_URL` | API base URL for Next.js app | `http://localhost:3000`| Staging URL | `https://reqst.xyz/api` |
-| `VITE_API_BASE_URL` | API base URL for Vite app | `http://localhost:3000`| Staging URL | `https://reqst.xyz/api` |
+| `NEXT_PUBLIC_SITE_URL` | Canonical public origin used by Next metadata routes (`robots.ts`, `sitemap.ts`, canonical metadata). Do not include a path. | `http://localhost:3000` | Staging origin | `https://reqst.xyz` |
+| `NEXT_PUBLIC_API_URL` | Public origin used by Next server components to call API routes. Code appends `/api/...`; do not include `/api`. | `http://localhost:3000` | Staging origin | `https://reqst.xyz` |
+| `VITE_API_BASE_URL` | Public origin used by Vite app API client. Code appends `/api/...` and `/v1/...`; do not include `/api`. | `http://localhost:3000` | Staging origin | `https://reqst.xyz` |
