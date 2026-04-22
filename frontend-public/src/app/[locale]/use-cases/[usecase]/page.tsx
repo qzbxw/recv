@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import Link from "next/link";
+import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 const USE_CASES = {
   "telegram-shops": {
@@ -80,9 +81,10 @@ export default async function UseCasePage(props: Props) {
 
   if (!data) notFound();
 
+  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
   const breadcrumbs = [
-    { label: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },
-    { label: locale === "ru" ? "Применение" : "Use Cases", href: `/${locale}/use-cases` },
+    { label: copy.breadcrumbs.home, href: `/${locale}` },
+    { label: copy.breadcrumbs.useCases, href: `/${locale}/use-cases` },
     { label: data.name, href: `/${locale}/use-cases/${usecase}` },
   ];
 

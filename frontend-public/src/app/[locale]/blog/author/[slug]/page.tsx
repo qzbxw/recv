@@ -1,8 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import Link from "next/link";
+import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 const AUTHORS = {
   "reqst-core": {
@@ -38,9 +40,10 @@ export default async function AuthorPage(props: Props) {
 
   if (!data) notFound();
 
+  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
   const breadcrumbs = [
-    { label: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },
-    { label: locale === "ru" ? "Блог" : "Blog", href: `/${locale}/blog` },
+    { label: copy.breadcrumbs.home, href: `/${locale}` },
+    { label: copy.breadcrumbs.blog, href: `/${locale}/blog` },
     { label: data.name, href: `/${locale}/blog/author/${slug}` },
   ];
 

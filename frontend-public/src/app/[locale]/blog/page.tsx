@@ -13,7 +13,16 @@ export const metadata: Metadata = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080";
 
-async function getPosts() {
+type BlogPostSummary = {
+  slug: string;
+  title: string;
+  excerpt?: string | null;
+  author?: string | null;
+  cover_image_url?: string | null;
+  published_at: string;
+};
+
+async function getPosts(): Promise<BlogPostSummary[]> {
   try {
     const res = await fetch(`${API_BASE}/api/public/blog`, { 
       next: { revalidate: 60 } // Revalidate every minute
@@ -21,7 +30,7 @@ async function getPosts() {
     if (!res.ok) {
       return [];
     }
-    const data = await res.json();
+    const data = (await res.json()) as { items?: BlogPostSummary[] };
     return data.items || [];
   } catch (error) {
     console.error("Failed to fetch blog posts", error);
@@ -50,7 +59,7 @@ export default async function BlogIndex(props: { params: Promise<{ locale: strin
             </div>
           ) : (
             <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
-              {posts.map((post: any) => (
+              {posts.map((post) => (
                 <Link key={post.slug} href={`/${locale}/blog/${post.slug}`} className="lend-card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   {post.cover_image_url && (
                     <div style={{ 

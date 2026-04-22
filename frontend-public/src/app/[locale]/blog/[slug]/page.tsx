@@ -1,5 +1,6 @@
+/* eslint-disable @next/next/no-img-element, @typescript-eslint/no-unused-vars */
 import Link from "next/link";
-import { Metadata, ResolvingMetadata } from "next";
+import { Metadata } from "next";
 import ReactMarkdown from "react-markdown";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { JsonLd } from "@/components/JsonLd";
@@ -106,17 +107,17 @@ export default async function BlogPost(props: Props) {
           }}>
             <ReactMarkdown
               components={{
-                h2: ({node, ...props}) => <h2 style={{ color: "var(--ink)", marginTop: "2.5rem", marginBottom: "1rem", fontSize: "1.75rem", letterSpacing: "-0.02em" }} {...props} />,
-                h3: ({node, ...props}) => <h3 style={{ color: "var(--ink)", marginTop: "2rem", marginBottom: "1rem", fontSize: "1.3rem" }} {...props} />,
-                p: ({node, ...props}) => <p style={{ marginBottom: "1.25rem" }} {...props} />,
-                a: ({node, ...props}) => <a style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: "4px" }} {...props} />,
+                h2: ({node: _node, ...props}) => <h2 style={{ color: "var(--ink)", marginTop: "2.5rem", marginBottom: "1rem", fontSize: "1.75rem", letterSpacing: "-0.02em" }} {...props} />,
+                h3: ({node: _node, ...props}) => <h3 style={{ color: "var(--ink)", marginTop: "2rem", marginBottom: "1rem", fontSize: "1.3rem" }} {...props} />,
+                p: ({node: _node, ...props}) => <p style={{ marginBottom: "1.25rem" }} {...props} />,
+                a: ({node: _node, ...props}) => <a style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: "4px" }} {...props} />,
                 code: ({inline, ...props}: { inline?: boolean; children?: React.ReactNode }) => 
                   inline ? <code style={{ background: "rgba(255,255,255,0.1)", padding: "0.2em 0.4em", borderRadius: "4px", fontSize: "0.9em", fontFamily: "monospace" }} {...props} />
                          : <pre style={{ background: "#0a0a0c", padding: "1.25rem", borderRadius: "12px", overflowX: "auto", border: "1px solid var(--line)", marginBottom: "1.5rem" }}><code style={{ fontFamily: "monospace", fontSize: "0.9em" }} {...props} /></pre>,
-                blockquote: ({node, ...props}) => <blockquote style={{ borderLeft: "4px solid var(--accent)", paddingLeft: "1rem", color: "var(--muted)", fontStyle: "italic", margin: "1.5rem 0" }} {...props} />,
-                ul: ({node, ...props}) => <ul style={{ marginBottom: "1.5rem", paddingLeft: "1.5rem" }} {...props} />,
-                ol: ({node, ...props}) => <ol style={{ marginBottom: "1.5rem", paddingLeft: "1.5rem" }} {...props} />,
-                li: ({node, ...props}) => <li style={{ marginBottom: "0.5rem" }} {...props} />
+                blockquote: ({node: _node, ...props}) => <blockquote style={{ borderLeft: "4px solid var(--accent)", paddingLeft: "1rem", color: "var(--muted)", fontStyle: "italic", margin: "1.5rem 0" }} {...props} />,
+                ul: ({node: _node, ...props}) => <ul style={{ marginBottom: "1.5rem", paddingLeft: "1.5rem" }} {...props} />,
+                ol: ({node: _node, ...props}) => <ol style={{ marginBottom: "1.5rem", paddingLeft: "1.5rem" }} {...props} />,
+                li: ({node: _node, ...props}) => <li style={{ marginBottom: "0.5rem" }} {...props} />
               }}
             >
               {post.content_md}

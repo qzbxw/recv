@@ -1,241 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useUI } from "../lib/ui";
+import { PLAN_COPY as COPY } from "../i18n";
 
 type Variant = "dev" | "enterprise";
-
-const COPY = {
-  ru: {
-    back: "На главную",
-    auth: "Консоль",
-    billing: "Связаться",
-    discuss: "Обсудить условия",
-    compareTitle: "Протокол",
-    flowTitle: "Интеграция",
-    priceTitle: "Доступ",
-    priceSubtitle: "Неограниченный оборот. Фиксированная цена.",
-    codeTitle: "Пример реализации",
-    codeSubtitle: "Готов к продакшену за считанные минуты.",
-    codeBody: "Бесшовная интеграция нашего протокола в ваш существующий рабочий процесс с помощью высокопроизводительного API Beta.",
-    processingNote: "We use a proprietary non-custodial architecture. All transactions go through your nodes or our high-performance clusters directly to the blockchain.",
-    compareSectionTitle: "Архитектура прямого доступа",
-    compareSectionBody: "Reqst работает как прозрачный программный слой (middleware). Транзакции идут напрямую от клиента к вам, минуя промежуточные счета. Мы лишь автоматизируем мониторинг через сеть высокопроизводительных нод, исключая любые риски блокировки средств.",
-    dev: {
-      badge: "Reqst Developer",
-      title: "Инфраструктура криптоплатежей. Контроль в ваших руках.",
-      body: "Профессиональный API v1 Beta и Webhook-уведомления для high-load систем. Прямые выплаты Direct-to-Wallet и полная свобода от комиссий с оборота в non-custodial среде.",
-      priceLabel: "199$",
-      period: "в месяц",
-      stats: [
-        { value: "Confirmed", label: "Финальность" },
-        { value: "100%", label: "Direct-to-Wallet" },
-        { value: "Full", label: "Real-time Access" },
-        { value: "∞", label: "Webhook Endpoints" },
-      ],
-      features: [
-        {
-          title: "Webhook Delivery",
-          body: "Гарантированная доставка (at-least-once) с автоматическими ретраями и проверкой подлинности через HMAC-SHA256.",
-        },
-        {
-          title: "Real-time Monitoring",
-          body: "Мониторинг транзакций в реальном времени. Обнаружение платежа учитывает сетевые подтверждения и политику финальности.",
-        },
-        {
-          title: "Unified API v1 Beta",
-          body: "Единый интерфейс для работы с поддерживаемыми сетями: TON, TRON, SOL, Base, Arbitrum, BSC и Ethereum (EVM).",
-        },
-        {
-          title: "Idempotency Safety",
-          body: "Встроенная защита от дублирования транзакций и повторных списаний на уровне протокола API.",
-        },
-      ],
-      flow: [
-        { title: "API Key Provisioning", body: "Мгновенная генерация ключей rqst_live_. Гибкое управление правами (Scopes) для безопасной интеграции в ваш бэкенд." },
-        { title: "Webhook Configuration", body: "Настройка коллбэков с подписью HMAC-SHA256. Получайте уведомления в реальном времени с автоматическими ретраями." },
-        { title: "Blockchain Monitoring", body: "Запуск автоматического процессинга. Наши вотчеры отслеживают транзакции и подтверждают платежи 24/7 без вашего участия." },
-      ],
-      code: `// Create Invoice via Reqst API v1 Beta
-const response = await fetch("https://api.reqst.xyz/v1/invoices", {
-  method: "POST",
-  headers: {
-    "X-API-Key": "rqst_live_...",
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    title: "Order #9921",
-    base_amount_usd: "149.00",
-    payable_network: "TRON", // TON, SOL, BASE, etc.
-    expires_in_minutes: 60
-  })
-});
-
-const invoice = await response.json();
-console.log("Checkout URL:", invoice.checkout_url);`
-    },
-    enterprise: {
-      badge: "Reqst Enterprise",
-      title: "Корпоративный стандарт. Инфраструктура без границ.",
-      body: "Высокая пропускная способность, расширенные лимиты API и приоритетная поддержка для масштабных систем с оборотом от 1M$.",
-      priceLabel: "Custom",
-      period: "индивидуальный расчет",
-      stats: [
-        { value: "Confirmed", label: "Финальность" },
-        { value: "Full", label: "Real-time Access" },
-        { value: "∞", label: "Webhook Endpoints" },
-        { value: "24/7", label: "Support" },
-      ],
-      features: [
-        {
-          title: "High-Performance Quota",
-          body: "Расширенные лимиты для крупных систем: до 600 запросов в минуту и 500,000 запросов к API ежемесячно.",
-        },
-        {
-          title: "Mission-Critical Webhooks",
-          body: "Повышенная надежность доставки уведомлений: до 8 автоматических попыток отправки (Retries) при сбоях вашего сервера.",
-        },
-        {
-          title: "Enhanced Key Management",
-          body: "Возможность выпуска до 20 активных API-ключей для разных отделов, сервисов или инфраструктурных задач.",
-        },
-        {
-          title: "Priority Engineering",
-          body: "Прямой канал связи с командой разработки Reqst. Приоритетное решение технических вопросов и консультации 24/7.",
-        },
-      ],
-      flow: [
-        { title: "Infrastructure Audit", body: "Анализ текущих потоков платежей и проектирование топологии узлов под ваши пиковые нагрузки." },
-        { title: "Dedicated Provisioning", body: "Развертывание изолированных инстансов мониторинга и настройка высокоприоритетных очередей уведомлений." },
-        { title: "Hyper-scale Launch", body: "Запуск процессинга с лимитами 600+ RPM и прямой поддержкой от команды Core-разработчиков." },
-      ],
-      code: `// Enterprise Webhook Verification (HMAC-SHA256)
-const crypto = require('crypto');
-
-function verify(payload, signature, secret) {
-  const hmac = crypto.createHmac('sha256', secret);
-  hmac.update(payload);
-  return \`v1=\${hmac.digest('hex')}\` === signature;
-}
-
-// Signed event verification for payment webhooks`
-    },
-  },
-  en: {
-    back: "Back to Home",
-    auth: "Console",
-    billing: "Contact",
-    discuss: "Discuss Terms",
-    compareTitle: "Protocol",
-    flowTitle: "Integration",
-    priceTitle: "Access",
-    priceSubtitle: "Unlimited volume. Flat monthly fee.",
-    codeTitle: "Code Implementation",
-    codeSubtitle: "Ready for production in minutes.",
-    codeBody: "Seamlessly integrate our protocol into your existing workflow using our high-performance API Beta.",
-    processingNote: "We use a proprietary non-custodial architecture. All transactions go through your nodes or our high-performance clusters directly to the blockchain.",
-    compareSectionTitle: "Direct Access Architecture",
-    compareSectionBody: "Reqst operates as a transparent software layer (middleware). Transactions flow directly from client to merchant, bypassing intermediary accounts. We automate monitoring via high-performance nodes, eliminating any third-party risks.",
-    dev: {
-      badge: "Reqst Developer",
-      title: "Crypto Payments Infrastructure. Total Control.",
-      body: "Professional API v1 Beta and Webhook notifications for high-load projects. Direct-to-wallet payouts and zero turnover fees in a pure non-custodial environment.",
-      priceLabel: "$199",
-      period: "per month",
-      stats: [
-        { value: "Confirmed", label: "Finality" },
-        { value: "100%", label: "Direct-to-Wallet" },
-        { value: "Full", label: "Real-time Access" },
-        { value: "∞", label: "Webhook Endpoints" },
-      ],
-      features: [
-        {
-          title: "Webhook Delivery",
-          body: "Guaranteed delivery (at-least-once) with automatic retries and HMAC-SHA256 signature verification.",
-        },
-        {
-          title: "Real-time Monitoring",
-          body: "Real-time transaction monitoring. Detect incoming payments using network confirmations and finality policy.",
-        },
-        {
-          title: "Unified API v1 Beta",
-          body: "A single interface for supported networks including TON, TRON, SOL, Base, Arbitrum, BSC, and Ethereum.",
-        },
-        {
-          title: "Idempotency Safety",
-          body: "Built-in protection against duplicate transactions and double-spending at the API protocol level.",
-        },
-      ],
-      flow: [
-        { title: "API Key Provisioning", body: "Instant rqst_live_ key generation. Granular scope management for secure backend integration." },
-        { title: "Webhook Configuration", body: "Secure HMAC-SHA256 signed callbacks. Receive real-time transaction updates with automated retry logic." },
-        { title: "Blockchain Monitoring", body: "Automated payment processing. Our watchers track transactions and confirm payments 24/7 autonomously." },
-      ],
-      code: `// Create Invoice via Reqst API v1 Beta
-const response = await fetch("https://api.reqst.xyz/v1/invoices", {
-  method: "POST",
-  headers: {
-    "X-API-Key": "rqst_live_...",
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    title: "Order #9921",
-    base_amount_usd: "149.00",
-    payable_network: "TRON", // TON, SOL, BASE, etc.
-    expires_in_minutes: 60
-  })
-});
-
-const invoice = await response.json();
-console.log("Checkout URL:", invoice.checkout_url);`
-    },
-    enterprise: {
-      badge: "Reqst Enterprise",
-      title: "Corporate Standard. Infrastructure Without Limits.",
-      body: "High throughput, expanded API limits, and priority support for large-scale systems with $1M+ turnover.",
-      priceLabel: "Custom",
-      period: "individual pricing",
-      stats: [
-        { value: "Confirmed", label: "Finality" },
-        { value: "Full", label: "Real-time Access" },
-        { value: "∞", label: "Webhook Endpoints" },
-        { value: "24/7", label: "Support" },
-      ],
-      features: [
-        {
-          title: "High-Performance Quota",
-          body: "Expanded limits for large-scale systems: up to 600 requests per minute and 500,000 monthly API requests.",
-        },
-        {
-          title: "Mission-Critical Webhooks",
-          body: "Enhanced notification reliability with up to 8 automatic retries if your server experiences downtime.",
-        },
-        {
-          title: "Enhanced Key Management",
-          body: "Issue up to 20 active API keys for different departments, services, or infrastructure requirements.",
-        },
-        {
-          title: "Priority Engineering",
-          body: "Direct communication channel with the Reqst core team. Priority technical support and 24/7 integration consulting.",
-        },
-      ],
-      flow: [
-        { title: "Infrastructure Audit", body: "Analyzing current payment flows and designing node topology for your specific peak loads." },
-        { title: "Dedicated Provisioning", body: "Deploying isolated monitoring instances and configuring high-priority notification queues." },
-        { title: "Hyper-scale Launch", body: "Launching processing with 600+ RPM limits and direct support from the Core team." },
-      ],
-      code: `// Enterprise Webhook Verification (HMAC-SHA256)
-const crypto = require('crypto');
-
-function verify(payload, signature, secret) {
-  const hmac = crypto.createHmac('sha256', secret);
-  hmac.update(payload);
-  return \`v1=\${hmac.digest('hex')}\` === signature;
-}
-
-// Signed event verification for payment webhooks`
-    },
-  },
-} as const;
 
 
 function useReveal() {
@@ -303,19 +71,19 @@ export function PlanPage({ variant }: { variant: Variant }) {
               {variant === "dev" ? (
                 <>
                   <Link className="lend-primary" to="/auth">
-                    {language === "ru" ? "Активировать" : "Activate"}
+                    {text.activate}
                   </Link>
                   <Link className="lend-secondary" to="/auth">
-                    {language === "ru" ? "Консоль" : "Console"}
+                    {text.auth}
                   </Link>
                 </>
               ) : variant === "enterprise" ? (
                 <>
                   <a className="lend-primary" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
-                    {language === "ru" ? "Обсудить условия" : "Discuss Terms"}
+                    {text.discuss}
                   </a>
                   <Link className="lend-secondary" to="/auth">
-                    {language === "ru" ? "Консоль" : "Console"}
+                    {text.auth}
                   </Link>
                 </>
               ) : (
@@ -384,7 +152,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
         <section className="lend-stacked-section lend-flow-section" ref={reveal}>
           <div className="lend-section-copy lend-reveal--1">
             <span className="lend-section-kicker">{text.flowTitle}</span>
-            <h2>Seamless Integration Flow</h2>
+            <h2>{text.integrationFlow}</h2>
           </div>
 
           <div className="lend-flow-container">
@@ -429,7 +197,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
           <div className="lend-cta-row lend-reveal--4">
             {variant === "dev" ? (
               <Link className="lend-primary lend-price-btn" to="/auth">
-                {language === "ru" ? "Активировать Reqst Dev" : "Activate Reqst Dev"}
+                {text.activateDev}
               </Link>
             ) : (
               <a className="lend-primary lend-price-btn" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
@@ -441,12 +209,12 @@ export function PlanPage({ variant }: { variant: Variant }) {
 
         <footer className="lend-footer">
           <div className="lend-footer-links">
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/terms">Terms</Link>
-            <Link to="/developers">Docs</Link>
-            <Link to="/dev">API</Link>
-            <Link to="/enterprise">B2B</Link>
-            <Link to="/auth">Console</Link>
+            <Link to="/privacy">{text.footerPrivacy}</Link>
+            <Link to="/terms">{text.footerTerms}</Link>
+            <Link to="/developers">{text.footerDocs}</Link>
+            <Link to="/dev">{text.footerApi}</Link>
+            <Link to="/enterprise">{text.footerB2B}</Link>
+            <Link to="/auth">{text.auth}</Link>
           </div>
         </footer>
       </div>

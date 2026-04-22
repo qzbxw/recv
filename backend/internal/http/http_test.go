@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	stdhttp "net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -264,6 +265,90 @@ func TestHelperUtilities(t *testing.T) {
 	}
 	if err := validateWallet(store.NetworkEVM, "0x1111111111111111111111111111111111111111"); err != nil {
 		t.Fatalf("expected valid wallet, got %v", err)
+	}
+}
+
+func TestInvoicePresentationHelpers(t *testing.T) {
+	comment := "order #1 / тест"
+	invoice := store.Invoice{
+		Kind:               store.InvoiceKindSubscription,
+		PlanCode:           store.PlanCodeTrial,
+		SubscriptionDays:   30,
+		PayableNetwork:     store.NetworkTON,
+		DestinationAddress: "UQWallet",
+		PayableAmount:      decimal.RequireFromString("1.25"),
+		PaymentComment:     &comment,
+	}
+
+	if got := checkoutBadge(invoice); got != store.ResolvePlan(store.PlanCodeMerchant).CheckoutBadge {
+		t.Fatalf("expected subscription trial invoice to render merchant badge, got %q", got)
+	}
+
+	uri := paymentURI(invoice)
+	if !strings.HasPrefix(uri, "ton://transfer/UQWallet?amount=1250000000&text=") {
+		t.Fatalf("unexpected TON payment uri: %s", uri)
+	}
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		t.Fatalf("payment uri should parse: %v", err)
+	}
+	if got := parsed.Query().Get("text"); got != comment {
+		t.Fatalf("expected escaped comment round trip, got %q", got)
+	}
+
+	invoice.Kind = store.InvoiceKindMerchant
+	invoice.SubscriptionDays = 0
+	invoice.PayableNetwork = store.NetworkBASE
+	invoice.DestinationAddress = "0x1111111111111111111111111111111111111111"
+	if !isWorkspaceManagedInvoice(invoice) {
+		t.Fatal("expected merchant invoice to be workspace managed")
+	}
+	if got := checkoutBadge(invoice); got != "Merchant Checkout" {
+		t.Fatalf("expected merchant checkout badge, got %q", got)
+	}
+	if got := paymentURI(invoice); got != invoice.DestinationAddress {
+		t.Fatalf("expected EVM-like payment URI to be destination address, got %q", got)
+	}
+}
+
+func TestWatcherPathAndDeveloperUtilityBranches(t *testing.T) {
+	tests := map[string]store.Network{
+		"/internal/watchers/ton":      store.NetworkTON,
+		"/internal/watchers/tron":     store.NetworkTRON,
+		"/internal/watchers/solana":   store.NetworkSOLANA,
+		"/internal/watchers/base":     store.NetworkBASE,
+		"/internal/watchers/arbitrum": store.NetworkARBITRUM,
+		"/internal/watchers/bsc":      store.NetworkBSC,
+		"/internal/watchers/evm":      store.NetworkEVM,
+		"/internal/watchers/unknown":  "",
+	}
+	for path, expected := range tests {
+		if got := inferredNetworkFromPath(path); got != expected {
+			t.Fatalf("inferredNetworkFromPath(%q) = %q; want %q", path, got, expected)
+		}
+	}
+
+	firstHash := hashRequestBody([]byte(`{"b":2,"a":1}`))
+	secondHash := hashRequestBody([]byte(`{"a":1,"b":2}`))
+	if firstHash != secondHash {
+		t.Fatalf("expected JSON request hash to be order-insensitive, got %s and %s", firstHash, secondHash)
+	}
+	if rawHash := hashRequestBody([]byte(`not-json`)); rawHash == firstHash {
+		t.Fatal("expected non-JSON payload to hash differently from normalized JSON")
+	}
+
+	limiter := &memoryRateLimiter{buckets: map[string]rateBucket{}}
+	if remaining, ok := limiter.Allow("key", 2); !ok || remaining != 1 {
+		t.Fatalf("first request should be allowed with 1 remaining, got remaining=%d ok=%v", remaining, ok)
+	}
+	if remaining, ok := limiter.Allow("key", 2); !ok || remaining != 0 {
+		t.Fatalf("second request should be allowed with 0 remaining, got remaining=%d ok=%v", remaining, ok)
+	}
+	if remaining, ok := limiter.Allow("key", 2); ok || remaining != 0 {
+		t.Fatalf("third request should be rejected, got remaining=%d ok=%v", remaining, ok)
+	}
+	if _, ok := limiter.Allow("unlimited", 0); !ok {
+		t.Fatal("non-positive limit should allow request")
 	}
 }
 

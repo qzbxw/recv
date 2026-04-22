@@ -23,6 +23,7 @@ import { buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus } from "../lib/status";
 import type { APIKey, DeveloperUsageResponse, Invoice, MeResponse, Network, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
+import { DEVELOPER_PORTAL_COPY as COPY } from "../i18n";
 
 const PLAN_OPTIONS = [
   { value: "merchant", label: "Merchant" },
@@ -42,149 +43,8 @@ const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
 
 const DEFAULT_SCOPES = ["invoices:read", "invoices:write"];
 
-const COPY = {
-  ru: {
-    hero: {
-      kicker: "Developer Platform",
-      title: "Стройте будущее платежей",
-      subtitle: "Профессиональные инструменты для интеграции криптоплатежей. API v1 Beta для автоматизации вашего бизнеса.",
-    },
-    nav: {
-      docs: "Документация",
-      dashboard: "Дашборд",
-      keys: "API Ключи",
-      webhooks: "Вебхуки",
-      billing: "Биллинг",
-    },
-    dashboard: {
-      title: "Состояние системы",
-      usage: "Использование API",
-      limit: "Лимит",
-      plan: "Текущий план",
-      status: "Статус доступа",
-      active: "Активен",
-      inactive: "Требует активации",
-    },
-    keys: {
-      title: "API Ключи",
-      subtitle: "Ключи для аутентификации ваших запросов. Храните их в секрете.",
-      create: "Создать ключ",
-      label: "Название ключа",
-      placeholder: "Production Backend",
-      scopes: "Права доступа",
-      warning: "Секретный ключ отображается только один раз!",
-    },
-    webhooks: {
-      title: "Вебхуки",
-      subtitle: "События в реальном времени. Мы отправим POST запрос на ваш URL.",
-      add: "Добавить эндпоинт",
-      url: "URL эндпоинта",
-      secret: "Секрет подписи",
-      verification: "Проверка подписи",
-      verificationDesc: "Каждый вебхук содержит заголовок X-Reqst-Signature. Используйте HMAC SHA-256 для проверки подлинности.",
-    },
-    billing: {
-      title: "Тарифные планы",
-      subtitle: "Выберите план, соответствующий вашим масштабам.",
-      upgrade: "Обновить план",
-      current: "Ваш текущий тариф",
-      enterpriseNote: "Нужны индивидуальные условия? Enterprise план настраивается под ваши задачи.",
-      contactSupport: "Узнать про Enterprise",
-    },
-    api: {
-      title: "Справочник API v1 Beta",
-      subtitle: "Базовый URL для всех запросов",
-      authTitle: "Аутентификация",
-      authDesc: "Все запросы должны содержать заголовок Authorization: Bearer <API_KEY>.",
-      rateLimitTitle: "Лимиты запросов",
-      rateLimitDesc: "Мы используем стандартные заголовки X-RateLimit для контроля нагрузки.",
-      params: "Параметры",
-      response: "Пример ответа",
-    },
-    common: {
-      copy: "Копировать",
-      copied: "Скопировано",
-      delete: "Удалить",
-      loading: "Загрузка...",
-      error: "Ошибка",
-      save: "Сохранить",
-      testMode: "Тест",
-      liveMode: "Live",
-    }
-  },
-  en: {
-    hero: {
-      kicker: "Developer Platform",
-      title: "Build the future of payments",
-      subtitle: "Professional tools for integrating crypto payments. API v1 Beta to automate your business.",
-    },
-    nav: {
-      docs: "Documentation",
-      dashboard: "Dashboard",
-      keys: "API Keys",
-      webhooks: "Webhooks",
-      billing: "Billing",
-    },
-    dashboard: {
-      title: "System Status",
-      usage: "API Usage",
-      limit: "Limit",
-      plan: "Current Plan",
-      status: "Access Status",
-      active: "Active",
-      inactive: "Requires Activation",
-    },
-    keys: {
-      title: "API Keys",
-      subtitle: "Keys to authenticate your requests. Keep them secure.",
-      create: "Create Key",
-      label: "Key Label",
-      placeholder: "Production Backend",
-      scopes: "Permissions",
-      warning: "The secret key is shown only once!",
-    },
-    webhooks: {
-      title: "Webhooks",
-      subtitle: "Real-time events. We'll send a POST request to your URL.",
-      add: "Add Endpoint",
-      url: "Endpoint URL",
-      secret: "Signing Secret",
-      verification: "Signature Verification",
-      verificationDesc: "Each webhook contains an X-Reqst-Signature header. Use HMAC SHA-256 to verify the payload.",
-    },
-    billing: {
-      title: "Subscription Plans",
-      subtitle: "Choose a plan that fits your scale.",
-      upgrade: "Upgrade Plan",
-      current: "Your current plan",
-      enterpriseNote: "Looking for something custom? Enterprise plans are tailored to your needs.",
-      contactSupport: "Learn about Enterprise",
-    },
-    api: {
-      title: "API Reference v1 Beta",
-      subtitle: "Base URL for all requests",
-      authTitle: "Authentication",
-      authDesc: "All requests must include the Authorization: Bearer <API_KEY> header.",
-      rateLimitTitle: "Rate Limiting",
-      rateLimitDesc: "We use standard X-RateLimit headers to control traffic load.",
-      params: "Parameters",
-      response: "Response Example",
-    },
-    common: {
-      copy: "Copy",
-      copied: "Copied",
-      delete: "Delete",
-      loading: "Loading...",
-      error: "Error",
-      save: "Save",
-      testMode: "Test",
-      liveMode: "Live",
-    }
-  }
-} as const;
-
 function formatDate(value: string | null | undefined, language: "ru" | "en") {
-  if (!value) return language === "ru" ? "Никогда" : "Never";
+  if (!value) return COPY[language].common.never;
   const date = new Date(value);
   return new Intl.DateTimeFormat(language === "ru" ? "ru-RU" : "en-US", {
     dateStyle: "medium",
@@ -325,7 +185,7 @@ export function DeveloperPortalPage() {
   async function handleCreateSampleInvoice() {
     const secret = sampleSecret;
     if (!secret) {
-      setError(language === "ru" ? "Создайте тестовый ключ и сохраните секрет для симулятора." : "Create a test key and keep the secret visible for the simulator.");
+      setError(t.common.createTestKeyFirst);
       return;
     }
     setSampleBusy(true);
@@ -374,8 +234,8 @@ export function DeveloperPortalPage() {
     {
       method: "GET",
       path: "/me",
-      title: language === "ru" ? "Аккаунт и лимиты" : "Account & Limits",
-      desc: language === "ru" ? "Возвращает информацию о текущем API ключе, тарифном плане и остатке месячной квоты." : "Returns information about the current API key, plan, and monthly quota.",
+      title: t.api.endpoints[0].title,
+      desc: t.api.endpoints[0].desc,
       params: [],
       response: {
         user: { id: 1, username: "merchant_one", email: "biz@example.com" },
@@ -388,11 +248,11 @@ export function DeveloperPortalPage() {
     {
       method: "GET",
       path: "/invoices",
-      title: language === "ru" ? "Список инвойсов" : "List Invoices",
-      desc: language === "ru" ? "Возвращает список инвойсов с поддержкой пагинации. Сортировка по дате создания (новые сверху)." : "Returns a list of invoices with pagination. Sorted by creation date (newest first).",
+      title: t.api.endpoints[1].title,
+      desc: t.api.endpoints[1].desc,
       params: [
-        { name: "page", type: "int", desc: language === "ru" ? "Номер страницы (по умолчанию 1)" : "Page number (default 1)" },
-        { name: "page_size", type: "int", desc: language === "ru" ? "Количество элементов (default 20, max 100)" : "Items per page (default 20, max 100)" }
+        { name: "page", type: "int", desc: t.api.endpoints[1].params[0] },
+        { name: "page_size", type: "int", desc: t.api.endpoints[1].params[1] }
       ],
       response: {
         items: [{ id: 1, public_id: "RQST-X1", title: "Order #1", status: "paid", base_amount_usd: "10.00", environment: "live" }],
@@ -403,13 +263,13 @@ export function DeveloperPortalPage() {
     {
       method: "POST",
       path: "/invoices",
-      title: language === "ru" ? "Создать инвойс" : "Create Invoice",
-      desc: language === "ru" ? "Создает новый счет на оплату. Возвращает объект инвойса с checkout_url для пользователя." : "Creates a new payment invoice. Returns an invoice object with a checkout_url for the user.",
+      title: t.api.endpoints[2].title,
+      desc: t.api.endpoints[2].desc,
       params: [
-        { name: "title", type: "string", desc: language === "ru" ? "Заголовок счета (виден клиенту)" : "Invoice title (visible to client)" },
-        { name: "base_amount_usd", type: "decimal", desc: language === "ru" ? "Сумма в USD (например, '25.00')" : "Amount in USD (e.g., '25.00')" },
+        { name: "title", type: "string", desc: t.api.endpoints[2].params[0] },
+        { name: "base_amount_usd", type: "decimal", desc: t.api.endpoints[2].params[1] },
         { name: "payable_network", type: "string", desc: "TRON, SOLANA, BASE, TON, ETH, etc." },
-        { name: "expires_in_minutes", type: "int", desc: language === "ru" ? "Время жизни (default 30, max 1440)" : "Expiration time (default 30, max 1440)" }
+        { name: "expires_in_minutes", type: "int", desc: t.api.endpoints[2].params[2] }
       ],
       response: {
         id: 1842,
@@ -426,20 +286,20 @@ export function DeveloperPortalPage() {
     {
       method: "GET",
       path: "/invoices/:id",
-      title: language === "ru" ? "Детали инвойса" : "Invoice Details",
-      desc: language === "ru" ? "Получение полной информации об инвойсе по его системному ID." : "Get full invoice information by its system ID.",
+      title: t.api.endpoints[3].title,
+      desc: t.api.endpoints[3].desc,
       params: [
-        { name: "id", type: "int", desc: language === "ru" ? "Системный ID инвойса" : "System invoice ID" }
+        { name: "id", type: "int", desc: t.api.endpoints[3].params[0] }
       ],
       response: { id: 1842, public_id: "RQST-9N2QK7", status: "paid", tx_hash: "0x...", environment: "live" }
     },
     {
       method: "POST",
       path: "/invoices/:id/cancel",
-      title: language === "ru" ? "Отменить инвойс" : "Cancel Invoice",
-      desc: language === "ru" ? "Переводит инвойс в статус 'expired'. Можно отменить только неоплаченные счета." : "Sets invoice status to 'expired'. Only unpaid invoices can be canceled.",
+      title: t.api.endpoints[4].title,
+      desc: t.api.endpoints[4].desc,
       params: [
-        { name: "id", type: "int", desc: language === "ru" ? "Системный ID инвойса" : "System invoice ID" }
+        { name: "id", type: "int", desc: t.api.endpoints[4].params[0] }
       ],
       response: { id: 1842, status: "expired" }
     }
@@ -460,7 +320,7 @@ export function DeveloperPortalPage() {
         <header className="dev-portal__topbar portal-animate-in">
           <Link className="dev-portal__brand" to="/">reqst</Link>
           <div style={{ display: "flex", gap: "1rem" }}>
-            <Link className="dev-btn dev-btn--primary" to="/console">{language === "ru" ? "Консоль" : "Console"}</Link>
+            <Link className="dev-btn dev-btn--primary" to="/console">{t.common.console}</Link>
           </div>
         </header>
 
@@ -509,26 +369,26 @@ export function DeveloperPortalPage() {
                 <div className="dev-card dev-widget">
                   <span className="dev-widget__label">RPM Limit</span>
                   <div className="dev-widget__value">{usage?.usage.minute_limit ?? 0}</div>
-                  <div className="dev-widget__meta">{t.dashboard.limit} per minute</div>
+                  <div className="dev-widget__meta">{t.dashboard.limit} {t.dashboard.perMinute}</div>
                 </div>
               </div>
             </section>
 
             <section id="quickstart" className="dev-portal__section portal-animate-in">
               <div className="dev-portal__section-header">
-                <h2>Quickstart</h2>
-                <p>One flow: test key, test invoice, simulation, webhook, live.</p>
+                <h2>{t.quickstart.title}</h2>
+                <p>{t.quickstart.subtitle}</p>
               </div>
               <div className="portal-quickstart">
                 {[
-                  { done: Boolean(testKey || sampleSecret), title: language === "ru" ? "Тестовый ключ" : "Test key", body: testKey?.prefix ?? "rqst_test_..." },
-                  { done: Boolean(sampleInvoice), title: language === "ru" ? "Тестовый инвойс" : "Test invoice", body: sampleInvoice?.public_id ?? "POST /v1/invoices" },
-                  { done: sampleInvoice?.status === "paid", title: language === "ru" ? "Симуляция" : "Simulate", body: sampleInvoice ? formatInvoiceStatus(sampleInvoice.status, language) : "simulate-payment" },
-                  { done: webhooks.length > 0, title: language === "ru" ? "Вебхук" : "Webhook", body: webhooks[0]?.url ?? "https://..." },
+                  { done: Boolean(testKey || sampleSecret), title: t.quickstart.testKey, body: testKey?.prefix ?? "rqst_test_..." },
+                  { done: Boolean(sampleInvoice), title: t.quickstart.testInvoice, body: sampleInvoice?.public_id ?? "POST /v1/invoices" },
+                  { done: sampleInvoice?.status === "paid", title: t.quickstart.simulate, body: sampleInvoice ? formatInvoiceStatus(sampleInvoice.status, language) : "simulate-payment" },
+                  { done: webhooks.length > 0, title: t.quickstart.webhook, body: webhooks[0]?.url ?? "https://..." },
                   { done: Boolean(liveKey), title: "Live", body: liveKey?.prefix ?? "rqst_live_..." },
                 ].map((step) => (
                   <div key={step.title} className="portal-quickstart__step">
-                    <span className={`dev-api-badge dev-api-badge--${step.done ? "done" : "post"}`}>{step.done ? "done" : "next"}</span>
+                    <span className={`dev-api-badge dev-api-badge--${step.done ? "done" : "post"}`}>{step.done ? t.quickstart.done : t.quickstart.next}</span>
                     <h3 style={{ margin: "0.75rem 0 0.35rem", fontSize: "1rem" }}>{step.title}</h3>
                     <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.82rem", overflowWrap: "anywhere" }}>{step.body}</p>
                   </div>
@@ -536,17 +396,17 @@ export function DeveloperPortalPage() {
               </div>
               <div className="dev-card">
                 <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
-                  <h3>Sample invoice simulator</h3>
-                  <p>{language === "ru" ? "Использует секрет rqst_test_, показанный при создании ключа. Секрет не сохраняется сервером в открытом виде." : "Uses the rqst_test_ secret shown when you create a key. The server does not reveal it again."}</p>
+                  <h3>{t.quickstart.simulatorTitle}</h3>
+                  <p>{t.quickstart.simulatorDesc}</p>
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
                   <button className="dev-btn dev-btn--primary" disabled={sampleBusy || !sampleSecret} onClick={() => void handleCreateSampleInvoice()}>
-                    {language === "ru" ? "Создать test invoice" : "Create test invoice"}
+                    {t.quickstart.createInvoice}
                   </button>
                   <button className="dev-btn dev-btn--secondary" disabled={sampleBusy || !sampleInvoice || sampleInvoice.status === "paid"} onClick={() => void handleSimulatePayment()}>
-                    {language === "ru" ? "Симулировать оплату" : "Simulate payment"}
+                    {t.quickstart.simulatePayment}
                   </button>
-                  {sampleInvoice ? <a className="dev-btn dev-btn--secondary" href={buildCheckoutUrl(sampleInvoice.public_id)} target="_blank" rel="noreferrer">{language === "ru" ? "Открыть checkout" : "Open checkout"}</a> : null}
+                  {sampleInvoice ? <a className="dev-btn dev-btn--secondary" href={buildCheckoutUrl(sampleInvoice.public_id)} target="_blank" rel="noreferrer">{t.quickstart.openCheckout}</a> : null}
                 </div>
                 {sampleInvoice ? (
                   <div className="dev-resource-card" style={{ marginTop: "1rem" }}>
@@ -605,7 +465,7 @@ export function DeveloperPortalPage() {
                 <div className="dev-code-box">
                   <div className="dev-code-box__header">
                     <div className="dev-code-box__tabs">
-                      <span className={`dev-code-box__tab ${apiView === "params" ? "is-active" : ""}`} onClick={() => setApiView("params")}>Request (cURL)</span>
+                      <span className={`dev-code-box__tab ${apiView === "params" ? "is-active" : ""}`} onClick={() => setApiView("params")}>{t.api.requestCurl}</span>
                       <span className={`dev-code-box__tab ${apiView === "response" ? "is-active" : ""}`} onClick={() => setApiView("response")}>{t.api.response}</span>
                     </div>
                     <button className="dev-code-box__copy" onClick={() => handleCopy(apiView === "params" ? curlExample : JSON.stringify(currentEp.response, null, 2), "code")}>
@@ -619,8 +479,8 @@ export function DeveloperPortalPage() {
               </div>
               <div className="dev-card">
                 <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
-                  <h3>API Error Guide</h3>
-                  <p>Concrete fixes for common response statuses.</p>
+                  <h3>{t.api.errorsTitle}</h3>
+                  <p>{t.api.errorsSubtitle}</p>
                 </div>
                 <div className="dev-resource-list">
                   {commonErrors.map(item => (
@@ -643,9 +503,9 @@ export function DeveloperPortalPage() {
 
               {!token ? (
                 <div className="dev-portal__locked-state">
-                  <h3>Sign in required</h3>
-                  <p>Authentication is required to manage API keys.</p>
-                  <Link to="/auth" className="dev-btn dev-btn--primary">Sign In</Link>
+                  <h3>{t.common.signInRequired}</h3>
+                  <p>{t.common.signInRequiredBody}</p>
+                  <Link to="/auth" className="dev-btn dev-btn--primary">{t.common.signIn}</Link>
                 </div>
               ) : (
                 <div className="dev-card">
@@ -731,7 +591,7 @@ export function DeveloperPortalPage() {
                         ))}
                     </div>
                     <div className="dev-input-group">
-                      <label>{language === "ru" ? "Название" : "Label"}</label>
+                      <label>{t.common.label}</label>
                       <input className="dev-input" value={hookForm.label} onChange={e => setHookForm({...hookForm, label: e.target.value})} placeholder="Production Hook" required />
                     </div>
                     <div className="dev-input-group">
@@ -749,7 +609,7 @@ export function DeveloperPortalPage() {
                         <div className="dev-resource-card__info">
                           <div className="dev-resource-card__title">{hook.label}</div>
                           <code style={{ opacity: 0.6, fontSize: "0.85rem" }}>{hook.url}</code>
-                          <div style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.25rem" }}>Environment: {hook.environment}</div>
+                          <div style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.25rem" }}>{t.common.environment}: {hook.environment}</div>
                         </div>
                         <button className="dev-btn dev-btn--danger" onClick={() => handleDeleteWebhook(hook.id)}>{t.common.delete}</button>
                       </div>
@@ -768,24 +628,24 @@ export function DeveloperPortalPage() {
               </div>
               <div className="dev-card">
                 <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
-                  <h3>Delivery Logs</h3>
-                  <p>Recent webhook attempts, statuses, and errors.</p>
+                  <h3>{t.common.deliveriesTitle}</h3>
+                  <p>{t.common.deliveriesSubtitle}</p>
                 </div>
                 <div className="dev-resource-list">
                   {deliveries.length === 0 ? (
-                    <div style={{ color: "var(--muted)", padding: "1rem" }}>No deliveries yet.</div>
+                    <div style={{ color: "var(--muted)", padding: "1rem" }}>{t.common.noDeliveries}</div>
                   ) : deliveries.map(delivery => (
                     <div key={delivery.id} className="dev-resource-card delivery-row">
                       <div className="dev-resource-card__info">
                         <div className="dev-resource-card__title">{delivery.event_type}</div>
                         <div className="dev-resource-card__meta">
-                          {delivery.status} • {delivery.attempts}/{delivery.max_attempts} attempts • {delivery.last_http_status ?? "no status"}
+                          {delivery.status} • {delivery.attempts}/{delivery.max_attempts} {t.common.attempts} • {delivery.last_http_status ?? t.common.noStatus}
                         </div>
                         {delivery.last_error ? <code style={{ color: "var(--danger)", fontSize: "0.78rem" }}>{delivery.last_error}</code> : null}
                       </div>
                       <span className={`dev-api-badge dev-api-badge--${delivery.status === "delivered" ? "done" : "post"}`}>{delivery.status}</span>
                       <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void handleResendDelivery(delivery.id)}>
-                        {language === "ru" ? "Повторить" : "Resend"}
+                        {t.common.resend}
                       </button>
                     </div>
                   ))}
@@ -803,12 +663,12 @@ export function DeveloperPortalPage() {
                 <div className="dev-form">
                   <h3>{t.billing.upgrade}</h3>
                   <div className="dev-input-group">
-                    <label>Plan</label>
-                    <CustomSelect value={billingPlan} options={PLAN_OPTIONS.map(o => ({...o}))} ariaLabel="Plan" onChange={v => setBillingPlan(v)} />
+                    <label>{t.common.plan}</label>
+                    <CustomSelect value={billingPlan} options={PLAN_OPTIONS.map(o => ({...o}))} ariaLabel={t.common.plan} onChange={v => setBillingPlan(v)} />
                   </div>
                   <div className="dev-input-group">
-                    <label>Network</label>
-                    <CustomSelect value={billingNetwork} options={NETWORK_OPTIONS} ariaLabel="Network" onChange={v => setBillingNetwork(v as any)} />
+                    <label>{t.common.network}</label>
+                    <CustomSelect value={billingNetwork} options={NETWORK_OPTIONS} ariaLabel={t.common.network} onChange={v => setBillingNetwork(v as any)} />
                   </div>
                   <button className="dev-btn dev-btn--primary" onClick={handleUpgrade}>{t.billing.upgrade}</button>
                 </div>
@@ -816,13 +676,13 @@ export function DeveloperPortalPage() {
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", borderLeft: "1px solid var(--line)", paddingLeft: "2rem", gap: "1.5rem" }}>
                   {checkoutUrl ? (
                     <div className="dev-form">
-                      <div className="alert alert--success">Checkout Link Generated!</div>
+                      <div className="alert alert--success">{t.common.checkoutGenerated}</div>
                       <code className="dev-input" style={{ fontSize: "0.8rem" }}>{checkoutUrl}</code>
                       <div style={{ display: "flex", gap: "1rem" }}>
                         <button className="dev-btn dev-btn--secondary" onClick={() => handleCopy(checkoutUrl, "billing")}>
                           {copiedId === "billing" ? t.common.copied : t.common.copy}
                         </button>
-                        <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary">Pay Now</a>
+                        <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary">{t.common.payNow}</a>
                       </div>
                     </div>
                   ) : (

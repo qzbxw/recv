@@ -26,6 +26,7 @@ import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routi
 import { formatInvoiceStatus, getInvoiceStatusMeta, formatNetworkLabel } from "../lib/status";
 import type { APIKey, Invoice, MeResponse, Network, Wallet, WebhookEndpoint, Plan, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
+import { SELLER_CONSOLE_COPY as COPY } from "../i18n";
 
 const BOT_URL = "https://t.me/reqstxyz_bot";
 
@@ -51,243 +52,6 @@ type SessionState = {
 };
 
 type PanelKey = "overview" | "wallets" | "invoices" | "create" | "developer" | "billing" | "settings" | "team";
-
-const COPY = {
-  ru: {
-    nav: {
-      overview: "Дашборд",
-      wallets: "Реквизиты",
-      invoices: "Транзакции",
-      create: "Принять платёж",
-      developer: "Разработчикам",
-      team: "Команда",
-      billing: "Тарифы",
-      settings: "Настройки",
-      logout: "Выйти",
-    },
-    promo: {
-      title: "Разблокируйте Reqst Developer",
-      subtitle: "Получите доступ к API, вебхукам и расширенным лимитам для вашего бизнеса.",
-      action: "Перейти на Developer",
-    },
-    overview: {
-      welcome: "Добро пожаловать,",
-      subtitle: "Ваш центр управления платежами и интеграциями.",
-      stats: {
-        account: "Аккаунт",
-        plan: "Тариф",
-        networks: "Сети",
-        invoices: "Инвойсы",
-      },
-      activity: "Последняя активность",
-      noActivity: "У вас пока нет транзакций.",
-      setupTitle: "Быстрый старт",
-      setupWallet: "Добавьте кошелек для выплат, чтобы начать принимать платежи.",
-      setupWalletAction: "Добавить кошелек",
-    },
-    wallets: {
-      title: "Реквизиты для выплат",
-      subtitle: "Добавьте по одному адресу для каждой поддерживаемой сети. Средства клиентов будут поступать напрямую на эти адреса.",
-      add: "Добавить кошелек",
-      network: "Сеть",
-      address: "Адрес кошелька",
-      placeholder: "Введите адрес...",
-      empty: "У вас пока не добавлено ни одного кошелька.",
-    },
-    invoices: {
-      title: "История транзакций",
-      subtitle: "Список всех созданных инвойсов и их текущие статусы в блокчейне.",
-      empty: "Инвойсы не найдены.",
-      id: "ID",
-      amount: "Сумма",
-      status: "Статус",
-      date: "Дата",
-      actions: "Действия",
-      copyLink: "Копировать ссылку",
-      view: "Открыть",
-      confirm: "Подтвердить",
-      cancel: "Отменить",
-    },
-    create: {
-      title: "Создать инвойс",
-      subtitle: "Сгенерируйте ссылку для быстрой оплаты услуги или товара.",
-      service: "Название услуги",
-      amount: "Сумма (USD)",
-      lifetime: "Срок действия (мин)",
-      network: "Сеть оплаты",
-      generate: "Создать ссылку на оплату",
-      success: "Инвойс успешно создан!",
-    },
-    developer: {
-      title: "Инструменты разработчика",
-      subtitle: "API ключи и вебхуки для автоматизации вашего бизнеса.",
-      keysTitle: "API Ключи",
-      keysSubtitle: "Используйте эти ключи для аутентификации запросов к нашему API.",
-      addKey: "Создать ключ",
-      keyLabel: "Название ключа",
-      hooksTitle: "Вебхуки",
-      hooksSubtitle: "Мы будем отправлять POST-уведомления на ваш URL при изменении статуса инвойсов.",
-      addHook: "Добавить эндпоинт",
-      hookUrl: "URL эндпоинта",
-      hookSecret: "Секрет подписи",
-      warning: "Секретный ключ отображается только один раз!",
-      locked: "API и вебхуки доступны на тарифе Developer и выше.",
-    },
-    team: {
-      title: "Команда",
-      subtitle: "Управление доступом к вашему воркспейсу.",
-      empty: "В вашей команде пока только вы.",
-      add: "Пригласить участника",
-      role: "Роль",
-      name: "Имя",
-    },
-    billing: {
-      title: "Тарифные планы",
-      subtitle: "Выберите план, который лучше всего подходит для вашего объема операций.",
-      current: "Ваш текущий план",
-      upgrade: "Обновить план",
-      trial: "Пробный период",
-      remaining: "осталось",
-      active: "Активен",
-    },
-    settings: {
-      title: "Настройки профиля",
-      subtitle: "Управление контактными данными и параметрами аккаунта.",
-      email: "Контактный Email",
-      save: "Сохранить изменения",
-      language: "Язык интерфейса",
-      session: "Сессия",
-      logoutHint: "Завершить текущую сессию на этом устройстве.",
-    },
-    common: {
-      copy: "Копировать",
-      copied: "Скопировано",
-      delete: "Удалить",
-      loading: "Загрузка...",
-      error: "Ошибка",
-      cancel: "Отмена",
-      testMode: "Тестовый режим",
-      liveMode: "Рабочий режим",
-    }
-  },
-  en: {
-    nav: {
-      overview: "Dashboard",
-      wallets: "Payouts",
-      invoices: "Transactions",
-      create: "Accept Payment",
-      developer: "Developers",
-      team: "Team",
-      billing: "Billing",
-      settings: "Settings",
-      logout: "Logout",
-    },
-    promo: {
-      title: "Unlock Reqst Developer",
-      subtitle: "Get API access, webhooks, and higher limits for your business.",
-      action: "Upgrade to Developer",
-    },
-    overview: {
-      welcome: "Welcome back,",
-      subtitle: "Your command center for payments and integrations.",
-      stats: {
-        account: "Account",
-        plan: "Plan",
-        networks: "Networks",
-        invoices: "Invoices",
-      },
-      activity: "Recent Activity",
-      noActivity: "No transactions yet.",
-      setupTitle: "Quick Setup",
-      setupWallet: "Add a payout address to start accepting payments.",
-      setupWalletAction: "Add Wallet",
-    },
-    wallets: {
-      title: "Payout Addresses",
-      subtitle: "Add one destination address for each supported network. Customer funds go directly to these addresses.",
-      add: "Add Wallet",
-      network: "Network",
-      address: "Wallet Address",
-      placeholder: "Enter address...",
-      empty: "No payout addresses added yet.",
-    },
-    invoices: {
-      title: "Transaction History",
-      subtitle: "A complete list of your invoices and their real-time blockchain status.",
-      empty: "No invoices found.",
-      id: "ID",
-      amount: "Amount",
-      status: "Status",
-      date: "Date",
-      actions: "Actions",
-      copyLink: "Copy Link",
-      view: "View",
-      confirm: "Confirm",
-      cancel: "Cancel",
-    },
-    create: {
-      title: "Create Invoice",
-      subtitle: "Generate a payment link for your product or service.",
-      service: "Service Name",
-      amount: "Amount (USD)",
-      lifetime: "Lifetime (min)",
-      network: "Payment Network",
-      generate: "Generate Payment Link",
-      success: "Invoice created successfully!",
-    },
-    developer: {
-      title: "Developer Tools",
-      subtitle: "API Keys and Webhooks to automate your business workflow.",
-      keysTitle: "API Keys",
-      keysSubtitle: "Use these keys to authenticate your requests to our API.",
-      addKey: "Create Key",
-      keyLabel: "Key Label",
-      hooksTitle: "Webhooks",
-      hooksSubtitle: "We'll send POST notifications to your URL when invoice status changes.",
-      addHook: "Add Endpoint",
-      hookUrl: "Endpoint URL",
-      hookSecret: "Signing Secret",
-      warning: "The secret key is shown only once!",
-      locked: "API and Webhooks are available on Developer plan and higher.",
-    },
-    team: {
-      title: "Team Management",
-      subtitle: "Manage access to your workspace.",
-      empty: "You are the only member of this workspace.",
-      add: "Invite Member",
-      role: "Role",
-      name: "Name",
-    },
-    billing: {
-      title: "Subscription Plans",
-      subtitle: "Choose a plan that fits your business scale.",
-      current: "Your current plan",
-      upgrade: "Upgrade Plan",
-      trial: "Trial Period",
-      remaining: "remaining",
-      active: "Active",
-    },
-    settings: {
-      title: "Profile Settings",
-      subtitle: "Manage your contact information and account parameters.",
-      email: "Contact Email",
-      save: "Save Changes",
-      language: "Interface Language",
-      session: "Session",
-      logoutHint: "End your current session on this device.",
-    },
-    common: {
-      copy: "Copy",
-      copied: "Copied",
-      delete: "Delete",
-      loading: "Loading...",
-      error: "Error",
-      cancel: "Cancel",
-      testMode: "Test Mode",
-      liveMode: "Live Mode",
-    }
-  },
-} as const;
 
 const WALLET_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
   { value: "TON", label: "TON" },
@@ -550,7 +314,7 @@ export function SellerConsolePage() {
   const payableNetworkOptions = PAYABLE_NETWORK_OPTIONS.map(option => ({
     ...option,
     disabled: !walletNetworks.has(walletBucket(option.value)),
-    hint: walletNetworks.has(walletBucket(option.value)) ? (language === "ru" ? "Кошелек добавлен" : "Wallet ready") : (language === "ru" ? "Сначала добавьте кошелек" : "Add wallet first"),
+    hint: walletNetworks.has(walletBucket(option.value)) ? t.common.walletReady : t.common.addWalletFirst,
   }));
 
   const handleNavClick = (key: PanelKey) => {
@@ -584,7 +348,7 @@ export function SellerConsolePage() {
             <button 
               className="dev-portal__menu-trigger" 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label={t.common.toggleMenu}
             >
               <div className="dev-portal__menu-icon">
                 <span />
@@ -598,7 +362,7 @@ export function SellerConsolePage() {
         <div className="dev-portal__main">
           <nav className={`dev-portal__nav portal-animate-in ${isMobileMenuOpen ? "is-open" : ""}`} style={{ animationDelay: "0.1s" }}>
             <div className="dev-portal__nav-group">
-              <span className="dev-portal__nav-label">Management</span>
+              <span className="dev-portal__nav-label">{t.common.management}</span>
               {navItems.slice(0, 4).map(item => (
                 <button key={item.key} className={`dev-portal__nav-link ${activePanel === item.key ? "is-active" : ""}`} onClick={() => handleNavClick(item.key)}>
                   {item.label}
@@ -606,7 +370,7 @@ export function SellerConsolePage() {
               ))}
             </div>
             <div className="dev-portal__nav-group">
-              <span className="dev-portal__nav-label">Advanced</span>
+              <span className="dev-portal__nav-label">{t.common.advanced}</span>
               {navItems.slice(4).map(item => (
                 <button key={item.key} className={`dev-portal__nav-link ${activePanel === item.key ? "is-active" : ""}`} onClick={() => handleNavClick(item.key)}>
                   {item.label}
@@ -624,9 +388,9 @@ export function SellerConsolePage() {
             {activePanel === "overview" && (
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__hero" style={{ padding: "1rem 0 2rem" }}>
-                  <span className="dev-api-badge dev-api-badge--post" style={{ width: "fit-content" }}>Dashboard</span>
+                  <span className="dev-api-badge dev-api-badge--post" style={{ width: "fit-content" }}>{t.overview.badge}</span>
                   <h1>{t.overview.welcome} {session.me.user.username || 'User'}</h1>
-                  <p>{t.overview.subtitle} Current workspace: <strong>{workspaceName}</strong></p>
+                  <p>{t.overview.subtitle} {t.overview.currentWorkspace}: <strong>{workspaceName}</strong></p>
                 </div>
 
                 <div className="dev-widget-grid">
@@ -640,12 +404,12 @@ export function SellerConsolePage() {
                   <div className="dev-card dev-widget">
                     <span className="dev-widget__label">{t.overview.stats.networks}</span>
                     <div className="dev-widget__value"><LiveValue value={activeWalletsCount} /></div>
-                    <div className="dev-widget__meta">/{WALLET_NETWORK_OPTIONS.length} active ({environment})</div>
+                    <div className="dev-widget__meta">/{WALLET_NETWORK_OPTIONS.length} {t.overview.active} ({environment})</div>
                   </div>
                   <div className="dev-card dev-widget">
                     <span className="dev-widget__label">{t.overview.stats.invoices}</span>
                     <div className="dev-widget__value"><LiveValue value={filteredInvoices.length} /></div>
-                    <div className="dev-widget__meta">Total in {environment}</div>
+                    <div className="dev-widget__meta">{t.overview.totalIn} {environment}</div>
                   </div>
                 </div>
 
@@ -682,10 +446,10 @@ export function SellerConsolePage() {
                           </div>
                           <div className="dev-resource-card__actions" onClick={e => e.stopPropagation()}>
                             <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `quick-${inv.id}`)}>
-                               {copiedId === `quick-${inv.id}` ? t.common.copied : 'URL'}
+                               {copiedId === `quick-${inv.id}` ? t.common.copied : t.common.url}
                             </button>
                             <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--compact">
-                               {language === 'ru' ? 'Счёт' : 'View'}
+                               {t.common.viewInvoice}
                             </a>
                             <div className="dev-resource-card__date">
                               {new Date(inv.created_at).toLocaleDateString()}
@@ -821,7 +585,7 @@ export function SellerConsolePage() {
                       />
                     </div>
                     <button type="submit" className="dev-btn dev-btn--primary" style={{ padding: "1.25rem", fontSize: "1rem" }} disabled={isCreatingInvoice || activeWalletsCount === 0}>
-                      {isCreatingInvoice ? (language === "ru" ? "Создаем..." : "Creating...") : t.create.generate}
+                      {isCreatingInvoice ? t.common.creating : t.create.generate}
                     </button>
                   </form>
                   {createdInvoice ? (
@@ -901,7 +665,7 @@ export function SellerConsolePage() {
                       <form onSubmit={onCreateHook} className="dev-form">
                         <div className="dev-webhook-form-grid">
                           <div className="dev-input-group">
-                            <label>Label</label>
+                            <label>{t.common.label}</label>
                             <input className="dev-input" value={hookForm.label} onChange={e => setHookForm({ ...hookForm, label: e.target.value })} placeholder="Main Server" required />
                           </div>
                           <div className="dev-input-group">
@@ -950,14 +714,14 @@ export function SellerConsolePage() {
                   <div className="dev-resource-list">
                     <div className="dev-resource-card">
                       <div className="dev-resource-card__info">
-                         <div className="dev-resource-card__title">{session.me.user.username || `@${session.me.user.telegram_id}`} (You)</div>
-                         <div className="dev-resource-card__meta">Owner</div>
+                         <div className="dev-resource-card__title">{session.me.user.username || `@${session.me.user.telegram_id}`} ({t.team.you})</div>
+                         <div className="dev-resource-card__meta">{t.team.owner}</div>
                       </div>
                     </div>
                   </div>
                   <div style={{ marginTop: "2rem", padding: "1.5rem", border: "1px dashed var(--line)", borderRadius: "20px", textAlign: "center" }}>
-                    <p style={{ color: "var(--muted)", marginBottom: "1rem" }}>Invite your colleagues to collaborate.</p>
-                    <button className="dev-btn dev-btn--secondary" disabled>{t.team.add} (Coming Soon)</button>
+                    <p style={{ color: "var(--muted)", marginBottom: "1rem" }}>{t.team.inviteBody}</p>
+                    <button className="dev-btn dev-btn--secondary" disabled>{t.team.add} ({t.team.comingSoon})</button>
                   </div>
                 </div>
               </div>
@@ -973,20 +737,20 @@ export function SellerConsolePage() {
                   <div className="dev-form">
                     <h3>{t.billing.upgrade}</h3>
                     <div className="dev-input-group">
-                      <label>Plan</label>
+                      <label>{t.common.plan}</label>
                       <CustomSelect
                         value={billingForm.plan}
                         options={session.me.plans.filter(p => p.code !== 'enterprise' && p.code !== 'trial').map(p => ({ value: p.code, label: p.name }))}
-                        ariaLabel="Plan"
+                        ariaLabel={t.common.plan}
                         onChange={v => setBillingForm(c => ({ ...c, plan: v }))}
                       />
                     </div>
                     <div className="dev-input-group">
-                      <label>Network</label>
+                      <label>{t.common.network}</label>
                       <CustomSelect
                         value={billingForm.network}
                         options={NETWORK_OPTIONS}
-                        ariaLabel="Network"
+                        ariaLabel={t.common.network}
                         onChange={v => setBillingForm(c => ({ ...c, network: v as Network }))}
                       />
                     </div>
@@ -995,13 +759,13 @@ export function SellerConsolePage() {
                   <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", borderLeft: "1px solid var(--line)", paddingLeft: "2rem", gap: "1.5rem" }}>
                     {checkoutUrl ? (
                       <div className="dev-form">
-                        <div className="alert alert--success" style={{ marginBottom: 0 }}>Checkout Link Generated!</div>
+                        <div className="alert alert--success" style={{ marginBottom: 0 }}>{t.common.checkoutGenerated}</div>
                         <code className="dev-input" style={{ fontSize: "0.85rem", background: "rgba(0,0,0,0.2)" }}>{checkoutUrl}</code>
                         <div style={{ display: "flex", gap: "1rem" }}>
                           <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1 }} onClick={() => handleCopy(checkoutUrl, "billing-url")}>
                             {copiedId === "billing-url" ? t.common.copied : t.common.copy}
                           </button>
-                          <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary" style={{ flexGrow: 1, textAlign: "center" }}>Pay Now</a>
+                          <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary" style={{ flexGrow: 1, textAlign: "center" }}>{t.common.payNow}</a>
                         </div>
                       </div>
                     ) : (

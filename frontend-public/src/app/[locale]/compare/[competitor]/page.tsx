@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import Link from "next/link";
+import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 const COMPARISONS = {
   "reqst-vs-manual": {
@@ -51,6 +52,13 @@ const COMPARISONS = {
   }
 };
 
+type ComparisonPoint = {
+  title: string;
+  reqst: string;
+  manual?: string;
+  custodial?: string;
+};
+
 type Props = {
   params: Promise<{ competitor: string; locale: string }>;
 };
@@ -80,9 +88,10 @@ export default async function ComparePage(props: Props) {
 
   if (!data) notFound();
 
+  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
   const breadcrumbs = [
-    { label: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },
-    { label: locale === "ru" ? "Сравнение" : "Compare", href: `/${locale}/compare` },
+    { label: copy.breadcrumbs.home, href: `/${locale}` },
+    { label: copy.breadcrumbs.compare, href: `/${locale}/compare` },
     { label: `vs ${data.name}`, href: `/${locale}/compare/${competitor}` },
   ];
 
@@ -109,7 +118,7 @@ export default async function ComparePage(props: Props) {
                 </div>
                 <div style={{ padding: "1.5rem", background: "rgba(255,255,255,0.02)", borderRadius: "12px" }}>
                   <span style={{ color: "var(--muted)", fontSize: "0.8rem", textTransform: "uppercase", display: "block", marginBottom: "0.5rem" }}>{data.name}</span>
-                  <p style={{ color: "var(--muted)" }}>{(point as any).manual || (point as any).custodial}</p>
+                  <p style={{ color: "var(--muted)" }}>{(point as ComparisonPoint).manual || (point as ComparisonPoint).custodial}</p>
                 </div>
                 <div style={{ padding: "1.5rem", background: "rgba(0, 102, 255, 0.05)", borderRadius: "12px", border: "1px solid rgba(0, 102, 255, 0.2)" }}>
                   <span style={{ color: "var(--accent)", fontSize: "0.8rem", textTransform: "uppercase", display: "block", marginBottom: "0.5rem" }}>Reqst</span>

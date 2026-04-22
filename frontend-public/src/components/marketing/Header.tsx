@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { COPY } from "@/lib/copy";
 
 export function Header({ language }: { language: "ru" | "en" }) {
   return (

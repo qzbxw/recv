@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Test
+        run: go test ./...
+      - name: Coverage
+        run: |
+          go test ./... -coverpkg=./internal/... -coverprofile=coverage.out
+          COVERAGE_MIN=45 sh scripts/check-coverage.sh coverage.out
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  frontend-public:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend-public/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare production env
+        run: |
+          cat > .env <<'EOF'
+          APP_ENV=production
+          POSTGRES_DB=reqst
+          POSTGRES_USER=reqst
+          POSTGRES_PASSWORD=reqst
+          JWT_SECRET=ci-jwt-secret
+          INTERNAL_TOKEN=ci-internal-token
+          TELEGRAM_BOT_TOKEN=
+          ADMIN_USERNAME=admin
+          ADMIN_PASSWORD=admin
+          ADMIN_JWT_SECRET=ci-admin-secret
+          PUBLIC_APP_URL=http://localhost:3000
+          NEXT_PUBLIC_SITE_URL=http://localhost:3000
+          NEXT_PUBLIC_API_URL=http://api:8080
+          VITE_API_BASE_URL=http://localhost:3000
+          TON_USD_RATE=2.50
+          EOF
+      - name: Build production containers
+        run: docker compose build
+      - name: Build development containers
+        run: docker compose -f docker-compose.dev.yml build
+      - name: Start production smoke stack
+        run: docker compose up -d postgres api frontend_public frontend
+      - name: Smoke routes
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/en >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsSI http://localhost:3000/ | grep -E "30[78]"
+          curl -fsS http://localhost:3000/en >/dev/null
+          curl -fsS http://localhost:3000/app/ >/dev/null
+          curl -fsS http://localhost:3000/docs/index.html >/dev/null
+      - name: Dump docker logs
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v

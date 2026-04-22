@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 export const runtime = "edge";
 
@@ -12,6 +13,7 @@ export const contentType = "image/png";
 
 export default async function Image({ params }: { params: { locale: string } }) {
   const { locale } = params;
+  const copy = PUBLIC_MARKETING_COPY[locale === "ru" ? "ru" : "en"];
 
   return new ImageResponse(
     (
@@ -70,9 +72,7 @@ export default async function Image({ params }: { params: { locale: string } }) 
             maxWidth: "800px",
           }}
         >
-          {locale === "ru" 
-            ? "Инфраструктура криптоплатежей нового поколения" 
-            : "Next-generation crypto payments infrastructure"}
+          {copy.ogSubtitle}
         </div>
       </div>
     ),

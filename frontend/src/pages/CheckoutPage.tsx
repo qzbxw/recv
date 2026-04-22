@@ -5,108 +5,10 @@ import { fetchPublicInvoice } from "../lib/api";
 import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel } from "../lib/status";
 import type { Invoice } from "../lib/types";
 import { useUI } from "../lib/ui";
+import { CHECKOUT_COPY as COPY } from "../i18n";
 
 const BOT_URL = "https://t.me/reqstxyz_bot";
 const DEMO_PUBLIC_ID = "demo";
-
-const COPY = {
-  ru: {
-    loading: "Загрузка...",
-    waitingPayment: "Ожидаем транзакцию",
-    expiresSoon: "Время почти вышло",
-    expired: "Срок истек",
-    wallet: "Адрес",
-    amount: "Сумма",
-    network: "Сеть",
-    comment: "Комментарий",
-    expires: "Осталось",
-    invoiceId: "Инвойс",
-    expiresAt: "До",
-    copyAddress: "Копировать",
-    copyComment: "Копировать",
-    copyAmount: "Копировать",
-    copied: "Скопировано",
-    warning: "Отправьте точную сумму в выбранной сети. Платёж зачислится автоматически.",
-    payloadTitle: "Важное примечание",
-    payloadHint: "Без этого комментария мы не сможем распознать ваш перевод.",
-    qrLoading: "QR-код...",
-    paymentRequest: "Оплата",
-    ru: "РУ",
-    en: "EN",
-    receiptLabel: "Reqst",
-    service: "Услуга",
-    status: "Статус",
-    receiptOutroPaid: "Платёж успешно зачислен.",
-    receiptOutroExpired: "Срок оплаты данного счета истек.",
-    footerLink: "Reqst",
-    networkOnly: "Только эта сеть",
-    paidTitle: "Оплачено",
-    paidBody: "Ваш платеж успешно подтвержден.",
-    underpaidBody: "Получена меньшая сумма. Доплатите остаток до истечения времени или дождитесь проверки продавца.",
-    underpaidReceived: "Получено",
-    underpaidRemaining: "Осталось доплатить",
-    manualReviewBody: "Платеж пришел поздно или не совпал автоматически. Продавец проверит его вручную.",
-    overpaidBody: "Получена сумма больше ожидаемой. Продавец проверит платеж перед финальным решением.",
-    expiredTitle: "Срок оплаты истек",
-    expiredBody: "Время на оплату вышло. Не отправляйте средства по этим реквизитам. Если перевод уже сделан, продавец сможет проверить его вручную.",
-    paymentDetails: "Реквизиты",
-    scanHint: "Отсканируйте QR-код для быстрой оплаты или скопируйте реквизиты.",
-    receiptNo: "Квитанция",
-    finalState: "Статус",
-    docHintPaid: "Транзакция успешно завершена.",
-    docHintExpired: "Пожалуйста, запросите новую ссылку для оплаты у продавца.",
-    footerPoweredBy: "Работает на",
-    footerCTA: "Принимайте платежи так же с Reqst",
-  },
-  en: {
-    loading: "Loading...",
-    waitingPayment: "Listening for transaction...",
-    expiresSoon: "Time is running out",
-    expired: "Expired",
-    wallet: "Address",
-    amount: "Amount",
-    network: "Network",
-    comment: "Comment",
-    expires: "Time left",
-    invoiceId: "Invoice",
-    expiresAt: "Until",
-    copyAddress: "Copy",
-    copyComment: "Copy",
-    copyAmount: "Copy",
-    copied: "Copied",
-    warning: "Send the exact amount in the specified network for instant confirmation.",
-    payloadTitle: "Required Comment",
-    payloadHint: "Don't forget this comment, otherwise we won't be able to match your payment.",
-    qrLoading: "QR...",
-    paymentRequest: "Payment",
-    ru: "RU",
-    en: "EN",
-    receiptLabel: "Reqst",
-    service: "Service",
-    status: "Status",
-    receiptOutroPaid: "Payment received successfully.",
-    receiptOutroExpired: "This checkout session has expired.",
-    footerLink: "Reqst",
-    networkOnly: "Network only",
-    paidTitle: "Paid",
-    paidBody: "Your payment has been successfully confirmed.",
-    underpaidBody: "A smaller amount was received. Top up the remaining amount before expiry or wait for merchant review.",
-    underpaidReceived: "Received",
-    underpaidRemaining: "Remaining",
-    manualReviewBody: "The payment arrived late or could not be matched automatically. The merchant will review it manually.",
-    overpaidBody: "More than the expected amount was received. The merchant will review the payment before final handling.",
-    expiredTitle: "Session Expired",
-    expiredBody: "The payment window has closed. Do not send funds to these details. If you already paid, the merchant may review it manually.",
-    paymentDetails: "Details",
-    scanHint: "Scan the QR code or copy the details below.",
-    receiptNo: "Invoice",
-    finalState: "Status",
-    docHintPaid: "The transaction was completed successfully.",
-    docHintExpired: "Please request a new payment link from the seller if needed.",
-    footerPoweredBy: "Powered by",
-    footerCTA: "Accept crypto payments like this with Reqst",
-  },
-} as const;
 
 function fallbackPaymentURI(invoice: Invoice) {
   if (invoice.payable_network === "TON") {
@@ -291,10 +193,8 @@ export function CheckoutPage() {
   useEffect(() => {
     document.title = invoice?.title?.trim()
       ? `Reqst | ${invoice.title.trim()}`
-      : language === "ru"
-        ? "Reqst | Оплата"
-        : "Reqst | Checkout";
-  }, [invoice?.title, language]);
+      : text.pageTitle;
+  }, [invoice?.title, text.pageTitle]);
 
   const title = invoice?.title?.trim() || text.paymentRequest;
   const checkoutBadge = invoice?.checkout_badge || (invoice?.kind === "subscription" ? "Reqst Billing" : text.paymentRequest);

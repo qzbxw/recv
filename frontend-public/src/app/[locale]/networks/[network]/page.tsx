@@ -4,6 +4,7 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import Link from "next/link";
+import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 const NETWORKS = {
   ton: {
@@ -109,9 +110,10 @@ export default async function NetworkPage(props: Props) {
 
   if (!data) notFound();
 
+  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
   const breadcrumbs = [
-    { label: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },
-    { label: locale === "ru" ? "Сети" : "Networks", href: `/${locale}/networks` },
+    { label: copy.breadcrumbs.home, href: `/${locale}` },
+    { label: copy.breadcrumbs.networks, href: `/${locale}/networks` },
     { label: data.name, href: `/${locale}/networks/${network}` },
   ];
 

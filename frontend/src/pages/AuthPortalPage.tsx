@@ -9,6 +9,7 @@ import {
 } from "../lib/api";
 import { sanitizeNextPath } from "../lib/routing";
 import { useUI } from "../lib/ui";
+import { AUTH_COPY as COPY } from "../i18n";
 
 const BOT_URL = "https://t.me/reqstxyz_bot";
 const DEV_AUTH_ENABLED = import.meta.env.VITE_ENABLE_DEV_AUTH === "true";
@@ -24,63 +25,6 @@ declare global {
     };
   }
 }
-
-const COPY = {
-  ru: {
-    browserTitle: "Вход по коду",
-    browserBody: "Безопасный вход через Telegram-бота для браузеров и настольных устройств.",
-    username: "Ваш @username",
-    usernamePlaceholder: "@username",
-    code: "Код подтверждения",
-    codePlaceholder: "123456",
-    sendCode: "Получить код",
-    sendingCode: "Отправка...",
-    loginAction: "Войти",
-    signingIn: "Авторизация...",
-    codeSent: "Код успешно отправлен в Telegram.",
-    browserHint: "Пожалуйста, сначала запустите нашего бота, чтобы он мог отправить вам код.",
-    telegramTitle: "Telegram Mini App",
-    telegramBody: "Если вы открыли это окно внутри Telegram, авторизация произойдет автоматически.",
-    openBot: "Открыть бота",
-    continueTelegram: "Продолжить в Telegram",
-    landing: "На главную",
-    devTitle: "Dev-вход без Telegram",
-    devBody: "Локальная авторизация для обычного браузера, чтобы спокойно править интерфейс и сценарии без миниаппа.",
-    devUsername: "Имя пользователя",
-    devUsernamePlaceholder: "designer",
-    devTelegramId: "Telegram ID",
-    devTelegramIdPlaceholder: "10001",
-    devAction: "Войти как dev",
-    devHint: "Работает только когда backend запущен с ALLOW_INSECURE_DEV_AUTH=true.",
-  },
-  en: {
-    browserTitle: "Sign in via code",
-    browserBody: "Secure Telegram-based authentication for browsers and desktop.",
-    username: "Your @username",
-    usernamePlaceholder: "@username",
-    code: "Verification code",
-    codePlaceholder: "123456",
-    sendCode: "Get code",
-    sendingCode: "Sending...",
-    loginAction: "Login",
-    signingIn: "Signing in...",
-    codeSent: "Code has been sent to your Telegram.",
-    browserHint: "Please start our bot first so we can send you the authentication code.",
-    telegramTitle: "Telegram Mini App",
-    telegramBody: "If you are using the Telegram Mini App, you will be signed in automatically.",
-    openBot: "Open Bot",
-    continueTelegram: "Login with Telegram",
-    landing: "Home",
-    devTitle: "Dev sign-in without Telegram",
-    devBody: "Local browser auth for editing the UI and flows without a Telegram Mini App.",
-    devUsername: "Username",
-    devUsernamePlaceholder: "designer",
-    devTelegramId: "Telegram ID",
-    devTelegramIdPlaceholder: "10001",
-    devAction: "Login in dev mode",
-    devHint: "Works only when the backend runs with ALLOW_INSECURE_DEV_AUTH=true.",
-  },
-} as const;
 
 export function AuthPortalPage() {
   const navigate = useNavigate();

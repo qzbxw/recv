@@ -112,7 +112,7 @@ export default function Page(props: { params: Promise<{ locale: string }> }) {
           </div>
 
           <div className="lend-feature-grid lend-feature-grid--expanded lend-reveal--2">
-            {copy.capabilities.items.map((feature, index) => (
+            {copy.capabilities.items.map((feature) => (
               <article key={feature.title} className="lend-card lend-card--feature lend-spotlight-card" onMouseMove={handleMouseMove}>
                 <div className="lend-card-spotlight" />
                 <div className="lend-dogfood-glow" />

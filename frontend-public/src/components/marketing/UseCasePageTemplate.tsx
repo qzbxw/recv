@@ -2,6 +2,7 @@
 
 import { MarketingLayout, useReveal } from "./MarketingLayout";
 import Link from "next/link";
+import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 export type UseCaseInfo = {
   title: string;
@@ -17,6 +18,7 @@ export function UseCasePageTemplate({
   useCase: UseCaseInfo;
 }) {
   const reveal = useReveal();
+  const copy = PUBLIC_MARKETING_COPY[language];
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -31,16 +33,16 @@ export function UseCasePageTemplate({
       <section className="lend-hero lend-hero--centered" ref={reveal}>
         <div className="lend-hero-copy">
           <span className="lend-section-kicker lend-reveal--1">
-            {language === "ru" ? "КЕЙСЫ" : "USE CASES"}
+            {copy.useCases}
           </span>
           <h1 className="lend-reveal--2">{useCase.title}</h1>
           <p className="lend-reveal--3">{useCase.description}</p>
           <div className="lend-cta-row lend-reveal--4">
             <Link className="lend-primary" href="/app/auth">
-              {language === "ru" ? "Начать внедрение" : "Start Integration"}
+              {copy.startIntegration}
             </Link>
             <Link className="lend-secondary" href="/docs">
-              {language === "ru" ? "Документация" : "Documentation"}
+              {copy.docs}
             </Link>
           </div>
         </div>

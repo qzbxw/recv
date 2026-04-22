@@ -7,10 +7,10 @@ ARG PUBLIC_APP_URL=https://reqst.xyz
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 ENV PUBLIC_APP_URL=${PUBLIC_APP_URL}
-COPY package*.json ./
+COPY frontend-public/package*.json ./
 RUN npm ci
 
-COPY . .
+COPY frontend-public ./
 RUN npm run build
 
 FROM node:22-alpine AS runner

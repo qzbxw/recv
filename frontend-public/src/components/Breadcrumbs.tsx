@@ -9,10 +9,10 @@ interface BreadcrumbItem {
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
-  locale: string;
+  locale?: string;
 }
 
-export function Breadcrumbs({ items, locale }: BreadcrumbsProps) {
+export function Breadcrumbs({ items }: BreadcrumbsProps) {
   const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://reqst.xyz").replace(/\/+$/, "");
   
   const breadcrumbListSchema = {

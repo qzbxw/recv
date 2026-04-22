@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { getAllDocSlugs } from "@/lib/docs";
 
 export async function GET() {

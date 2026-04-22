@@ -2,6 +2,7 @@
 
 import { MarketingLayout, useReveal } from "./MarketingLayout";
 import Link from "next/link";
+import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 export type NetworkInfo = {
   name: string;
@@ -18,6 +19,7 @@ export function NetworkPageTemplate({
   network: NetworkInfo;
 }) {
   const reveal = useReveal();
+  const copy = PUBLIC_MARKETING_COPY[language];
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -32,16 +34,16 @@ export function NetworkPageTemplate({
       <section className="lend-hero lend-hero--centered" ref={reveal}>
         <div className="lend-hero-copy">
           <span className="lend-section-kicker lend-reveal--1">
-            {language === "ru" ? "СЕТИ" : "NETWORKS"}
+            {copy.networks}
           </span>
           <h1 className="lend-reveal--2">{network.fullName}</h1>
           <p className="lend-reveal--3">{network.description}</p>
           <div className="lend-cta-row lend-reveal--4">
             <Link className="lend-primary" href="/app/auth">
-              {language === "ru" ? "Запустить прием в " : "Accept "} {network.name}
+              {copy.accept} {network.name}
             </Link>
             <Link className="lend-secondary" href="/docs">
-              {language === "ru" ? "Техническая документация" : "Technical Docs"}
+              {copy.technicalDocs}
             </Link>
           </div>
         </div>
