@@ -373,13 +373,18 @@ func (s *Store) ClaimWebhookDeliveries(ctx context.Context, limit int) ([]Webhoo
 		return nil, err
 	}
 
-	for _, item := range items {
+	if len(items) > 0 {
+		var ids []int64
+		for _, item := range items {
+			ids = append(ids, item.ID)
+		}
+
 		if _, err := tx.Exec(ctx, `
 			UPDATE webhook_deliveries
 			SET status = 'processing',
 			    attempts = attempts + 1
-			WHERE id = $1
-		`, item.ID); err != nil {
+			WHERE id = ANY($1)
+		`, ids); err != nil {
 			return nil, fmt.Errorf("mark webhook delivery processing: %w", err)
 		}
 	}
