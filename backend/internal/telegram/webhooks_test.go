@@ -59,12 +59,12 @@ func TestSendWebhookDelivery(t *testing.T) {
 		httpClient: &http.Client{Timeout: 2 * time.Second},
 	}
 
-	statusCode, err := worker.sendWebhookDelivery(context.Background(), server.URL, "whsec_123", "invoice.paid", payload)
-	if err != nil {
-		t.Fatalf("sendWebhookDelivery returned error: %v", err)
+	result := worker.sendWebhookDelivery(context.Background(), server.URL, "whsec_123", "invoice.paid", payload)
+	if result.Error != "" {
+		t.Fatalf("sendWebhookDelivery returned error: %v", result.Error)
 	}
-	if statusCode != http.StatusNoContent {
-		t.Fatalf("expected 204, got %d", statusCode)
+	if result.StatusCode != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", result.StatusCode)
 	}
 }
 
@@ -78,11 +78,14 @@ func TestSendWebhookDeliveryReturnsHTTPFailureStatus(t *testing.T) {
 		httpClient: &http.Client{Timeout: 2 * time.Second},
 	}
 
-	statusCode, err := worker.sendWebhookDelivery(context.Background(), server.URL, "whsec_123", "invoice.failed", []byte(`{}`))
-	if err != nil {
-		t.Fatalf("sendWebhookDelivery returned unexpected error: %v", err)
+	result := worker.sendWebhookDelivery(context.Background(), server.URL, "whsec_123", "invoice.failed", []byte(`{}`))
+	if result.Error != "" {
+		t.Fatalf("sendWebhookDelivery returned unexpected error: %v", result.Error)
 	}
-	if statusCode != http.StatusBadGateway {
-		t.Fatalf("expected 502, got %d", statusCode)
+	if result.StatusCode != http.StatusBadGateway {
+		t.Fatalf("expected 502, got %d", result.StatusCode)
+	}
+	if !strings.Contains(result.ResponseSnippet, "boom") {
+		t.Fatalf("expected response snippet to contain boom, got %q", result.ResponseSnippet)
 	}
 }

@@ -72,6 +72,9 @@ func Load() (Config, error) {
 	if cfg.JWTSecret == "" {
 		return Config{}, fmt.Errorf("JWT_SECRET is required")
 	}
+	if cfg.AllowInsecureDevAuth && cfg.AppEnv != "development" {
+		return Config{}, fmt.Errorf("ALLOW_INSECURE_DEV_AUTH is only allowed when APP_ENV=development")
+	}
 
 	initMaxAgeSeconds := intEnv("TELEGRAM_INIT_MAX_AGE_SECONDS", 86400)
 	cfg.TelegramInitMaxAge = time.Duration(initMaxAgeSeconds) * time.Second

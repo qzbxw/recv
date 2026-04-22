@@ -1,8 +1,8 @@
 package service
 
 import (
-	"crypto/subtle"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"errors"
 	"fmt"

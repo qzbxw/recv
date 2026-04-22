@@ -94,6 +94,7 @@ const (
 	InvoiceStatusPaid            InvoiceStatus = "paid"
 	InvoiceStatusExpired         InvoiceStatus = "expired"
 	InvoiceStatusUnderpaid       InvoiceStatus = "underpaid"
+	InvoiceStatusOverpaid        InvoiceStatus = "overpaid"
 	InvoiceStatusManualReview    InvoiceStatus = "manual_review"
 )
 
@@ -143,6 +144,10 @@ type Invoice struct {
 	ExpiresAt          time.Time        `json:"expires_at"`
 	TxHash             *string          `json:"tx_hash"`
 	PaidAt             *time.Time       `json:"paid_at"`
+	ReceivedAmount     decimal.Decimal  `json:"received_amount"`
+	LastPaymentEventID *int64           `json:"last_payment_event_id,omitempty"`
+	ReviewReason       *string          `json:"review_reason,omitempty"`
+	FinalizedAt        *time.Time       `json:"finalized_at,omitempty"`
 	Mode               string           `json:"mode"`
 	CreatedAt          time.Time        `json:"created_at"`
 }
@@ -162,11 +167,14 @@ type PaymentEvent struct {
 	RawPayload         json.RawMessage `json:"raw_payload"`
 	MatchedInvoiceID   *int64          `json:"matched_invoice_id"`
 	Classification     string          `json:"classification"`
+	ExternalEventID    string          `json:"external_event_id"`
+	AllocatedAmount    decimal.Decimal `json:"allocated_amount"`
 	CreatedAt          time.Time       `json:"created_at"`
 }
 
 type ObservedTransfer struct {
 	TxHash             string
+	ExternalEventID    string
 	Network            Network
 	DestinationAddress string
 	Amount             decimal.Decimal

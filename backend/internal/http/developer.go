@@ -75,7 +75,12 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		remainingMinute, allowed := s.apiLimiter.Allow(fmt.Sprintf("%d:%d", seller.ID, record.ID), plan.RequestsPerMinute)
+		remainingMinute, allowed, err := s.store.AllowRateLimit(c.Request.Context(), fmt.Sprintf("api:%d:%d", seller.ID, record.ID), plan.RequestsPerMinute, time.Minute)
+		if err != nil {
+			metrics.IncAuthAttempt("api_key", "failure", "rate_limit")
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.Header("X-RateLimit-Limit-Minute", strconv.Itoa(plan.RequestsPerMinute))
 		c.Header("X-RateLimit-Remaining-Minute", strconv.Itoa(max(0, remainingMinute)))
 		if plan.MonthlyRequestCap > 0 {
@@ -420,11 +425,13 @@ func (s *Server) handleAPICreateInvoice(c *gin.Context) {
 		ExpiresInMinutes int    `json:"expires_in_minutes"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
+		recordIdempotentJSON(c, s.store, idempotencyRecord, http.StatusBadRequest, gin.H{"error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	baseAmount, err := decimal.NewFromString(strings.TrimSpace(body.BaseAmountUSD))
 	if err != nil {
+		recordIdempotentJSON(c, s.store, idempotencyRecord, http.StatusBadRequest, gin.H{"error": "invalid base_amount_usd"})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid base_amount_usd"})
 		return
 	}
@@ -436,6 +443,7 @@ func (s *Server) handleAPICreateInvoice(c *gin.Context) {
 		Mode:             keyCtx.Key.Mode,
 	})
 	if err != nil {
+		recordIdempotentJSON(c, s.store, idempotencyRecord, http.StatusBadRequest, gin.H{"error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -544,7 +552,7 @@ func (s *Server) handleAPISimulatePayment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "only test invoices can be simulated"})
 		return
 	}
-	updated, err := s.store.CompleteInvoicePayment(c.Request.Context(), invoice.ID, invoice.Status, fmt.Sprintf("sim_%d", time.Now().UTC().UnixNano()), store.InvoiceStatusPaid, "test_simulated", invoice.PayableAmount, time.Now().UTC())
+	updated, err := s.store.CompleteInvoicePayment(c.Request.Context(), invoice.ID, invoice.Status, 0, fmt.Sprintf("sim_%d", time.Now().UTC().UnixNano()), store.InvoiceStatusPaid, "test_simulated", invoice.PayableAmount, time.Now().UTC())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -582,6 +590,7 @@ func (s *Server) handleResendWebhookDelivery(c *gin.Context) {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), fmt.Sprintf("seller:%d", sc.Seller.ID), "webhook_resend", "webhook_delivery", strconv.FormatInt(deliveryID, 10), gin.H{"new_delivery_id": item.ID})
 	c.JSON(http.StatusCreated, gin.H{"delivery": item})
 }
 
@@ -691,6 +700,13 @@ func hashRequestBody(raw []byte) string {
 	}
 	sum := sha256.Sum256(raw)
 	return hex.EncodeToString(sum[:])
+}
+
+func recordIdempotentJSON(c *gin.Context, st *store.Store, record *store.IdempotencyRecord, statusCode int, body gin.H) {
+	if record == nil {
+		return
+	}
+	_ = st.CompleteIdempotencyRecord(c.Request.Context(), record.ID, statusCode, store.MustJSON(body))
 }
 
 func (l *memoryRateLimiter) Allow(key string, limit int) (int, bool) {

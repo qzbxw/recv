@@ -22,13 +22,6 @@ const (
 	TrialInvoiceLimit = 15
 )
 
-var reqstBillingWallets = map[store.Network]string{
-	store.NetworkTON:    "UQBuzCySn6dYEHzKoGzUPmclj9Dg_m1dA-mzeDEvuF3F9x6P",
-	store.NetworkTRON:   "TYNY19wFMM24dJN4ciyuGZDNzzQHVcaMPd",
-	store.NetworkSOLANA: "FuJjhzKnFePteS35Ehyc6LHXYnax1G8TsJa1c1goem5V",
-	store.NetworkEVM:    "0x117cd2295ba0f280a2fdb757157c33ef049d34af",
-}
-
 type InvoiceService struct {
 	store      *store.Store
 	httpClient *http.Client
@@ -169,8 +162,8 @@ func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, seller 
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "invalid_price")
 		return store.Invoice{}, errors.New("subscription price must be positive")
 	}
-	address, ok := reqstBillingWallets[network.WalletBucket()]
-	if !ok || strings.TrimSpace(address) == "" {
+	address, err := s.store.GetBillingWalletAddress(ctx, network)
+	if err != nil || strings.TrimSpace(address) == "" {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "billing_wallet_missing")
 		return store.Invoice{}, fmt.Errorf("billing wallet is not configured for network %s", network)
 	}

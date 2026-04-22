@@ -27,7 +27,7 @@ func NewPaymentService(st *store.Store) *PaymentService {
 
 func (s *PaymentService) ProcessObservedTransfer(ctx context.Context, transfer store.ObservedTransfer) (PaymentResult, error) {
 	source := metrics.SourceFromContext(ctx)
-	inserted, err := s.store.RecordObservedTransfer(ctx, transfer)
+	event, inserted, err := s.store.RecordObservedTransfer(ctx, transfer)
 	if err != nil {
 		metrics.ObservePayment(source, string(transfer.Network), "record_failed", "none", false, transfer.Amount.InexactFloat64())
 		return PaymentResult{}, err
@@ -47,7 +47,7 @@ func (s *PaymentService) ProcessObservedTransfer(ctx context.Context, transfer s
 		return PaymentResult{Classification: classification}, nil
 	}
 
-	updated, err := s.store.CompleteInvoicePayment(ctx, invoice.ID, invoice.Status, transfer.TxHash, status, classification, transfer.Amount, transfer.ObservedAt)
+	updated, err := s.store.CompleteInvoicePayment(ctx, invoice.ID, invoice.Status, event.ID, transfer.TxHash, status, classification, transfer.Amount, transfer.ObservedAt)
 	if err != nil {
 		metrics.ObservePayment(source, string(transfer.Network), classification, string(status), true, transfer.Amount.InexactFloat64())
 		return PaymentResult{}, err
@@ -107,7 +107,7 @@ func classifyInvoiceTransfer(invoice store.Invoice, amount decimal.Decimal, obse
 		return &invoice, "underpaid", store.InvoiceStatusUnderpaid
 	}
 	if amount.GreaterThan(invoice.PayableAmount) {
-		return &invoice, "overpaid", store.InvoiceStatusManualReview
+		return &invoice, "overpaid", store.InvoiceStatusOverpaid
 	}
 	return &invoice, "paid_exact", store.InvoiceStatusPaid
 }
@@ -128,6 +128,9 @@ func isLikelyExchangeFeeUnderpayment(invoice store.Invoice, amount decimal.Decim
 func normalizeObservedTransfer(transfer *store.ObservedTransfer) error {
 	if transfer.TxHash == "" {
 		return errors.New("tx_hash is required")
+	}
+	if transfer.ExternalEventID == "" {
+		transfer.ExternalEventID = string(transfer.Network) + ":" + transfer.TxHash
 	}
 	if transfer.DestinationAddress == "" {
 		return errors.New("destination_address is required")

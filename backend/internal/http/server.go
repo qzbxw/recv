@@ -1,6 +1,8 @@
 package http
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -539,6 +541,7 @@ func (s *Server) handleGrantPRO(c *gin.Context) {
 		return
 	}
 	metrics.IncAdminOperation("grant_pro", "success")
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), "internal", "grant_pro", "seller", strconv.FormatInt(sellerID, 10), gin.H{"days": body.Days})
 	c.JSON(http.StatusOK, gin.H{"seller": seller})
 }
 
@@ -568,6 +571,7 @@ func (s *Server) handleBlockSeller(c *gin.Context) {
 		return
 	}
 	metrics.IncAdminOperation("set_blocked", "success")
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), "internal", "set_blocked", "seller", strconv.FormatInt(sellerID, 10), gin.H{"blocked": body.Blocked})
 	c.JSON(http.StatusOK, gin.H{"seller": seller})
 }
 
@@ -609,11 +613,6 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 
 func (s *Server) internalTokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if s.cfg.InternalToken == "" {
-			metrics.IncAuthAttempt("internal_token", "failure", "not_configured")
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "internal token is not configured"})
-			return
-		}
 		token := strings.TrimSpace(c.GetHeader("X-Internal-Token"))
 		if token == "" {
 			auth := strings.TrimSpace(c.GetHeader("Authorization"))
@@ -621,7 +620,7 @@ func (s *Server) internalTokenMiddleware() gin.HandlerFunc {
 				token = strings.TrimSpace(auth[len("Bearer "):])
 			}
 		}
-		if token != s.cfg.InternalToken {
+		if !s.validInternalToken(c.Request.Context(), token) {
 			metrics.IncAuthAttempt("internal_token", "failure", "invalid")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "invalid internal token"})
 			return
@@ -630,6 +629,28 @@ func (s *Server) internalTokenMiddleware() gin.HandlerFunc {
 		metrics.IncAuthAttempt("internal_token", "success", "authenticated")
 		c.Next()
 	}
+}
+
+func (s *Server) validInternalToken(ctx context.Context, token string) bool {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return false
+	}
+	if s.store != nil {
+		if cfg, err := s.store.GetSystemConfig(ctx, "internal_token_hashes"); err == nil {
+			var hashes []string
+			if json.Unmarshal(cfg.Value, &hashes) == nil {
+				tokenHash := hashSecret(token)
+				for _, candidate := range hashes {
+					if strings.TrimSpace(candidate) == tokenHash {
+						return true
+					}
+				}
+				return false
+			}
+		}
+	}
+	return token == s.cfg.InternalToken
 }
 
 func requestMetricsMiddleware() gin.HandlerFunc {
@@ -673,6 +694,9 @@ func publicInvoiceResponse(invoice store.Invoice) gin.H {
 		"expires_at":          invoice.ExpiresAt,
 		"created_at":          invoice.CreatedAt,
 		"tx_hash":             invoice.TxHash,
+		"received_amount":     invoice.ReceivedAmount.StringFixed(payableScale(invoice.PayableNetwork)),
+		"review_reason":       invoice.ReviewReason,
+		"finalized_at":        invoice.FinalizedAt,
 		"checkout_url":        "/app/checkout/" + invoice.PublicID,
 		"payment_uri":         paymentURI(invoice),
 	}

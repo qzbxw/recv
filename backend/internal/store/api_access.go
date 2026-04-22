@@ -59,6 +59,15 @@ type WebhookDelivery struct {
 	LastError      *string         `json:"last_error,omitempty"`
 	CreatedAt      time.Time       `json:"created_at,omitempty"`
 	SentAt         *time.Time      `json:"sent_at,omitempty"`
+	ResendOf       *int64          `json:"resend_of,omitempty"`
+}
+
+type WebhookAttemptResult struct {
+	StatusCode      int
+	Status          string
+	Error           string
+	Duration        time.Duration
+	ResponseSnippet string
 }
 
 type IdempotencyRecord struct {
@@ -389,6 +398,32 @@ func (s *Store) ClaimWebhookDeliveries(ctx context.Context, limit int) ([]Webhoo
 	return items, nil
 }
 
+func (s *Store) RecordWebhookDeliveryAttempt(ctx context.Context, deliveryID int64, endpointID int64, attemptNumber int, result WebhookAttemptResult) error {
+	if result.Status == "" {
+		result.Status = "failure"
+		if result.Error == "" && result.StatusCode > 0 && result.StatusCode < 400 {
+			result.Status = "success"
+		}
+	}
+	httpStatus := any(nil)
+	if result.StatusCode > 0 {
+		httpStatus = result.StatusCode
+	}
+	errorMessage := any(nil)
+	if result.Error != "" {
+		errorMessage = result.Error
+	}
+	if _, err := s.pool.Exec(ctx, `
+		INSERT INTO webhook_delivery_attempts (delivery_id, endpoint_id, attempt_number, status, http_status, error, duration_ms, response_snippet)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		ON CONFLICT (delivery_id, attempt_number)
+		DO UPDATE SET status = EXCLUDED.status, http_status = EXCLUDED.http_status, error = EXCLUDED.error, duration_ms = EXCLUDED.duration_ms, response_snippet = EXCLUDED.response_snippet
+	`, deliveryID, endpointID, attemptNumber, result.Status, httpStatus, errorMessage, result.Duration.Milliseconds(), result.ResponseSnippet); err != nil {
+		return fmt.Errorf("record webhook delivery attempt: %w", err)
+	}
+	return nil
+}
+
 func (s *Store) MarkWebhookDeliverySent(ctx context.Context, deliveryID int64, endpointID int64) error {
 	if _, err := s.pool.Exec(ctx, `
 		UPDATE webhook_deliveries
@@ -413,7 +448,14 @@ func (s *Store) MarkWebhookDeliverySent(ctx context.Context, deliveryID int64, e
 
 func (s *Store) MarkWebhookDeliveryFailed(ctx context.Context, deliveryID int64, endpointID int64, attempts int, maxAttempts int, statusCode int, message string) error {
 	state := "failed"
-	availableAt := time.Now().UTC().Add(2 * time.Minute)
+	backoff := time.Duration(attempts*attempts) * time.Minute
+	if backoff < time.Minute {
+		backoff = time.Minute
+	}
+	if backoff > 30*time.Minute {
+		backoff = 30 * time.Minute
+	}
+	availableAt := time.Now().UTC().Add(backoff)
 	if attempts >= maxAttempts {
 		state = "dead"
 		availableAt = time.Now().UTC()
@@ -465,15 +507,27 @@ func enqueueWebhookDeliveriesTx(ctx context.Context, tx pgx.Tx, sellerID int64, 
 
 	for _, endpointID := range endpointIDs {
 		eventID := fmt.Sprintf("evt_%d_%d", time.Now().UTC().UnixNano(), endpointID)
+		if transitionID := payloadTransitionID(payload); transitionID > 0 {
+			eventID = fmt.Sprintf("evt_transition_%d_%d", transitionID, endpointID)
+		}
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO webhook_deliveries (endpoint_id, seller_id, event_type, payload, max_attempts, event_id)
 			VALUES ($1, $2, $3, $4, $5, $6)
+			ON CONFLICT (event_id) DO NOTHING
 		`, endpointID, sellerID, eventType, payloadWithEventID(payload, eventID), maxAttempts, eventID); err != nil {
 			return fmt.Errorf("insert webhook delivery: %w", err)
 		}
 		metrics.IncDeliveryEvent("webhook", "enqueue", "success")
 	}
 	return nil
+}
+
+func payloadTransitionID(payload json.RawMessage) int64 {
+	var body struct {
+		TransitionID int64 `json:"transition_id"`
+	}
+	_ = json.Unmarshal(payload, &body)
+	return body.TransitionID
 }
 
 func payloadWithEventID(payload json.RawMessage, eventID string) json.RawMessage {
@@ -487,7 +541,7 @@ func payloadWithEventID(payload json.RawMessage, eventID string) json.RawMessage
 
 func (s *Store) ListWebhookDeliveries(ctx context.Context, sellerID int64, limit int) ([]WebhookDelivery, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, event_id, endpoint_id, seller_id, event_type, payload, status, attempts, max_attempts, available_at, last_http_status, last_error, created_at, sent_at
+		SELECT id, event_id, endpoint_id, seller_id, event_type, payload, status, attempts, max_attempts, available_at, last_http_status, last_error, created_at, sent_at, resend_of
 		FROM webhook_deliveries
 		WHERE seller_id = $1
 		ORDER BY created_at DESC
@@ -501,7 +555,7 @@ func (s *Store) ListWebhookDeliveries(ctx context.Context, sellerID int64, limit
 	var items []WebhookDelivery
 	for rows.Next() {
 		var item WebhookDelivery
-		if err := rows.Scan(&item.ID, &item.EventID, &item.EndpointID, &item.SellerID, &item.EventType, &item.Payload, &item.Status, &item.Attempts, &item.MaxAttempts, &item.AvailableAt, &item.LastHTTPStatus, &item.LastError, &item.CreatedAt, &item.SentAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.EventID, &item.EndpointID, &item.SellerID, &item.EventType, &item.Payload, &item.Status, &item.Attempts, &item.MaxAttempts, &item.AvailableAt, &item.LastHTTPStatus, &item.LastError, &item.CreatedAt, &item.SentAt, &item.ResendOf); err != nil {
 			return nil, fmt.Errorf("scan webhook delivery list item: %w", err)
 		}
 		items = append(items, item)
@@ -527,10 +581,10 @@ func (s *Store) ResendWebhookDelivery(ctx context.Context, sellerID int64, deliv
 	row = s.pool.QueryRow(ctx, `
 		INSERT INTO webhook_deliveries (endpoint_id, seller_id, event_type, payload, max_attempts, event_id, resend_of)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, event_id, endpoint_id, seller_id, event_type, payload, status, attempts, max_attempts, available_at, last_http_status, last_error, created_at, sent_at
+		RETURNING id, event_id, endpoint_id, seller_id, event_type, payload, status, attempts, max_attempts, available_at, last_http_status, last_error, created_at, sent_at, resend_of
 	`, source.EndpointID, sellerID, source.EventType, payloadWithEventID(source.Payload, eventID), source.MaxAttempts, eventID, source.ID)
 	var item WebhookDelivery
-	if err := row.Scan(&item.ID, &item.EventID, &item.EndpointID, &item.SellerID, &item.EventType, &item.Payload, &item.Status, &item.Attempts, &item.MaxAttempts, &item.AvailableAt, &item.LastHTTPStatus, &item.LastError, &item.CreatedAt, &item.SentAt); err != nil {
+	if err := row.Scan(&item.ID, &item.EventID, &item.EndpointID, &item.SellerID, &item.EventType, &item.Payload, &item.Status, &item.Attempts, &item.MaxAttempts, &item.AvailableAt, &item.LastHTTPStatus, &item.LastError, &item.CreatedAt, &item.SentAt, &item.ResendOf); err != nil {
 		return WebhookDelivery{}, fmt.Errorf("insert webhook resend: %w", err)
 	}
 	return item, nil

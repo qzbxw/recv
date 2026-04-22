@@ -80,8 +80,8 @@ func TestClassifyInvoiceTransfer(t *testing.T) {
 		if classification != "overpaid" {
 			t.Fatalf("expected overpaid, got %s", classification)
 		}
-		if status != store.InvoiceStatusManualReview {
-			t.Fatalf("expected manual_review status, got %s", status)
+		if status != store.InvoiceStatusOverpaid {
+			t.Fatalf("expected overpaid status, got %s", status)
 		}
 	})
 }

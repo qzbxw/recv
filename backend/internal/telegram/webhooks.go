@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"reqst/backend/internal/metrics"
+	"reqst/backend/internal/store"
 )
 
 func (b *BotWorker) flushWebhookDeliveries(ctx context.Context) error {
@@ -23,7 +24,10 @@ func (b *BotWorker) flushWebhookDeliveries(ctx context.Context) error {
 	}
 
 	for _, delivery := range deliveries {
-		statusCode, requestErr := b.sendWebhookDelivery(ctx, delivery.TargetURL, delivery.Secret, delivery.EventType, delivery.Payload)
+		attempt := b.sendWebhookDelivery(ctx, delivery.TargetURL, delivery.Secret, delivery.EventType, delivery.Payload)
+		_ = b.store.RecordWebhookDeliveryAttempt(ctx, delivery.ID, delivery.EndpointID, delivery.Attempts, attempt)
+		statusCode := attempt.StatusCode
+		requestErr := errorFromString(attempt.Error)
 		if requestErr != nil || statusCode >= http.StatusBadRequest {
 			message := ""
 			if requestErr != nil {
@@ -39,13 +43,14 @@ func (b *BotWorker) flushWebhookDeliveries(ctx context.Context) error {
 	return nil
 }
 
-func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, secret string, eventType string, payload []byte) (int, error) {
+func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, secret string, eventType string, payload []byte) store.WebhookAttemptResult {
 	timestamp := strconv.FormatInt(time.Now().UTC().Unix(), 10)
 	signature := webhookSignature(secret, timestamp, payload)
+	startedAt := time.Now()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, targetURL, bytes.NewReader(payload))
 	if err != nil {
-		return 0, err
+		return store.WebhookAttemptResult{Status: "failure", Error: err.Error(), Duration: time.Since(startedAt)}
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "reqst-webhooks/1.0")
@@ -53,20 +58,32 @@ func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, s
 	req.Header.Set("X-Reqst-Timestamp", timestamp)
 	req.Header.Set("X-Reqst-Signature", signature)
 
-	startedAt := time.Now()
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
 		metrics.ObserveUpstream("seller_webhook", eventType, "failure", time.Since(startedAt))
-		return 0, err
+		return store.WebhookAttemptResult{Status: "failure", Error: err.Error(), Duration: time.Since(startedAt)}
 	}
 	defer resp.Body.Close()
-	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1024))
+	var responseBody bytes.Buffer
+	_, _ = io.Copy(&responseBody, io.LimitReader(resp.Body, 1024))
 	result := "success"
 	if resp.StatusCode >= http.StatusBadRequest {
 		result = "failure"
 	}
 	metrics.ObserveUpstream("seller_webhook", eventType, result, time.Since(startedAt))
-	return resp.StatusCode, nil
+	return store.WebhookAttemptResult{
+		StatusCode:      resp.StatusCode,
+		Status:          result,
+		Duration:        time.Since(startedAt),
+		ResponseSnippet: strings.TrimSpace(responseBody.String()),
+	}
+}
+
+func errorFromString(message string) error {
+	if strings.TrimSpace(message) == "" {
+		return nil
+	}
+	return fmt.Errorf("%s", message)
 }
 
 func webhookSignature(secret string, timestamp string, payload []byte) string {

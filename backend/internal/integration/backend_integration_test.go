@@ -32,7 +32,7 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 	env := newIntegrationEnv(t, ctx)
 	client := env.server.Client()
 
-	assertMigrationCount(t, ctx, env.store, 12)
+	assertMigrationCount(t, ctx, env.store, 13)
 
 	auth := loginSeller(t, client, env.server.URL, 10001, "alice")
 	assertTelegramAuthCodeLifecycle(t, ctx, env.store, auth.Seller.ID)
@@ -241,6 +241,14 @@ func newIntegrationEnv(t *testing.T, ctx context.Context) integrationEnv {
 		t.Fatalf("store.New returned error: %v", err)
 	}
 	t.Cleanup(st.Close)
+	if err := st.UpsertSystemConfig(ctx, "billing_wallets", map[string]string{
+		"TON":    "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"TRON":   "TIntegrationBillingWallet111111",
+		"SOLANA": "11111111111111111111111111111111",
+		"EVM":    "0x1111111111111111111111111111111111111111",
+	}, false, "integration-test"); err != nil {
+		t.Fatalf("seed billing wallets config: %v", err)
+	}
 
 	cfg := config.Config{
 		AppEnv:               "test",
@@ -416,7 +424,7 @@ type observedTransferEvent struct {
 
 type observedTransfersResponse struct {
 	Items []struct {
-		Classification string          `json:"classification"`
+		Classification string           `json:"classification"`
 		Invoice        *invoiceResponse `json:"invoice,omitempty"`
 	} `json:"items"`
 }
@@ -438,7 +446,7 @@ type createAPIKeyResponse struct {
 
 type developerUsageResponse struct {
 	Usage struct {
-		ActiveAPIKeys   int `json:"active_api_keys"`
+		ActiveAPIKeys    int `json:"active_api_keys"`
 		WebhookEndpoints int `json:"webhook_endpoints"`
 	} `json:"usage"`
 }

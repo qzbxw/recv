@@ -37,14 +37,34 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 		return
 	}
 
-	token, err := s.adminService.Authenticate(strings.TrimSpace(body.Username), body.Password)
+	username := strings.TrimSpace(body.Username)
+	if s.store != nil {
+		_, allowed, err := s.store.AllowRateLimit(c.Request.Context(), "admin_login:"+c.ClientIP()+":"+strings.ToLower(username), 5, time.Minute)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		if !allowed {
+			_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login_rate_limited", "admin", username, gin.H{"ip": c.ClientIP()})
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "admin login rate limit exceeded"})
+			return
+		}
+	}
+
+	token, err := s.adminService.Authenticate(username, body.Password)
 	if err != nil {
+		if s.store != nil {
+			_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login_failed", "admin", username, gin.H{"ip": c.ClientIP()})
+		}
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
+	if s.store != nil {
+		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login", "admin", username, gin.H{"ip": c.ClientIP()})
+	}
 
 	c.Request = c.Request.WithContext(ctx)
-	c.JSON(http.StatusOK, gin.H{"token": token, "username": strings.TrimSpace(body.Username)})
+	c.JSON(http.StatusOK, gin.H{"token": token, "username": username})
 }
 
 func (s *Server) adminMiddleware() gin.HandlerFunc {
@@ -199,6 +219,8 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_billing_checkout", "seller", strconv.FormatInt(sellerID, 10), gin.H{"invoice_id": invoice.ID, "plan_code": planCode, "network": network})
 
 	plan := store.ResolvePlan(planCode)
 	priceLabel := plan.PriceUSDString
