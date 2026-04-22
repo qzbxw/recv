@@ -4,22 +4,30 @@ import { CustomSelect } from "../components/CustomSelect";
 import {
   createAPIKey,
   createBillingCheckout,
+  createDeveloperInvoice,
   createWebhookEndpoint,
   deleteAPIKey,
   deleteWebhookEndpoint,
   fetchAPIKeys,
   fetchDeveloperUsage,
   fetchMe,
+  fetchWebhookDeliveries,
   fetchWebhookEndpoints,
   getApiBase,
   getStoredToken,
+  resendWebhookDelivery,
+  simulateTestPayment,
 } from "../lib/api";
+import { ApiError, formatApiError, mapApiError } from "../lib/errors";
 import { buildCheckoutUrl } from "../lib/routing";
-import type { APIKey, DeveloperUsageResponse, MeResponse, Network, WebhookEndpoint } from "../lib/types";
+import { formatInvoiceStatus } from "../lib/status";
+import type { APIKey, DeveloperUsageResponse, Invoice, MeResponse, Network, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
 
 const PLAN_OPTIONS = [
-  { value: "dev", label: "Reqst Dev" },
+  { value: "merchant", label: "Merchant" },
+  { value: "developer", label: "Developer" },
+  { value: "business", label: "Business" },
 ] as const;
 
 const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
@@ -100,6 +108,8 @@ const COPY = {
       loading: "Загрузка...",
       error: "Ошибка",
       save: "Сохранить",
+      testMode: "Тест",
+      liveMode: "Live",
     }
   },
   en: {
@@ -167,6 +177,8 @@ const COPY = {
       loading: "Loading...",
       error: "Error",
       save: "Save",
+      testMode: "Test",
+      liveMode: "Live",
     }
   }
 } as const;
@@ -188,6 +200,7 @@ export function DeveloperPortalPage() {
   const [usage, setUsage] = useState<DeveloperUsageResponse | null>(null);
   const [apiKeys, setAPIKeys] = useState<APIKey[]>([]);
   const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([]);
+  const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
   const [loading, setLoading] = useState(Boolean(token));
   const [error, setError] = useState("");
   const [activeSection, setActiveSection] = useState("hero");
@@ -195,15 +208,18 @@ export function DeveloperPortalPage() {
   // Form states
   const [latestSecret, setLatestSecret] = useState("");
   const [copiedId, setCopiedId] = useState("");
-  const [billingPlan, setBillingPlan] = useState<"dev" | "enterprise">("dev");
+  const [billingPlan, setBillingPlan] = useState<string>("developer");
   const [billingNetwork, setBillingNetwork] = useState<Network>("TRON");
   const [keyLabel, setKeyLabel] = useState("");
   const [keyScopes, setKeyScopes] = useState<string[]>(DEFAULT_SCOPES);
-  const [hookForm, setHookForm] = useState({ label: "", url: "" });
+  const [keyEnvironment, setKeyEnvironment] = useState<Environment>("test");
+  const [hookForm, setHookForm] = useState({ label: "", url: "", environment: "test" as Environment });
   const [checkoutUrl, setCheckoutUrl] = useState("");
-  const [codeTab, setCodeTab] = useState<"curl" | "node">("curl");
   const [apiView, setApiView] = useState<"params" | "response">("params");
   const [selectedMethod, setSelectedMethod] = useState(0);
+  const [sampleSecret, setSampleSecret] = useState("");
+  const [sampleInvoice, setSampleInvoice] = useState<Invoice | null>(null);
+  const [sampleBusy, setSampleBusy] = useState(false);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -226,18 +242,20 @@ export function DeveloperPortalPage() {
   async function loadPortal(sessionToken: string) {
     try {
       setLoading(true);
-      const [meRes, usageRes, keysRes, hooksRes] = await Promise.all([
+      const [meRes, usageRes, keysRes, hooksRes, deliveriesRes] = await Promise.all([
         fetchMe(sessionToken),
         fetchDeveloperUsage(sessionToken).catch(() => null),
         fetchAPIKeys(sessionToken).catch(() => ({ items: [] })),
         fetchWebhookEndpoints(sessionToken).catch(() => ({ items: [] })),
+        fetchWebhookDeliveries(sessionToken).catch(() => ({ items: [] })),
       ]);
       setMe(meRes);
       setUsage(usageRes);
       setAPIKeys(keysRes.items ?? []);
       setWebhooks(hooksRes.items ?? []);
+      setDeliveries(deliveriesRes.items ?? []);
     } catch (err) {
-      setError((err as Error).message);
+      setError(formatApiError(err));
     } finally {
       setLoading(false);
     }
@@ -253,11 +271,14 @@ export function DeveloperPortalPage() {
     e.preventDefault();
     if (!token) return;
     try {
-      const res = await createAPIKey(token, { label: keyLabel, scopes: keyScopes });
+      const res = await createAPIKey(token, { label: keyLabel, scopes: keyScopes, environment: keyEnvironment });
       setLatestSecret(res.secret);
+      if (keyEnvironment === "test") {
+        setSampleSecret(res.secret);
+      }
       setKeyLabel("");
       await loadPortal(token);
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   };
 
   const toggleScope = (scope: string) => {
@@ -269,17 +290,17 @@ export function DeveloperPortalPage() {
     try {
       await deleteAPIKey(token, id);
       await loadPortal(token);
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   };
 
   const handleCreateWebhook = async (e: FormEvent) => {
     e.preventDefault();
     if (!token) return;
     try {
-      await createWebhookEndpoint(token, { label: hookForm.label, url: hookForm.url });
-      setHookForm({ label: "", url: "" });
+      await createWebhookEndpoint(token, { label: hookForm.label, url: hookForm.url, environment: hookForm.environment });
+      setHookForm({ label: "", url: "", environment: "test" });
       await loadPortal(token);
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   };
 
   const handleDeleteWebhook = async (id: number) => {
@@ -287,7 +308,7 @@ export function DeveloperPortalPage() {
     try {
       await deleteWebhookEndpoint(token, id);
       await loadPortal(token);
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   };
 
   const handleUpgrade = async () => {
@@ -295,8 +316,57 @@ export function DeveloperPortalPage() {
     try {
       const invoice = await createBillingCheckout(token, { payable_network: billingNetwork, plan_code: billingPlan });
       setCheckoutUrl(buildCheckoutUrl(invoice.public_id));
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   };
+
+  const testKey = apiKeys.find(key => key.environment === "test");
+  const liveKey = apiKeys.find(key => key.environment === "live");
+
+  async function handleCreateSampleInvoice() {
+    const secret = sampleSecret;
+    if (!secret) {
+      setError(language === "ru" ? "Создайте тестовый ключ и сохраните секрет для симулятора." : "Create a test key and keep the secret visible for the simulator.");
+      return;
+    }
+    setSampleBusy(true);
+    try {
+      const invoice = await createDeveloperInvoice(secret, {
+        title: "Reqst API test invoice",
+        base_amount_usd: "10.00",
+        payable_network: "TRON",
+        expires_in_minutes: 30,
+      });
+      setSampleInvoice(invoice);
+    } catch (err) {
+      setError(formatApiError(err));
+    } finally {
+      setSampleBusy(false);
+    }
+  }
+
+  async function handleSimulatePayment() {
+    if (!sampleSecret || !sampleInvoice) return;
+    setSampleBusy(true);
+    try {
+      const invoice = await simulateTestPayment(sampleSecret, sampleInvoice.id);
+      setSampleInvoice(invoice);
+      if (token) await loadPortal(token);
+    } catch (err) {
+      setError(formatApiError(err));
+    } finally {
+      setSampleBusy(false);
+    }
+  }
+
+  async function handleResendDelivery(id: number) {
+    if (!token) return;
+    try {
+      await resendWebhookDelivery(token, id);
+      await loadPortal(token);
+    } catch (err) {
+      setError(formatApiError(err));
+    }
+  }
 
   const apiBase = useMemo(() => `${getApiBase() || window.location.origin}/v1`, []);
 
@@ -308,10 +378,11 @@ export function DeveloperPortalPage() {
       desc: language === "ru" ? "Возвращает информацию о текущем API ключе, тарифном плане и остатке месячной квоты." : "Returns information about the current API key, plan, and monthly quota.",
       params: [],
       response: {
-        seller: { id: 1, username: "merchant_one", email: "biz@example.com" },
-        plan: { code: "dev", name: "Reqst Dev", requests_per_minute: 100, monthly_cap: 10000 },
-        usage: { monthly_requests: 450, monthly_limit: 10000 },
-        key: { id: 12, label: "Production Backend", scopes: ["invoices:read", "invoices:write"] }
+        user: { id: 1, username: "merchant_one", email: "biz@example.com" },
+        workspace: { id: 1, username: "workspace_one", plan_code: "developer" },
+        plan: { code: "developer", name: "Developer", requests_per_minute: 90, monthly_cap: 50000 },
+        usage: { monthly_requests: 450, monthly_limit: 50000 },
+        key: { id: 12, label: "Production Backend", scopes: ["invoices:read", "invoices:write"], environment: "live" }
       }
     },
     {
@@ -324,7 +395,7 @@ export function DeveloperPortalPage() {
         { name: "page_size", type: "int", desc: language === "ru" ? "Количество элементов (default 20, max 100)" : "Items per page (default 20, max 100)" }
       ],
       response: {
-        items: [{ id: 1, public_id: "REQST-X1", title: "Order #1", status: "paid", base_amount_usd: "10.00" }],
+        items: [{ id: 1, public_id: "RQST-X1", title: "Order #1", status: "paid", base_amount_usd: "10.00", environment: "live" }],
         page: 1,
         page_size: 20
       }
@@ -342,13 +413,14 @@ export function DeveloperPortalPage() {
       ],
       response: {
         id: 1842,
-        public_id: "REQST-9N2QK7",
+        public_id: "RQST-9N2QK7",
         title: "Product Subscription",
         status: "awaiting_payment",
-        checkout_url: "https://reqst.xyz/app/checkout/REQST-9N2QK7",
+        checkout_url: "https://reqst.xyz/app/checkout/RQST-9N2QK7",
         base_amount_usd: "25.00",
         payable_amount: "25.000000",
-        payable_network: "TRON"
+        payable_network: "TRON",
+        environment: "live"
       }
     },
     {
@@ -359,7 +431,7 @@ export function DeveloperPortalPage() {
       params: [
         { name: "id", type: "int", desc: language === "ru" ? "Системный ID инвойса" : "System invoice ID" }
       ],
-      response: { id: 1842, public_id: "REQST-9N2QK7", status: "paid", tx_hash: "0x..." }
+      response: { id: 1842, public_id: "RQST-9N2QK7", status: "paid", tx_hash: "0x...", environment: "live" }
     },
     {
       method: "POST",
@@ -374,6 +446,7 @@ export function DeveloperPortalPage() {
   ];
 
   const currentEp = endpoints[selectedMethod];
+  const commonErrors = [400, 401, 403, 404, 409, 429, 500].map(status => mapApiError(new ApiError(status, "")));
 
   const curlExample = `curl -X ${currentEp.method} ${apiBase}${currentEp.path.replace(":id", "1842")} \\
   -H "Authorization: Bearer YOUR_KEY" \\
@@ -441,6 +514,54 @@ export function DeveloperPortalPage() {
               </div>
             </section>
 
+            <section id="quickstart" className="dev-portal__section portal-animate-in">
+              <div className="dev-portal__section-header">
+                <h2>Quickstart</h2>
+                <p>One flow: test key, test invoice, simulation, webhook, live.</p>
+              </div>
+              <div className="portal-quickstart">
+                {[
+                  { done: Boolean(testKey || sampleSecret), title: language === "ru" ? "Тестовый ключ" : "Test key", body: testKey?.prefix ?? "rqst_test_..." },
+                  { done: Boolean(sampleInvoice), title: language === "ru" ? "Тестовый инвойс" : "Test invoice", body: sampleInvoice?.public_id ?? "POST /v1/invoices" },
+                  { done: sampleInvoice?.status === "paid", title: language === "ru" ? "Симуляция" : "Simulate", body: sampleInvoice ? formatInvoiceStatus(sampleInvoice.status, language) : "simulate-payment" },
+                  { done: webhooks.length > 0, title: language === "ru" ? "Вебхук" : "Webhook", body: webhooks[0]?.url ?? "https://..." },
+                  { done: Boolean(liveKey), title: "Live", body: liveKey?.prefix ?? "rqst_live_..." },
+                ].map((step) => (
+                  <div key={step.title} className="portal-quickstart__step">
+                    <span className={`dev-api-badge dev-api-badge--${step.done ? "done" : "post"}`}>{step.done ? "done" : "next"}</span>
+                    <h3 style={{ margin: "0.75rem 0 0.35rem", fontSize: "1rem" }}>{step.title}</h3>
+                    <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.82rem", overflowWrap: "anywhere" }}>{step.body}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="dev-card">
+                <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
+                  <h3>Sample invoice simulator</h3>
+                  <p>{language === "ru" ? "Использует секрет rqst_test_, показанный при создании ключа. Секрет не сохраняется сервером в открытом виде." : "Uses the rqst_test_ secret shown when you create a key. The server does not reveal it again."}</p>
+                </div>
+                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                  <button className="dev-btn dev-btn--primary" disabled={sampleBusy || !sampleSecret} onClick={() => void handleCreateSampleInvoice()}>
+                    {language === "ru" ? "Создать test invoice" : "Create test invoice"}
+                  </button>
+                  <button className="dev-btn dev-btn--secondary" disabled={sampleBusy || !sampleInvoice || sampleInvoice.status === "paid"} onClick={() => void handleSimulatePayment()}>
+                    {language === "ru" ? "Симулировать оплату" : "Simulate payment"}
+                  </button>
+                  {sampleInvoice ? <a className="dev-btn dev-btn--secondary" href={buildCheckoutUrl(sampleInvoice.public_id)} target="_blank" rel="noreferrer">{language === "ru" ? "Открыть checkout" : "Open checkout"}</a> : null}
+                </div>
+                {sampleInvoice ? (
+                  <div className="dev-resource-card" style={{ marginTop: "1rem" }}>
+                    <div className="dev-resource-card__info">
+                      <div className="dev-resource-card__title">{sampleInvoice.title}</div>
+                      <div className="dev-resource-card__meta">{sampleInvoice.public_id} • {formatInvoiceStatus(sampleInvoice.status, language)} • {sampleInvoice.environment}</div>
+                    </div>
+                    <button className="dev-btn dev-btn--secondary" onClick={() => handleCopy(buildCheckoutUrl(sampleInvoice.public_id), "sample-url")}>
+                      {copiedId === "sample-url" ? t.common.copied : "URL"}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
             <section id="api" className="dev-portal__section portal-animate-in">
               <div className="dev-portal__section-header">
                 <h2>{t.api.title}</h2>
@@ -496,6 +617,22 @@ export function DeveloperPortalPage() {
                   </pre>
                 </div>
               </div>
+              <div className="dev-card">
+                <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
+                  <h3>API Error Guide</h3>
+                  <p>Concrete fixes for common response statuses.</p>
+                </div>
+                <div className="dev-resource-list">
+                  {commonErrors.map(item => (
+                    <div key={item.status} className="dev-resource-card">
+                      <div className="dev-resource-card__info">
+                        <div className="dev-resource-card__title">{item.status} {item.message}</div>
+                        <div className="dev-resource-card__meta">{item.action}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </section>
 
             <section id="keys" className="dev-portal__section portal-animate-in">
@@ -513,6 +650,13 @@ export function DeveloperPortalPage() {
               ) : (
                 <div className="dev-card">
                   <form onSubmit={handleCreateKey} className="dev-form">
+                    <div className="portal-mode-tabs" role="tablist" aria-label="API key mode">
+                      {(["test", "live"] as const).map(mode => (
+                        <button key={mode} type="button" className={keyEnvironment === mode ? "is-active" : ""} onClick={() => setKeyEnvironment(mode)}>
+                          {mode === 'test' ? t.common.testMode : t.common.liveMode}
+                        </button>
+                      ))}
+                    </div>
                     <div className="dev-api-grid" style={{ gridTemplateColumns: "1fr auto", alignItems: "flex-end" }}>
                       <div className="dev-input-group">
                         <label>{t.keys.label}</label>
@@ -548,7 +692,7 @@ export function DeveloperPortalPage() {
                         <div className="dev-resource-card__info">
                           <div className="dev-resource-card__title">{key.label}</div>
                           <div className="dev-resource-card__meta">
-                            <code>{key.prefix}***</code> • {formatDate(key.created_at, language)}
+                            <code>{key.prefix}***</code> • {key.environment} • {formatDate(key.created_at, language)}
                           </div>
                           <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                             {key.scopes.map(s => <span key={s} className="dev-scope-pill">{s}</span>)}
@@ -579,6 +723,13 @@ export function DeveloperPortalPage() {
                   </div>
 
                   <form onSubmit={handleCreateWebhook} className="dev-card dev-form">
+                    <div className="portal-mode-tabs" role="tablist" style={{ marginBottom: "1rem" }}>
+                        {(["test", "live"] as const).map(mode => (
+                          <button key={mode} type="button" className={hookForm.environment === mode ? "is-active" : ""} onClick={() => setHookForm({ ...hookForm, environment: mode })}>
+                            {mode === 'test' ? t.common.testMode : t.common.liveMode}
+                          </button>
+                        ))}
+                    </div>
                     <div className="dev-input-group">
                       <label>{language === "ru" ? "Название" : "Label"}</label>
                       <input className="dev-input" value={hookForm.label} onChange={e => setHookForm({...hookForm, label: e.target.value})} placeholder="Production Hook" required />
@@ -598,6 +749,7 @@ export function DeveloperPortalPage() {
                         <div className="dev-resource-card__info">
                           <div className="dev-resource-card__title">{hook.label}</div>
                           <code style={{ opacity: 0.6, fontSize: "0.85rem" }}>{hook.url}</code>
+                          <div style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.25rem" }}>Environment: {hook.environment}</div>
                         </div>
                         <button className="dev-btn dev-btn--danger" onClick={() => handleDeleteWebhook(hook.id)}>{t.common.delete}</button>
                       </div>
@@ -610,6 +762,31 @@ export function DeveloperPortalPage() {
                           {copiedId === `hook-${hook.id}` ? t.common.copied : t.common.copy}
                         </button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="dev-card">
+                <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
+                  <h3>Delivery Logs</h3>
+                  <p>Recent webhook attempts, statuses, and errors.</p>
+                </div>
+                <div className="dev-resource-list">
+                  {deliveries.length === 0 ? (
+                    <div style={{ color: "var(--muted)", padding: "1rem" }}>No deliveries yet.</div>
+                  ) : deliveries.map(delivery => (
+                    <div key={delivery.id} className="dev-resource-card delivery-row">
+                      <div className="dev-resource-card__info">
+                        <div className="dev-resource-card__title">{delivery.event_type}</div>
+                        <div className="dev-resource-card__meta">
+                          {delivery.status} • {delivery.attempts}/{delivery.max_attempts} attempts • {delivery.last_http_status ?? "no status"}
+                        </div>
+                        {delivery.last_error ? <code style={{ color: "var(--danger)", fontSize: "0.78rem" }}>{delivery.last_error}</code> : null}
+                      </div>
+                      <span className={`dev-api-badge dev-api-badge--${delivery.status === "delivered" ? "done" : "post"}`}>{delivery.status}</span>
+                      <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void handleResendDelivery(delivery.id)}>
+                        {language === "ru" ? "Повторить" : "Resend"}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -627,7 +804,7 @@ export function DeveloperPortalPage() {
                   <h3>{t.billing.upgrade}</h3>
                   <div className="dev-input-group">
                     <label>Plan</label>
-                    <CustomSelect value={billingPlan} options={PLAN_OPTIONS.map(o => ({...o}))} ariaLabel="Plan" onChange={v => setBillingPlan(v as any)} />
+                    <CustomSelect value={billingPlan} options={PLAN_OPTIONS.map(o => ({...o}))} ariaLabel="Plan" onChange={v => setBillingPlan(v)} />
                   </div>
                   <div className="dev-input-group">
                     <label>Network</label>

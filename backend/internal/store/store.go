@@ -23,9 +23,9 @@ type Store struct {
 	pool *pgxpool.Pool
 }
 
-const sellerSelectColumns = `
+const workspaceSelectColumns = `
 	id,
-	telegram_id,
+	owner_telegram_id,
 	COALESCE(username, ''),
 	COALESCE(email, ''),
 	default_network,
@@ -40,7 +40,7 @@ const sellerSelectColumns = `
 const invoiceSelectColumns = `
 	id,
 	public_id,
-	seller_id,
+	workspace_id,
 	kind,
 	subscription_days,
 	plan_code,
@@ -86,99 +86,196 @@ func (s *Store) Close() {
 	s.pool.Close()
 }
 
-func (s *Store) UpsertSellerByTelegram(ctx context.Context, telegramID int64, username string) (Seller, error) {
-	row := s.pool.QueryRow(ctx, `
-		INSERT INTO sellers (telegram_id, username, telegram_linked_at)
-		VALUES ($1, NULLIF($2, ''), NOW())
+func (s *Store) GetUserByID(ctx context.Context, id int64) (User, error) {
+	var u User
+	err := s.pool.QueryRow(ctx, `
+		SELECT id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), created_at
+		FROM users
+		WHERE id = $1
+	`, id).Scan(&u.ID, &u.TelegramID, &u.Username, &u.Email, &u.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return User{}, ErrNotFound
+	}
+	return u, err
+}
+
+func (s *Store) GetUserByTelegramID(ctx context.Context, telegramID int64) (User, error) {
+	var u User
+	err := s.pool.QueryRow(ctx, `
+		SELECT id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), created_at
+		FROM users
+		WHERE telegram_id = $1
+	`, telegramID).Scan(&u.ID, &u.TelegramID, &u.Username, &u.Email, &u.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return User{}, ErrNotFound
+	}
+	return u, err
+}
+
+func (s *Store) UpsertUser(ctx context.Context, telegramID int64, username string, email string) (User, error) {
+	var u User
+	err := s.pool.QueryRow(ctx, `
+		INSERT INTO users (telegram_id, username, email)
+		VALUES ($1, NULLIF($2, ''), NULLIF($3, ''))
 		ON CONFLICT (telegram_id)
 		DO UPDATE SET
-			username = COALESCE(NULLIF(EXCLUDED.username, ''), sellers.username),
-			telegram_linked_at = COALESCE(sellers.telegram_linked_at, NOW())
-		RETURNING `+sellerSelectColumns+`
+			username = COALESCE(NULLIF(EXCLUDED.username, ''), users.username),
+			email = COALESCE(NULLIF(EXCLUDED.email, ''), users.email)
+		RETURNING id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), created_at
+	`, telegramID, username, email).Scan(&u.ID, &u.TelegramID, &u.Username, &u.Email, &u.CreatedAt)
+	return u, err
+}
+
+func (s *Store) ListWorkspacesForUser(ctx context.Context, userID int64) ([]Workspace, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT `+strings.ReplaceAll(workspaceSelectColumns, "id,", "w.id,")+`
+		FROM workspaces w
+		JOIN workspace_members wm ON w.id = wm.workspace_id
+		WHERE wm.user_id = $1
+		ORDER BY w.created_at ASC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var workspaces []Workspace
+	for rows.Next() {
+		w, err := scanWorkspace(rows)
+		if err != nil {
+			return nil, err
+		}
+		workspaces = append(workspaces, w)
+	}
+	return workspaces, nil
+}
+
+func (s *Store) AddWorkspaceMember(ctx context.Context, workspaceID, userID int64, role MemberRole) error {
+	_, err := s.pool.Exec(ctx, `
+		INSERT INTO workspace_members (workspace_id, user_id, role)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (workspace_id, user_id) DO UPDATE SET role = EXCLUDED.role
+	`, workspaceID, userID, role)
+	return err
+}
+
+func (s *Store) UpsertWorkspaceByTelegram(ctx context.Context, telegramID int64, username string) (Workspace, error) {
+	// 1. Upsert user
+	user, err := s.UpsertUser(ctx, telegramID, username, "")
+	if err != nil {
+		return Workspace{}, fmt.Errorf("upsert user: %w", err)
+	}
+
+	// 2. Find existing workspace owned by this telegram ID
+	w, err := s.GetWorkspaceByTelegramID(ctx, telegramID)
+	if err == nil {
+		// Ensure user is member
+		_ = s.AddWorkspaceMember(ctx, w.ID, user.ID, RoleOwner)
+		return w, nil
+	}
+	if !errors.Is(err, ErrNotFound) {
+		return Workspace{}, err
+	}
+
+	// 3. Create a default workspace if not found
+	row := s.pool.QueryRow(ctx, `
+		INSERT INTO workspaces (owner_telegram_id, username, telegram_linked_at)
+		VALUES ($1, NULLIF($2, ''), NOW())
+		RETURNING `+workspaceSelectColumns+`
 	`, telegramID, username)
+	w, err = scanWorkspace(row)
+	if err != nil {
+		return Workspace{}, err
+	}
 
-	return scanSeller(row)
+	// 4. Add them as an owner in workspace_members
+	err = s.AddWorkspaceMember(ctx, w.ID, user.ID, RoleOwner)
+	if err != nil {
+		return Workspace{}, err
+	}
+
+	return w, nil
 }
 
-func (s *Store) GetSellerByID(ctx context.Context, sellerID int64) (Seller, error) {
+func (s *Store) GetWorkspaceByID(ctx context.Context, workspaceID int64) (Workspace, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT `+sellerSelectColumns+`
-		FROM sellers
+		SELECT `+workspaceSelectColumns+`
+		FROM workspaces
 		WHERE id = $1
-	`, sellerID)
-	return scanSeller(row)
+	`, workspaceID)
+	return scanWorkspace(row)
 }
 
-func (s *Store) GetSellerByTelegramID(ctx context.Context, telegramID int64) (Seller, error) {
+func (s *Store) GetWorkspaceByTelegramID(ctx context.Context, telegramID int64) (Workspace, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT `+sellerSelectColumns+`
-		FROM sellers
-		WHERE telegram_id = $1
+		SELECT `+workspaceSelectColumns+`
+		FROM workspaces
+		WHERE owner_telegram_id = $1
 	`, telegramID)
-	return scanSeller(row)
+	return scanWorkspace(row)
 }
 
-func (s *Store) GetSellerByUsername(ctx context.Context, username string) (Seller, error) {
+func (s *Store) GetWorkspaceByUsername(ctx context.Context, username string) (Workspace, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT `+sellerSelectColumns+`
-		FROM sellers
+		SELECT `+workspaceSelectColumns+`
+		FROM workspaces
 		WHERE LOWER(username) = LOWER($1)
 	`, username)
-	return scanSeller(row)
+	return scanWorkspace(row)
 }
 
-func (s *Store) GrantPRO(ctx context.Context, sellerID int64, days int) (Seller, error) {
+func (s *Store) GrantPRO(ctx context.Context, workspaceID int64, days int) (Workspace, error) {
 	if days <= 0 {
 		days = 30
 	}
 
 	row := s.pool.QueryRow(ctx, `
-		UPDATE sellers
-		SET plan_code = 'pro',
+		UPDATE workspaces
+		SET plan_code = 'merchant',
 		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + make_interval(days => $2)
 		WHERE id = $1
-		RETURNING `+sellerSelectColumns+`
-	`, sellerID, days)
-	seller, err := scanSeller(row)
+		RETURNING `+workspaceSelectColumns+`
+	`, workspaceID, days)
+	workspace, err := scanWorkspace(row)
 	if err != nil {
-		return Seller{}, err
+		return Workspace{}, err
 	}
-	metrics.IncResourceOperation("seller_subscription", "grant_pro", "success")
-	return seller, nil
+	metrics.IncResourceOperation("workspace_subscription", "grant_pro", "success")
+	return workspace, nil
 }
 
-func (s *Store) SetSellerBlocked(ctx context.Context, sellerID int64, blocked bool) (Seller, error) {
+func (s *Store) SetWorkspaceBlocked(ctx context.Context, workspaceID int64, blocked bool) (Workspace, error) {
 	row := s.pool.QueryRow(ctx, `
-		UPDATE sellers
+		UPDATE workspaces
 		SET is_blocked = $2
 		WHERE id = $1
-		RETURNING `+sellerSelectColumns+`
-	`, sellerID, blocked)
-	seller, err := scanSeller(row)
+		RETURNING `+workspaceSelectColumns+`
+	`, workspaceID, blocked)
+	workspace, err := scanWorkspace(row)
 	if err != nil {
-		return Seller{}, err
+		return Workspace{}, err
 	}
-	metrics.IncResourceOperation("seller", "set_blocked", "success")
-	return seller, nil
+	metrics.IncResourceOperation("workspace", "set_blocked", "success")
+	return workspace, nil
 }
 
-func (s *Store) UpdateSellerEmail(ctx context.Context, sellerID int64, email string) (Seller, error) {
+func (s *Store) UpdateWorkspaceEmail(ctx context.Context, workspaceID int64, email string) (Workspace, error) {
 	row := s.pool.QueryRow(ctx, `
-		UPDATE sellers
+		UPDATE workspaces
 		SET email = NULLIF($2, '')
 		WHERE id = $1
-		RETURNING `+sellerSelectColumns+`
-	`, sellerID, email)
-	seller, err := scanSeller(row)
+		RETURNING `+workspaceSelectColumns+`
+	`, workspaceID, email)
+	workspace, err := scanWorkspace(row)
 	if err != nil {
-		metrics.IncResourceOperation("seller_email", "update", "failure")
-		return Seller{}, err
+		metrics.IncResourceOperation("workspace_email", "update", "failure")
+		return Workspace{}, err
 	}
-	metrics.IncResourceOperation("seller_email", "update", "success")
-	return seller, nil
+	metrics.IncResourceOperation("workspace_email", "update", "success")
+	return workspace, nil
 }
 
-func (s *Store) StoreTelegramAuthCode(ctx context.Context, sellerID int64, codeHash string, expiresAt time.Time) error {
+func (s *Store) StoreTelegramAuthCode(ctx context.Context, workspaceID int64, codeHash string, expiresAt time.Time) error {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("begin store telegram auth code tx: %w", err)
@@ -188,16 +285,16 @@ func (s *Store) StoreTelegramAuthCode(ctx context.Context, sellerID int64, codeH
 	if _, err := tx.Exec(ctx, `
 		UPDATE telegram_auth_codes
 		SET consumed_at = NOW()
-		WHERE seller_id = $1
+		WHERE workspace_id = $1
 		  AND consumed_at IS NULL
-	`, sellerID); err != nil {
+	`, workspaceID); err != nil {
 		return fmt.Errorf("expire active telegram auth codes: %w", err)
 	}
 
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO telegram_auth_codes (seller_id, code_hash, expires_at)
+		INSERT INTO telegram_auth_codes (workspace_id, code_hash, expires_at)
 		VALUES ($1, $2, $3)
-	`, sellerID, codeHash, expiresAt); err != nil {
+	`, workspaceID, codeHash, expiresAt); err != nil {
 		return fmt.Errorf("insert telegram auth code: %w", err)
 	}
 
@@ -207,7 +304,7 @@ func (s *Store) StoreTelegramAuthCode(ctx context.Context, sellerID int64, codeH
 	return nil
 }
 
-func (s *Store) ConsumeTelegramAuthCode(ctx context.Context, sellerID int64, codeHash string) error {
+func (s *Store) ConsumeTelegramAuthCode(ctx context.Context, workspaceID int64, codeHash string) error {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("begin consume telegram auth code tx: %w", err)
@@ -221,7 +318,7 @@ func (s *Store) ConsumeTelegramAuthCode(ctx context.Context, sellerID int64, cod
 		WHERE id = (
 			SELECT id
 			FROM telegram_auth_codes
-			WHERE seller_id = $1
+			WHERE workspace_id = $1
 			  AND code_hash = $2
 			  AND consumed_at IS NULL
 			  AND expires_at > NOW()
@@ -230,7 +327,7 @@ func (s *Store) ConsumeTelegramAuthCode(ctx context.Context, sellerID int64, cod
 			FOR UPDATE
 		)
 		RETURNING id
-	`, sellerID, codeHash)
+	`, workspaceID, codeHash)
 	if err := row.Scan(&id); errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	} else if err != nil {
@@ -243,14 +340,14 @@ func (s *Store) ConsumeTelegramAuthCode(ctx context.Context, sellerID int64, cod
 	return nil
 }
 
-func (s *Store) ListWallets(ctx context.Context, sellerID int64) ([]Wallet, error) {
+func (s *Store) ListWallets(ctx context.Context, workspaceID int64) ([]Wallet, error) {
 	wallets := make([]Wallet, 0)
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, seller_id, network, address, is_active, created_at
+		SELECT id, workspace_id, network, address, is_active, created_at
 		FROM wallets
-		WHERE seller_id = $1 AND is_active = TRUE
+		WHERE workspace_id = $1 AND is_active = TRUE
 		ORDER BY created_at DESC
-	`, sellerID)
+	`, workspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("list wallets: %w", err)
 	}
@@ -266,14 +363,14 @@ func (s *Store) ListWallets(ctx context.Context, sellerID int64) ([]Wallet, erro
 	return wallets, rows.Err()
 }
 
-func (s *Store) CreateWallet(ctx context.Context, sellerID int64, network Network, address string) (Wallet, error) {
+func (s *Store) CreateWallet(ctx context.Context, workspaceID int64, network Network, address string) (Wallet, error) {
 	row := s.pool.QueryRow(ctx, `
-		INSERT INTO wallets (seller_id, network, address, is_active)
+		INSERT INTO wallets (workspace_id, network, address, is_active)
 		VALUES ($1, $2, $3, TRUE)
-		ON CONFLICT (seller_id, network, address)
+		ON CONFLICT (workspace_id, network, address)
 		DO UPDATE SET is_active = TRUE
-		RETURNING id, seller_id, network, address, is_active, created_at
-	`, sellerID, network, address)
+		RETURNING id, workspace_id, network, address, is_active, created_at
+	`, workspaceID, network, address)
 	wallet, err := scanWallet(row)
 	if err != nil {
 		metrics.IncResourceOperation("wallet", "create", "failure")
@@ -283,12 +380,12 @@ func (s *Store) CreateWallet(ctx context.Context, sellerID int64, network Networ
 	return wallet, nil
 }
 
-func (s *Store) DeactivateWallet(ctx context.Context, sellerID int64, walletID int64) error {
+func (s *Store) DeactivateWallet(ctx context.Context, workspaceID int64, walletID int64) error {
 	tag, err := s.pool.Exec(ctx, `
 		UPDATE wallets
 		SET is_active = FALSE
-		WHERE id = $1 AND seller_id = $2
-	`, walletID, sellerID)
+		WHERE id = $1 AND workspace_id = $2
+	`, walletID, workspaceID)
 	if err != nil {
 		metrics.IncResourceOperation("wallet", "deactivate", "failure")
 		return fmt.Errorf("deactivate wallet: %w", err)
@@ -301,29 +398,29 @@ func (s *Store) DeactivateWallet(ctx context.Context, sellerID int64, walletID i
 	return nil
 }
 
-func (s *Store) GetActiveWalletForNetwork(ctx context.Context, sellerID int64, network Network) (Wallet, error) {
+func (s *Store) GetActiveWalletForNetwork(ctx context.Context, workspaceID int64, network Network) (Wallet, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, seller_id, network, address, is_active, created_at
+		SELECT id, workspace_id, network, address, is_active, created_at
 		FROM wallets
-		WHERE seller_id = $1 AND network = $2 AND is_active = TRUE
+		WHERE workspace_id = $1 AND network = $2 AND is_active = TRUE
 		ORDER BY created_at DESC
 		LIMIT 1
-	`, sellerID, network)
+	`, workspaceID, network)
 	return scanWallet(row)
 }
 
-func (s *Store) GetWalletByID(ctx context.Context, sellerID int64, walletID int64) (Wallet, error) {
+func (s *Store) GetWalletByID(ctx context.Context, workspaceID int64, walletID int64) (Wallet, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, seller_id, network, address, is_active, created_at
+		SELECT id, workspace_id, network, address, is_active, created_at
 		FROM wallets
-		WHERE id = $1 AND seller_id = $2 AND is_active = TRUE
-	`, walletID, sellerID)
+		WHERE id = $1 AND workspace_id = $2 AND is_active = TRUE
+	`, walletID, workspaceID)
 	return scanWallet(row)
 }
 
-func (s *Store) CountInvoicesCreated(ctx context.Context, sellerID int64) (int, error) {
+func (s *Store) CountInvoicesCreated(ctx context.Context, workspaceID int64) (int, error) {
 	var count int
-	err := s.pool.QueryRow(ctx, `SELECT COUNT(1) FROM invoices WHERE seller_id = $1`, sellerID).Scan(&count)
+	err := s.pool.QueryRow(ctx, `SELECT COUNT(1) FROM invoices WHERE workspace_id = $1`, workspaceID).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("count invoices: %w", err)
 	}
@@ -368,7 +465,7 @@ func (s *Store) SuffixRecentlyUsed(ctx context.Context, address string, network 
 
 type CreateInvoiceParams struct {
 	PublicID           string
-	SellerID           int64
+	WorkspaceID           int64
 	Kind               InvoiceKind
 	SubscriptionDays   int
 	PlanCode           PlanCode
@@ -398,7 +495,7 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 	row := tx.QueryRow(ctx, `
 		INSERT INTO invoices (
 			public_id,
-			seller_id,
+			workspace_id,
 			kind,
 			subscription_days,
 			plan_code,
@@ -415,7 +512,7 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'awaiting_payment', $13, $14)
 		RETURNING `+invoiceSelectColumns+`
-	`, params.PublicID, params.SellerID, params.Kind, params.SubscriptionDays, params.PlanCode, params.Title, params.BaseAmountUSD, params.PayableAmount, params.PayableNetwork,
+	`, params.PublicID, params.WorkspaceID, params.Kind, params.SubscriptionDays, params.PlanCode, params.Title, params.BaseAmountUSD, params.PayableAmount, params.PayableNetwork,
 		params.DestinationAddress, params.PaymentComment, params.MatchingSuffix, params.ExpiresAt, params.Mode)
 	invoice, err = scanInvoice(row)
 	if err != nil {
@@ -424,10 +521,10 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 
 	if params.CountTowardsTrial {
 		if _, err := tx.Exec(ctx, `
-			UPDATE sellers
+			UPDATE workspaces
 			SET free_invoices_used = free_invoices_used + 1
 			WHERE id = $1
-		`, params.SellerID); err != nil {
+		`, params.WorkspaceID); err != nil {
 			return Invoice{}, fmt.Errorf("increment free_invoices_used: %w", err)
 		}
 	}
@@ -439,15 +536,15 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 	return invoice, nil
 }
 
-func (s *Store) ListInvoices(ctx context.Context, sellerID int64, limit int, offset int) ([]Invoice, error) {
+func (s *Store) ListInvoices(ctx context.Context, workspaceID int64, limit int, offset int) ([]Invoice, error) {
 	invoices := make([]Invoice, 0)
 	rows, err := s.pool.Query(ctx, `
 		SELECT `+invoiceSelectColumns+`
 		FROM invoices
-		WHERE seller_id = $1
+		WHERE workspace_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3
-	`, sellerID, limit, offset)
+	`, workspaceID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list invoices: %w", err)
 	}
@@ -463,12 +560,12 @@ func (s *Store) ListInvoices(ctx context.Context, sellerID int64, limit int, off
 	return invoices, rows.Err()
 }
 
-func (s *Store) GetInvoiceByID(ctx context.Context, sellerID int64, invoiceID int64) (Invoice, error) {
+func (s *Store) GetInvoiceByID(ctx context.Context, workspaceID int64, invoiceID int64) (Invoice, error) {
 	row := s.pool.QueryRow(ctx, `
 		SELECT `+invoiceSelectColumns+`
 		FROM invoices
-		WHERE id = $1 AND seller_id = $2
-	`, invoiceID, sellerID)
+		WHERE id = $1 AND workspace_id = $2
+	`, invoiceID, workspaceID)
 	return scanInvoice(row)
 }
 
@@ -481,13 +578,13 @@ func (s *Store) GetInvoiceByPublicID(ctx context.Context, publicID string) (Invo
 	return scanInvoice(row)
 }
 
-func (s *Store) SetInvoiceStatus(ctx context.Context, sellerID int64, invoiceID int64, status InvoiceStatus) (Invoice, error) {
+func (s *Store) SetInvoiceStatus(ctx context.Context, workspaceID int64, invoiceID int64, status InvoiceStatus) (Invoice, error) {
 	row := s.pool.QueryRow(ctx, `
 		UPDATE invoices
 		SET status = $1
-		WHERE id = $2 AND seller_id = $3
+		WHERE id = $2 AND workspace_id = $3
 		RETURNING `+invoiceSelectColumns+`
-	`, status, invoiceID, sellerID)
+	`, status, invoiceID, workspaceID)
 	invoice, err := scanInvoice(row)
 	if err != nil {
 		return Invoice{}, err
@@ -496,7 +593,7 @@ func (s *Store) SetInvoiceStatus(ctx context.Context, sellerID int64, invoiceID 
 	return invoice, nil
 }
 
-func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoiceID int64) (Invoice, error) {
+func (s *Store) MarkInvoicePaidManual(ctx context.Context, workspaceID int64, invoiceID int64) (Invoice, error) {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return Invoice{}, fmt.Errorf("begin manual mark paid tx: %w", err)
@@ -507,9 +604,9 @@ func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoi
 	if err := tx.QueryRow(ctx, `
 		SELECT status
 		FROM invoices
-		WHERE id = $1 AND seller_id = $2
+		WHERE id = $1 AND workspace_id = $2
 		FOR UPDATE
-	`, invoiceID, sellerID).Scan(&previousStatus); err != nil {
+	`, invoiceID, workspaceID).Scan(&previousStatus); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Invoice{}, ErrNotFound
 		}
@@ -523,9 +620,9 @@ func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoi
 		    received_amount = GREATEST(received_amount, payable_amount),
 		    finalized_at = COALESCE(finalized_at, NOW()),
 		    review_reason = NULL
-		WHERE id = $1 AND seller_id = $2
+		WHERE id = $1 AND workspace_id = $2
 		RETURNING `+invoiceSelectColumns+`
-	`, invoiceID, sellerID)
+	`, invoiceID, workspaceID)
 	invoice, err := scanInvoice(row)
 	if err != nil {
 		return Invoice{}, err
@@ -533,7 +630,7 @@ func (s *Store) MarkInvoicePaidManual(ctx context.Context, sellerID int64, invoi
 	if err := applyInvoicePostPaymentEffects(ctx, tx, invoice); err != nil {
 		return Invoice{}, err
 	}
-	transitionID, err := insertInvoiceTransitionTx(ctx, tx, invoice, previousStatus, invoice.Status, "manual_mark_paid", 0, invoice.PayableAmount, invoice.PayableAmount, "seller", fmt.Sprintf("%d", sellerID))
+	transitionID, err := insertInvoiceTransitionTx(ctx, tx, invoice, previousStatus, invoice.Status, "manual_mark_paid", 0, invoice.PayableAmount, invoice.PayableAmount, "workspace", fmt.Sprintf("%d", workspaceID))
 	if err != nil {
 		return Invoice{}, err
 	}
@@ -731,8 +828,8 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, pre
 	}
 
 	var telegramID sql.NullInt64
-	if err := tx.QueryRow(ctx, `SELECT telegram_id FROM sellers WHERE id = $1`, invoice.SellerID).Scan(&telegramID); err != nil {
-		return Invoice{}, fmt.Errorf("load seller telegram id: %w", err)
+	if err := tx.QueryRow(ctx, `SELECT owner_telegram_id FROM workspaces WHERE id = $1`, invoice.WorkspaceID).Scan(&telegramID); err != nil {
+		return Invoice{}, fmt.Errorf("load workspace telegram id: %w", err)
 	}
 
 	shouldNotify := previousStatus != invoice.Status || invoice.Status == InvoiceStatusUnderpaid
@@ -740,10 +837,10 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, pre
 		message := buildInvoiceNotificationMessage(invoice, classification, observedAmount)
 		payload := buildInvoiceNotificationPayload(invoice, classification)
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO notification_outbox (seller_id, recipient_telegram_id, message, payload)
+			INSERT INTO notification_outbox (workspace_id, recipient_telegram_id, message, payload)
 			VALUES ($1, $2, $3, $4)
-		`, invoice.SellerID, telegramID.Int64, message, payload); err != nil {
-			return Invoice{}, fmt.Errorf("queue seller notification: %w", err)
+		`, invoice.WorkspaceID, telegramID.Int64, message, payload); err != nil {
+			return Invoice{}, fmt.Errorf("queue workspace notification: %w", err)
 		}
 	}
 
@@ -803,7 +900,7 @@ func (s *Store) ClaimNotificationJobs(ctx context.Context, limit int) ([]Notific
 	defer tx.Rollback(ctx)
 
 	rows, err := tx.Query(ctx, `
-		SELECT id, seller_id, recipient_telegram_id, message, payload, attempts
+		SELECT id, workspace_id, recipient_telegram_id, message, payload, attempts
 		FROM notification_outbox
 		WHERE status IN ('pending', 'failed')
 		  AND recipient_telegram_id IS NOT NULL
@@ -820,7 +917,7 @@ func (s *Store) ClaimNotificationJobs(ctx context.Context, limit int) ([]Notific
 	var jobs []NotificationJob
 	for rows.Next() {
 		var job NotificationJob
-		if err := rows.Scan(&job.ID, &job.SellerID, &job.RecipientTelegramID, &job.Message, &job.Payload, &job.Attempts); err != nil {
+		if err := rows.Scan(&job.ID, &job.WorkspaceID, &job.RecipientTelegramID, &job.Message, &job.Payload, &job.Attempts); err != nil {
 			return nil, fmt.Errorf("scan notification job: %w", err)
 		}
 		jobs = append(jobs, job)
@@ -877,38 +974,38 @@ func (s *Store) MarkNotificationFailed(ctx context.Context, id int64, message st
 	return nil
 }
 
-func scanSeller(row pgx.Row) (Seller, error) {
-	var seller Seller
+func scanWorkspace(row pgx.Row) (Workspace, error) {
+	var workspace Workspace
 	var telegramID sql.NullInt64
 	err := row.Scan(
-		&seller.ID,
+		&workspace.ID,
 		&telegramID,
-		&seller.Username,
-		&seller.Email,
-		&seller.DefaultNetwork,
-		&seller.PlanCode,
-		&seller.SubscriptionEndsAt,
-		&seller.FreeInvoicesUsed,
-		&seller.IsBlocked,
-		&seller.TelegramLinkedAt,
-		&seller.CreatedAt,
+		&workspace.Username,
+		&workspace.Email,
+		&workspace.DefaultNetwork,
+		&workspace.PlanCode,
+		&workspace.SubscriptionEndsAt,
+		&workspace.FreeInvoicesUsed,
+		&workspace.IsBlocked,
+		&workspace.TelegramLinkedAt,
+		&workspace.CreatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return Seller{}, ErrNotFound
+		return Workspace{}, ErrNotFound
 	}
 	if err != nil {
-		return Seller{}, fmt.Errorf("scan seller: %w", err)
+		return Workspace{}, fmt.Errorf("scan workspace: %w", err)
 	}
 	if telegramID.Valid {
 		value := telegramID.Int64
-		seller.TelegramID = &value
+		workspace.OwnerTelegramID = &value
 	}
-	return seller, nil
+	return workspace, nil
 }
 
 func scanWallet(row interface{ Scan(dest ...any) error }) (Wallet, error) {
 	var wallet Wallet
-	err := row.Scan(&wallet.ID, &wallet.SellerID, &wallet.Network, &wallet.Address, &wallet.IsActive, &wallet.CreatedAt)
+	err := row.Scan(&wallet.ID, &wallet.WorkspaceID, &wallet.Network, &wallet.Address, &wallet.IsActive, &wallet.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Wallet{}, ErrNotFound
 	}
@@ -923,7 +1020,7 @@ func scanInvoice(row interface{ Scan(dest ...any) error }) (Invoice, error) {
 	err := row.Scan(
 		&invoice.ID,
 		&invoice.PublicID,
-		&invoice.SellerID,
+		&invoice.WorkspaceID,
 		&invoice.Kind,
 		&invoice.SubscriptionDays,
 		&invoice.PlanCode,
@@ -951,6 +1048,7 @@ func scanInvoice(row interface{ Scan(dest ...any) error }) (Invoice, error) {
 	if err != nil {
 		return Invoice{}, fmt.Errorf("scan invoice: %w", err)
 	}
+	invoice.Environment = Environment(invoice.Mode)
 	return invoice, nil
 }
 
@@ -982,15 +1080,15 @@ func applyInvoicePostPaymentEffects(ctx context.Context, tx pgx.Tx, invoice Invo
 	}
 	planCode := NormalizePlanCode(string(invoice.PlanCode))
 	if planCode == PlanCodeTrial {
-		planCode = PlanCodePro
+		planCode = PlanCodeMerchant
 	}
 	if _, err := tx.Exec(ctx, `
-		UPDATE sellers
+		UPDATE workspaces
 		SET plan_code = $2,
 		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + make_interval(days => $3)
 		WHERE id = $1
-	`, invoice.SellerID, planCode, invoice.SubscriptionDays); err != nil {
-		return fmt.Errorf("extend seller subscription: %w", err)
+	`, invoice.WorkspaceID, planCode, invoice.SubscriptionDays); err != nil {
+		return fmt.Errorf("extend workspace subscription: %w", err)
 	}
 	return nil
 }
@@ -1014,7 +1112,7 @@ func insertInvoiceTransitionTx(ctx context.Context, tx pgx.Tx, invoice Invoice, 
 	if err := tx.QueryRow(ctx, `
 		INSERT INTO invoice_state_transitions (
 			invoice_id,
-			seller_id,
+			workspace_id,
 			from_status,
 			to_status,
 			reason,
@@ -1026,7 +1124,7 @@ func insertInvoiceTransitionTx(ctx context.Context, tx pgx.Tx, invoice Invoice, 
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id
-	`, invoice.ID, invoice.SellerID, from, to, reason, paymentEvent, observedAmount, cumulativeAmount, actorType, actor).Scan(&id); err != nil {
+	`, invoice.ID, invoice.WorkspaceID, from, to, reason, paymentEvent, observedAmount, cumulativeAmount, actorType, actor).Scan(&id); err != nil {
 		return 0, fmt.Errorf("insert invoice transition: %w", err)
 	}
 	return id, nil
@@ -1039,7 +1137,7 @@ func buildInvoiceNotificationMessage(invoice Invoice, classification string, obs
 	if invoice.Kind == InvoiceKindSubscription && invoice.Status == InvoiceStatusPaid {
 		planCode := NormalizePlanCode(string(invoice.PlanCode))
 		if planCode == PlanCodeTrial {
-			planCode = PlanCodePro
+			planCode = PlanCodeMerchant
 		}
 		plan := ResolvePlan(planCode)
 		return fmt.Sprintf("✅ Subscription activated: %s. Received %s %s. Valid for %d days.", plan.MarketingLabel, received, invoice.PayableNetwork, invoice.SubscriptionDays)
@@ -1093,18 +1191,18 @@ func buildInvoiceNotificationPayload(invoice Invoice, classification string) jso
 }
 
 func enqueueWebhookEventsTx(ctx context.Context, tx pgx.Tx, invoice Invoice, classification string, observedAmount decimal.Decimal, transitionID int64) error {
-	var seller Seller
+	var workspace Workspace
 	row := tx.QueryRow(ctx, `
-		SELECT `+sellerSelectColumns+`
-		FROM sellers
+		SELECT `+workspaceSelectColumns+`
+		FROM workspaces
 		WHERE id = $1
-	`, invoice.SellerID)
-	seller, err := scanSeller(row)
+	`, invoice.WorkspaceID)
+	workspace, err := scanWorkspace(row)
 	if err != nil {
-		return fmt.Errorf("load seller for webhook enqueue: %w", err)
+		return fmt.Errorf("load workspace for webhook enqueue: %w", err)
 	}
 
-	plan := seller.EffectivePlan(time.Now())
+	plan := workspace.EffectivePlan(time.Now())
 	if plan.WebhookRetries <= 0 {
 		return nil
 	}
@@ -1132,7 +1230,7 @@ func enqueueWebhookEventsTx(ctx context.Context, tx pgx.Tx, invoice Invoice, cla
 		},
 		"sent_at": time.Now().UTC(),
 	})
-	if err := enqueueWebhookDeliveriesTx(ctx, tx, invoice.SellerID, eventType, payload, plan.WebhookRetries); err != nil {
+	if err := enqueueWebhookDeliveriesTx(ctx, tx, invoice.WorkspaceID, eventType, payload, plan.WebhookRetries); err != nil {
 		return fmt.Errorf("enqueue invoice webhook deliveries: %w", err)
 	}
 
@@ -1147,7 +1245,7 @@ func enqueueWebhookEventsTx(ctx context.Context, tx pgx.Tx, invoice Invoice, cla
 			"invoice_public_id": invoice.PublicID,
 			"sent_at":           time.Now().UTC(),
 		})
-		if err := enqueueWebhookDeliveriesTx(ctx, tx, invoice.SellerID, "subscription.activated", subscriptionPayload, plan.WebhookRetries); err != nil {
+		if err := enqueueWebhookDeliveriesTx(ctx, tx, invoice.WorkspaceID, "subscription.activated", subscriptionPayload, plan.WebhookRetries); err != nil {
 			return fmt.Errorf("enqueue subscription webhook deliveries: %w", err)
 		}
 	}

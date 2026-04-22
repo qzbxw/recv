@@ -17,13 +17,14 @@ import {
   fetchMe,
   fetchWallets,
   fetchWebhookEndpoints,
-  getApiBase,
   getStoredToken,
   markInvoicePaid,
   updateContactEmail,
 } from "../lib/api";
+import { formatApiError } from "../lib/errors";
 import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routing";
-import type { APIKey, Invoice, MeResponse, Network, Wallet, WebhookEndpoint, Plan } from "../lib/types";
+import { formatInvoiceStatus, getInvoiceStatusMeta, formatNetworkLabel } from "../lib/status";
+import type { APIKey, Invoice, MeResponse, Network, Wallet, WebhookEndpoint, Plan, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
 
 const BOT_URL = "https://t.me/reqstxyz_bot";
@@ -49,7 +50,7 @@ type SessionState = {
   webhooks: WebhookEndpoint[];
 };
 
-type PanelKey = "overview" | "wallets" | "invoices" | "create" | "developer" | "billing" | "settings";
+type PanelKey = "overview" | "wallets" | "invoices" | "create" | "developer" | "billing" | "settings" | "team";
 
 const COPY = {
   ru: {
@@ -59,14 +60,15 @@ const COPY = {
       invoices: "Транзакции",
       create: "Принять платёж",
       developer: "Разработчикам",
+      team: "Команда",
       billing: "Тарифы",
       settings: "Настройки",
       logout: "Выйти",
     },
     promo: {
-      title: "Разблокируйте Reqst PRO",
-      subtitle: "Получите полный доступ к API Beta, неограниченным вебхукам и приоритетному мониторингу транзакций.",
-      action: "Перейти на PRO",
+      title: "Разблокируйте Reqst Developer",
+      subtitle: "Получите доступ к API, вебхукам и расширенным лимитам для вашего бизнеса.",
+      action: "Перейти на Developer",
     },
     overview: {
       welcome: "Добро пожаловать,",
@@ -118,8 +120,8 @@ const COPY = {
     },
     developer: {
       title: "Инструменты разработчика",
-      subtitle: "API Beta ключи и вебхуки для автоматизации вашего бизнеса.",
-      keysTitle: "API Beta Ключи",
+      subtitle: "API ключи и вебхуки для автоматизации вашего бизнеса.",
+      keysTitle: "API Ключи",
       keysSubtitle: "Используйте эти ключи для аутентификации запросов к нашему API.",
       addKey: "Создать ключ",
       keyLabel: "Название ключа",
@@ -129,6 +131,15 @@ const COPY = {
       hookUrl: "URL эндпоинта",
       hookSecret: "Секрет подписи",
       warning: "Секретный ключ отображается только один раз!",
+      locked: "API и вебхуки доступны на тарифе Developer и выше.",
+    },
+    team: {
+      title: "Команда",
+      subtitle: "Управление доступом к вашему воркспейсу.",
+      empty: "В вашей команде пока только вы.",
+      add: "Пригласить участника",
+      role: "Роль",
+      name: "Имя",
     },
     billing: {
       title: "Тарифные планы",
@@ -155,6 +166,8 @@ const COPY = {
       loading: "Загрузка...",
       error: "Ошибка",
       cancel: "Отмена",
+      testMode: "Тестовый режим",
+      liveMode: "Рабочий режим",
     }
   },
   en: {
@@ -164,14 +177,15 @@ const COPY = {
       invoices: "Transactions",
       create: "Accept Payment",
       developer: "Developers",
+      team: "Team",
       billing: "Billing",
       settings: "Settings",
       logout: "Logout",
     },
     promo: {
-      title: "Unlock Reqst PRO",
-      subtitle: "Get full API Beta access, unlimited webhooks, and priority blockchain monitoring for your business.",
-      action: "Upgrade to PRO",
+      title: "Unlock Reqst Developer",
+      subtitle: "Get API access, webhooks, and higher limits for your business.",
+      action: "Upgrade to Developer",
     },
     overview: {
       welcome: "Welcome back,",
@@ -223,8 +237,8 @@ const COPY = {
     },
     developer: {
       title: "Developer Tools",
-      subtitle: "API Beta Keys and Webhooks to automate your business workflow.",
-      keysTitle: "API Beta Keys",
+      subtitle: "API Keys and Webhooks to automate your business workflow.",
+      keysTitle: "API Keys",
       keysSubtitle: "Use these keys to authenticate your requests to our API.",
       addKey: "Create Key",
       keyLabel: "Key Label",
@@ -234,6 +248,15 @@ const COPY = {
       hookUrl: "Endpoint URL",
       hookSecret: "Signing Secret",
       warning: "The secret key is shown only once!",
+      locked: "API and Webhooks are available on Developer plan and higher.",
+    },
+    team: {
+      title: "Team Management",
+      subtitle: "Manage access to your workspace.",
+      empty: "You are the only member of this workspace.",
+      add: "Invite Member",
+      role: "Role",
+      name: "Name",
     },
     billing: {
       title: "Subscription Plans",
@@ -260,26 +283,9 @@ const COPY = {
       loading: "Loading...",
       error: "Error",
       cancel: "Cancel",
+      testMode: "Test Mode",
+      liveMode: "Live Mode",
     }
-  },
-} as const;
-
-const STATUS_LABELS = {
-  ru: {
-    awaiting_payment: "Ожидание",
-    paid: "Оплачен",
-    expired: "Истек",
-    underpaid: "Недоплата",
-    manual_review: "Проверка",
-    draft: "Черновик",
-  },
-  en: {
-    awaiting_payment: "Awaiting",
-    paid: "Paid",
-    expired: "Expired",
-    underpaid: "Underpaid",
-    manual_review: "Review",
-    draft: "Draft",
   },
 } as const;
 
@@ -310,6 +316,10 @@ function LiveValue({ value }: { value: string | number }) {
   return <span className={animate ? "live-value is-updating" : "live-value"}>{value}</span>;
 }
 
+function walletBucket(network: Network) {
+  return network === "BASE" || network === "ARBITRUM" || network === "BSC" ? "EVM" : network === "TON_USDT" ? "TON" : network;
+}
+
 export function SellerConsolePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -321,6 +331,7 @@ export function SellerConsolePage() {
   const [activePanel, setActivePanel] = useState<PanelKey>("overview");
   const [copiedId, setCopiedId] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [environment, setEnvironment] = useState<Environment>("live");
 
   // Form States
   const [walletForm, setWalletForm] = useState<{ network: Network; address: string }>({ network: "TON", address: "" });
@@ -328,9 +339,11 @@ export function SellerConsolePage() {
   const [keyForm, setKeyForm] = useState({ label: "" });
   const [hookForm, setHookForm] = useState({ label: "", url: "" });
   const [latestKeySecret, setLatestKeySecret] = useState("");
-  const [billingForm, setBillingForm] = useState<{ plan: string; network: Network }>({ plan: "pro", network: "TRON" });
+  const [billingForm, setBillingForm] = useState<{ plan: string; network: Network }>({ plan: "merchant", network: "TRON" });
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [emailForm, setEmailForm] = useState("");
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
+  const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
 
   useEffect(() => {
     const token = getStoredToken();
@@ -343,6 +356,16 @@ export function SellerConsolePage() {
     const interval = setInterval(() => void loadSession(session.token, { silent: true }), 20000);
     return () => clearInterval(interval);
   }, [session?.token]);
+
+  useEffect(() => {
+    if (!session || session.wallets.length === 0) return;
+    const currentBucket = walletBucket(invoiceForm.network);
+    if (session.wallets.some(wallet => wallet.is_active && wallet.network === currentBucket)) return;
+    const firstWallet = session.wallets.find(wallet => wallet.is_active);
+    if (firstWallet) {
+      setInvoiceForm(current => ({ ...current, network: firstWallet.network }));
+    }
+  }, [invoiceForm.network, session]);
 
   async function loadSession(token: string, options?: { silent?: boolean }) {
     try {
@@ -362,7 +385,7 @@ export function SellerConsolePage() {
         apiKeys: keys.items ?? [],
         webhooks: hooks.items ?? [],
       });
-      setEmailForm(me.seller.email || "");
+      setEmailForm(me.workspace.email || "");
     } catch (err) {
       if (!options?.silent) {
         clearStoredToken();
@@ -388,21 +411,11 @@ export function SellerConsolePage() {
   async function onAddWallet(e: FormEvent) {
     e.preventDefault();
     if (!session) return;
-
-    // Check if wallet for this network already exists
-    const exists = session.wallets.find(w => w.network === walletForm.network);
-    if (exists) {
-      setError(language === 'ru' 
-        ? `Кошелек для сети ${walletForm.network} уже добавлен. Удалите старый, чтобы добавить новый.` 
-        : `Wallet for ${walletForm.network} already exists. Remove the old one first.`);
-      return;
-    }
-
     try {
-      await createWallet(session.token, walletForm);
+      await createWallet(session.token, { ...walletForm, environment });
       setWalletForm({ network: "TON", address: "" });
       void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
 
   async function onDeleteWallet(id: number) {
@@ -410,22 +423,30 @@ export function SellerConsolePage() {
     try {
       await deleteWallet(session.token, id);
       void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
 
   async function onCreateInvoice(e: FormEvent) {
     e.preventDefault();
     if (!session) return;
+    if (isCreatingInvoice) return;
+    setIsCreatingInvoice(true);
+    setCreatedInvoice(null);
     try {
-      await createInvoice(session.token, {
+      const invoice = await createInvoice(session.token, {
         title: invoiceForm.title,
         base_amount_usd: invoiceForm.amount,
         payable_network: invoiceForm.network,
         expires_in_minutes: invoiceForm.ttl,
+        environment,
       });
-      setActivePanel("invoices");
-      void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+      setCreatedInvoice(invoice);
+      await loadSession(session.token, { silent: true });
+    } catch (err) {
+      setError(formatApiError(err));
+    } finally {
+      setIsCreatingInvoice(false);
+    }
   }
 
   async function onInvoiceAction(id: number, action: "cancel" | "mark_paid") {
@@ -434,18 +455,18 @@ export function SellerConsolePage() {
       if (action === "mark_paid") await markInvoicePaid(session.token, id);
       else await cancelInvoice(session.token, id);
       void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
 
   async function onCreateKey(e: FormEvent) {
     e.preventDefault();
     if (!session) return;
     try {
-      const res = await createAPIKey(session.token, { label: keyForm.label, scopes: ["invoices:read", "invoices:write"] });
+      const res = await createAPIKey(session.token, { label: keyForm.label, scopes: ["invoices:read", "invoices:write"], environment });
       setLatestKeySecret(res.secret);
       setKeyForm({ label: "" });
       void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
 
   async function onDeleteKey(id: number) {
@@ -453,17 +474,17 @@ export function SellerConsolePage() {
     try {
       await deleteAPIKey(session.token, id);
       void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
 
   async function onCreateHook(e: FormEvent) {
     e.preventDefault();
     if (!session) return;
     try {
-      await createWebhookEndpoint(session.token, hookForm);
+      await createWebhookEndpoint(session.token, { ...hookForm, environment });
       setHookForm({ label: "", url: "" });
       void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
 
   async function onDeleteHook(id: number) {
@@ -471,7 +492,7 @@ export function SellerConsolePage() {
     try {
       await deleteWebhookEndpoint(session.token, id);
       void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
 
   async function onUpdateEmail(e: FormEvent) {
@@ -480,7 +501,7 @@ export function SellerConsolePage() {
     try {
       await updateContactEmail(session.token, { email: emailForm });
       void loadSession(session.token, { silent: true });
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
 
   async function onUpgrade() {
@@ -491,8 +512,13 @@ export function SellerConsolePage() {
         plan_code: billingForm.plan,
       });
       setCheckoutUrl(buildCheckoutUrl(inv.public_id));
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError(formatApiError(err)); }
   }
+
+  const filteredInvoices = useMemo(() => session?.invoices.filter(inv => inv.environment === environment) ?? [], [session, environment]);
+  const filteredWallets = useMemo(() => session?.wallets.filter(w => w.environment === environment) ?? [], [session, environment]);
+  const filteredKeys = useMemo(() => session?.apiKeys.filter(k => k.environment === environment) ?? [], [session, environment]);
+  const filteredHooks = useMemo(() => session?.webhooks.filter(h => h.environment === environment) ?? [], [session, environment]);
 
   const navItems: Array<{ key: PanelKey; label: string }> = [
     { key: "overview", label: t.nav.overview },
@@ -500,6 +526,7 @@ export function SellerConsolePage() {
     { key: "invoices", label: t.nav.invoices },
     { key: "create", label: t.nav.create },
     { key: "developer", label: t.nav.developer },
+    { key: "team", label: t.nav.team },
     { key: "billing", label: t.nav.billing },
     { key: "settings", label: t.nav.settings },
   ];
@@ -517,8 +544,14 @@ export function SellerConsolePage() {
 
   if (!session) return null;
 
-  const sellerName = session.me.seller.username || `#${session.me.seller.telegram_id}`;
-  const activeWalletsCount = session.wallets.filter(w => w.is_active).length;
+  const workspaceName = session.me.workspace.username || `#${session.me.workspace.id}`;
+  const activeWalletsCount = filteredWallets.filter(w => w.is_active).length;
+  const walletNetworks = new Set(filteredWallets.filter(w => w.is_active).map(w => w.network));
+  const payableNetworkOptions = PAYABLE_NETWORK_OPTIONS.map(option => ({
+    ...option,
+    disabled: !walletNetworks.has(walletBucket(option.value)),
+    hint: walletNetworks.has(walletBucket(option.value)) ? (language === "ru" ? "Кошелек добавлен" : "Wallet ready") : (language === "ru" ? "Сначала добавьте кошелек" : "Add wallet first"),
+  }));
 
   const handleNavClick = (key: PanelKey) => {
     setActivePanel(key);
@@ -537,7 +570,17 @@ export function SellerConsolePage() {
         <header className="dev-portal__topbar portal-animate-in">
           <Link className="dev-portal__brand" to="/" onClick={() => setIsMobileMenuOpen(false)}>reqst</Link>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <div className="dev-portal__nav-link dev-portal__seller-badge" style={{ padding: "0.4rem 0.8rem", cursor: "default" }}>{sellerName}</div>
+            <div className="env-toggle">
+              <button className={`env-toggle__btn ${environment === 'live' ? 'is-active' : ''}`} onClick={() => setEnvironment('live')}>{t.common.liveMode}</button>
+              <button className={`env-toggle__btn ${environment === 'test' ? 'is-active' : ''}`} onClick={() => setEnvironment('test')}>{t.common.testMode}</button>
+            </div>
+            {session.me.workspaces.length > 1 && (
+              <div className="workspace-switcher">
+                {/* Simplified switcher for now */}
+                <span className="dev-portal__nav-link dev-portal__seller-badge">{workspaceName}</span>
+              </div>
+            )}
+            {!session.me.workspaces.length && <div className="dev-portal__nav-link dev-portal__seller-badge">{workspaceName}</div>}
             <button 
               className="dev-portal__menu-trigger" 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -582,8 +625,8 @@ export function SellerConsolePage() {
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__hero" style={{ padding: "1rem 0 2rem" }}>
                   <span className="dev-api-badge dev-api-badge--post" style={{ width: "fit-content" }}>Dashboard</span>
-                  <h1>{t.overview.welcome} {sellerName}</h1>
-                  <p>{t.overview.subtitle}</p>
+                  <h1>{t.overview.welcome} {session.me.user.username || 'User'}</h1>
+                  <p>{t.overview.subtitle} Current workspace: <strong>{workspaceName}</strong></p>
                 </div>
 
                 <div className="dev-widget-grid">
@@ -591,22 +634,22 @@ export function SellerConsolePage() {
                     <span className="dev-widget__label">{t.overview.stats.plan}</span>
                     <div className="dev-widget__value">{session.me.plan.name}</div>
                     <div className="dev-widget__meta">
-                      {!session.me.plan.is_pro ? `${t.billing.trial}: ${session.me.plan.trial_remaining} ${t.billing.remaining}` : t.billing.active}
+                      {session.me.plan.code === 'trial' ? `${t.billing.trial}` : t.billing.active}
                     </div>
                   </div>
                   <div className="dev-card dev-widget">
                     <span className="dev-widget__label">{t.overview.stats.networks}</span>
                     <div className="dev-widget__value"><LiveValue value={activeWalletsCount} /></div>
-                    <div className="dev-widget__meta">/{WALLET_NETWORK_OPTIONS.length} active</div>
+                    <div className="dev-widget__meta">/{WALLET_NETWORK_OPTIONS.length} active ({environment})</div>
                   </div>
                   <div className="dev-card dev-widget">
                     <span className="dev-widget__label">{t.overview.stats.invoices}</span>
-                    <div className="dev-widget__value"><LiveValue value={session.invoices.length} /></div>
-                    <div className="dev-widget__meta">Total created</div>
+                    <div className="dev-widget__value"><LiveValue value={filteredInvoices.length} /></div>
+                    <div className="dev-widget__meta">Total in {environment}</div>
                   </div>
                 </div>
 
-                {!session.me.plan.is_pro && (
+                {session.me.plan.code === 'trial' && (
                   <div className="dev-card dev-card--accent dev-promo-card portal-animate-in">
                     <div className="dev-promo-card__content">
                       <h3>{t.promo.title}</h3>
@@ -618,29 +661,21 @@ export function SellerConsolePage() {
                   </div>
                 )}
 
-                {session.wallets.length === 0 && (
-                  <div className="dev-portal__locked-state">
-                    <h3>{t.overview.setupTitle}</h3>
-                    <p>{t.overview.setupWallet}</p>
-                    <button className="dev-btn dev-btn--primary" onClick={() => setActivePanel("wallets")}>{t.overview.setupWalletAction}</button>
-                  </div>
-                )}
-
                 <div className="dev-card">
                   <div className="dev-portal__section-header" style={{ marginBottom: "1.5rem" }}>
-                    <h3>{t.overview.activity}</h3>
+                    <h3>{t.overview.activity} ({environment})</h3>
                   </div>
-                  {session.invoices.length === 0 ? (
+                  {filteredInvoices.length === 0 ? (
                     <div style={{ padding: "2rem", textAlign: "center", color: "var(--muted)" }}>{t.overview.noActivity}</div>
                   ) : (
                     <div className="dev-resource-list">
-                      {session.invoices.slice(0, 5).map(inv => (
+                      {filteredInvoices.slice(0, 5).map(inv => (
                         <div key={inv.id} className="dev-resource-card" style={{ padding: "0.75rem 1rem" }} onClick={() => setActivePanel("invoices")}>
                           <div className="dev-resource-card__info" style={{ gap: "0.15rem" }}>
                             <div className="dev-resource-card__title" style={{ fontSize: "0.95rem" }}>{inv.title}</div>
                             <div className="dev-resource-card__meta" style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.75rem" }}>
-                              <span className={`dev-api-badge dev-api-badge--${inv.status === 'paid' ? 'get' : 'post'}`} style={{ padding: "0.1rem 0.4rem", fontSize: "0.65rem" }}>
-                                {STATUS_LABELS[language][inv.status as keyof typeof STATUS_LABELS[typeof language]] || inv.status}
+                              <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'}`} style={{ padding: "0.1rem 0.4rem", fontSize: "0.65rem" }}>
+                                {formatInvoiceStatus(inv.status, language, true)}
                               </span>
                               <span style={{ opacity: 0.6 }}>{inv.payable_amount} {inv.payable_network}</span>
                             </div>
@@ -667,7 +702,7 @@ export function SellerConsolePage() {
             {activePanel === "wallets" && (
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__section-header">
-                  <h2>{t.wallets.title}</h2>
+                  <h2>{t.wallets.title} ({environment})</h2>
                   <p>{t.wallets.subtitle}</p>
                 </div>
                 <div className="dev-card">
@@ -691,11 +726,11 @@ export function SellerConsolePage() {
                   </form>
 
                   <div className="dev-resource-list" style={{ marginTop: "2.5rem" }}>
-                    {session.wallets.length === 0 ? (
+                    {filteredWallets.length === 0 ? (
                       <div style={{ padding: "3rem", textAlign: "center", color: "var(--muted)", border: "1px dashed var(--line)", borderRadius: "20px" }}>
                         {t.wallets.empty}
                       </div>
-                    ) : session.wallets.map(w => (
+                    ) : filteredWallets.map(w => (
                       <div key={w.id} className="dev-resource-card dev-wallet-card">
                         <div className="dev-resource-card__info">
                           <div className="dev-resource-card__title">{w.network}</div>
@@ -712,21 +747,21 @@ export function SellerConsolePage() {
             {activePanel === "invoices" && (
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__section-header">
-                  <h2>{t.invoices.title}</h2>
+                  <h2>{t.invoices.title} ({environment})</h2>
                   <p>{t.invoices.subtitle}</p>
                 </div>
                 <div className="dev-resource-list">
-                  {session.invoices.length === 0 ? (
+                  {filteredInvoices.length === 0 ? (
                     <div className="dev-card" style={{ textAlign: "center", padding: "4rem", color: "var(--muted)" }}>{t.invoices.empty}</div>
-                  ) : session.invoices.map(inv => (
+                  ) : filteredInvoices.map(inv => (
                     <div key={inv.id} className="dev-card" style={{ padding: "1.5rem" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
                         <div>
                           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                            <span className={`dev-api-badge dev-api-badge--${inv.status === 'paid' ? 'get' : 'post'}`}>
-                              {STATUS_LABELS[language][inv.status as keyof typeof STATUS_LABELS[typeof language]] || inv.status}
+                            <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'}`}>
+                              {formatInvoiceStatus(inv.status, language, true)}
                             </span>
-                            <span className="dev-api-badge" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--line)" }}>{inv.payable_network}</span>
+                            <span className="dev-api-badge" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--line)" }}>{formatNetworkLabel(inv.payable_network)}</span>
                           </div>
                           <h3 style={{ fontSize: "1.25rem", margin: 0 }}>{inv.title}</h3>
                           <code style={{ fontSize: "0.8rem", opacity: 0.4 }}>{inv.public_id}</code>
@@ -741,10 +776,10 @@ export function SellerConsolePage() {
                           {copiedId === `inv-${inv.id}` ? t.common.copied : t.invoices.copyLink}
                         </button>
                         <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary" style={{ flexGrow: 1, textAlign: "center" }}>{t.invoices.view}</a>
-                        {inv.status === "awaiting_payment" && (
+                        {(getInvoiceStatusMeta(inv.status).canSellerMarkPaid || getInvoiceStatusMeta(inv.status).canSellerCancel) && (
                           <>
-                            <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1, color: "var(--success)" }} onClick={() => void onInvoiceAction(inv.id, "mark_paid")}>{t.invoices.confirm}</button>
-                            <button className="dev-btn dev-btn--danger" style={{ flexGrow: 1 }} onClick={() => void onInvoiceAction(inv.id, "cancel")}>{t.invoices.cancel}</button>
+                            {getInvoiceStatusMeta(inv.status).canSellerMarkPaid ? <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1, color: "var(--success)" }} onClick={() => void onInvoiceAction(inv.id, "mark_paid")}>{t.invoices.confirm}</button> : null}
+                            {getInvoiceStatusMeta(inv.status).canSellerCancel ? <button className="dev-btn dev-btn--danger" style={{ flexGrow: 1 }} onClick={() => void onInvoiceAction(inv.id, "cancel")}>{t.invoices.cancel}</button> : null}
                           </>
                         )}
                       </div>
@@ -757,7 +792,7 @@ export function SellerConsolePage() {
             {activePanel === "create" && (
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__section-header">
-                  <h2>{t.create.title}</h2>
+                  <h2>{t.create.title} ({environment})</h2>
                   <p>{t.create.subtitle}</p>
                 </div>
                 <div className="dev-card" style={{ maxWidth: "640px" }}>
@@ -780,13 +815,26 @@ export function SellerConsolePage() {
                       <label>{t.create.network}</label>
                       <CustomSelect
                         value={invoiceForm.network}
-                        options={PAYABLE_NETWORK_OPTIONS}
+                        options={payableNetworkOptions}
                         ariaLabel={t.create.network}
                         onChange={(v) => setInvoiceForm(c => ({ ...c, network: v as Network }))}
                       />
                     </div>
-                    <button type="submit" className="dev-btn dev-btn--primary" style={{ padding: "1.25rem", fontSize: "1rem" }}>{t.create.generate}</button>
+                    <button type="submit" className="dev-btn dev-btn--primary" style={{ padding: "1.25rem", fontSize: "1rem" }} disabled={isCreatingInvoice || activeWalletsCount === 0}>
+                      {isCreatingInvoice ? (language === "ru" ? "Создаем..." : "Creating...") : t.create.generate}
+                    </button>
                   </form>
+                  {createdInvoice ? (
+                    <div className="alert alert--success" style={{ marginTop: "1rem" }}>
+                      <strong>{t.create.success}</strong>
+                      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+                        <button className="dev-btn dev-btn--secondary" onClick={() => handleCopy(buildCheckoutUrl(createdInvoice.public_id), "created-invoice")}>
+                          {copiedId === "created-invoice" ? t.common.copied : t.invoices.copyLink}
+                        </button>
+                        <a className="dev-btn dev-btn--primary" href={buildCheckoutPath(createdInvoice.public_id)} target="_blank" rel="noreferrer">{t.invoices.view}</a>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}
@@ -794,95 +842,122 @@ export function SellerConsolePage() {
             {activePanel === "developer" && (
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__section-header">
-                  <h2>{t.developer.title}</h2>
+                  <h2>{t.developer.title} ({environment})</h2>
                   <p>{t.developer.subtitle}</p>
                 </div>
 
-                <div className="dev-card">
-                  <div className="dev-portal__section-header" style={{ marginBottom: "1.5rem" }}>
-                    <h3>{t.developer.keysTitle}</h3>
-                    <p>{t.developer.keysSubtitle}</p>
+                {!session.me.plan.has_api ? (
+                  <div className="dev-portal__locked-state">
+                    <h3>{t.developer.locked}</h3>
+                    <button className="dev-btn dev-btn--primary" onClick={() => setActivePanel("billing")}>{t.promo.action}</button>
                   </div>
-                  <div style={{ marginBottom: "2rem", display: "flex", gap: "1rem" }}>
-                    <Link to="/developers" className="dev-btn dev-btn--secondary" style={{ fontSize: "0.85rem", padding: "0.6rem 1rem" }}>
-                      {language === "ru" ? "Документация API Beta" : "API Beta Reference"}
-                    </Link>
-                  </div>
-                  <form onSubmit={onCreateKey} className="dev-form">
-                    <div className="dev-api-grid" style={{ gridTemplateColumns: "1fr auto", alignItems: "flex-end", gap: "1rem" }}>
-                      <div className="dev-input-group">
-                        <label>{t.developer.keyLabel}</label>
-                        <input className="dev-input" value={keyForm.label} onChange={e => setKeyForm({ label: e.target.value })} placeholder="Production App" required />
+                ) : (
+                  <>
+                    <div className="dev-card">
+                      <div className="dev-portal__section-header" style={{ marginBottom: "1.5rem" }}>
+                        <h3>{t.developer.keysTitle}</h3>
+                        <p>{t.developer.keysSubtitle}</p>
                       </div>
-                      <button type="submit" className="dev-btn dev-btn--primary" disabled={!session.me.plan.has_api}>{t.developer.addKey}</button>
-                    </div>
-                  </form>
-
-                  {latestKeySecret && (
-                    <div className="alert alert--success" style={{ marginTop: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <small style={{ display: "block", marginBottom: "0.25rem" }}>{t.developer.warning}</small>
-                        <code style={{ fontSize: "1.1rem" }}>{latestKeySecret}</code>
-                      </div>
-                      <button className="dev-code-box__copy" onClick={() => handleCopy(latestKeySecret, "latest-key")}>
-                        {copiedId === "latest-key" ? t.common.copied : t.common.copy}
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="dev-resource-list" style={{ marginTop: "2rem" }}>
-                    {session.apiKeys.map(key => (
-                      <div key={key.id} className="dev-resource-card">
-                        <div className="dev-resource-card__info">
-                          <div className="dev-resource-card__title">{key.label}</div>
-                          <code className="dev-resource-card__meta">{key.prefix}***</code>
-                        </div>
-                        <button className="dev-btn dev-btn--danger" onClick={() => void onDeleteKey(key.id)}>{t.common.delete}</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="dev-card">
-                  <div className="dev-portal__section-header" style={{ marginBottom: "1.5rem" }}>
-                    <h3>{t.developer.hooksTitle}</h3>
-                    <p>{t.developer.hooksSubtitle}</p>
-                  </div>
-                  <form onSubmit={onCreateHook} className="dev-form">
-                    <div className="dev-webhook-form-grid">
-                      <div className="dev-input-group">
-                        <label>Label</label>
-                        <input className="dev-input" value={hookForm.label} onChange={e => setHookForm({ ...hookForm, label: e.target.value })} placeholder="Main Server" required />
-                      </div>
-                      <div className="dev-input-group">
-                        <label>{t.developer.hookUrl}</label>
-                        <input className="dev-input" value={hookForm.url} onChange={e => setHookForm({ ...hookForm, url: e.target.value })} placeholder="https://api.yoursite.com/webhook" required />
-                      </div>
-                      <button type="submit" className="dev-btn dev-btn--primary dev-webhook-add-btn" disabled={!session.me.plan.has_webhooks}>{t.developer.addHook}</button>
-                    </div>
-                  </form>
-
-                  <div className="dev-resource-list" style={{ marginTop: "2rem" }}>
-                    {session.webhooks.map(hook => (
-                      <div key={hook.id} className="dev-resource-card" style={{ flexDirection: "column", alignItems: "stretch", gap: "1rem" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div className="dev-resource-card__info">
-                            <div className="dev-resource-card__title">{hook.label}</div>
-                            <code style={{ opacity: 0.6, fontSize: "0.85rem" }}>{hook.url}</code>
+                      <form onSubmit={onCreateKey} className="dev-form">
+                        <div className="dev-api-grid" style={{ gridTemplateColumns: "1fr auto", alignItems: "flex-end", gap: "1rem" }}>
+                          <div className="dev-input-group">
+                            <label>{t.developer.keyLabel}</label>
+                            <input className="dev-input" value={keyForm.label} onChange={e => setKeyForm({ label: e.target.value })} placeholder="Production App" required />
                           </div>
-                          <button className="dev-btn dev-btn--danger" onClick={() => void onDeleteHook(hook.id)}>{t.common.delete}</button>
+                          <button type="submit" className="dev-btn dev-btn--primary">{t.developer.addKey}</button>
                         </div>
-                        <div className="dev-card" style={{ padding: "0.75rem 1rem", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      </form>
+
+                      {latestKeySecret && (
+                        <div className="alert alert--success" style={{ marginTop: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
-                            <span style={{ fontSize: "0.7rem", textTransform: "uppercase", opacity: 0.5, display: "block" }}>{t.developer.hookSecret}</span>
-                            <code style={{ fontSize: "0.85rem" }}>{hook.secret}</code>
+                            <small style={{ display: "block", marginBottom: "0.25rem" }}>{t.developer.warning}</small>
+                            <code style={{ fontSize: "1.1rem" }}>{latestKeySecret}</code>
                           </div>
-                          <button className="dev-code-box__copy" onClick={() => handleCopy(hook.secret, `hook-${hook.id}`)}>
-                            {copiedId === `hook-${hook.id}` ? t.common.copied : t.common.copy}
+                          <button className="dev-code-box__copy" onClick={() => handleCopy(latestKeySecret, "latest-key")}>
+                            {copiedId === "latest-key" ? t.common.copied : t.common.copy}
                           </button>
                         </div>
+                      )}
+
+                      <div className="dev-resource-list" style={{ marginTop: "2rem" }}>
+                        {filteredKeys.map(key => (
+                          <div key={key.id} className="dev-resource-card">
+                            <div className="dev-resource-card__info">
+                              <div className="dev-resource-card__title">{key.label}</div>
+                              <code className="dev-resource-card__meta">{key.prefix}***</code>
+                            </div>
+                            <button className="dev-btn dev-btn--danger" onClick={() => void onDeleteKey(key.id)}>{t.common.delete}</button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="dev-card">
+                      <div className="dev-portal__section-header" style={{ marginBottom: "1.5rem" }}>
+                        <h3>{t.developer.hooksTitle}</h3>
+                        <p>{t.developer.hooksSubtitle}</p>
+                      </div>
+                      <form onSubmit={onCreateHook} className="dev-form">
+                        <div className="dev-webhook-form-grid">
+                          <div className="dev-input-group">
+                            <label>Label</label>
+                            <input className="dev-input" value={hookForm.label} onChange={e => setHookForm({ ...hookForm, label: e.target.value })} placeholder="Main Server" required />
+                          </div>
+                          <div className="dev-input-group">
+                            <label>{t.developer.hookUrl}</label>
+                            <input className="dev-input" value={hookForm.url} onChange={e => setHookForm({ ...hookForm, url: e.target.value })} placeholder="https://api.yoursite.com/webhook" required />
+                          </div>
+                          <button type="submit" className="dev-btn dev-btn--primary dev-webhook-add-btn">{t.developer.addHook}</button>
+                        </div>
+                      </form>
+
+                      <div className="dev-resource-list" style={{ marginTop: "2rem" }}>
+                        {filteredHooks.map(hook => (
+                          <div key={hook.id} className="dev-resource-card" style={{ flexDirection: "column", alignItems: "stretch", gap: "1rem" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <div className="dev-resource-card__info">
+                                <div className="dev-resource-card__title">{hook.label}</div>
+                                <code style={{ opacity: 0.6, fontSize: "0.85rem" }}>{hook.url}</code>
+                              </div>
+                              <button className="dev-btn dev-btn--danger" onClick={() => void onDeleteHook(hook.id)}>{t.common.delete}</button>
+                            </div>
+                            <div className="dev-card" style={{ padding: "0.75rem 1rem", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <div>
+                                <span style={{ fontSize: "0.7rem", textTransform: "uppercase", opacity: 0.5, display: "block" }}>{t.developer.hookSecret}</span>
+                                <code style={{ fontSize: "0.85rem" }}>{hook.secret}</code>
+                              </div>
+                              <button className="dev-code-box__copy" onClick={() => handleCopy(hook.secret, `hook-${hook.id}`)}>
+                                {copiedId === `hook-${hook.id}` ? t.common.copied : t.common.copy}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {activePanel === "team" && (
+              <div className="dev-portal__section portal-animate-in">
+                <div className="dev-portal__section-header">
+                  <h2>{t.team.title}</h2>
+                  <p>{t.team.subtitle}</p>
+                </div>
+                <div className="dev-card">
+                  <div className="dev-resource-list">
+                    <div className="dev-resource-card">
+                      <div className="dev-resource-card__info">
+                         <div className="dev-resource-card__title">{session.me.user.username || `@${session.me.user.telegram_id}`} (You)</div>
+                         <div className="dev-resource-card__meta">Owner</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: "2rem", padding: "1.5rem", border: "1px dashed var(--line)", borderRadius: "20px", textAlign: "center" }}>
+                    <p style={{ color: "var(--muted)", marginBottom: "1rem" }}>Invite your colleagues to collaborate.</p>
+                    <button className="dev-btn dev-btn--secondary" disabled>{t.team.add} (Coming Soon)</button>
                   </div>
                 </div>
               </div>
@@ -901,7 +976,7 @@ export function SellerConsolePage() {
                       <label>Plan</label>
                       <CustomSelect
                         value={billingForm.plan}
-                        options={session.me.plans.filter(p => p.code !== 'enterprise').map(p => ({ value: p.code, label: p.name }))}
+                        options={session.me.plans.filter(p => p.code !== 'enterprise' && p.code !== 'trial').map(p => ({ value: p.code, label: p.name }))}
                         ariaLabel="Plan"
                         onChange={v => setBillingForm(c => ({ ...c, plan: v }))}
                       />

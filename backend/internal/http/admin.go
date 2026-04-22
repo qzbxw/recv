@@ -117,9 +117,9 @@ func (s *Server) handleAdminOverview(c *gin.Context) {
 			"merchant_paid_usd":       overview.Totals.MerchantPaidUSD.StringFixed(2),
 			"subscription_paid_usd":   overview.Totals.SubscriptionPaidUSD.StringFixed(2),
 			"open_invoice_usd":        overview.Totals.OpenInvoiceUSD.StringFixed(2),
-			"sellers_total":           overview.Totals.SellersTotal,
+			"workspaces_total":        overview.Totals.WorkspacesTotal,
 			"active_subscribers":      overview.Totals.ActiveSubscribers,
-			"blocked_sellers":         overview.Totals.BlockedSellers,
+			"blocked_workspaces":      overview.Totals.BlockedWorkspaces,
 			"wallets_total":           overview.Totals.WalletsTotal,
 			"api_keys_active":         overview.Totals.APIKeysActive,
 			"webhook_endpoints":       overview.Totals.WebhookEndpoints,
@@ -159,10 +159,148 @@ func (s *Server) handleAdminInvoices(c *gin.Context) {
 	})
 }
 
-func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
-	sellerID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+func (s *Server) handleAdminOpsOverview(c *gin.Context) {
+	overview, err := s.store.GetAdminOverview(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid seller id"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	manualReview, err := s.store.ListAdminInvoices(c.Request.Context(), store.AdminInvoiceFilters{Page: 1, PageSize: 12, Status: string(store.InvoiceStatusManualReview)})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	failedWebhooks, err := s.store.ListAdminFailedWebhooks(c.Request.Context(), 12)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	watchers, err := s.store.ListAdminWatchers(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	notifications, err := s.store.GetAdminNotificationHealth(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"generated_at":         overview.GeneratedAt,
+		"revenue":              gin.H{"gross_paid_usd": overview.Totals.GrossPaidUSD.StringFixed(2), "open_invoice_usd": overview.Totals.OpenInvoiceUSD.StringFixed(2), "subscription_paid_usd": overview.Totals.SubscriptionPaidUSD.StringFixed(2)},
+		"workspaces":           gin.H{"total": overview.Totals.WorkspacesTotal, "active_subscribers": overview.Totals.ActiveSubscribers, "blocked": overview.Totals.BlockedWorkspaces},
+		"invoices":             gin.H{"total": overview.Totals.InvoicesTotal, "paid": overview.Totals.PaidTotal, "manual_review": overview.Totals.ManualReviewTotal, "underpaid": overview.Totals.UnderpaidTotal},
+		"subscriptions":        gin.H{"active": overview.Totals.ActiveSubscribers, "paid_invoices": overview.Totals.SubscriptionPaidTotal},
+		"manual_review_queue":  adminInvoiceResponseItems(manualReview.Items),
+		"failed_webhook_queue": failedWebhooks,
+		"watcher_health":       watchers,
+		"notification_health":  notifications,
+		"daily_sales":          adminDailySalesResponse(overview.DailySales),
+		"network_breakdown":    adminNetworkBreakdownResponse(overview.NetworkBreakdown),
+		"status_breakdown":     adminStatusBreakdownResponse(overview.StatusBreakdown),
+		"plan_breakdown":       adminPlanBreakdownResponse(overview.PlanBreakdown),
+	})
+}
+
+func (s *Server) handleAdminWorkspaces(c *gin.Context) {
+	items, err := s.store.ListAdminWorkspaces(c.Request.Context(), parseIntDefault(c.Query("limit"), 100))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": items})
+}
+
+func (s *Server) handleAdminFailedWebhooks(c *gin.Context) {
+	items, err := s.store.ListAdminFailedWebhooks(c.Request.Context(), parseIntDefault(c.Query("limit"), 50))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": items})
+}
+
+func (s *Server) handleAdminWatchers(c *gin.Context) {
+	items, err := s.store.ListAdminWatchers(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": items})
+}
+
+func (s *Server) handleAdminNotifications(c *gin.Context) {
+	item, err := s.store.GetAdminNotificationHealth(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, item)
+}
+
+func (s *Server) handleAdminBlockWorkspace(c *gin.Context) {
+	workspaceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
+		return
+	}
+	var body struct {
+		Blocked bool   `json:"blocked"`
+		Reason  string `json:"reason"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	workspace, err := s.store.SetWorkspaceBlocked(c.Request.Context(), workspaceID, body.Blocked)
+	if err != nil {
+		writeAdminStoreError(c, err, "workspace not found")
+		return
+	}
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "set_workspace_blocked", "workspace", strconv.FormatInt(workspaceID, 10), gin.H{"blocked": body.Blocked, "reason": strings.TrimSpace(body.Reason)})
+	result := "Workspace unblocked."
+	if body.Blocked {
+		result = "Workspace blocked."
+	}
+	c.JSON(http.StatusOK, gin.H{"workspace": workspace, "result": result})
+}
+
+func (s *Server) handleAdminSetWorkspacePlan(c *gin.Context) {
+	workspaceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
+		return
+	}
+	var body struct {
+		PlanCode           string     `json:"plan_code"`
+		Days               int        `json:"days"`
+		SubscriptionEndsAt *time.Time `json:"subscription_ends_at"`
+		Reason             string     `json:"reason"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	planCode, ok := validAdminPlanCode(body.PlanCode)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid plan_code"})
+		return
+	}
+	workspace, err := s.store.SetWorkspacePlan(c.Request.Context(), workspaceID, planCode, body.Days, body.SubscriptionEndsAt)
+	if err != nil {
+		writeAdminStoreError(c, err, "workspace not found")
+		return
+	}
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "set_workspace_plan", "workspace", strconv.FormatInt(workspaceID, 10), gin.H{"plan_code": planCode, "days": body.Days, "subscription_ends_at": body.SubscriptionEndsAt, "reason": strings.TrimSpace(body.Reason)})
+	c.JSON(http.StatusOK, gin.H{"workspace": workspace, "result": "Workspace plan updated."})
+}
+
+func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
+	workspaceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
 		return
 	}
 
@@ -176,7 +314,7 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 		return
 	}
 
-	seller, err := s.store.GetSellerByID(c.Request.Context(), sellerID)
+	workspace, err := s.store.GetWorkspaceByID(c.Request.Context(), workspaceID)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
@@ -214,13 +352,13 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 	}
 
 	ctx := metrics.WithSource(c.Request.Context(), "admin_api")
-	invoice, err := s.invoiceService.CreatePlanInvoiceWithPrice(ctx, seller, planCode, network, overridePrice)
+	invoice, err := s.invoiceService.CreatePlanInvoiceWithPrice(ctx, workspace, planCode, network, overridePrice)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	adminCtx := adminFromContext(c)
-	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_billing_checkout", "seller", strconv.FormatInt(sellerID, 10), gin.H{"invoice_id": invoice.ID, "plan_code": planCode, "network": network})
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_billing_checkout", "workspace", strconv.FormatInt(workspaceID, 10), gin.H{"invoice_id": invoice.ID, "plan_code": planCode, "network": network})
 
 	plan := store.ResolvePlan(planCode)
 	priceLabel := plan.PriceUSDString
@@ -228,10 +366,10 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 		priceLabel = overridePrice.StringFixed(2)
 	}
 	c.JSON(http.StatusCreated, gin.H{
-		"seller": gin.H{
-			"id":       seller.ID,
-			"username": seller.Username,
-			"email":    seller.Email,
+		"workspace": gin.H{
+			"id":       workspace.ID,
+			"username": workspace.Username,
+			"email":    workspace.Email,
 		},
 		"plan": gin.H{
 			"code":         plan.Code,
@@ -242,6 +380,115 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 		},
 		"invoice": publicInvoiceResponse(invoice),
 	})
+}
+
+func (s *Server) handleAdminResendWebhookDelivery(c *gin.Context) {
+	deliveryID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid webhook delivery id"})
+		return
+	}
+	item, err := s.store.ResendAdminWebhookDelivery(c.Request.Context(), deliveryID)
+	if err != nil {
+		writeAdminStoreError(c, err, "webhook delivery not found")
+		return
+	}
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "resend_webhook_delivery", "webhook_delivery", strconv.FormatInt(deliveryID, 10), gin.H{"new_delivery_id": item.ID})
+	c.JSON(http.StatusCreated, gin.H{"delivery": item, "result": "Webhook resend queued."})
+}
+
+func (s *Server) handleAdminReviewInvoice(c *gin.Context) {
+	invoiceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invoice id"})
+		return
+	}
+	var body struct {
+		Result  string `json:"result"`
+		Comment string `json:"comment"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if body.Result != "mark_paid" && body.Result != "keep_manual_review" && body.Result != "expire" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid review result"})
+		return
+	}
+	adminCtx := adminFromContext(c)
+	invoice, result, err := s.store.ReviewAdminInvoice(c.Request.Context(), invoiceID, body.Result, body.Comment, adminCtx.Claims.Username)
+	if err != nil {
+		writeAdminStoreError(c, err, "invoice not found")
+		return
+	}
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "review_invoice", "invoice", strconv.FormatInt(invoiceID, 10), gin.H{"result": body.Result, "comment": strings.TrimSpace(body.Comment)})
+	c.JSON(http.StatusOK, gin.H{"invoice": publicInvoiceResponse(invoice), "result": result})
+}
+
+func (s *Server) handleAdminCreateInternalComment(c *gin.Context) {
+	var body struct {
+		TargetType string `json:"target_type"`
+		TargetID   string `json:"target_id"`
+		Body       string `json:"body"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if strings.TrimSpace(body.TargetType) == "" || strings.TrimSpace(body.TargetID) == "" || strings.TrimSpace(body.Body) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "target_type, target_id and body are required"})
+		return
+	}
+	adminCtx := adminFromContext(c)
+	comment, err := s.store.CreateAdminInternalComment(c.Request.Context(), body.TargetType, body.TargetID, body.Body, adminCtx.Claims.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_internal_comment", body.TargetType, body.TargetID, gin.H{"comment_id": comment.ID})
+	c.JSON(http.StatusCreated, gin.H{"comment": comment, "result": "Internal comment added."})
+}
+
+func (s *Server) handleAdminRefreshInvoiceStatus(c *gin.Context) {
+	invoiceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invoice id"})
+		return
+	}
+	invoice, result, err := s.store.RefreshAdminInvoiceStatus(c.Request.Context(), invoiceID)
+	if err != nil {
+		writeAdminStoreError(c, err, "invoice not found")
+		return
+	}
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "refresh_invoice_status", "invoice", strconv.FormatInt(invoiceID, 10), gin.H{})
+	c.JSON(http.StatusOK, gin.H{"invoice": publicInvoiceResponse(invoice), "result": result})
+}
+
+func (s *Server) handleAdminAnalytics(c *gin.Context) {
+	from := parseAdminDate(c.Query("from"), time.Now().UTC().AddDate(0, 0, -30))
+	to := parseAdminDate(c.Query("to"), time.Now().UTC())
+	groupBy := c.DefaultQuery("group_by", "date")
+	if groupBy != "date" && groupBy != "network" && groupBy != "plan" && groupBy != "mode" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "group_by must be date, network, plan or mode"})
+		return
+	}
+	item, err := s.store.GetAdminAnalytics(c.Request.Context(), from, to, groupBy)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, adminAnalyticsResponse(item))
+}
+
+func (s *Server) handleAdminSEOTargets(c *gin.Context) {
+	items, err := s.store.ListSEOTargets(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": items})
 }
 
 func adminDailySalesResponse(items []store.AdminDailySalesPoint) []gin.H {
@@ -304,9 +551,9 @@ func adminInvoiceResponseItems(items []store.AdminInvoiceRecord) []gin.H {
 		out = append(out, gin.H{
 			"id":                  item.ID,
 			"public_id":           item.PublicID,
-			"seller_id":           item.SellerID,
-			"seller_username":     item.SellerUsername,
-			"seller_email":        item.SellerEmail,
+			"workspace_id":        item.WorkspaceID,
+			"workspace_username":  item.WorkspaceUsername,
+			"workspace_email":     item.WorkspaceEmail,
 			"kind":                item.Kind,
 			"plan_code":           item.PlanCode,
 			"title":               item.Title,
@@ -325,6 +572,74 @@ func adminInvoiceResponseItems(items []store.AdminInvoiceRecord) []gin.H {
 		})
 	}
 	return out
+}
+
+func adminAnalyticsResponse(item store.AdminAnalytics) gin.H {
+	breakdown := make([]gin.H, 0, len(item.Breakdown))
+	for _, point := range item.Breakdown {
+		breakdown = append(breakdown, gin.H{
+			"bucket":                 point.Bucket,
+			"created_invoices":       point.CreatedInvoices,
+			"paid_invoices":          point.PaidInvoices,
+			"manual_review_invoices": point.ManualReviewInvoices,
+			"underpaid_invoices":     point.UnderpaidInvoices,
+			"paid_volume_usd":        point.PaidVolumeUSD.StringFixed(2),
+		})
+	}
+	return gin.H{
+		"from":                item.From,
+		"to":                  item.To,
+		"group_by":            item.GroupBy,
+		"mrr_usd":             item.MRRUSD.StringFixed(2),
+		"arr_usd":             item.ARRUSD.StringFixed(2),
+		"paid_volume_usd":     item.PaidVolumeUSD.StringFixed(2),
+		"active_workspaces":   item.ActiveWorkspaces,
+		"created_invoices":    item.CreatedInvoices,
+		"paid_invoices":       item.PaidInvoices,
+		"failed_webhook_rate": item.FailedWebhookRate.StringFixed(4),
+		"manual_review_rate":  item.ManualReviewRate.StringFixed(4),
+		"underpaid_share":     item.UnderpaidShare.StringFixed(4),
+		"breakdown":           breakdown,
+	}
+}
+
+func validAdminPlanCode(raw string) (store.PlanCode, bool) {
+	switch store.PlanCode(strings.ToLower(strings.TrimSpace(raw))) {
+	case store.PlanCodeTrial:
+		return store.PlanCodeTrial, true
+	case store.PlanCodeMerchant:
+		return store.PlanCodeMerchant, true
+	case store.PlanCodeDeveloper:
+		return store.PlanCodeDeveloper, true
+	case store.PlanCodeBusiness:
+		return store.PlanCodeBusiness, true
+	case store.PlanCodeEnterprise:
+		return store.PlanCodeEnterprise, true
+	default:
+		return "", false
+	}
+}
+
+func parseAdminDate(raw string, fallback time.Time) time.Time {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return fallback
+	}
+	if value, err := time.Parse(time.RFC3339, raw); err == nil {
+		return value
+	}
+	if value, err := time.Parse("2006-01-02", raw); err == nil {
+		return value
+	}
+	return fallback
+}
+
+func writeAdminStoreError(c *gin.Context, err error, notFoundMessage string) {
+	if errors.Is(err, store.ErrNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": notFoundMessage})
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 }
 
 func adminFromContext(c *gin.Context) adminContext {

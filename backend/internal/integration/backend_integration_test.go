@@ -32,10 +32,10 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 	env := newIntegrationEnv(t, ctx)
 	client := env.server.Client()
 
-	assertMigrationCount(t, ctx, env.store, 13)
+	assertMigrationCount(t, ctx, env.store, 15)
 
 	auth := loginSeller(t, client, env.server.URL, 10001, "alice")
-	assertTelegramAuthCodeLifecycle(t, ctx, env.store, auth.Seller.ID)
+	assertTelegramAuthCodeLifecycle(t, ctx, env.store, auth.Workspace.ID)
 
 	createWallet(t, client, env.server.URL, auth.Token, "EVM", "0x1111111111111111111111111111111111111111")
 	createWallet(t, client, env.server.URL, auth.Token, "TON", "UQBuzCySn6dYEHzKoGzUPmclj9Dg_m1dA-mzeDEvuF3F9x6P")
@@ -105,7 +105,7 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 		t.Fatalf("expected at least 4 invoices, got %d", len(merchantList.Items))
 	}
 
-	devCheckout := createBillingCheckout(t, client, env.server.URL, auth.Token, "TRON", "dev")
+	devCheckout := createBillingCheckout(t, client, env.server.URL, auth.Token, "TRON", "developer")
 	devPayment := postObservedTransfer(t, client, env.server.URL, env.cfg.InternalToken, "/internal/watchers/tron", observedTransferEvent{
 		TxHash:             "tx-subscription-1",
 		DestinationAddress: devCheckout.DestinationAddress,
@@ -114,12 +114,12 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 		RawPayload:         map[string]any{"source": "integration-tron"},
 	})
 	if len(devPayment.Items) != 1 || devPayment.Items[0].Classification != "paid_exact" {
-		t.Fatalf("expected dev checkout payment to be paid_exact, got %#v", devPayment.Items)
+		t.Fatalf("expected developer checkout payment to be paid_exact, got %#v", devPayment.Items)
 	}
 
 	me := getMe(t, client, env.server.URL, auth.Token)
-	if me.Plan.Code != "dev" || !me.Plan.HasAPI || !me.Plan.HasWebhooks {
-		t.Fatalf("expected dev plan with api+webhooks, got %+v", me.Plan)
+	if me.Plan.Code != "developer" || !me.Plan.HasAPI || !me.Plan.HasWebhooks {
+		t.Fatalf("expected developer plan with api+webhooks, got %+v", me.Plan)
 	}
 
 	webhookReceiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +150,7 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 		t.Fatalf("expected developer invoice payment to be paid_exact, got %#v", devInvoicePayment.Items)
 	}
 
-	requestCount, err := env.store.CountAPIRequestsSince(ctx, auth.Seller.ID, nil, time.Now().UTC().Add(-1*time.Hour))
+	requestCount, err := env.store.CountAPIRequestsSince(ctx, auth.Workspace.ID, nil, time.Now().UTC().Add(-1*time.Hour))
 	if err != nil {
 		t.Fatalf("CountAPIRequestsSince returned error: %v", err)
 	}
@@ -162,14 +162,14 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 	assertWebhookQueue(t, ctx, env.store, devInvoice.PublicID)
 
 	secondAuth := loginSeller(t, client, env.server.URL, 10002, "bravo1")
-	setSellerBlocked(t, client, env.server.URL, env.cfg.InternalToken, secondAuth.Seller.ID, true)
+	setSellerBlocked(t, client, env.server.URL, env.cfg.InternalToken, secondAuth.Workspace.ID, true)
 	assertSellerMeStatus(t, client, env.server.URL, secondAuth.Token, http.StatusForbidden)
-	setSellerBlocked(t, client, env.server.URL, env.cfg.InternalToken, secondAuth.Seller.ID, false)
+	setSellerBlocked(t, client, env.server.URL, env.cfg.InternalToken, secondAuth.Workspace.ID, false)
 	assertSellerMeStatus(t, client, env.server.URL, secondAuth.Token, http.StatusOK)
-	grantPro(t, client, env.server.URL, env.cfg.InternalToken, secondAuth.Seller.ID, 14)
+	grantPro(t, client, env.server.URL, env.cfg.InternalToken, secondAuth.Workspace.ID, 14)
 	secondMe := getMe(t, client, env.server.URL, secondAuth.Token)
-	if secondMe.Plan.Code != "pro" {
-		t.Fatalf("expected second seller PRO plan after grant, got %+v", secondMe.Plan)
+	if secondMe.Plan.Code != "merchant" {
+		t.Fatalf("expected second workspace Merchant plan after grant, got %+v", secondMe.Plan)
 	}
 
 	adminToken := adminLogin(t, client, env.server.URL)
@@ -180,8 +180,8 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 	if overview.Totals.PaidTotal < 5 {
 		t.Fatalf("expected at least 5 paid invoices, got %d", overview.Totals.PaidTotal)
 	}
-	if overview.Totals.SellersTotal != 2 {
-		t.Fatalf("expected 2 sellers, got %d", overview.Totals.SellersTotal)
+	if overview.Totals.WorkspacesTotal != 2 {
+		t.Fatalf("expected 2 workspaces, got %d", overview.Totals.WorkspacesTotal)
 	}
 	if overview.Totals.APIKeysActive != 1 {
 		t.Fatalf("expected 1 active api key, got %d", overview.Totals.APIKeysActive)
@@ -380,9 +380,9 @@ func pickFreePort(t *testing.T) uint32 {
 
 type authResponse struct {
 	Token  string `json:"token"`
-	Seller struct {
+	Workspace struct {
 		ID int64 `json:"id"`
-	} `json:"seller"`
+	} `json:"workspace"`
 }
 
 type walletResponse struct {
@@ -430,9 +430,9 @@ type observedTransfersResponse struct {
 }
 
 type meResponse struct {
-	Seller struct {
+	Workspace struct {
 		ID int64 `json:"id"`
-	} `json:"seller"`
+	} `json:"workspace"`
 	Plan struct {
 		Code        string `json:"code"`
 		HasAPI      bool   `json:"has_api"`
@@ -459,7 +459,7 @@ type adminOverviewResponse struct {
 	Totals struct {
 		InvoicesTotal    int `json:"invoices_total"`
 		PaidTotal        int `json:"paid_total"`
-		SellersTotal     int `json:"sellers_total"`
+		WorkspacesTotal  int `json:"workspaces_total"`
 		APIKeysActive    int `json:"api_keys_active"`
 		WebhookEndpoints int `json:"webhook_endpoints"`
 	} `json:"totals"`
@@ -482,7 +482,7 @@ func loginSeller(t *testing.T, client *http.Client, baseURL string, telegramID i
 	}
 	var response authResponse
 	decodeJSON(t, body, &response)
-	if response.Token == "" || response.Seller.ID == 0 {
+	if response.Token == "" || response.Workspace.ID == 0 {
 		t.Fatalf("unexpected auth response: %+v", response)
 	}
 	return response
@@ -719,23 +719,23 @@ func adminLogin(t *testing.T, client *http.Client, baseURL string) string {
 	return response.Token
 }
 
-func setSellerBlocked(t *testing.T, client *http.Client, baseURL string, internalToken string, sellerID int64, blocked bool) {
+func setSellerBlocked(t *testing.T, client *http.Client, baseURL string, internalToken string, workspaceID int64, blocked bool) {
 	t.Helper()
 
 	headers := map[string]string{"X-Internal-Token": internalToken}
-	status, body := doJSON(t, client, http.MethodPost, fmt.Sprintf("%s/internal/admin/sellers/%d/block", baseURL, sellerID), headers, map[string]any{
+	status, body := doJSON(t, client, http.MethodPost, fmt.Sprintf("%s/internal/admin/workspaces/%d/block", baseURL, workspaceID), headers, map[string]any{
 		"blocked": blocked,
 	})
 	if status != http.StatusOK {
-		t.Fatalf("expected block seller 200, got %d: %s", status, string(body))
+		t.Fatalf("expected block workspace 200, got %d: %s", status, string(body))
 	}
 }
 
-func grantPro(t *testing.T, client *http.Client, baseURL string, internalToken string, sellerID int64, days int) {
+func grantPro(t *testing.T, client *http.Client, baseURL string, internalToken string, workspaceID int64, days int) {
 	t.Helper()
 
 	headers := map[string]string{"X-Internal-Token": internalToken}
-	status, body := doJSON(t, client, http.MethodPost, fmt.Sprintf("%s/internal/admin/sellers/%d/grant-pro", baseURL, sellerID), headers, map[string]any{
+	status, body := doJSON(t, client, http.MethodPost, fmt.Sprintf("%s/internal/admin/workspaces/%d/grant-pro", baseURL, workspaceID), headers, map[string]any{
 		"days": days,
 	})
 	if status != http.StatusOK {

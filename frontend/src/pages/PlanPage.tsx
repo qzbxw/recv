@@ -51,7 +51,7 @@ const COPY = {
         },
       ],
       flow: [
-        { title: "API Key Provisioning", body: "Мгновенная генерация ключей rk_live_. Гибкое управление правами (Scopes) для безопасной интеграции в ваш бэкенд." },
+        { title: "API Key Provisioning", body: "Мгновенная генерация ключей rqst_live_. Гибкое управление правами (Scopes) для безопасной интеграции в ваш бэкенд." },
         { title: "Webhook Configuration", body: "Настройка коллбэков с подписью HMAC-SHA256. Получайте уведомления в реальном времени с автоматическими ретраями." },
         { title: "Blockchain Monitoring", body: "Запуск автоматического процессинга. Наши вотчеры отслеживают транзакции и подтверждают платежи 24/7 без вашего участия." },
       ],
@@ -59,7 +59,7 @@ const COPY = {
 const response = await fetch("https://api.reqst.xyz/v1/invoices", {
   method: "POST",
   headers: {
-    "X-API-Key": "rk_live_...",
+    "X-API-Key": "rqst_live_...",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
@@ -166,7 +166,7 @@ function verify(payload, signature, secret) {
         },
       ],
       flow: [
-        { title: "API Key Provisioning", body: "Instant rk_live_ key generation. Granular scope management for secure backend integration." },
+        { title: "API Key Provisioning", body: "Instant rqst_live_ key generation. Granular scope management for secure backend integration." },
         { title: "Webhook Configuration", body: "Secure HMAC-SHA256 signed callbacks. Receive real-time transaction updates with automated retry logic." },
         { title: "Blockchain Monitoring", body: "Automated payment processing. Our watchers track transactions and confirm payments 24/7 autonomously." },
       ],
@@ -174,7 +174,7 @@ function verify(payload, signature, secret) {
 const response = await fetch("https://api.reqst.xyz/v1/invoices", {
   method: "POST",
   headers: {
-    "X-API-Key": "rk_live_...",
+    "X-API-Key": "rqst_live_...",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({

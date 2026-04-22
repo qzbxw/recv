@@ -1,7 +1,25 @@
 import { Inter } from "next/font/google";
 import { UIProvider } from "@/components/UIProvider";
+import { Metadata } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export async function generateMetadata(props: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await props.params;
+  
+  return {
+    alternates: {
+      canonical: `/${locale}`,
+      languages: {
+        "en": "/en",
+        "ru": "/ru",
+        "x-default": "/en",
+      },
+    },
+  };
+}
 
 export default async function LocaleLayout(props: {
   children: React.ReactNode;

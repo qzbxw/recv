@@ -1,0 +1,58 @@
+---
+title: Errors
+description: Understanding Reqst API errors and rate limits.
+---
+
+# Errors
+
+The Reqst API uses standard HTTP response codes to indicate the success or failure of an API request.
+
+## HTTP Status Codes
+
+| Status Code | Description |
+|-------------|-------------|
+| `200` | OK - Everything worked as expected. |
+| `400` | Bad Request - The request was unacceptable, often due to missing a required parameter. |
+| `401` | Unauthorized - No valid API key provided. |
+| `403` | Forbidden - The API key doesn't have permissions to perform the request. |
+| `404` | Not Found - The requested resource doesn't exist. |
+| `429` | Too Many Requests - You have reached the rate limit. |
+| `500` | Internal Server Error - Something went wrong on Reqst's end. |
+
+## Error Response Body
+
+When an error occurs, the API returns a JSON response with an `error` field providing more detail.
+
+```json
+{
+  "error": "Invalid API Key",
+  "code": "unauthorized",
+  "message": "The provided API key is invalid or has been revoked."
+}
+```
+
+## Rate Limits
+
+The Reqst API enforces rate limits to ensure stability and fair usage.
+
+- **Public API**: 60 requests per minute per API key.
+- **Webhook Delivery**: Retries up to 10 times over 24 hours with exponential backoff.
+
+If you reach the rate limit, you will receive a `429 Too Many Requests` status code. The `Retry-After` header will indicate how many seconds to wait before making a new request.
+
+## Handling Errors (Python Example)
+
+```python
+import requests
+
+try:
+    response = requests.get("https://reqst.xyz/v1/invoices/invalid_id", headers={"X-API-Key": "YOUR_KEY"})
+    response.raise_for_status()
+except requests.exceptions.HTTPError as err:
+    if response.status_code == 404:
+        print("Invoice not found.")
+    elif response.status_code == 429:
+        print("Rate limit exceeded. Try again later.")
+    else:
+        print(f"An error occurred: {err}")
+```

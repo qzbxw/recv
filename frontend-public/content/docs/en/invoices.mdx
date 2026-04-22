@@ -1,0 +1,76 @@
+---
+title: Creating Invoices
+description: How to create and manage payment invoices.
+---
+
+# Creating Invoices
+
+Invoices are the core of Reqst's payment flow. An invoice represents a single payment request for a user.
+
+## Create Invoice
+
+To create a new invoice, send a `POST` request to `/v1/invoices`.
+
+### Request Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `amount` | string | Yes | The amount in decimal format (e.g., "10.50"). |
+| `currency` | string | Yes | The currency code (e.g., "USD", "EUR"). |
+| `description` | string | No | A short description shown to the user. |
+| `metadata` | object | No | Custom data to store with the invoice. |
+
+### Example Request (Python)
+
+```python
+import requests
+
+url = "https://reqst.xyz/v1/invoices"
+headers = {
+    "X-API-Key": "YOUR_API_KEY",
+    "Content-Type": "application/json"
+}
+payload = {
+    "amount": "100.00",
+    "currency": "USD",
+    "description": "Premium Subscription"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+invoice = response.json()
+print(f"Checkout URL: {invoice['checkout_url']}")
+```
+
+## Get Invoice Status
+
+To check the status of an invoice, send a `GET` request to `/v1/invoices/:id`.
+
+### Invoice Statuses
+
+- `awaiting_payment`: The user hasn't paid yet.
+- `paid`: The payment was received and confirmed.
+- `expired`: The payment window closed before payment was made.
+- `cancelled`: The invoice was manually cancelled.
+
+## Example (Go)
+
+```go
+import (
+    "encoding/json"
+    "fmt"
+    "net/http"
+)
+
+func getInvoice(id string, apiKey string) {
+    req, _ := http.NewRequest("GET", "https://reqst.xyz/v1/invoices/"+id, nil)
+    req.Header.Add("X-API-Key", apiKey)
+    
+    client := &http.Client{}
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+    
+    var result map[string]interface{}
+    json.NewDecoder(resp.Body).Decode(&result)
+    fmt.Println("Status:", result["status"])
+}
+```

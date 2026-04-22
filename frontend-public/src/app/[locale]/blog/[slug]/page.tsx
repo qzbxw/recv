@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Metadata, ResolvingMetadata } from "next";
 import ReactMarkdown from "react-markdown";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { JsonLd } from "@/components/JsonLd";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080";
 
@@ -20,12 +22,11 @@ async function getPost(slug: string) {
 }
 
 type Props = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 };
 
 export async function generateMetadata(
-  props: Props,
-  parent: ResolvingMetadata
+  props: Props
 ): Promise<Metadata> {
   const params = await props.params;
   const post = await getPost(params.slug);
@@ -37,6 +38,9 @@ export async function generateMetadata(
   return {
     title: `${post.title} | Reqst Blog`,
     description: post.excerpt || "Read the latest updates and engineering insights from Reqst.",
+    alternates: {
+      canonical: `/${params.locale}/blog/${params.slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -48,34 +52,37 @@ export async function generateMetadata(
 export default async function BlogPost(props: Props) {
   const params = await props.params;
   const post = await getPost(params.slug);
+  const language = params.locale as "ru" | "en";
 
   if (!post) {
     return (
-      <main className="lend-page" style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
-        <div style={{ textAlign: "center" }}>
+      <MarketingLayout language={language}>
+        <div style={{ textAlign: "center", padding: "10rem 2rem" }}>
           <h1 style={{ color: "var(--ink)", fontSize: "2rem", marginBottom: "1rem" }}>Post Not Found</h1>
-          <Link href="/blog" style={{ color: "var(--accent)" }}>&larr; Back to Blog</Link>
+          <Link href={`/${language}/blog`} style={{ color: "var(--accent)" }}>&larr; Back to Blog</Link>
         </div>
-      </main>
+      </MarketingLayout>
     );
   }
 
-  return (
-    <main className="lend-page" style={{ minHeight: "100vh" }}>
-      <div className="lend-backdrop lend-backdrop--grid" />
-      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--left" />
-      <div className="lend-shell">
-        <header className="lend-topbar">
-          <div className="lend-topbar-main">
-            <Link className="lend-brand" href="/">
-              <strong>reqst</strong>
-            </Link>
-            <div className="lend-topbar-actions">
-              <Link className="lend-nav-link" href="/blog">&larr; Back</Link>
-            </div>
-          </div>
-        </header>
+  const blogPostSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": post.title,
+    "description": post.excerpt,
+    "image": post.cover_image_url ? [post.cover_image_url] : [],
+    "datePublished": post.published_at,
+    "dateModified": post.updated_at || post.published_at,
+    "author": [{
+      "@type": "Person",
+      "name": post.author || "Reqst Core Team",
+      "url": `https://reqst.xyz/${language}/blog/author/${(post.author || "reqst-core").toLowerCase().replace(/\s+/g, '-')}`
+    }]
+  };
 
+  return (
+    <MarketingLayout language={language}>
+        <JsonLd schema={blogPostSchema} />
         <article style={{ maxWidth: "768px", margin: "4rem auto 8rem", padding: "0 1.5rem" }}>
           <header style={{ marginBottom: "3rem", textAlign: "center" }}>
             <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--ink)", lineHeight: 1.1, marginBottom: "1.5rem", letterSpacing: "-0.03em" }}>
@@ -103,7 +110,7 @@ export default async function BlogPost(props: Props) {
                 h3: ({node, ...props}) => <h3 style={{ color: "var(--ink)", marginTop: "2rem", marginBottom: "1rem", fontSize: "1.3rem" }} {...props} />,
                 p: ({node, ...props}) => <p style={{ marginBottom: "1.25rem" }} {...props} />,
                 a: ({node, ...props}) => <a style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: "4px" }} {...props} />,
-                code: ({node, inline, ...props}: any) => 
+                code: ({inline, ...props}: { inline?: boolean; children?: React.ReactNode }) => 
                   inline ? <code style={{ background: "rgba(255,255,255,0.1)", padding: "0.2em 0.4em", borderRadius: "4px", fontSize: "0.9em", fontFamily: "monospace" }} {...props} />
                          : <pre style={{ background: "#0a0a0c", padding: "1.25rem", borderRadius: "12px", overflowX: "auto", border: "1px solid var(--line)", marginBottom: "1.5rem" }}><code style={{ fontFamily: "monospace", fontSize: "0.9em" }} {...props} /></pre>,
                 blockquote: ({node, ...props}) => <blockquote style={{ borderLeft: "4px solid var(--accent)", paddingLeft: "1rem", color: "var(--muted)", fontStyle: "italic", margin: "1.5rem 0" }} {...props} />,
@@ -116,7 +123,6 @@ export default async function BlogPost(props: Props) {
             </ReactMarkdown>
           </div>
         </article>
-      </div>
-    </main>
+    </MarketingLayout>
   );
 }

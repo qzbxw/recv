@@ -21,10 +21,14 @@ func TestAuthServiceIssueAndParseToken(t *testing.T) {
 	telegramID := int64(42)
 	service := NewAuthService(nil, "jwt-secret", "bot-token", false, time.Hour)
 
-	result, err := service.issueAuthResult(store.Seller{
-		ID:         7,
-		TelegramID: &telegramID,
+	result, err := service.issueAuthResult(store.User{
+		ID:         3,
+		TelegramID: telegramID,
 		Username:   "alice",
+	}, store.Workspace{
+		ID:              7,
+		OwnerTelegramID: &telegramID,
+		Username:        "alice",
 	})
 	if err != nil {
 		t.Fatalf("issueAuthResult returned error: %v", err)
@@ -37,10 +41,10 @@ func TestAuthServiceIssueAndParseToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseToken returned error: %v", err)
 	}
-	if claims.SellerID != 7 {
-		t.Fatalf("expected seller id 7, got %d", claims.SellerID)
+	if claims.WorkspaceID != 7 {
+		t.Fatalf("expected workspace id 7, got %d", claims.WorkspaceID)
 	}
-	if claims.TelegramID == nil || *claims.TelegramID != telegramID {
+	if claims.TelegramID != telegramID {
 		t.Fatalf("unexpected telegram id: %+v", claims.TelegramID)
 	}
 	if claims.Username != "alice" {
@@ -48,12 +52,12 @@ func TestAuthServiceIssueAndParseToken(t *testing.T) {
 	}
 }
 
-func TestAuthServiceIssueAuthResultRejectsBlockedSeller(t *testing.T) {
+func TestAuthServiceIssueAuthResultRejectsBlockedWorkspace(t *testing.T) {
 	service := NewAuthService(nil, "jwt-secret", "bot-token", false, time.Hour)
 
-	_, err := service.issueAuthResult(store.Seller{ID: 1, IsBlocked: true})
+	_, err := service.issueAuthResult(store.User{ID: 1, TelegramID: 42}, store.Workspace{ID: 1, IsBlocked: true})
 	if err == nil || !strings.Contains(err.Error(), "blocked") {
-		t.Fatalf("expected blocked seller error, got %v", err)
+		t.Fatalf("expected blocked workspace error, got %v", err)
 	}
 }
 
@@ -61,7 +65,8 @@ func TestAuthServiceParseTokenRejectsUnexpectedSigningMethod(t *testing.T) {
 	service := NewAuthService(nil, "jwt-secret", "bot-token", false, time.Hour)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, Claims{
-		SellerID: 1,
+		WorkspaceID: 1,
+		UserID:      1,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject: "1",
 		},

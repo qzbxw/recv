@@ -1,0 +1,34 @@
+---
+title: Authentication
+description: How to authenticate with the Reqst API.
+---
+
+# Authentication
+
+Reqst uses API Keys to authenticate requests. You can obtain your API Key from the [Developer Portal](https://reqst.xyz/app/developer-portal).
+
+## Using the API Key
+
+All API requests must include the `X-API-Key` header with your API key.
+
+```bash
+curl -X GET "https://reqst.xyz/v1/me" \
+     -H "X-API-Key: YOUR_API_KEY"
+```
+
+## Security Best Practices
+
+- **Keep your API Key secret**: Never expose it in client-side code or public repositories.
+- **Rotate keys regularly**: If you suspect a key has been compromised, revoke it and generate a new one.
+- **Environment variables**: Store your keys in environment variables (e.g., `REQST_API_KEY`) rather than hardcoding them.
+
+## Example (Node.js)
+
+```javascript
+const response = await fetch('https://reqst.xyz/v1/me', {
+  headers: {
+    'X-API-Key': process.env.REQST_API_KEY
+  }
+});
+const data = await response.json();
+```

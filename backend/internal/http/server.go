@@ -43,9 +43,9 @@ type rateBucket struct {
 	lastLimit int
 }
 
-type sellerContext struct {
-	Claims service.Claims
-	Seller store.Seller
+type workspaceContext struct {
+	Claims    service.Claims
+	Workspace store.Workspace
 }
 
 func NewServer(cfg config.Config, st *store.Store, authService *service.AuthService, adminService *service.AdminService, invoiceService *service.InvoiceService, paymentService *service.PaymentService) *gin.Engine {
@@ -81,8 +81,8 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	internal.POST("/watchers/base", server.handleObservedTransfers)
 	internal.POST("/watchers/arbitrum", server.handleObservedTransfers)
 	internal.POST("/watchers/bsc", server.handleObservedTransfers)
-	internal.POST("/admin/sellers/:id/grant-pro", server.handleGrantPRO)
-	internal.POST("/admin/sellers/:id/block", server.handleBlockSeller)
+	internal.POST("/admin/workspaces/:id/grant-pro", server.handleGrantPRO)
+	internal.POST("/admin/workspaces/:id/block", server.handleBlockWorkspace)
 
 	api := router.Group("/api")
 	api.Use(server.authMiddleware())
@@ -120,8 +120,21 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	adminAPI := router.Group("/api/admin")
 	adminAPI.Use(server.adminMiddleware())
 	adminAPI.GET("/overview", server.handleAdminOverview)
+	adminAPI.GET("/ops/overview", server.handleAdminOpsOverview)
 	adminAPI.GET("/invoices", server.handleAdminInvoices)
-	adminAPI.POST("/sellers/:id/billing-checkout", server.handleAdminCreateBillingCheckout)
+	adminAPI.GET("/workspaces", server.handleAdminWorkspaces)
+	adminAPI.GET("/webhooks/failed", server.handleAdminFailedWebhooks)
+	adminAPI.GET("/watchers", server.handleAdminWatchers)
+	adminAPI.GET("/notifications", server.handleAdminNotifications)
+	adminAPI.GET("/analytics", server.handleAdminAnalytics)
+	adminAPI.GET("/seo-targets", server.handleAdminSEOTargets)
+	adminAPI.POST("/workspaces/:id/block", server.handleAdminBlockWorkspace)
+	adminAPI.POST("/workspaces/:id/plan", server.handleAdminSetWorkspacePlan)
+	adminAPI.POST("/workspaces/:id/billing-checkout", server.handleAdminCreateBillingCheckout)
+	adminAPI.POST("/webhook-deliveries/:id/resend", server.handleAdminResendWebhookDelivery)
+	adminAPI.POST("/invoices/:id/review", server.handleAdminReviewInvoice)
+	adminAPI.POST("/invoices/:id/refresh-status", server.handleAdminRefreshInvoiceStatus)
+	adminAPI.POST("/internal-comments", server.handleAdminCreateInternalComment)
 
 	adminAPI.GET("/blog", server.handleAdminListBlogPosts)
 	adminAPI.POST("/blog", server.handleAdminCreateBlogPost)
@@ -197,12 +210,13 @@ func (s *Server) handleTelegramCodeLogin(c *gin.Context) {
 }
 
 func (s *Server) handleMe(c *gin.Context) {
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	now := time.Now()
-	plan := sc.Seller.EffectivePlan(now)
+	plan := wc.Workspace.EffectivePlan(now)
 
 	c.JSON(http.StatusOK, gin.H{
-		"seller": sc.Seller,
+		"workspace": wc.Workspace,
+		"user":      wc.Claims, // claims has user_id now
 		"plan": map[string]any{
 			"code":            plan.Code,
 			"name":            plan.Name,
@@ -210,7 +224,7 @@ func (s *Server) handleMe(c *gin.Context) {
 			"has_api":         plan.HasAPI,
 			"has_webhooks":    plan.HasWebhooks,
 			"trial_limit":     service.TrialInvoiceLimit,
-			"trial_remaining": max(0, service.TrialInvoiceLimit-sc.Seller.FreeInvoicesUsed),
+			"trial_remaining": max(0, service.TrialInvoiceLimit-wc.Workspace.FreeInvoicesUsed),
 			"price_usd":       plan.PriceUSDString,
 			"billing_days":    plan.BillingDays,
 			"api_key_limit":   plan.APIKeyLimit,
@@ -223,7 +237,7 @@ func (s *Server) handleMe(c *gin.Context) {
 }
 
 func (s *Server) handleUpdateContactEmail(c *gin.Context) {
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	var body struct {
 		Email string `json:"email"`
 	}
@@ -238,7 +252,7 @@ func (s *Server) handleUpdateContactEmail(c *gin.Context) {
 		return
 	}
 
-	seller, err := s.store.UpdateSellerEmail(c.Request.Context(), sc.Seller.ID, email)
+	workspace, err := s.store.UpdateWorkspaceEmail(c.Request.Context(), wc.Workspace.ID, email)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if strings.Contains(strings.ToLower(err.Error()), "duplicate key") {
@@ -248,12 +262,12 @@ func (s *Server) handleUpdateContactEmail(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"seller": seller})
+	c.JSON(http.StatusOK, gin.H{"workspace": workspace})
 }
 
 func (s *Server) handleListWallets(c *gin.Context) {
-	sc := sellerFromContext(c)
-	wallets, err := s.store.ListWallets(c.Request.Context(), sc.Seller.ID)
+	wc := workspaceFromContext(c)
+	wallets, err := s.store.ListWallets(c.Request.Context(), wc.Workspace.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -262,7 +276,7 @@ func (s *Server) handleListWallets(c *gin.Context) {
 }
 
 func (s *Server) handleCreateWallet(c *gin.Context) {
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	var body struct {
 		Network string `json:"network"`
 		Address string `json:"address"`
@@ -283,7 +297,7 @@ func (s *Server) handleCreateWallet(c *gin.Context) {
 		return
 	}
 
-	wallet, err := s.store.CreateWallet(c.Request.Context(), sc.Seller.ID, network, address)
+	wallet, err := s.store.CreateWallet(c.Request.Context(), wc.Workspace.ID, network, address)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -292,13 +306,13 @@ func (s *Server) handleCreateWallet(c *gin.Context) {
 }
 
 func (s *Server) handleDeleteWallet(c *gin.Context) {
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	walletID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid wallet id"})
 		return
 	}
-	if err := s.store.DeactivateWallet(c.Request.Context(), sc.Seller.ID, walletID); err != nil {
+	if err := s.store.DeactivateWallet(c.Request.Context(), wc.Workspace.ID, walletID); err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
@@ -311,7 +325,7 @@ func (s *Server) handleDeleteWallet(c *gin.Context) {
 
 func (s *Server) handleListInvoices(c *gin.Context) {
 	_, _ = s.store.ExpireOverdueInvoices(c.Request.Context())
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	page := parseIntDefault(c.Query("page"), 1)
 	pageSize := parseIntDefault(c.Query("page_size"), 20)
 	if page < 1 {
@@ -321,7 +335,7 @@ func (s *Server) handleListInvoices(c *gin.Context) {
 		pageSize = 20
 	}
 
-	items, err := s.store.ListInvoices(c.Request.Context(), sc.Seller.ID, pageSize, (page-1)*pageSize)
+	items, err := s.store.ListInvoices(c.Request.Context(), wc.Workspace.ID, pageSize, (page-1)*pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -335,7 +349,7 @@ func (s *Server) handleListInvoices(c *gin.Context) {
 }
 
 func (s *Server) handleCreateInvoice(c *gin.Context) {
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	var body struct {
 		Title            string `json:"title"`
 		BaseAmountUSD    string `json:"base_amount_usd"`
@@ -353,7 +367,7 @@ func (s *Server) handleCreateInvoice(c *gin.Context) {
 		return
 	}
 
-	invoice, err := s.invoiceService.CreateInvoice(c.Request.Context(), sc.Seller, service.CreateInvoiceInput{
+	invoice, err := s.invoiceService.CreateInvoice(c.Request.Context(), wc.Workspace, service.CreateInvoiceInput{
 		Title:            strings.TrimSpace(body.Title),
 		BaseAmountUSD:    baseAmount,
 		PayableNetwork:   store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork))),
@@ -369,14 +383,14 @@ func (s *Server) handleCreateInvoice(c *gin.Context) {
 
 func (s *Server) handleGetInvoice(c *gin.Context) {
 	_, _ = s.store.ExpireOverdueInvoices(c.Request.Context())
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	invoiceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invoice id"})
 		return
 	}
 
-	invoice, err := s.store.GetInvoiceByID(c.Request.Context(), sc.Seller.ID, invoiceID)
+	invoice, err := s.store.GetInvoiceByID(c.Request.Context(), wc.Workspace.ID, invoiceID)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
@@ -389,13 +403,13 @@ func (s *Server) handleGetInvoice(c *gin.Context) {
 }
 
 func (s *Server) handleCancelInvoice(c *gin.Context) {
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	invoiceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invoice id"})
 		return
 	}
-	currentInvoice, err := s.store.GetInvoiceByID(c.Request.Context(), sc.Seller.ID, invoiceID)
+	currentInvoice, err := s.store.GetInvoiceByID(c.Request.Context(), wc.Workspace.ID, invoiceID)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
@@ -404,11 +418,11 @@ func (s *Server) handleCancelInvoice(c *gin.Context) {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
-	if !isSellerManagedInvoice(currentInvoice) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "only seller-created invoices can be canceled"})
+	if !isWorkspaceManagedInvoice(currentInvoice) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "only workspace-created invoices can be canceled"})
 		return
 	}
-	invoice, err := s.store.SetInvoiceStatus(c.Request.Context(), sc.Seller.ID, invoiceID, store.InvoiceStatusExpired)
+	invoice, err := s.store.SetInvoiceStatus(c.Request.Context(), wc.Workspace.ID, invoiceID, store.InvoiceStatusExpired)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
@@ -421,13 +435,13 @@ func (s *Server) handleCancelInvoice(c *gin.Context) {
 }
 
 func (s *Server) handleMarkInvoicePaid(c *gin.Context) {
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	invoiceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invoice id"})
 		return
 	}
-	currentInvoice, err := s.store.GetInvoiceByID(c.Request.Context(), sc.Seller.ID, invoiceID)
+	currentInvoice, err := s.store.GetInvoiceByID(c.Request.Context(), wc.Workspace.ID, invoiceID)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
@@ -436,12 +450,12 @@ func (s *Server) handleMarkInvoicePaid(c *gin.Context) {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
-	if !isSellerManagedInvoice(currentInvoice) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "only seller-created invoices can be marked paid"})
+	if !isWorkspaceManagedInvoice(currentInvoice) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "only workspace-created invoices can be marked paid"})
 		return
 	}
 
-	invoice, err := s.store.MarkInvoicePaidManual(c.Request.Context(), sc.Seller.ID, invoiceID)
+	invoice, err := s.store.MarkInvoicePaidManual(c.Request.Context(), wc.Workspace.ID, invoiceID)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
@@ -519,9 +533,9 @@ func (s *Server) handleObservedTransfers(c *gin.Context) {
 }
 
 func (s *Server) handleGrantPRO(c *gin.Context) {
-	sellerID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	workspaceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid seller id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
 		return
 	}
 
@@ -530,7 +544,7 @@ func (s *Server) handleGrantPRO(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&body)
 
-	seller, err := s.store.GrantPRO(c.Request.Context(), sellerID, body.Days)
+	workspace, err := s.store.GrantPRO(c.Request.Context(), workspaceID, body.Days)
 	if err != nil {
 		metrics.IncAdminOperation("grant_pro", "failure")
 		status := http.StatusInternalServerError
@@ -541,14 +555,14 @@ func (s *Server) handleGrantPRO(c *gin.Context) {
 		return
 	}
 	metrics.IncAdminOperation("grant_pro", "success")
-	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), "internal", "grant_pro", "seller", strconv.FormatInt(sellerID, 10), gin.H{"days": body.Days})
-	c.JSON(http.StatusOK, gin.H{"seller": seller})
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), "internal", "grant_pro", "workspace", strconv.FormatInt(workspaceID, 10), gin.H{"days": body.Days})
+	c.JSON(http.StatusOK, gin.H{"workspace": workspace})
 }
 
-func (s *Server) handleBlockSeller(c *gin.Context) {
-	sellerID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+func (s *Server) handleBlockWorkspace(c *gin.Context) {
+	workspaceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid seller id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
 		return
 	}
 
@@ -560,7 +574,7 @@ func (s *Server) handleBlockSeller(c *gin.Context) {
 		return
 	}
 
-	seller, err := s.store.SetSellerBlocked(c.Request.Context(), sellerID, body.Blocked)
+	workspace, err := s.store.SetWorkspaceBlocked(c.Request.Context(), workspaceID, body.Blocked)
 	if err != nil {
 		metrics.IncAdminOperation("set_blocked", "failure")
 		status := http.StatusInternalServerError
@@ -571,8 +585,8 @@ func (s *Server) handleBlockSeller(c *gin.Context) {
 		return
 	}
 	metrics.IncAdminOperation("set_blocked", "success")
-	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), "internal", "set_blocked", "seller", strconv.FormatInt(sellerID, 10), gin.H{"blocked": body.Blocked})
-	c.JSON(http.StatusOK, gin.H{"seller": seller})
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), "internal", "set_blocked", "workspace", strconv.FormatInt(workspaceID, 10), gin.H{"blocked": body.Blocked})
+	c.JSON(http.StatusOK, gin.H{"workspace": workspace})
 }
 
 func (s *Server) authMiddleware() gin.HandlerFunc {
@@ -592,21 +606,21 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		seller, err := s.store.GetSellerByID(c.Request.Context(), claims.SellerID)
+		workspace, err := s.store.GetWorkspaceByID(c.Request.Context(), claims.WorkspaceID)
 		if err != nil {
-			metrics.IncAuthAttempt("bearer_token", "failure", "seller_not_found")
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "seller not found"})
+			metrics.IncAuthAttempt("bearer_token", "failure", "workspace_not_found")
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "workspace not found"})
 			return
 		}
-		if seller.IsBlocked {
-			metrics.IncAuthAttempt("bearer_token", "failure", "seller_blocked")
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "seller account is blocked"})
+		if workspace.IsBlocked {
+			metrics.IncAuthAttempt("bearer_token", "failure", "workspace_blocked")
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "workspace account is blocked"})
 			return
 		}
 
-		c.Request = c.Request.WithContext(metrics.WithSource(c.Request.Context(), "seller_api"))
+		c.Request = c.Request.WithContext(metrics.WithSource(c.Request.Context(), "workspace_api"))
 		metrics.IncAuthAttempt("bearer_token", "success", "authenticated")
-		c.Set("seller_ctx", sellerContext{Claims: claims, Seller: seller})
+		c.Set("workspace_ctx", workspaceContext{Claims: claims, Workspace: workspace})
 		c.Next()
 	}
 }
@@ -661,9 +675,9 @@ func requestMetricsMiddleware() gin.HandlerFunc {
 	}
 }
 
-func sellerFromContext(c *gin.Context) sellerContext {
-	value, _ := c.Get("seller_ctx")
-	return value.(sellerContext)
+func workspaceFromContext(c *gin.Context) workspaceContext {
+	value, _ := c.Get("workspace_ctx")
+	return value.(workspaceContext)
 }
 
 func publicInvoiceResponse(invoice store.Invoice) gin.H {
@@ -690,6 +704,7 @@ func publicInvoiceResponse(invoice store.Invoice) gin.H {
 		"destination_address": invoice.DestinationAddress,
 		"payment_comment":     comment,
 		"status":              status,
+		"environment":         invoice.Mode,
 		"mode":                invoice.Mode,
 		"expires_at":          invoice.ExpiresAt,
 		"created_at":          invoice.CreatedAt,
@@ -702,12 +717,12 @@ func publicInvoiceResponse(invoice store.Invoice) gin.H {
 	}
 }
 
-func isSellerManagedInvoice(invoice store.Invoice) bool {
+func isWorkspaceManagedInvoice(invoice store.Invoice) bool {
 	return invoice.Kind == store.InvoiceKindMerchant && invoice.SubscriptionDays <= 0
 }
 
 func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
-	sc := sellerFromContext(c)
+	wc := workspaceFromContext(c)
 	var body struct {
 		PayableNetwork string `json:"payable_network"`
 		PlanCode       string `json:"plan_code"`
@@ -720,9 +735,9 @@ func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	network := store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork)))
 	planCode := store.NormalizePlanCode(body.PlanCode)
 	if strings.TrimSpace(body.PlanCode) == "" {
-		planCode = store.PlanCodePro
+		planCode = store.PlanCodeMerchant
 	}
-	invoice, err := s.invoiceService.CreatePlanInvoice(c.Request.Context(), sc.Seller, planCode, network)
+	invoice, err := s.invoiceService.CreatePlanInvoice(c.Request.Context(), wc.Workspace, planCode, network)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -740,7 +755,7 @@ func checkoutBadge(invoice store.Invoice) string {
 func normalizedInvoicePlanCode(invoice store.Invoice) store.PlanCode {
 	code := store.NormalizePlanCode(string(invoice.PlanCode))
 	if invoice.Kind == store.InvoiceKindSubscription && code == store.PlanCodeTrial {
-		return store.PlanCodePro
+		return store.PlanCodeMerchant
 	}
 	return code
 }

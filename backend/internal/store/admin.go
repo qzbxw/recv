@@ -33,9 +33,9 @@ type AdminOverviewTotals struct {
 	MerchantPaidUSD       decimal.Decimal
 	SubscriptionPaidUSD   decimal.Decimal
 	OpenInvoiceUSD        decimal.Decimal
-	SellersTotal          int
+	WorkspacesTotal       int
 	ActiveSubscribers     int
-	BlockedSellers        int
+	BlockedWorkspaces     int
 	WalletsTotal          int
 	APIKeysActive         int
 	WebhookEndpoints      int
@@ -74,9 +74,9 @@ type AdminPlanBreakdown struct {
 type AdminInvoiceRecord struct {
 	ID                 int64
 	PublicID           string
-	SellerID           int64
-	SellerUsername     string
-	SellerEmail        string
+	WorkspaceID        int64
+	WorkspaceUsername  string
+	WorkspaceEmail     string
 	Kind               InvoiceKind
 	PlanCode           PlanCode
 	Title              string
@@ -145,16 +145,16 @@ func (s *Store) GetAdminOverview(ctx context.Context) (AdminOverview, error) {
 
 	if err := s.pool.QueryRow(ctx, `
 		SELECT
-			(SELECT COUNT(1) FROM sellers),
-			(SELECT COUNT(1) FROM sellers WHERE subscription_ends_at IS NOT NULL AND subscription_ends_at > NOW()),
-			(SELECT COUNT(1) FROM sellers WHERE is_blocked = TRUE),
+			(SELECT COUNT(1) FROM workspaces),
+			(SELECT COUNT(1) FROM workspaces WHERE subscription_ends_at IS NOT NULL AND subscription_ends_at > NOW()),
+			(SELECT COUNT(1) FROM workspaces WHERE is_blocked = TRUE),
 			(SELECT COUNT(1) FROM wallets WHERE is_active = TRUE),
 			(SELECT COUNT(1) FROM api_keys WHERE revoked_at IS NULL),
 			(SELECT COUNT(1) FROM webhook_endpoints WHERE is_active = TRUE)
 	`).Scan(
-		&overview.Totals.SellersTotal,
+		&overview.Totals.WorkspacesTotal,
 		&overview.Totals.ActiveSubscribers,
-		&overview.Totals.BlockedSellers,
+		&overview.Totals.BlockedWorkspaces,
 		&overview.Totals.WalletsTotal,
 		&overview.Totals.APIKeysActive,
 		&overview.Totals.WebhookEndpoints,
@@ -260,7 +260,7 @@ func (s *Store) GetAdminOverview(ctx context.Context) (AdminOverview, error) {
 	planRows, err := s.pool.Query(ctx, `
 		SELECT
 			CASE
-				WHEN kind = 'subscription' AND (plan_code = '' OR plan_code = 'trial') THEN 'pro'
+				WHEN kind = 'subscription' AND (plan_code = '' OR plan_code = 'trial') THEN 'merchant'
 				WHEN plan_code = '' THEN 'merchant'
 				ELSE plan_code
 			END AS plan_bucket,
@@ -325,7 +325,7 @@ func (s *Store) listAdminInvoices(ctx context.Context, filters AdminInvoiceFilte
 		argIndex++
 	}
 	if query := strings.TrimSpace(filters.Query); query != "" {
-		whereParts = append(whereParts, fmt.Sprintf("(i.public_id ILIKE $%d OR i.title ILIKE $%d OR COALESCE(s.username, '') ILIKE $%d OR COALESCE(s.email, '') ILIKE $%d)", argIndex, argIndex, argIndex, argIndex))
+		whereParts = append(whereParts, fmt.Sprintf("(i.public_id ILIKE $%d OR i.title ILIKE $%d OR COALESCE(w.username, '') ILIKE $%d OR COALESCE(w.email, '') ILIKE $%d)", argIndex, argIndex, argIndex, argIndex))
 		args = append(args, "%"+query+"%")
 		argIndex++
 	}
@@ -335,7 +335,7 @@ func (s *Store) listAdminInvoices(ctx context.Context, filters AdminInvoiceFilte
 	countQuery := `
 		SELECT COUNT(1)
 		FROM invoices i
-		JOIN sellers s ON s.id = i.seller_id
+		JOIN workspaces w ON w.id = i.workspace_id
 		WHERE ` + whereClause
 	var total int
 	if err := s.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
@@ -351,9 +351,9 @@ func (s *Store) listAdminInvoices(ctx context.Context, filters AdminInvoiceFilte
 		SELECT
 			i.id,
 			i.public_id,
-			i.seller_id,
-			COALESCE(s.username, ''),
-			COALESCE(s.email, ''),
+			i.workspace_id,
+			COALESCE(w.username, ''),
+			COALESCE(w.email, ''),
 			i.kind,
 			i.plan_code,
 			i.title,
@@ -369,7 +369,7 @@ func (s *Store) listAdminInvoices(ctx context.Context, filters AdminInvoiceFilte
 			i.paid_at,
 			i.created_at
 		FROM invoices i
-		JOIN sellers s ON s.id = i.seller_id
+		JOIN workspaces w ON w.id = i.workspace_id
 		LEFT JOIN LATERAL (
 			SELECT classification
 			FROM payment_events pe
@@ -396,9 +396,9 @@ func (s *Store) listAdminInvoices(ctx context.Context, filters AdminInvoiceFilte
 		if err := rows.Scan(
 			&item.ID,
 			&item.PublicID,
-			&item.SellerID,
-			&item.SellerUsername,
-			&item.SellerEmail,
+			&item.WorkspaceID,
+			&item.WorkspaceUsername,
+			&item.WorkspaceEmail,
 			&item.Kind,
 			&item.PlanCode,
 			&item.Title,

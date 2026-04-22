@@ -103,9 +103,32 @@ const (
 	InvoiceKindSubscription InvoiceKind = "subscription"
 )
 
-type Seller struct {
+type Environment string
+
+const (
+	EnvironmentTest Environment = "test"
+	EnvironmentLive Environment = "live"
+)
+
+type MemberRole string
+
+const (
+	RoleOwner  MemberRole = "owner"
+	RoleAdmin  MemberRole = "admin"
+	RoleMember MemberRole = "member"
+)
+
+type User struct {
+	ID         int64     `json:"id"`
+	TelegramID int64     `json:"telegram_id"`
+	Username   string    `json:"username"`
+	Email      string    `json:"email"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+type Workspace struct {
 	ID                 int64      `json:"id"`
-	TelegramID         *int64     `json:"telegram_id"`
+	OwnerTelegramID    *int64     `json:"owner_telegram_id"`
 	Username           string     `json:"username"`
 	Email              string     `json:"email"`
 	DefaultNetwork     Network    `json:"default_network"`
@@ -117,19 +140,46 @@ type Seller struct {
 	CreatedAt          time.Time  `json:"created_at"`
 }
 
+func (w Workspace) HasActiveSubscription(now time.Time) bool {
+	return w.SubscriptionEndsAt != nil && w.SubscriptionEndsAt.After(now)
+}
+
+func (w Workspace) EffectivePlanCode(now time.Time) PlanCode {
+	if !w.HasActiveSubscription(now) {
+		return PlanCodeTrial
+	}
+	planCode := NormalizePlanCode(string(w.PlanCode))
+	if planCode == PlanCodeTrial {
+		return PlanCodeMerchant
+	}
+	return planCode
+}
+
+func (w Workspace) EffectivePlan(now time.Time) PlanDefinition {
+	return ResolvePlan(w.EffectivePlanCode(now))
+}
+
+type WorkspaceMember struct {
+	WorkspaceID int64      `json:"workspace_id"`
+	UserID      int64      `json:"user_id"`
+	Role        MemberRole `json:"role"`
+	CreatedAt   time.Time  `json:"created_at"`
+}
+
 type Wallet struct {
-	ID        int64     `json:"id"`
-	SellerID  int64     `json:"seller_id"`
-	Network   Network   `json:"network"`
-	Address   string    `json:"address"`
-	IsActive  bool      `json:"is_active"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          int64       `json:"id"`
+	WorkspaceID int64       `json:"workspace_id"`
+	Network     Network     `json:"network"`
+	Address     string      `json:"address"`
+	Environment Environment `json:"environment"`
+	IsActive    bool        `json:"is_active"`
+	CreatedAt   time.Time   `json:"created_at"`
 }
 
 type Invoice struct {
 	ID                 int64            `json:"id"`
 	PublicID           string           `json:"public_id"`
-	SellerID           int64            `json:"seller_id"`
+	WorkspaceID        int64            `json:"workspace_id"`
 	Kind               InvoiceKind      `json:"kind"`
 	SubscriptionDays   int              `json:"subscription_days"`
 	PlanCode           PlanCode         `json:"plan_code"`
@@ -141,6 +191,7 @@ type Invoice struct {
 	PaymentComment     *string          `json:"payment_comment"`
 	MatchingSuffix     *decimal.Decimal `json:"matching_suffix"`
 	Status             InvoiceStatus    `json:"status"`
+	Environment        Environment      `json:"environment"`
 	ExpiresAt          time.Time        `json:"expires_at"`
 	TxHash             *string          `json:"tx_hash"`
 	PaidAt             *time.Time       `json:"paid_at"`
@@ -163,6 +214,7 @@ type PaymentEvent struct {
 	DestinationAddress string          `json:"destination_address"`
 	Amount             decimal.Decimal `json:"amount"`
 	PaymentComment     *string         `json:"payment_comment"`
+	Environment        Environment     `json:"environment"`
 	ObservedAt         time.Time       `json:"observed_at"`
 	RawPayload         json.RawMessage `json:"raw_payload"`
 	MatchedInvoiceID   *int64          `json:"matched_invoice_id"`
@@ -187,11 +239,12 @@ type WatchedWallet struct {
 	PollNetwork    Network
 	PayableNetwork Network
 	Address        string
+	Environment    Environment
 }
 
 type NotificationJob struct {
 	ID                  int64
-	SellerID            int64
+	WorkspaceID         int64
 	RecipientTelegramID int64
 	Message             string
 	Payload             json.RawMessage
@@ -199,15 +252,24 @@ type NotificationJob struct {
 }
 
 type BlogPost struct {
-	ID            int64      `json:"id"`
-	Slug          string     `json:"slug"`
-	Title         string     `json:"title"`
-	ContentMD     string     `json:"content_md"`
-	Excerpt       *string    `json:"excerpt"`
-	CoverImageURL *string    `json:"cover_image_url"`
-	Author        *string    `json:"author"`
-	IsPublished   bool       `json:"is_published"`
-	PublishedAt   *time.Time `json:"published_at"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	ID                    int64      `json:"id"`
+	Slug                  string     `json:"slug"`
+	Title                 string     `json:"title"`
+	ContentMD             string     `json:"content_md"`
+	Excerpt               *string    `json:"excerpt"`
+	CoverImageURL         *string    `json:"cover_image_url"`
+	Author                *string    `json:"author"`
+	IsPublished           bool       `json:"is_published"`
+	Status                string     `json:"status"`
+	MetaTitle             *string    `json:"meta_title"`
+	MetaDescription       *string    `json:"meta_description"`
+	CanonicalURL          *string    `json:"canonical_url"`
+	Tags                  []string   `json:"tags"`
+	Locale                string     `json:"locale"`
+	PreviewToken          *string    `json:"preview_token"`
+	InternalLinksCount    int        `json:"internal_links_count"`
+	InternalLinkingStatus string     `json:"internal_linking_status"`
+	PublishedAt           *time.Time `json:"published_at"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 }

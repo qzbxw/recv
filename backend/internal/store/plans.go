@@ -2,7 +2,6 @@ package store
 
 import (
 	"strings"
-	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -11,8 +10,9 @@ type PlanCode string
 
 const (
 	PlanCodeTrial      PlanCode = "trial"
-	PlanCodePro        PlanCode = "pro"
-	PlanCodeDev        PlanCode = "dev"
+	PlanCodeMerchant   PlanCode = "merchant"
+	PlanCodeDeveloper  PlanCode = "developer"
+	PlanCodeBusiness   PlanCode = "business"
 	PlanCodeEnterprise PlanCode = "enterprise"
 )
 
@@ -32,6 +32,11 @@ type PlanDefinition struct {
 	MonthlyRequestCap int             `json:"monthly_request_cap"`
 	RequestsPerMinute int             `json:"requests_per_minute"`
 	WebhookRetries    int             `json:"webhook_retries"`
+	WebhookLimit      int             `json:"webhook_limit"`
+	MaxWorkspaces     int             `json:"max_workspaces"`
+	MaxSeats          int             `json:"max_seats"`
+	AnalyticsLevel    string          `json:"analytics_level"`
+	SupportLevel      string          `json:"support_level"`
 	PrioritySupport   bool            `json:"priority_support"`
 }
 
@@ -40,7 +45,7 @@ var planCatalog = map[PlanCode]PlanDefinition{
 		Code:              PlanCodeTrial,
 		Name:              "Trial",
 		CheckoutTitle:     "Reqst Trial",
-		CheckoutBadge:     "Merchant",
+		CheckoutBadge:     "Test-only",
 		MarketingLabel:    "Reqst Trial",
 		PriceUSD:          decimal.Zero,
 		PriceUSDString:    "0",
@@ -48,24 +53,34 @@ var planCatalog = map[PlanCode]PlanDefinition{
 		HasUnlimitedSales: false,
 		HasAPI:            false,
 		HasWebhooks:       false,
+		MaxWorkspaces:     1,
+		MaxSeats:          1,
+		AnalyticsLevel:    "none",
+		SupportLevel:      "community",
 	},
-	PlanCodePro: {
-		Code:              PlanCodePro,
-		Name:              "Reqst PRO",
-		CheckoutTitle:     "Reqst PRO · 30 days",
-		CheckoutBadge:     "Reqst PRO",
-		MarketingLabel:    "Reqst PRO",
+	PlanCodeMerchant: {
+		Code:              PlanCodeMerchant,
+		Name:              "Merchant",
+		CheckoutTitle:     "Reqst Merchant · 30 days",
+		CheckoutBadge:     "Merchant",
+		MarketingLabel:    "Merchant",
 		PriceUSD:          decimal.RequireFromString("39"),
 		PriceUSDString:    "39",
 		BillingDays:       30,
 		HasUnlimitedSales: true,
+		HasAPI:            false,
+		HasWebhooks:       false,
+		MaxWorkspaces:     1,
+		MaxSeats:          1,
+		AnalyticsLevel:    "basic",
+		SupportLevel:      "standard",
 	},
-	PlanCodeDev: {
-		Code:              PlanCodeDev,
-		Name:              "Reqst Dev",
-		CheckoutTitle:     "Reqst Dev · 30 days",
-		CheckoutBadge:     "Reqst Dev",
-		MarketingLabel:    "Reqst Dev",
+	PlanCodeDeveloper: {
+		Code:              PlanCodeDeveloper,
+		Name:              "Developer",
+		CheckoutTitle:     "Reqst Developer · 30 days",
+		CheckoutBadge:     "Developer",
+		MarketingLabel:    "Developer",
 		PriceUSD:          decimal.RequireFromString("199"),
 		PriceUSDString:    "199",
 		BillingDays:       30,
@@ -76,23 +91,56 @@ var planCatalog = map[PlanCode]PlanDefinition{
 		MonthlyRequestCap: 50000,
 		RequestsPerMinute: 90,
 		WebhookRetries:    3,
+		WebhookLimit:      3,
+		MaxWorkspaces:     3,
+		MaxSeats:          3,
+		AnalyticsLevel:    "basic",
+		SupportLevel:      "standard",
+	},
+	PlanCodeBusiness: {
+		Code:              PlanCodeBusiness,
+		Name:              "Business",
+		CheckoutTitle:     "Reqst Business · 30 days",
+		CheckoutBadge:     "Business",
+		MarketingLabel:    "Business",
+		PriceUSD:          decimal.RequireFromString("499"),
+		PriceUSDString:    "499",
+		BillingDays:       30,
+		HasUnlimitedSales: true,
+		HasAPI:            true,
+		HasWebhooks:       true,
+		APIKeyLimit:       10,
+		MonthlyRequestCap: 200000,
+		RequestsPerMinute: 300,
+		WebhookRetries:    5,
+		WebhookLimit:      10,
+		MaxWorkspaces:     10,
+		MaxSeats:          10,
+		AnalyticsLevel:    "advanced",
+		SupportLevel:      "priority",
+		PrioritySupport:   true,
 	},
 	PlanCodeEnterprise: {
 		Code:              PlanCodeEnterprise,
-		Name:              "Reqst Enterprise",
+		Name:              "Enterprise",
 		CheckoutTitle:     "Reqst Enterprise · 30 days",
-		CheckoutBadge:     "Reqst Enterprise",
-		MarketingLabel:    "Reqst Enterprise",
+		CheckoutBadge:     "Enterprise",
+		MarketingLabel:    "Enterprise",
 		PriceUSD:          decimal.RequireFromString("0"),
 		PriceUSDString:    "Custom",
 		BillingDays:       30,
 		HasUnlimitedSales: true,
 		HasAPI:            true,
 		HasWebhooks:       true,
-		APIKeyLimit:       20,
-		MonthlyRequestCap: 500000,
-		RequestsPerMinute: 600,
+		APIKeyLimit:       50,
+		MonthlyRequestCap: 1000000,
+		RequestsPerMinute: 1200,
 		WebhookRetries:    8,
+		WebhookLimit:      50,
+		MaxWorkspaces:     100,
+		MaxSeats:          100,
+		AnalyticsLevel:    "custom",
+		SupportLevel:      "dedicated",
 		PrioritySupport:   true,
 	},
 }
@@ -100,8 +148,12 @@ var planCatalog = map[PlanCode]PlanDefinition{
 func NormalizePlanCode(raw string) PlanCode {
 	code := PlanCode(strings.ToLower(strings.TrimSpace(raw)))
 	switch code {
-	case PlanCodeTrial, PlanCodePro, PlanCodeDev, PlanCodeEnterprise:
+	case PlanCodeTrial, PlanCodeMerchant, PlanCodeDeveloper, PlanCodeBusiness, PlanCodeEnterprise:
 		return code
+	case "pro":
+		return PlanCodeMerchant
+	case "dev":
+		return PlanCodeDeveloper
 	default:
 		return PlanCodeTrial
 	}
@@ -117,31 +169,9 @@ func ResolvePlan(code PlanCode) PlanDefinition {
 
 func ListPaidPlans() []PlanDefinition {
 	return []PlanDefinition{
-		ResolvePlan(PlanCodePro),
-		ResolvePlan(PlanCodeDev),
+		ResolvePlan(PlanCodeMerchant),
+		ResolvePlan(PlanCodeDeveloper),
+		ResolvePlan(PlanCodeBusiness),
 		ResolvePlan(PlanCodeEnterprise),
 	}
-}
-
-func (s Seller) HasActiveSubscription(now time.Time) bool {
-	return s.SubscriptionEndsAt != nil && s.SubscriptionEndsAt.After(now)
-}
-
-func (s Seller) EffectivePlanCode(now time.Time) PlanCode {
-	if !s.HasActiveSubscription(now) {
-		return PlanCodeTrial
-	}
-	code := NormalizePlanCode(string(s.PlanCode))
-	if code == PlanCodeTrial {
-		return PlanCodePro
-	}
-	return code
-}
-
-func (s Seller) EffectivePlan(now time.Time) PlanDefinition {
-	return ResolvePlan(s.EffectivePlanCode(now))
-}
-
-func (s Seller) IsPRO(now time.Time) bool {
-	return s.HasActiveSubscription(now)
 }

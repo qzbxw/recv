@@ -63,8 +63,8 @@ func TestInvoiceIsExpired(t *testing.T) {
 }
 
 func TestPlanHelpers(t *testing.T) {
-	if got := NormalizePlanCode(" DEV "); got != PlanCodeDev {
-		t.Fatalf("expected dev plan code, got %s", got)
+	if got := NormalizePlanCode(" developer "); got != PlanCodeDeveloper {
+		t.Fatalf("expected developer plan code, got %s", got)
 	}
 	if got := NormalizePlanCode("unknown"); got != PlanCodeTrial {
 		t.Fatalf("expected fallback trial plan, got %s", got)
@@ -72,43 +72,40 @@ func TestPlanHelpers(t *testing.T) {
 	if got := ResolvePlan(PlanCodeEnterprise).PriceUSDString; got != "Custom" {
 		t.Fatalf("unexpected enterprise price string: %s", got)
 	}
-	if plans := ListPaidPlans(); len(plans) != 3 {
-		t.Fatalf("expected three paid plans, got %d", len(plans))
+	if plans := ListPaidPlans(); len(plans) != 4 {
+		t.Fatalf("expected four paid plans, got %d", len(plans))
 	}
 }
 
-func TestSellerEffectivePlan(t *testing.T) {
+func TestWorkspaceEffectivePlan(t *testing.T) {
 	now := time.Now()
 	activeUntil := now.Add(24 * time.Hour)
 
-	seller := Seller{
-		PlanCode:           PlanCodeDev,
+	workspace := Workspace{
+		PlanCode:           PlanCodeDeveloper,
 		SubscriptionEndsAt: &activeUntil,
 	}
-	if got := seller.EffectivePlanCode(now); got != PlanCodeDev {
-		t.Fatalf("expected dev plan, got %s", got)
-	}
-	if !seller.IsPRO(now) {
-		t.Fatal("expected active subscription to be treated as PRO")
+	if got := workspace.EffectivePlanCode(now); got != PlanCodeDeveloper {
+		t.Fatalf("expected developer plan, got %s", got)
 	}
 
-	trialSeller := Seller{
+	trialWorkspace := Workspace{
 		PlanCode:           PlanCodeTrial,
 		SubscriptionEndsAt: &activeUntil,
 	}
-	if got := trialSeller.EffectivePlanCode(now); got != PlanCodePro {
-		t.Fatalf("expected paid trial subscription to upgrade to PRO, got %s", got)
+	if got := trialWorkspace.EffectivePlanCode(now); got != PlanCodeMerchant {
+		t.Fatalf("expected paid trial subscription to upgrade to merchant, got %s", got)
 	}
 
-	expiredSeller := Seller{
+	expiredWorkspace := Workspace{
 		PlanCode:           PlanCodeEnterprise,
 		SubscriptionEndsAt: ptrTime(now.Add(-time.Hour)),
 	}
-	if got := expiredSeller.EffectivePlanCode(now); got != PlanCodeTrial {
+	if got := expiredWorkspace.EffectivePlanCode(now); got != PlanCodeTrial {
 		t.Fatalf("expected expired subscription to fall back to trial, got %s", got)
 	}
-	if got := seller.EffectivePlan(now).Code; got != PlanCodeDev {
-		t.Fatalf("expected effective plan dev, got %s", got)
+	if got := workspace.EffectivePlan(now).Code; got != PlanCodeDeveloper {
+		t.Fatalf("expected effective plan developer, got %s", got)
 	}
 }
 
@@ -143,11 +140,11 @@ func TestResolvePlan(t *testing.T) {
 		expected PlanCode
 	}{
 		{name: "valid trial", input: PlanCodeTrial, expected: PlanCodeTrial},
-		{name: "valid pro", input: PlanCodePro, expected: PlanCodePro},
-		{name: "valid dev", input: PlanCodeDev, expected: PlanCodeDev},
+		{name: "valid merchant", input: PlanCodeMerchant, expected: PlanCodeMerchant},
+		{name: "valid developer", input: PlanCodeDeveloper, expected: PlanCodeDeveloper},
 		{name: "valid enterprise", input: PlanCodeEnterprise, expected: PlanCodeEnterprise},
-		{name: "uppercase valid", input: "PRO", expected: PlanCodePro},
-		{name: "padded valid", input: "  dev  ", expected: PlanCodeDev},
+		{name: "uppercase valid pro->merchant", input: "PRO", expected: PlanCodeMerchant},
+		{name: "padded valid dev->developer", input: "  developer  ", expected: PlanCodeDeveloper},
 		{name: "unknown fallback to trial", input: "unknown", expected: PlanCodeTrial},
 		{name: "empty string fallback to trial", input: "", expected: PlanCodeTrial},
 	}

@@ -20,10 +20,10 @@ func TestBotWorkerHelpers(t *testing.T) {
 		sessions:     map[int64]*botSession{},
 	}
 
-	if got := sellerTelegramLabel(nil); got != "unlinked" {
+	if got := workspaceTelegramLabel(nil); got != "unlinked" {
 		t.Fatalf("expected unlinked label, got %q", got)
 	}
-	if got := sellerTelegramLabel(&telegramID); got != "42" {
+	if got := workspaceTelegramLabel(&telegramID); got != "42" {
 		t.Fatalf("expected telegram label 42, got %q", got)
 	}
 

@@ -211,34 +211,34 @@ func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error
 		return nil
 	}
 
-	seller, err := b.ensureSeller(ctx, *message.From)
+	workspace, err := b.ensureWorkspace(ctx, *message.From)
 	if err != nil {
 		return err
 	}
 
 	text := strings.TrimSpace(message.Text)
 	if strings.HasPrefix(text, "/") {
-		return b.handleCommand(ctx, seller, message, strings.Fields(text)[0])
+		return b.handleCommand(ctx, workspace, message, strings.Fields(text)[0])
 	}
 
 	session := b.session(message.Chat.ID)
 	switch session.Flow {
 	case flowWalletAddress:
-		return b.handleWalletAddressInput(ctx, seller, message, text)
+		return b.handleWalletAddressInput(ctx, workspace, message, text)
 	case flowInvoiceTitle:
-		return b.handleInvoiceTitleInput(ctx, seller, message, text)
+		return b.handleInvoiceTitleInput(ctx, workspace, message, text)
 	case flowInvoiceAmount:
-		return b.handleInvoiceAmountInput(ctx, seller, message, text)
+		return b.handleInvoiceAmountInput(ctx, workspace, message, text)
 	default:
 		return nil
 	}
 }
 
-func (b *BotWorker) handleCommand(ctx context.Context, seller store.Seller, message *tgMessage, command string) error {
+func (b *BotWorker) handleCommand(ctx context.Context, workspace store.Workspace, message *tgMessage, command string) error {
 	switch strings.ToLower(command) {
 	case "/start", "/menu":
 		b.resetSession(message.Chat.ID)
-		return b.renderHome(ctx, seller, message.Chat.ID, 0)
+		return b.renderHome(ctx, workspace, message.Chat.ID, 0)
 	case "/login":
 		msg := "🔑 Browser authentication works via Telegram verification code.\n\n" +
 			"1. Open the reqst auth page in your browser.\n" +
@@ -248,11 +248,11 @@ func (b *BotWorker) handleCommand(ctx context.Context, seller store.Seller, mess
 		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.reqstKeyboard(nil))
 		return err
 	case "/invoice":
-		return b.renderInvoiceWalletPicker(ctx, seller, message.Chat.ID, 0)
+		return b.renderInvoiceWalletPicker(ctx, workspace, message.Chat.ID, 0)
 	case "/wallets":
-		return b.renderWallets(ctx, seller, message.Chat.ID, 0, "")
+		return b.renderWallets(ctx, workspace, message.Chat.ID, 0, "")
 	case "/upgrade":
-		return b.renderUpgrade(ctx, seller, message.Chat.ID, 0, "")
+		return b.renderUpgrade(ctx, workspace, message.Chat.ID, 0, "")
 	default:
 		msg := "Unknown command. Use /invoice to create a payment link, /wallets to manage your payout addresses, or /upgrade to unlock PRO features."
 		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.reqstKeyboard(nil))
@@ -265,7 +265,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		return nil
 	}
 
-	seller, err := b.ensureSeller(ctx, query.From)
+	workspace, err := b.ensureWorkspace(ctx, query.From)
 	if err != nil {
 		return err
 	}
@@ -278,13 +278,13 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 	switch {
 	case data == "nav:home":
 		b.resetSession(query.Message.Chat.ID)
-		err = b.renderHome(ctx, seller, query.Message.Chat.ID, query.Message.MessageID)
+		err = b.renderHome(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
 	case data == "screen:wallets":
-		err = b.renderWallets(ctx, seller, query.Message.Chat.ID, query.Message.MessageID, "")
+		err = b.renderWallets(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "")
 	case data == "screen:invoice":
-		err = b.renderInvoiceWalletPicker(ctx, seller, query.Message.Chat.ID, query.Message.MessageID)
+		err = b.renderInvoiceWalletPicker(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
 	case data == "screen:upgrade":
-		err = b.renderUpgrade(ctx, seller, query.Message.Chat.ID, query.Message.MessageID, "")
+		err = b.renderUpgrade(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "")
 	case strings.HasPrefix(data, "wallet:set:"):
 		network := store.Network(strings.TrimPrefix(data, "wallet:set:"))
 		session.Flow = flowWalletAddress
@@ -298,9 +298,9 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = parseErr
 			break
 		}
-		err = b.store.DeactivateWallet(ctx, seller.ID, walletID)
+		err = b.store.DeactivateWallet(ctx, workspace.ID, walletID)
 		if err == nil {
-			err = b.renderWallets(ctx, seller, query.Message.Chat.ID, query.Message.MessageID, "Wallet disabled.")
+			err = b.renderWallets(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "Wallet disabled.")
 			callbackText = "Wallet disabled"
 		}
 	case strings.HasPrefix(data, "invoice:new:"):
@@ -309,7 +309,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = parseErr
 			break
 		}
-		wallet, getErr := b.store.GetWalletByID(ctx, seller.ID, walletID)
+		wallet, getErr := b.store.GetWalletByID(ctx, workspace.ID, walletID)
 		if getErr != nil {
 			err = getErr
 			break
@@ -339,7 +339,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = parseErr
 			break
 		}
-		wallet, getErr := b.store.GetWalletByID(ctx, seller.ID, walletID)
+		wallet, getErr := b.store.GetWalletByID(ctx, workspace.ID, walletID)
 		if getErr != nil {
 			err = getErr
 			break
@@ -365,10 +365,10 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = parseErr
 			break
 		}
-		err = b.finishInvoiceWizard(ctx, seller, query.Message.Chat.ID, query.Message.MessageID, minutes)
+		err = b.finishInvoiceWizard(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, minutes)
 	case strings.HasPrefix(data, "upgrade:network:"):
 		network := store.Network(strings.TrimPrefix(data, "upgrade:network:"))
-		invoice, createErr := b.invoiceService.CreateSubscriptionInvoice(ctx, seller, network)
+		invoice, createErr := b.invoiceService.CreateSubscriptionInvoice(ctx, workspace, network)
 		if createErr != nil {
 			err = createErr
 			break
@@ -380,14 +380,14 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		}))
 	case data == "invoice:cancel":
 		b.resetSession(query.Message.Chat.ID)
-		err = b.renderHome(ctx, seller, query.Message.Chat.ID, query.Message.MessageID)
+		err = b.renderHome(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
 	case strings.HasPrefix(data, "invoice:mark_paid:"):
 		invoiceID, parseErr := strconv.ParseInt(strings.TrimPrefix(data, "invoice:mark_paid:"), 10, 64)
 		if parseErr != nil {
 			err = parseErr
 			break
 		}
-		invoice, markErr := b.store.MarkInvoicePaidManual(ctx, seller.ID, invoiceID)
+		invoice, markErr := b.store.MarkInvoicePaidManual(ctx, workspace.ID, invoiceID)
 		if markErr != nil {
 			err = markErr
 			break
@@ -400,7 +400,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = parseErr
 			break
 		}
-		invoice, getErr := b.store.GetInvoiceByID(ctx, seller.ID, invoiceID)
+		invoice, getErr := b.store.GetInvoiceByID(ctx, workspace.ID, invoiceID)
 		if getErr != nil {
 			err = getErr
 			break
@@ -413,7 +413,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = parseErr
 			break
 		}
-		invoice, getErr := b.store.GetInvoiceByID(ctx, seller.ID, invoiceID)
+		invoice, getErr := b.store.GetInvoiceByID(ctx, workspace.ID, invoiceID)
 		if getErr != nil {
 			err = getErr
 			break
@@ -433,7 +433,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 	return err
 }
 
-func (b *BotWorker) handleWalletAddressInput(ctx context.Context, seller store.Seller, message *tgMessage, text string) error {
+func (b *BotWorker) handleWalletAddressInput(ctx context.Context, workspace store.Workspace, message *tgMessage, text string) error {
 	session := b.session(message.Chat.ID)
 	address := strings.TrimSpace(text)
 	if err := validateWallet(session.WalletNetwork, address); err != nil {
@@ -442,15 +442,15 @@ func (b *BotWorker) handleWalletAddressInput(ctx context.Context, seller store.S
 		}))
 	}
 
-	if _, err := b.store.CreateWallet(ctx, seller.ID, session.WalletNetwork, address); err != nil {
+	if _, err := b.store.CreateWallet(ctx, workspace.ID, session.WalletNetwork, address); err != nil {
 		return err
 	}
 	session.Flow = flowIdle
 	session.WalletNetwork = ""
-	return b.renderWallets(ctx, seller, message.Chat.ID, session.MenuMessageID, "Wallet saved.")
+	return b.renderWallets(ctx, workspace, message.Chat.ID, session.MenuMessageID, "Wallet saved.")
 }
 
-func (b *BotWorker) handleInvoiceTitleInput(ctx context.Context, seller store.Seller, message *tgMessage, text string) error {
+func (b *BotWorker) handleInvoiceTitleInput(ctx context.Context, workspace store.Workspace, message *tgMessage, text string) error {
 	session := b.session(message.Chat.ID)
 	title := strings.TrimSpace(text)
 	if title == "" {
@@ -465,7 +465,7 @@ func (b *BotWorker) handleInvoiceTitleInput(ctx context.Context, seller store.Se
 	}))
 }
 
-func (b *BotWorker) handleInvoiceAmountInput(ctx context.Context, seller store.Seller, message *tgMessage, text string) error {
+func (b *BotWorker) handleInvoiceAmountInput(ctx context.Context, workspace store.Workspace, message *tgMessage, text string) error {
 	session := b.session(message.Chat.ID)
 	amountText := strings.TrimSpace(strings.ReplaceAll(text, ",", "."))
 	amount, err := decimal.NewFromString(amountText)
@@ -488,14 +488,14 @@ func (b *BotWorker) handleInvoiceAmountInput(ctx context.Context, seller store.S
 	}))
 }
 
-func (b *BotWorker) finishInvoiceWizard(ctx context.Context, seller store.Seller, chatID int64, messageID int64, minutes int) error {
+func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, minutes int) error {
 	session := b.session(chatID)
 	amount, err := decimal.NewFromString(session.DraftInvoice.Amount)
 	if err != nil {
 		return err
 	}
 
-	invoice, err := b.invoiceService.CreateInvoice(ctx, seller, service.CreateInvoiceInput{
+	invoice, err := b.invoiceService.CreateInvoice(ctx, workspace, service.CreateInvoiceInput{
 		Title:            session.DraftInvoice.Title,
 		BaseAmountUSD:    amount,
 		WalletID:         session.DraftInvoice.WalletID,
@@ -504,7 +504,7 @@ func (b *BotWorker) finishInvoiceWizard(ctx context.Context, seller store.Seller
 	})
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "trial limit reached") {
-			return b.renderUpgrade(ctx, seller, chatID, messageID, "Trial limit reached. Unlock PRO to keep generating links.")
+			return b.renderUpgrade(ctx, workspace, chatID, messageID, "Trial limit reached. Unlock PRO to keep generating links.")
 		}
 		return err
 	}
@@ -517,12 +517,12 @@ func (b *BotWorker) finishInvoiceWizard(ctx context.Context, seller store.Seller
 	}))
 }
 
-func (b *BotWorker) renderHome(ctx context.Context, seller store.Seller, chatID int64, messageID int64) error {
-	wallets, err := b.store.ListWallets(ctx, seller.ID)
+func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
+	wallets, err := b.store.ListWallets(ctx, workspace.ID)
 	if err != nil {
 		return err
 	}
-	invoices, err := b.store.ListInvoices(ctx, seller.ID, 1, 0)
+	invoices, err := b.store.ListInvoices(ctx, workspace.ID, 1, 0)
 	if err != nil {
 		return err
 	}
@@ -532,8 +532,8 @@ func (b *BotWorker) renderHome(ctx context.Context, seller store.Seller, chatID 
 	}
 
 	text := fmt.Sprintf(
-		"reqst seller bot\n\nSeller: @%s\nWallets: %d\nLatest: %s\n\nUse the buttons below, open reqst, or run /login to get browser sign-in instructions.",
-		valueOrFallback(seller.Username, sellerTelegramLabel(seller.TelegramID)),
+		"reqst workspace bot\n\nWorkspace: @%s\nWallets: %d\nLatest: %s\n\nUse the buttons below, open reqst, or run /login to get browser sign-in instructions.",
+		valueOrFallback(workspace.Username, workspaceTelegramLabel(workspace.OwnerTelegramID)),
 		len(wallets),
 		latest,
 	)
@@ -548,15 +548,15 @@ func (b *BotWorker) renderHome(ctx context.Context, seller store.Seller, chatID 
 	}))
 }
 
-func sellerTelegramLabel(telegramID *int64) string {
+func workspaceTelegramLabel(telegramID *int64) string {
 	if telegramID == nil {
 		return "unlinked"
 	}
 	return strconv.FormatInt(*telegramID, 10)
 }
 
-func (b *BotWorker) renderWallets(ctx context.Context, seller store.Seller, chatID int64, messageID int64, note string) error {
-	wallets, err := b.store.ListWallets(ctx, seller.ID)
+func (b *BotWorker) renderWallets(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, note string) error {
+	wallets, err := b.store.ListWallets(ctx, workspace.ID)
 	if err != nil {
 		return err
 	}
@@ -592,13 +592,13 @@ func (b *BotWorker) renderWallets(ctx context.Context, seller store.Seller, chat
 	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.reqstKeyboard(rows))
 }
 
-func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, seller store.Seller, chatID int64, messageID int64) error {
-	wallets, err := b.store.ListWallets(ctx, seller.ID)
+func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
+	wallets, err := b.store.ListWallets(ctx, workspace.ID)
 	if err != nil {
 		return err
 	}
 	if len(wallets) == 0 {
-		return b.renderWallets(ctx, seller, chatID, messageID, "Add a wallet first to create invoices.")
+		return b.renderWallets(ctx, workspace, chatID, messageID, "Add a wallet first to create invoices.")
 	}
 
 	rows := make([][]tgInlineKeyboardButton, 0, len(wallets)+1)
@@ -612,7 +612,7 @@ func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, seller store.
 	return b.sendOrEdit(ctx, chatID, messageID, text, b.reqstKeyboard(rows))
 }
 
-func (b *BotWorker) renderUpgrade(ctx context.Context, seller store.Seller, chatID int64, messageID int64, note string) error {
+func (b *BotWorker) renderUpgrade(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, note string) error {
 	lines := []string{
 		"Unlock Reqst PRO",
 		"",
@@ -622,7 +622,7 @@ func (b *BotWorker) renderUpgrade(ctx context.Context, seller store.Seller, chat
 	if note != "" {
 		lines = append(lines, "", note)
 	}
-	if seller.IsPRO(time.Now()) {
+	if workspace.HasActiveSubscription(time.Now()) {
 		lines = append(lines, "", "Your PRO subscription is already active. You can still extend it early.")
 	}
 
@@ -708,9 +708,10 @@ func (b *BotWorker) resetSession(chatID int64) {
 	b.sessions[chatID] = &botSession{}
 }
 
-func (b *BotWorker) ensureSeller(ctx context.Context, user tgUser) (store.Seller, error) {
-	return b.store.UpsertSellerByTelegram(ctx, user.ID, user.Username)
+func (b *BotWorker) ensureWorkspace(ctx context.Context, user tgUser) (store.Workspace, error) {
+	return b.store.UpsertWorkspaceByTelegram(ctx, user.ID, user.Username)
 }
+
 
 func (b *BotWorker) getUpdates(ctx context.Context) ([]tgUpdate, error) {
 	query := url.Values{}

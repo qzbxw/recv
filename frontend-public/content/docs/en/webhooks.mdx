@@ -1,0 +1,59 @@
+---
+title: Webhooks
+description: How to receive and verify payment notifications.
+---
+
+# Webhooks
+
+Webhooks allow you to receive real-time notifications when an invoice's status changes.
+
+## Configration
+
+Configure your webhook URL in the [Developer Portal](https://reqst.xyz/app/developer-portal). Reqst will send a `POST` request to this URL with a JSON payload whenever an invoice is updated.
+
+## Webhook Payload
+
+```json
+{
+  "event": "invoice.paid",
+  "invoice": {
+    "id": "INV-123",
+    "amount": "100.00",
+    "currency": "USD",
+    "status": "paid",
+    "metadata": {
+      "user_id": "user_456"
+    }
+  }
+}
+```
+
+## Verifying Signatures
+
+To ensure that a webhook was actually sent by Reqst, you should verify the `X-Reqst-Signature` header.
+
+The signature is an HMAC-SHA256 hash of the request body using your **Webhook Secret** as the key.
+
+### Verification Example (Node.js)
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhook(payload, signature, secret) {
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(JSON.stringify(payload));
+  const expectedSignature = hmac.digest('hex');
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
+```
+
+## Best Practices
+
+- **Respond with 200 OK**: Always return a 200 status code to acknowledge receipt of the webhook.
+- **Idempotency**: Your webhook handler should be idempotent, as Reqst may retry the same notification if it doesn't receive a 200 response.
+- **Verify Signatures**: Always verify the signature to prevent spoofing.
+- **Async Processing**: Acknowledge the webhook immediately and process it asynchronously to avoid timeouts.

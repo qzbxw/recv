@@ -190,7 +190,7 @@ func TestPublicInvoiceResponse(t *testing.T) {
 		PublicID:           "INV123",
 		Kind:               store.InvoiceKindSubscription,
 		PlanCode:           store.PlanCodeTrial,
-		Title:              "Reqst PRO · 30 days",
+		Title:              "Reqst Merchant · 30 days",
 		BaseAmountUSD:      decimal.RequireFromString("39"),
 		PayableAmount:      decimal.RequireFromString("11.250000"),
 		PayableNetwork:     store.NetworkTON,
@@ -203,10 +203,10 @@ func TestPublicInvoiceResponse(t *testing.T) {
 
 	response := publicInvoiceResponse(invoice)
 
-	if response["checkout_badge"] != "Reqst PRO" {
+	if response["checkout_badge"] != "Merchant" {
 		t.Fatalf("unexpected checkout badge: %#v", response["checkout_badge"])
 	}
-	if response["plan_code"] != store.PlanCodePro {
+	if response["plan_code"] != store.PlanCodeMerchant {
 		t.Fatalf("unexpected plan code: %#v", response["plan_code"])
 	}
 	paymentURI, ok := response["payment_uri"].(string)
@@ -225,10 +225,10 @@ func TestPublicInvoiceResponse(t *testing.T) {
 }
 
 func TestHelperUtilities(t *testing.T) {
-	if !isSellerManagedInvoice(store.Invoice{Kind: store.InvoiceKindMerchant}) {
+	if !isWorkspaceManagedInvoice(store.Invoice{Kind: store.InvoiceKindMerchant}) {
 		t.Fatal("expected merchant invoice to be seller managed")
 	}
-	if isSellerManagedInvoice(store.Invoice{Kind: store.InvoiceKindSubscription, SubscriptionDays: 30}) {
+	if isWorkspaceManagedInvoice(store.Invoice{Kind: store.InvoiceKindSubscription, SubscriptionDays: 30}) {
 		t.Fatal("expected subscription invoice not to be seller managed")
 	}
 	if got := parseIntDefault("15", 1); got != 15 {
@@ -249,11 +249,11 @@ func TestHelperUtilities(t *testing.T) {
 	if got := hashSecret(" secret "); got == "" {
 		t.Fatal("expected secret hash")
 	}
-	token, prefix, err := generateTokenWithPrefix("rk_live_", 8)
+	token, prefix, err := generateTokenWithPrefix("rqst_live_", 8)
 	if err != nil {
 		t.Fatalf("generateTokenWithPrefix returned error: %v", err)
 	}
-	if !strings.HasPrefix(token, "rk_live_") || prefix == "" {
+	if !strings.HasPrefix(token, "rqst_live_") || prefix == "" {
 		t.Fatalf("unexpected token or prefix: %q / %q", token, prefix)
 	}
 	if got := ternary(true, "a", "b"); got != "a" {
@@ -267,15 +267,15 @@ func TestHelperUtilities(t *testing.T) {
 	}
 }
 
-func TestSellerHandlersValidationBranches(t *testing.T) {
+func TestWorkspaceHandlersValidationBranches(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	server := &Server{}
-	seller := store.Seller{ID: 1}
+	workspace := store.Workspace{ID: 1}
 
 	t.Run("update contact email rejects invalid address", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(seller))
+		router.Use(withWorkspaceContext(workspace))
 		router.POST("/api/me/contact-email", server.handleUpdateContactEmail)
 
 		recorder := httptest.NewRecorder()
@@ -290,7 +290,7 @@ func TestSellerHandlersValidationBranches(t *testing.T) {
 
 	t.Run("create wallet rejects unsupported network", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(seller))
+		router.Use(withWorkspaceContext(workspace))
 		router.POST("/api/wallets", server.handleCreateWallet)
 
 		recorder := httptest.NewRecorder()
@@ -305,7 +305,7 @@ func TestSellerHandlersValidationBranches(t *testing.T) {
 
 	t.Run("create invoice rejects invalid amount", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(seller))
+		router.Use(withWorkspaceContext(workspace))
 		router.POST("/api/invoices", server.handleCreateInvoice)
 
 		recorder := httptest.NewRecorder()
@@ -320,7 +320,7 @@ func TestSellerHandlersValidationBranches(t *testing.T) {
 
 	t.Run("cancel invoice rejects invalid id", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(seller))
+		router.Use(withWorkspaceContext(workspace))
 		router.POST("/api/invoices/:id/cancel", server.handleCancelInvoice)
 
 		recorder := httptest.NewRecorder()
@@ -334,7 +334,7 @@ func TestSellerHandlersValidationBranches(t *testing.T) {
 
 	t.Run("mark invoice paid rejects invalid id", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(seller))
+		router.Use(withWorkspaceContext(workspace))
 		router.POST("/api/invoices/:id/mark-paid", server.handleMarkInvoicePaid)
 
 		recorder := httptest.NewRecorder()
@@ -408,12 +408,12 @@ func TestPublicAndInternalHandlersValidationBranches(t *testing.T) {
 		}
 	})
 
-	t.Run("grant pro rejects invalid seller id", func(t *testing.T) {
+	t.Run("grant pro rejects invalid workspace id", func(t *testing.T) {
 		router := gin.New()
-		router.POST("/internal/admin/sellers/:id/grant-pro", server.handleGrantPRO)
+		router.POST("/internal/admin/workspaces/:id/grant-pro", server.handleGrantPRO)
 
 		recorder := httptest.NewRecorder()
-		request := httptest.NewRequest(stdhttp.MethodPost, "/internal/admin/sellers/oops/grant-pro", nil)
+		request := httptest.NewRequest(stdhttp.MethodPost, "/internal/admin/workspaces/oops/grant-pro", nil)
 		router.ServeHTTP(recorder, request)
 
 		if recorder.Code != stdhttp.StatusBadRequest {
@@ -421,12 +421,12 @@ func TestPublicAndInternalHandlersValidationBranches(t *testing.T) {
 		}
 	})
 
-	t.Run("block seller rejects malformed payload", func(t *testing.T) {
+	t.Run("block workspace rejects malformed payload", func(t *testing.T) {
 		router := gin.New()
-		router.POST("/internal/admin/sellers/:id/block", server.handleBlockSeller)
+		router.POST("/internal/admin/workspaces/:id/block", server.handleBlockWorkspace)
 
 		recorder := httptest.NewRecorder()
-		request := httptest.NewRequest(stdhttp.MethodPost, "/internal/admin/sellers/1/block", strings.NewReader(`{`))
+		request := httptest.NewRequest(stdhttp.MethodPost, "/internal/admin/workspaces/1/block", strings.NewReader(`{`))
 		request.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(recorder, request)
 
@@ -440,11 +440,11 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	server := &Server{}
-	trialSeller := store.Seller{ID: 1}
+	trialWorkspace := store.Workspace{ID: 1}
 
 	t.Run("create api key rejects unsupported plan", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(trialSeller))
+		router.Use(withWorkspaceContext(trialWorkspace))
 		router.POST("/api/developer/api-keys", server.handleCreateAPIKey)
 
 		recorder := httptest.NewRecorder()
@@ -459,7 +459,7 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 
 	t.Run("create webhook endpoint rejects unsupported plan", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(trialSeller))
+		router.Use(withWorkspaceContext(trialWorkspace))
 		router.POST("/api/developer/webhooks", server.handleCreateWebhookEndpoint)
 
 		recorder := httptest.NewRecorder()
@@ -474,7 +474,7 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 
 	t.Run("api create invoice rejects missing scope", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(trialSeller), withAPIKeyScopes("invoices:read"))
+		router.Use(withWorkspaceContext(trialWorkspace), withAPIKeyScopes("invoices:read"))
 		router.POST("/v1/invoices", server.handleAPICreateInvoice)
 
 		recorder := httptest.NewRecorder()
@@ -489,7 +489,7 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 
 	t.Run("api create invoice rejects invalid amount", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(trialSeller), withAPIKeyScopes("invoices:write"))
+		router.Use(withWorkspaceContext(trialWorkspace), withAPIKeyScopes("invoices:write"))
 		router.POST("/v1/invoices", server.handleAPICreateInvoice)
 
 		recorder := httptest.NewRecorder()
@@ -504,7 +504,7 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 
 	t.Run("api get invoice rejects invalid id", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(trialSeller), withAPIKeyScopes("invoices:read"))
+		router.Use(withWorkspaceContext(trialWorkspace), withAPIKeyScopes("invoices:read"))
 		router.GET("/v1/invoices/:id", server.handleAPIGetInvoice)
 
 		recorder := httptest.NewRecorder()
@@ -518,7 +518,7 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 
 	t.Run("api cancel invoice rejects invalid id", func(t *testing.T) {
 		router := gin.New()
-		router.Use(withSellerContext(trialSeller), withAPIKeyScopes("invoices:write"))
+		router.Use(withWorkspaceContext(trialWorkspace), withAPIKeyScopes("invoices:write"))
 		router.POST("/v1/invoices/:id/cancel", server.handleAPICancelInvoice)
 
 		recorder := httptest.NewRecorder()
@@ -531,9 +531,9 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 	})
 }
 
-func withSellerContext(seller store.Seller) gin.HandlerFunc {
+func withWorkspaceContext(workspace store.Workspace) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Set("seller_ctx", sellerContext{Seller: seller})
+		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
 		c.Next()
 	}
 }

@@ -12,13 +12,22 @@ import (
 )
 
 type createBlogPostInput struct {
-	Slug          string  `json:"slug" binding:"required"`
-	Title         string  `json:"title" binding:"required"`
-	ContentMD     string  `json:"content_md" binding:"required"`
-	Excerpt       *string `json:"excerpt"`
-	CoverImageURL *string `json:"cover_image_url"`
-	Author        *string `json:"author"`
-	IsPublished   bool    `json:"is_published"`
+	Slug                  string   `json:"slug" binding:"required"`
+	Title                 string   `json:"title" binding:"required"`
+	ContentMD             string   `json:"content_md" binding:"required"`
+	Excerpt               *string  `json:"excerpt"`
+	CoverImageURL         *string  `json:"cover_image_url"`
+	Author                *string  `json:"author"`
+	IsPublished           bool     `json:"is_published"`
+	Status                string   `json:"status"`
+	MetaTitle             *string  `json:"meta_title"`
+	MetaDescription       *string  `json:"meta_description"`
+	CanonicalURL          *string  `json:"canonical_url"`
+	Tags                  []string `json:"tags"`
+	Locale                string   `json:"locale"`
+	PreviewToken          *string  `json:"preview_token"`
+	InternalLinksCount    int      `json:"internal_links_count"`
+	InternalLinkingStatus string   `json:"internal_linking_status"`
 }
 
 func (s *Server) handleAdminCreateBlogPost(c *gin.Context) {
@@ -28,21 +37,31 @@ func (s *Server) handleAdminCreateBlogPost(c *gin.Context) {
 		return
 	}
 
+	status := normalizeBlogStatus(input.Status, input.IsPublished)
 	var publishedAt *time.Time
-	if input.IsPublished {
+	if status == "published" {
 		now := time.Now()
 		publishedAt = &now
 	}
 
 	post := store.BlogPost{
-		Slug:          input.Slug,
-		Title:         input.Title,
-		ContentMD:     input.ContentMD,
-		Excerpt:       input.Excerpt,
-		CoverImageURL: input.CoverImageURL,
-		Author:        input.Author,
-		IsPublished:   input.IsPublished,
-		PublishedAt:   publishedAt,
+		Slug:                  input.Slug,
+		Title:                 input.Title,
+		ContentMD:             input.ContentMD,
+		Excerpt:               input.Excerpt,
+		CoverImageURL:         input.CoverImageURL,
+		Author:                input.Author,
+		IsPublished:           status == "published",
+		Status:                status,
+		MetaTitle:             input.MetaTitle,
+		MetaDescription:       input.MetaDescription,
+		CanonicalURL:          input.CanonicalURL,
+		Tags:                  input.Tags,
+		Locale:                input.Locale,
+		PreviewToken:          input.PreviewToken,
+		InternalLinksCount:    input.InternalLinksCount,
+		InternalLinkingStatus: input.InternalLinkingStatus,
+		PublishedAt:           publishedAt,
 	}
 
 	createdPost, err := s.store.CreateBlogPost(c.Request.Context(), post)
@@ -50,6 +69,8 @@ func (s *Server) handleAdminCreateBlogPost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_blog_post", "blog_post", strconv.FormatInt(createdPost.ID, 10), gin.H{"slug": createdPost.Slug, "status": createdPost.Status})
 
 	c.JSON(http.StatusCreated, createdPost)
 }
@@ -67,21 +88,31 @@ func (s *Server) handleAdminUpdateBlogPost(c *gin.Context) {
 		return
 	}
 
+	status := normalizeBlogStatus(input.Status, input.IsPublished)
 	var publishedAt *time.Time
-	if input.IsPublished {
+	if status == "published" {
 		now := time.Now()
 		publishedAt = &now
 	}
 
 	post := store.BlogPost{
-		Slug:          input.Slug,
-		Title:         input.Title,
-		ContentMD:     input.ContentMD,
-		Excerpt:       input.Excerpt,
-		CoverImageURL: input.CoverImageURL,
-		Author:        input.Author,
-		IsPublished:   input.IsPublished,
-		PublishedAt:   publishedAt,
+		Slug:                  input.Slug,
+		Title:                 input.Title,
+		ContentMD:             input.ContentMD,
+		Excerpt:               input.Excerpt,
+		CoverImageURL:         input.CoverImageURL,
+		Author:                input.Author,
+		IsPublished:           status == "published",
+		Status:                status,
+		MetaTitle:             input.MetaTitle,
+		MetaDescription:       input.MetaDescription,
+		CanonicalURL:          input.CanonicalURL,
+		Tags:                  input.Tags,
+		Locale:                input.Locale,
+		PreviewToken:          input.PreviewToken,
+		InternalLinksCount:    input.InternalLinksCount,
+		InternalLinkingStatus: input.InternalLinkingStatus,
+		PublishedAt:           publishedAt,
 	}
 
 	updatedPost, err := s.store.UpdateBlogPost(c.Request.Context(), id, post)
@@ -93,6 +124,8 @@ func (s *Server) handleAdminUpdateBlogPost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "update_blog_post", "blog_post", strconv.FormatInt(updatedPost.ID, 10), gin.H{"slug": updatedPost.Slug, "status": updatedPost.Status})
 
 	c.JSON(http.StatusOK, updatedPost)
 }
@@ -113,6 +146,8 @@ func (s *Server) handleAdminDeleteBlogPost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "delete_blog_post", "blog_post", strconv.FormatInt(id, 10), gin.H{})
 
 	c.Status(http.StatusNoContent)
 }
@@ -133,4 +168,11 @@ func (s *Server) handleAdminListBlogPosts(c *gin.Context) {
 		"page":  page,
 		"size":  pageSize,
 	})
+}
+
+func normalizeBlogStatus(status string, isPublished bool) string {
+	if status == "published" || isPublished {
+		return "published"
+	}
+	return "draft"
 }

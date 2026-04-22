@@ -61,6 +61,10 @@ export function AdminBlogPage() {
     }
   }
 
+  function updateEditingPost(next: Partial<AdminBlogPost>) {
+    setEditingPost((current) => ({ ...(current || {}), ...next }));
+  }
+
   if (!token) {
     return <Navigate replace to="/admin" />;
   }
@@ -89,70 +93,139 @@ export function AdminBlogPage() {
           <section className="admin-sales-board">
             {error && <div className="admin-error admin-error--inline">{error}</div>}
             
-            <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1rem" }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+            <form onSubmit={handleSave} className="admin-editor-form">
+              <div className="admin-editor-grid">
+              <label>
                 <span>Title</span>
                 <input
                   required
                   value={editingPost.title || ""}
-                  onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
-                  style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.5rem", borderRadius: "4px" }}
+                  onChange={(e) => updateEditingPost({ title: e.target.value })}
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+              <label>
                 <span>Slug</span>
                 <input
                   required
                   value={editingPost.slug || ""}
-                  onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
-                  style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.5rem", borderRadius: "4px" }}
+                  onChange={(e) => updateEditingPost({ slug: e.target.value })}
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                <span>Excerpt</span>
-                <textarea
-                  required
-                  value={editingPost.excerpt || ""}
-                  onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
-                  style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.5rem", borderRadius: "4px", minHeight: "80px" }}
-                />
+              <label>
+                <span>Status</span>
+                <select
+                  value={editingPost.status || (editingPost.is_published ? "published" : "draft")}
+                  onChange={(e) => updateEditingPost({ status: e.target.value as "draft" | "published", is_published: e.target.value === "published" })}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                <span>Cover Image URL</span>
+              <label>
+                <span>Locale</span>
                 <input
-                  value={editingPost.cover_image_url || ""}
-                  onChange={(e) => setEditingPost({ ...editingPost, cover_image_url: e.target.value })}
-                  style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.5rem", borderRadius: "4px" }}
+                  value={editingPost.locale || "en"}
+                  onChange={(e) => updateEditingPost({ locale: e.target.value })}
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+              <label>
                 <span>Author</span>
                 <input
                   required
                   value={editingPost.author || ""}
-                  onChange={(e) => setEditingPost({ ...editingPost, author: e.target.value })}
-                  style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.5rem", borderRadius: "4px" }}
+                  onChange={(e) => updateEditingPost({ author: e.target.value })}
                 />
               </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem" }}>
+              <label>
+                <span>Cover Image URL</span>
                 <input
-                  type="checkbox"
-                  checked={editingPost.is_published || false}
-                  onChange={(e) => setEditingPost({ ...editingPost, is_published: e.target.checked })}
+                  value={editingPost.cover_image_url || ""}
+                  onChange={(e) => updateEditingPost({ cover_image_url: e.target.value })}
                 />
-                <span>Is Published</span>
               </label>
+
+              <label className="admin-editor-wide">
+                <span>Excerpt</span>
+                <textarea
+                  required
+                  value={editingPost.excerpt || ""}
+                  onChange={(e) => updateEditingPost({ excerpt: e.target.value })}
+                />
+              </label>
+
+              <label>
+                <span>Meta title</span>
+                <input
+                  value={editingPost.meta_title || ""}
+                  onChange={(e) => updateEditingPost({ meta_title: e.target.value })}
+                />
+              </label>
+
+              <label>
+                <span>Canonical URL</span>
+                <input
+                  value={editingPost.canonical_url || ""}
+                  onChange={(e) => updateEditingPost({ canonical_url: e.target.value })}
+                />
+              </label>
+
+              <label className="admin-editor-wide">
+                <span>Meta description</span>
+                <textarea
+                  value={editingPost.meta_description || ""}
+                  onChange={(e) => updateEditingPost({ meta_description: e.target.value })}
+                />
+              </label>
+
+              <label>
+                <span>Tags</span>
+                <input
+                  value={(editingPost.tags || []).join(", ")}
+                  onChange={(e) => updateEditingPost({ tags: e.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })}
+                />
+              </label>
+
+              <label>
+                <span>Preview token</span>
+                <input
+                  value={editingPost.preview_token || ""}
+                  onChange={(e) => updateEditingPost({ preview_token: e.target.value })}
+                />
+              </label>
+
+              <label>
+                <span>Internal links</span>
+                <input
+                  inputMode="numeric"
+                  value={editingPost.internal_links_count ?? 0}
+                  onChange={(e) => updateEditingPost({ internal_links_count: Number(e.target.value) || 0 })}
+                />
+              </label>
+
+              <label>
+                <span>Linking status</span>
+                <select
+                  value={editingPost.internal_linking_status || "unknown"}
+                  onChange={(e) => updateEditingPost({ internal_linking_status: e.target.value })}
+                >
+                  <option value="unknown">Unknown</option>
+                  <option value="needs_links">Needs links</option>
+                  <option value="ready">Ready</option>
+                  <option value="strong">Strong</option>
+                </select>
+              </label>
+              </div>
 
               <div style={{ marginTop: "1rem" }} data-color-mode="dark">
                 <span style={{ display: "block", marginBottom: "0.5rem" }}>Content (Markdown)</span>
                 <MDEditor
                   value={editingPost.content_md || ""}
-                  onChange={(val) => setEditingPost({ ...editingPost, content_md: val || "" })}
+                  onChange={(val) => updateEditingPost({ content_md: val || "" })}
                   height={400}
                 />
               </div>
@@ -202,7 +275,12 @@ export function AdminBlogPage() {
                 content_md: "",
                 cover_image_url: "",
                 author: "Reqst Team",
-                is_published: false
+                is_published: false,
+                status: "draft",
+                tags: [],
+                locale: "en",
+                internal_links_count: 0,
+                internal_linking_status: "unknown"
               })}
             >
               New Post
@@ -221,13 +299,14 @@ export function AdminBlogPage() {
                   <th>Slug</th>
                   <th>Author</th>
                   <th>Status</th>
+                  <th>SEO</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && posts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="admin-table-empty">Loading posts...</td>
+                    <td colSpan={6} className="admin-table-empty">Loading posts...</td>
                   </tr>
                 ) : posts.length > 0 ? (
                   posts.map((post) => (
@@ -241,9 +320,10 @@ export function AdminBlogPage() {
                       <td>{post.author}</td>
                       <td>
                         <span className={`admin-status-pill ${post.is_published ? "status-paid" : "status-draft"}`}>
-                          {post.is_published ? "Published" : "Draft"}
+                          {post.status === "published" || post.is_published ? "Published" : "Draft"}
                         </span>
                       </td>
+                      <td>{post.locale || "en"} / {post.internal_linking_status || "unknown"} / {post.internal_links_count ?? 0} links</td>
                       <td>
                         <button
                           type="button"
@@ -257,7 +337,7 @@ export function AdminBlogPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="admin-table-empty">No posts found.</td>
+                    <td colSpan={6} className="admin-table-empty">No posts found.</td>
                   </tr>
                 )}
               </tbody>

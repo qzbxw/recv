@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 
 export const metadata: Metadata = {
   title: "Blog | Reqst",
@@ -28,27 +29,12 @@ async function getPosts() {
   }
 }
 
-export default async function BlogIndex() {
+export default async function BlogIndex(props: { params: Promise<{ locale: string }> }) {
+  const { locale } = await props.params;
   const posts = await getPosts();
 
   return (
-    <main className="lend-page" style={{ minHeight: "100vh" }}>
-      <div className="lend-backdrop lend-backdrop--grid" />
-      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--left" />
-      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--right" />
-
-      <div className="lend-shell">
-        <header className="lend-topbar">
-          <div className="lend-topbar-main">
-            <Link className="lend-brand" href="/">
-              <strong>reqst</strong>
-            </Link>
-            <div className="lend-topbar-actions">
-              <Link className="lend-nav-link" href="/">/home</Link>
-            </div>
-          </div>
-        </header>
-
+    <MarketingLayout language={locale as "ru" | "en"}>
         <section className="lend-hero lend-hero--centered">
           <div className="lend-hero-copy" style={{ maxWidth: "800px" }}>
             <span className="lend-section-kicker">BLOG</span>
@@ -65,7 +51,7 @@ export default async function BlogIndex() {
           ) : (
             <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
               {posts.map((post: any) => (
-                <Link key={post.slug} href={`/blog/${post.slug}`} className="lend-card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <Link key={post.slug} href={`/${locale}/blog/${post.slug}`} className="lend-card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   {post.cover_image_url && (
                     <div style={{ 
                       width: "100%", 
@@ -87,7 +73,6 @@ export default async function BlogIndex() {
             </div>
           )}
         </section>
-      </div>
-    </main>
+    </MarketingLayout>
   );
 }

@@ -3,16 +3,16 @@ import { Link } from "react-router-dom";
 const sections = [
   {
     title: "Quickstart",
-    body: "Create an rk_test_ key, add a payout wallet, create a test invoice, simulate a payment, then switch the same integration to rk_live_ when your webhook verification is passing.",
+    body: "Create an rqst_test_ key, add a payout wallet, create a test invoice, simulate a payment, then switch the same integration to rqst_live_ when your webhook verification is passing.",
     code: `curl -X POST https://api.reqst.xyz/v1/invoices \\
-  -H "Authorization: Bearer rk_test_..." \\
+  -H "Authorization: Bearer rqst_test_..." \\
   -H "Idempotency-Key: order-1001" \\
   -H "Content-Type: application/json" \\
   -d '{"title":"Order #1001","base_amount_usd":"49.00","payable_network":"TRON"}'`,
   },
   {
     title: "API Auth",
-    body: "Use Authorization: Bearer <API_KEY> or X-API-Key. Live keys start with rk_live_. Test keys start with rk_test_ and create test-mode invoices that are ignored by live blockchain watchers.",
+    body: "Use Authorization: Bearer <API_KEY> or X-API-Key. Live keys start with rqst_live_. Test keys start with rqst_test_ and create test-mode invoices that are ignored by live blockchain watchers.",
   },
   {
     title: "Invoices",
@@ -32,7 +32,7 @@ const sections = [
   },
   {
     title: "Test Mode",
-    body: "Use POST /v1/test/invoices/{id}/simulate-payment with an rk_test_ key to mark a test invoice as paid and exercise webhook delivery without sending funds.",
+    body: "Use POST /v1/test/invoices/{id}/simulate-payment with an rqst_test_ key to mark a test invoice as paid and exercise webhook delivery without sending funds.",
   },
   {
     title: "Blockchain Edge Cases",

@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { getAllDocSlugs } from "@/lib/docs";
 
 export const revalidate = 3600;
 
@@ -10,23 +11,49 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = publicSiteUrl();
   const locales = ["en", "ru"];
 
-  const routes = [
+  const staticRoutes = [
     "", 
     "/dev", 
     "/enterprise", 
     "/privacy", 
     "/terms", 
-    "/blog"
+    "/blog",
+    "/products/checkout",
+    "/products/invoicing",
+    "/products/api",
+    "/networks/ton",
+    "/networks/tron",
+    "/networks/solana",
+    "/networks/base",
+    "/networks/bsc",
+    "/networks/arbitrum",
+    "/use-cases/telegram-shops",
+    "/use-cases/saas-billing",
+    "/use-cases/digital-goods",
+    "/use-cases/paid-communities",
+    "/compare/reqst-vs-manual",
+    "/compare/reqst-vs-custodial",
   ];
 
-  const staticRoutes: MetadataRoute.Sitemap = locales.flatMap((locale) => 
-    routes.map((route) => ({
+  const routes: MetadataRoute.Sitemap = locales.flatMap((locale) => 
+    staticRoutes.map((route) => ({
       url: `${baseUrl}/${locale}${route}`,
       lastModified: new Date(),
       changeFrequency: "daily" as const,
       priority: route === "" ? 1.0 : 0.8,
     }))
   );
+
+  // Docs
+  const docRoutes: MetadataRoute.Sitemap = locales.flatMap((locale) => {
+    const slugs = getAllDocSlugs(locale);
+    return slugs.map((slug) => ({
+      url: `${baseUrl}/${locale}/docs/${slug.join("/")}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }));
+  });
 
   let blogRoutes: MetadataRoute.Sitemap = [];
   try {
@@ -36,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const data = await res.json();
       if (data.items) {
         blogRoutes = locales.flatMap((locale) => 
-          data.items.map((post: any) => ({
+          data.items.map((post: { slug: string; updated_at: string }) => ({
             url: `${baseUrl}/${locale}/blog/${post.slug}`,
             lastModified: new Date(post.updated_at),
             changeFrequency: "weekly" as const,
@@ -49,5 +76,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Failed to fetch blog posts for sitemap", err);
   }
 
-  return [...staticRoutes, ...blogRoutes];
+  return [...routes, ...docRoutes, ...blogRoutes];
 }

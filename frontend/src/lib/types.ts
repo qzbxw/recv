@@ -1,24 +1,45 @@
 export type Network = "TON" | "TON_USDT" | "TRON" | "SOLANA" | "EVM" | "BASE" | "ARBITRUM" | "BSC";
+export type InvoiceStatus = "draft" | "awaiting_payment" | "paid" | "expired" | "underpaid" | "overpaid" | "manual_review";
+export type APIKeyMode = "live" | "test";
+export type WebhookDeliveryStatus = "pending" | "delivered" | "failed" | "retrying" | "exhausted" | string;
 
-export type Seller = {
+export type Environment = "test" | "live";
+
+export type User = {
   id: number;
-  telegram_id: number | null;
+  telegram_id: number;
   username: string;
   email: string;
+  created_at: string;
+};
+
+export type Workspace = {
+  id: number;
+  owner_telegram_id?: number | null;
+  username?: string;
+  email?: string;
+  name: string;
+  slug: string;
   default_network: Network;
-  plan_code: "trial" | "pro" | "dev" | "enterprise";
+  plan_code: "trial" | "merchant" | "developer" | "business" | "enterprise";
   subscription_ends_at: string | null;
-  free_invoices_used: number;
   is_blocked: boolean;
-  telegram_linked_at: string | null;
+  created_at: string;
+};
+
+export type WorkspaceMember = {
+  workspace_id: number;
+  user_id: number;
+  role: string;
   created_at: string;
 };
 
 export type Wallet = {
   id: number;
-  seller_id: number;
+  workspace_id: number;
   network: Network;
   address: string;
+  environment: Environment;
   is_active: boolean;
   created_at: string;
 };
@@ -28,45 +49,37 @@ export type Invoice = {
   public_id: string;
   kind?: "merchant" | "subscription";
   subscription_days?: number;
-  plan_code?: "trial" | "pro" | "dev" | "enterprise" | "";
+  plan_code?: "trial" | "merchant" | "developer" | "business" | "enterprise" | "";
   checkout_badge?: string;
   title: string;
+  workspace_id?: number;
   base_amount_usd: string;
   payable_amount: string;
   payable_network: Network;
   destination_address: string;
   payment_comment: string | null;
-  status: string;
-  mode?: "live" | "test";
+  status: InvoiceStatus;
+  environment: Environment;
   expires_at: string;
   created_at: string;
   tx_hash?: string | null;
+  received_amount: string;
+  review_reason?: string | null;
+  finalized_at?: string | null;
   checkout_url: string;
   payment_uri: string;
 };
 
 export type MeResponse = {
-  seller: Seller;
-  plan: {
-    code: "trial" | "pro" | "dev" | "enterprise";
-    name: string;
-    is_pro: boolean;
-    has_api: boolean;
-    has_webhooks: boolean;
-    trial_limit: number;
-    trial_remaining: number;
-    price_usd: string;
-    billing_days: number;
-    api_key_limit: number;
-    monthly_cap: number;
-    rpm_limit: number;
-    webhook_retries: number;
-  };
+  user: User;
+  workspaces: Workspace[];
+  workspace: Workspace;
+  plan: Plan;
   plans: Plan[];
 };
 
 export type Plan = {
-  code: "trial" | "pro" | "dev" | "enterprise";
+  code: "trial" | "merchant" | "developer" | "business" | "enterprise";
   name: string;
   checkout_title: string;
   checkout_badge: string;
@@ -80,6 +93,11 @@ export type Plan = {
   monthly_request_cap: number;
   requests_per_minute: number;
   webhook_retries: number;
+  webhook_limit?: number;
+  max_workspaces?: number;
+  max_seats?: number;
+  analytics_level?: string;
+  support_level?: string;
   priority_support: boolean;
 };
 
@@ -99,10 +117,10 @@ export type DeveloperUsageResponse = {
 
 export type APIKey = {
   id: number;
-  seller_id: number;
+  workspace_id: number;
   label: string;
   prefix: string;
-  mode: "live" | "test";
+  environment: Environment;
   scopes: string[];
   last_used_at: string | null;
   created_at: string;
@@ -112,10 +130,11 @@ export type WebhookDelivery = {
   id: number;
   event_id: string;
   endpoint_id: number;
-  seller_id: number;
+  workspace_id: number;
   event_type: string;
   payload: unknown;
-  status: string;
+  status: WebhookDeliveryStatus;
+  environment: Environment;
   attempts: number;
   max_attempts: number;
   last_http_status: number | null;
@@ -130,10 +149,11 @@ export type WebhookDeliveryListResponse = {
 
 export type WebhookEndpoint = {
   id: number;
-  seller_id: number;
+  workspace_id: number;
   label: string;
   url: string;
   secret: string;
+  environment: Environment;
   is_active: boolean;
   last_delivery_at: string | null;
   last_success_at: string | null;
@@ -161,9 +181,9 @@ export type WebhookListResponse = {
 export type AdminInvoice = {
   id: number;
   public_id: string;
-  seller_id: number;
-  seller_username: string;
-  seller_email: string;
+  workspace_id: number;
+  workspace_name: string;
+  user_email: string;
   kind: "merchant" | "subscription";
   plan_code: string;
   title: string;
@@ -196,9 +216,9 @@ export type AdminOverviewResponse = {
     merchant_paid_usd: string;
     subscription_paid_usd: string;
     open_invoice_usd: string;
-    sellers_total: number;
+    workspaces_total: number;
     active_subscribers: number;
-    blocked_sellers: number;
+    blocked_workspaces: number;
     wallets_total: number;
     api_keys_active: number;
     webhook_endpoints: number;
@@ -232,6 +252,125 @@ export type AdminOverviewResponse = {
   recent_sales: AdminInvoice[];
 };
 
+export type AdminOpsOverviewResponse = {
+  generated_at: string;
+  revenue: {
+    gross_paid_usd: string;
+    open_invoice_usd: string;
+    subscription_paid_usd: string;
+  };
+  workspaces: {
+    total: number;
+    active_subscribers: number;
+    blocked: number;
+  };
+  invoices: {
+    total: number;
+    paid: number;
+    manual_review: number;
+    underpaid: number;
+  };
+  subscriptions: {
+    active: number;
+    paid_invoices: number;
+  };
+  manual_review_queue: AdminInvoice[];
+  failed_webhook_queue: AdminWebhookDelivery[];
+  watcher_health: AdminWatcher[];
+  notification_health: AdminNotificationHealth;
+  daily_sales: AdminOverviewResponse["daily_sales"];
+  network_breakdown: AdminOverviewResponse["network_breakdown"];
+  status_breakdown: AdminOverviewResponse["status_breakdown"];
+  plan_breakdown: AdminOverviewResponse["plan_breakdown"];
+};
+
+export type AdminWorkspace = {
+  workspace: Workspace;
+  invoices_total: number;
+  paid_invoices: number;
+  gross_paid_usd: string;
+  last_invoice_at: string | null;
+  webhook_endpoints: number;
+  active_api_keys: number;
+  manual_review_invoices: number;
+};
+
+export type AdminWebhookDelivery = WebhookDelivery & {
+  endpoint_label: string;
+  endpoint_url: string;
+  target_url?: string;
+  workspace_name: string;
+  user_email: string;
+};
+
+export type AdminWatcher = {
+  poll_network: Network;
+  payable_network: Network;
+  destination_address: string;
+  last_block: number;
+  last_observed_at: string | null;
+  updated_at: string;
+  freshness_seconds: number;
+};
+
+export type AdminNotificationHealth = {
+  pending_total: number;
+  processing_total: number;
+  failed_total: number;
+  sent_24h: number;
+  oldest_pending_age_seconds: number;
+};
+
+export type AdminAnalyticsResponse = {
+  from: string;
+  to: string;
+  group_by: "date" | "network" | "plan" | "mode";
+  mrr_usd: string;
+  arr_usd: string;
+  paid_volume_usd: string;
+  active_merchants: number;
+  created_invoices: number;
+  paid_invoices: number;
+  failed_webhook_rate: string;
+  manual_review_rate: string;
+  underpaid_share: string;
+  breakdown: Array<{
+    bucket: string;
+    created_invoices: number;
+    paid_invoices: number;
+    manual_review_invoices: number;
+    underpaid_invoices: number;
+    paid_volume_usd: string;
+  }>;
+};
+
+export type AdminActionResponse<T> = {
+  result: string;
+} & T;
+
+export type AdminInternalComment = {
+  id: number;
+  target_type: string;
+  target_id: string;
+  body: string;
+  author: string;
+  created_at: string;
+};
+
+export type SEOTarget = {
+  id: number;
+  keyword_cluster: string;
+  target_page: string;
+  publish_status: string;
+  index_status: string;
+  internal_links_count: number;
+  video_attached: boolean;
+  comparison_page_status: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AdminInvoiceListResponse = {
   items: AdminInvoice[];
   total: number;
@@ -240,13 +379,17 @@ export type AdminInvoiceListResponse = {
 };
 
 export type AdminBillingCheckoutResponse = {
-  seller: {
+  workspace: {
+    id: number;
+    name: string;
+  };
+  user: {
     id: number;
     username: string;
     email: string;
   };
   plan: {
-    code: "pro" | "dev" | "enterprise";
+    code: "merchant" | "developer" | "business" | "enterprise";
     name: string;
     price_usd: string;
     billing_days: number;
@@ -264,6 +407,16 @@ export type AdminBlogPost = {
   cover_image_url: string;
   author: string;
   is_published: boolean;
+  status: "draft" | "published";
+  meta_title: string | null;
+  meta_description: string | null;
+  canonical_url: string | null;
+  tags: string[];
+  locale: string;
+  preview_token: string | null;
+  internal_links_count: number;
+  internal_linking_status: string;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 };

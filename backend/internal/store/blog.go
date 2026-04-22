@@ -17,6 +17,15 @@ const blogPostSelectColumns = `
 	cover_image_url,
 	author,
 	is_published,
+	status,
+	meta_title,
+	meta_description,
+	canonical_url,
+	tags,
+	locale,
+	preview_token,
+	internal_links_count,
+	internal_linking_status,
 	published_at,
 	created_at,
 	updated_at
@@ -33,6 +42,15 @@ func scanBlogPost(row pgx.Row) (BlogPost, error) {
 		&p.CoverImageURL,
 		&p.Author,
 		&p.IsPublished,
+		&p.Status,
+		&p.MetaTitle,
+		&p.MetaDescription,
+		&p.CanonicalURL,
+		&p.Tags,
+		&p.Locale,
+		&p.PreviewToken,
+		&p.InternalLinksCount,
+		&p.InternalLinkingStatus,
 		&p.PublishedAt,
 		&p.CreatedAt,
 		&p.UpdatedAt,
@@ -47,17 +65,22 @@ func scanBlogPost(row pgx.Row) (BlogPost, error) {
 }
 
 func (s *Store) CreateBlogPost(ctx context.Context, post BlogPost) (BlogPost, error) {
+	post = normalizeBlogPostForWrite(post)
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO blog_posts (
-			slug, title, content_md, excerpt, cover_image_url, author, is_published, published_at
+			slug, title, content_md, excerpt, cover_image_url, author, is_published, status,
+			meta_title, meta_description, canonical_url, tags, locale, preview_token,
+			internal_links_count, internal_linking_status, published_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING `+blogPostSelectColumns+`
-	`, post.Slug, post.Title, post.ContentMD, post.Excerpt, post.CoverImageURL, post.Author, post.IsPublished, post.PublishedAt)
+	`, post.Slug, post.Title, post.ContentMD, post.Excerpt, post.CoverImageURL, post.Author, post.IsPublished, post.Status,
+		post.MetaTitle, post.MetaDescription, post.CanonicalURL, post.Tags, post.Locale, post.PreviewToken, post.InternalLinksCount, post.InternalLinkingStatus, post.PublishedAt)
 	return scanBlogPost(row)
 }
 
 func (s *Store) UpdateBlogPost(ctx context.Context, id int64, post BlogPost) (BlogPost, error) {
+	post = normalizeBlogPostForWrite(post)
 	row := s.pool.QueryRow(ctx, `
 		UPDATE blog_posts
 		SET slug = $1,
@@ -67,11 +90,21 @@ func (s *Store) UpdateBlogPost(ctx context.Context, id int64, post BlogPost) (Bl
 		    cover_image_url = $5,
 		    author = $6,
 		    is_published = $7,
-		    published_at = $8,
+		    status = $8,
+		    meta_title = $9,
+		    meta_description = $10,
+		    canonical_url = $11,
+		    tags = $12,
+		    locale = $13,
+		    preview_token = $14,
+		    internal_links_count = $15,
+		    internal_linking_status = $16,
+		    published_at = $17,
 		    updated_at = NOW()
-		WHERE id = $9
+		WHERE id = $18
 		RETURNING `+blogPostSelectColumns+`
-	`, post.Slug, post.Title, post.ContentMD, post.Excerpt, post.CoverImageURL, post.Author, post.IsPublished, post.PublishedAt, id)
+	`, post.Slug, post.Title, post.ContentMD, post.Excerpt, post.CoverImageURL, post.Author, post.IsPublished, post.Status,
+		post.MetaTitle, post.MetaDescription, post.CanonicalURL, post.Tags, post.Locale, post.PreviewToken, post.InternalLinksCount, post.InternalLinkingStatus, post.PublishedAt, id)
 	return scanBlogPost(row)
 }
 
@@ -99,7 +132,7 @@ func (s *Store) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPubli
 	var total int
 	countQuery := `SELECT COUNT(1) FROM blog_posts`
 	if onlyPublished {
-		countQuery += ` WHERE is_published = TRUE`
+		countQuery += ` WHERE status = 'published' OR is_published = TRUE`
 	}
 	if err := s.pool.QueryRow(ctx, countQuery).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count blog posts: %w", err)
@@ -107,7 +140,7 @@ func (s *Store) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPubli
 
 	query := `SELECT ` + blogPostSelectColumns + ` FROM blog_posts`
 	if onlyPublished {
-		query += ` WHERE is_published = TRUE`
+		query += ` WHERE status = 'published' OR is_published = TRUE`
 	}
 	query += ` ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 
@@ -134,4 +167,25 @@ func (s *Store) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPubli
 		return nil, 0, err
 	}
 	return posts, total, nil
+}
+
+func normalizeBlogPostForWrite(post BlogPost) BlogPost {
+	if post.Status == "" {
+		if post.IsPublished {
+			post.Status = "published"
+		} else {
+			post.Status = "draft"
+		}
+	}
+	if post.Status != "published" {
+		post.Status = "draft"
+	}
+	post.IsPublished = post.Status == "published"
+	if post.Locale == "" {
+		post.Locale = "en"
+	}
+	if post.InternalLinkingStatus == "" {
+		post.InternalLinkingStatus = "unknown"
+	}
+	return post
 }

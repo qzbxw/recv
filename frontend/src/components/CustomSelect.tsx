@@ -4,6 +4,7 @@ export type CustomSelectOption<T extends string> = {
   value: T;
   label: string;
   hint?: string;
+  disabled?: boolean;
 };
 
 type CustomSelectProps<T extends string> = {
@@ -100,7 +101,11 @@ export function CustomSelect<T extends string>({
                 <button
                   type="button"
                   className={active ? "custom-select-option is-active" : "custom-select-option"}
+                  disabled={option.disabled}
                   onClick={() => {
+                    if (option.disabled) {
+                      return;
+                    }
                     onChange(option.value);
                     setOpen(false);
                   }}

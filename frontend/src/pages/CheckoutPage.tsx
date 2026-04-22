@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { fetchPublicInvoice } from "../lib/api";
+import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel } from "../lib/status";
 import type { Invoice } from "../lib/types";
 import { useUI } from "../lib/ui";
 
@@ -41,10 +42,13 @@ const COPY = {
     networkOnly: "Только эта сеть",
     paidTitle: "Оплачено",
     paidBody: "Ваш платеж успешно подтвержден.",
-    underpaidBody: "Получена меньшая сумма. Продавец проверит платеж или дождется доплаты.",
-    manualReviewBody: "Платеж требует ручной проверки продавцом. Не отправляйте повторный платеж без подтверждения.",
+    underpaidBody: "Получена меньшая сумма. Доплатите остаток до истечения времени или дождитесь проверки продавца.",
+    underpaidReceived: "Получено",
+    underpaidRemaining: "Осталось доплатить",
+    manualReviewBody: "Платеж пришел поздно или не совпал автоматически. Продавец проверит его вручную.",
+    overpaidBody: "Получена сумма больше ожидаемой. Продавец проверит платеж перед финальным решением.",
     expiredTitle: "Срок оплаты истек",
-    expiredBody: "Время на оплату вышло. Пожалуйста, не отправляйте средства по этим реквизитам.",
+    expiredBody: "Время на оплату вышло. Не отправляйте средства по этим реквизитам. Если перевод уже сделан, продавец сможет проверить его вручную.",
     paymentDetails: "Реквизиты",
     scanHint: "Отсканируйте QR-код для быстрой оплаты или скопируйте реквизиты.",
     receiptNo: "Квитанция",
@@ -86,10 +90,13 @@ const COPY = {
     networkOnly: "Network only",
     paidTitle: "Paid",
     paidBody: "Your payment has been successfully confirmed.",
-    underpaidBody: "A smaller amount was received. The merchant will review the payment or wait for a top-up.",
-    manualReviewBody: "This payment needs merchant review. Do not send another payment unless the merchant confirms it.",
+    underpaidBody: "A smaller amount was received. Top up the remaining amount before expiry or wait for merchant review.",
+    underpaidReceived: "Received",
+    underpaidRemaining: "Remaining",
+    manualReviewBody: "The payment arrived late or could not be matched automatically. The merchant will review it manually.",
+    overpaidBody: "More than the expected amount was received. The merchant will review the payment before final handling.",
     expiredTitle: "Session Expired",
-    expiredBody: "The payment window has closed. Please do not send any funds to this address.",
+    expiredBody: "The payment window has closed. Do not send funds to these details. If you already paid, the merchant may review it manually.",
     paymentDetails: "Details",
     scanHint: "Scan the QR code or copy the details below.",
     receiptNo: "Invoice",
@@ -101,25 +108,6 @@ const COPY = {
   },
 } as const;
 
-const STATUS_LABELS = {
-  ru: {
-    awaiting_payment: "Ждёт оплату",
-    paid: "Оплачен",
-    expired: "Истёк",
-    underpaid: "Недоплата",
-    manual_review: "Ручная проверка",
-    draft: "Черновик",
-  },
-  en: {
-    awaiting_payment: "Awaiting payment",
-    paid: "Paid",
-    expired: "Expired",
-    underpaid: "Underpaid",
-    manual_review: "Manual review",
-    draft: "Draft",
-  },
-} as const;
-
 function fallbackPaymentURI(invoice: Invoice) {
   if (invoice.payable_network === "TON") {
     const amount = Math.round(Number(invoice.payable_amount) * 1_000_000_000);
@@ -127,29 +115,6 @@ function fallbackPaymentURI(invoice: Invoice) {
     return `ton://transfer/${invoice.destination_address}?amount=${amount}${comment}`;
   }
   return [invoice.destination_address, invoice.payment_comment, `${invoice.payable_amount} ${invoice.payable_network}`].filter(Boolean).join("\n");
-}
-
-function formatStatus(language: keyof typeof STATUS_LABELS, status: string) {
-  return STATUS_LABELS[language][status as keyof (typeof STATUS_LABELS)[typeof language]] ?? status.replaceAll("_", " ");
-}
-
-function formatNetworkLabel(network: Invoice["payable_network"]) {
-  switch (network) {
-    case "TRON":
-      return "TRON";
-    case "SOLANA":
-      return "SOLANA";
-    case "EVM":
-      return "ETHEREUM";
-    case "BASE":
-      return "BASE";
-    case "ARBITRUM":
-      return "ARBITRUM";
-    case "BSC":
-      return "BSC";
-    default:
-      return network;
-  }
 }
 
 function formatAddressPreview(address: string) {
@@ -170,7 +135,7 @@ function createDemoInvoice(): Invoice {
     id: 0,
     public_id: "REQST-DEMO-149",
     kind: "merchant",
-    plan_code: "pro",
+    plan_code: "merchant",
     checkout_badge: "Demo Checkout",
     title: "Reqst Product Demo",
     base_amount_usd: "149.00",
@@ -179,9 +144,13 @@ function createDemoInvoice(): Invoice {
     destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
     payment_comment: "REQST-DEMO-149",
     status: "awaiting_payment",
+    environment: "test",
     expires_at: expiresAt,
     created_at: now.toISOString(),
     tx_hash: null,
+    received_amount: "0",
+    review_reason: null,
+    finalized_at: null,
     checkout_url: "/app/checkout/demo",
     payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=149000000000&text=REQST-DEMO-149",
   };
@@ -330,14 +299,17 @@ export function CheckoutPage() {
   const title = invoice?.title?.trim() || text.paymentRequest;
   const checkoutBadge = invoice?.checkout_badge || (invoice?.kind === "subscription" ? "Reqst Billing" : text.paymentRequest);
   const checkoutVariant = invoice?.plan_code && invoice.plan_code !== "trial" ? invoice.plan_code : "merchant";
-  const statusLabel = invoice ? formatStatus(language, invoice.status) : "";
+  const statusLabel = invoice ? formatInvoiceStatus(invoice.status, language) : "";
   const expiresDiff = invoice ? new Date(invoice.expires_at).getTime() - now : 0;
   const isExpired = invoice ? expiresDiff <= 0 || invoice.status === "expired" : false;
   const isPaid = invoice?.status === "paid";
   const isUnderpaid = invoice?.status === "underpaid";
+  const isOverpaid = invoice?.status === "overpaid";
   const isManualReview = invoice?.status === "manual_review";
-  const isFinalState = isPaid || isExpired || isUnderpaid || isManualReview;
+  const canCopyDetails = invoice ? canCopyInvoicePaymentDetails(invoice, now) : false;
+  const isFinalState = !canCopyDetails;
   const isExpiringSoon = !isExpired && !isPaid && expiresDiff > 0 && expiresDiff <= 5 * 60 * 1000;
+  const remainingAmount = invoice ? calculateRemainingAmount(invoice) : "";
   const paymentRows = invoice
     ? [
         {
@@ -395,7 +367,7 @@ export function CheckoutPage() {
                       <span className={`status-pill receipt-status status-${invoice.status}`}>
                         {isPaid && <Icons.Check />}
                         {isExpired && <Icons.Alert />}
-                        {formatStatus(language, invoice.status)}
+                        {formatInvoiceStatus(invoice.status, language)}
                       </span>
                     </div>
                     <h1>{title}</h1>
@@ -410,9 +382,17 @@ export function CheckoutPage() {
                     <div className={`receipt-warning-callout ${isPaid ? "is-success" : isExpired ? "is-error" : ""}`}>
                       {isPaid ? <Icons.Check /> : isExpired ? <Icons.Alert /> : <Icons.Alert />}
                       <p className="hero-copy">
-                        {isPaid ? text.paidBody : isExpired ? text.expiredBody : isUnderpaid ? text.underpaidBody : isManualReview ? text.manualReviewBody : text.warning}
+                        {isPaid ? text.paidBody : isExpired ? text.expiredBody : isUnderpaid ? text.underpaidBody : isOverpaid ? text.overpaidBody : isManualReview ? text.manualReviewBody : text.warning}
                       </p>
                     </div>
+
+                    {isUnderpaid || isOverpaid || isManualReview ? (
+                      <div className="checkout-state-note">
+                        <strong>{text.underpaidReceived}: {invoice.received_amount || "0"} {formatNetworkLabel(invoice.payable_network)}</strong>
+                        {isUnderpaid && remainingAmount ? <small>{text.underpaidRemaining}: {remainingAmount} {formatNetworkLabel(invoice.payable_network)}</small> : null}
+                        {invoice.review_reason ? <small>{invoice.review_reason.replaceAll("_", " ")}</small> : null}
+                      </div>
+                    ) : null}
 
                     <div className="receipt-docmeta">
                       <div>
@@ -442,7 +422,7 @@ export function CheckoutPage() {
                             </div>
                             <p>{text.payloadHint}</p>
                           </div>
-                          {!isFinalState && (
+                          {canCopyDetails && (
                             <button type="button" className={`field-copy field-copy--named ${copiedField === "comment" ? "is-copied" : ""}`} onClick={() => void copyValue("comment", invoice.payment_comment ?? "")} aria-label={text.copyComment}>
                               <Icons.Copy />
                               {copiedField === "comment" ? text.copied : text.copyComment}
@@ -461,13 +441,13 @@ export function CheckoutPage() {
                     {paymentRows
                       .filter((row) => row.key !== "amount")
                       .map((row) => (
-                        <div key={row.key} className={`payment-field ${!isFinalState ? "payment-field--button" : ""}`} onClick={() => !isFinalState && void copyValue(row.key, row.value)}>
+                        <div key={row.key} className={`payment-field ${canCopyDetails ? "payment-field--button" : ""}`} onClick={() => canCopyDetails && void copyValue(row.key, row.value)}>
                           <div>
                             <label>{row.label}</label>
                             <code>{row.value}</code>
                             <small>{row.secondary}</small>
                           </div>
-                          {!isFinalState && (
+                          {canCopyDetails && (
                             <span className="field-copy field-copy--named" aria-label={row.copyLabel}>
                               <Icons.Copy />
                               {copiedField === row.key ? text.copied : row.copyLabel}
@@ -487,7 +467,7 @@ export function CheckoutPage() {
                     <b>{formatNetworkLabel(invoice.payable_network)}</b>
                     <small>{text.networkOnly}</small>
                   </div>
-                  {!isFinalState && (
+                  {canCopyDetails && (
                     <button type="button" className={`ghost-button compact-button payment-rail-action ${copiedField === "amount" ? "is-copied" : ""}`} onClick={() => void copyValue("amount", invoice.payable_amount)}>
                       <Icons.Copy />
                       {copiedField === "amount" ? text.copied : text.copyAmount}
@@ -501,7 +481,7 @@ export function CheckoutPage() {
                       {qrDataUrl ? <img className="qr-image qr-image--lux" src={qrDataUrl} alt="Invoice QR" /> : <p className="muted">{text.qrLoading}</p>}
                     </div>
                   </div>
-                  {!isFinalState && <p className="qr-caption">{text.scanHint}</p>}
+                  {canCopyDetails ? <p className="qr-caption">{text.scanHint}</p> : null}
                 </aside>
               </aside>
             </div>

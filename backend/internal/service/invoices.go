@@ -47,17 +47,17 @@ func NewInvoiceService(st *store.Store, tonRateEnv string) *InvoiceService {
 	}
 }
 
-func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller, input CreateInvoiceInput) (store.Invoice, error) {
+func (s *InvoiceService) CreateInvoice(ctx context.Context, workspace store.Workspace, input CreateInvoiceInput) (store.Invoice, error) {
 	source := metrics.SourceFromContext(ctx)
-	planCode := seller.EffectivePlanCode(time.Now())
+	planCode := workspace.EffectivePlanCode(time.Now())
 	network := input.PayableNetwork
 	if network == "" {
-		network = seller.DefaultNetwork
+		network = workspace.DefaultNetwork
 	}
 
-	if seller.IsBlocked {
-		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(network), string(planCode), "failure", "seller_blocked")
-		return store.Invoice{}, errors.New("seller account is blocked")
+	if workspace.IsBlocked {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(network), string(planCode), "failure", "workspace_blocked")
+		return store.Invoice{}, errors.New("workspace is blocked")
 	}
 	if input.Title == "" {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(network), string(planCode), "failure", "missing_title")
@@ -71,14 +71,14 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 		input.ExpiresInMinutes = 30
 	}
 	if input.PayableNetwork == "" {
-		input.PayableNetwork = seller.DefaultNetwork
+		input.PayableNetwork = workspace.DefaultNetwork
 	}
 	if !input.PayableNetwork.IsSupportedPayableNetwork() {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "unsupported_network")
 		return store.Invoice{}, fmt.Errorf("unsupported network %s", input.PayableNetwork)
 	}
 
-	if seller.EffectivePlanCode(time.Now()) == store.PlanCodeTrial && seller.FreeInvoicesUsed >= TrialInvoiceLimit {
+	if workspace.EffectivePlanCode(time.Now()) == store.PlanCodeTrial && workspace.FreeInvoicesUsed >= TrialInvoiceLimit {
 		metrics.IncLimitDecision("trial_invoice_cap", "denied", "reached")
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "trial_limit_reached")
 		return store.Invoice{}, fmt.Errorf("trial limit reached: %d invoices. Unlock a paid Reqst plan to keep generating links.", TrialInvoiceLimit)
@@ -89,7 +89,7 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 		err    error
 	)
 	if input.WalletID > 0 {
-		wallet, err = s.store.GetWalletByID(ctx, seller.ID, input.WalletID)
+		wallet, err = s.store.GetWalletByID(ctx, workspace.ID, input.WalletID)
 		if err != nil {
 			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "wallet_lookup")
 			return store.Invoice{}, fmt.Errorf("selected wallet %d: %w", input.WalletID, err)
@@ -102,7 +102,7 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 			return store.Invoice{}, fmt.Errorf("wallet %d does not support network %s", wallet.ID, input.PayableNetwork)
 		}
 	} else {
-		wallet, err = s.store.GetActiveWalletForNetwork(ctx, seller.ID, input.PayableNetwork.WalletBucket())
+		wallet, err = s.store.GetActiveWalletForNetwork(ctx, workspace.ID, input.PayableNetwork.WalletBucket())
 		if err != nil {
 			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "active_wallet_lookup")
 			return store.Invoice{}, fmt.Errorf("active wallet for network %s: %w", input.PayableNetwork, err)
@@ -111,7 +111,7 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 
 	mode := normalizedMode(input.Mode)
 	invoice, err := s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
-		SellerID:           seller.ID,
+		WorkspaceID:        workspace.ID,
 		Kind:               store.InvoiceKindMerchant,
 		SubscriptionDays:   0,
 		PlanCode:           "",
@@ -130,20 +130,20 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, seller store.Seller,
 	return invoice, nil
 }
 
-func (s *InvoiceService) CreateSubscriptionInvoice(ctx context.Context, seller store.Seller, network store.Network) (store.Invoice, error) {
-	return s.CreatePlanInvoice(ctx, seller, store.PlanCodePro, network)
+func (s *InvoiceService) CreateSubscriptionInvoice(ctx context.Context, workspace store.Workspace, network store.Network) (store.Invoice, error) {
+	return s.CreatePlanInvoice(ctx, workspace, store.PlanCodeMerchant, network)
 }
 
-func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, seller store.Seller, planCode store.PlanCode, network store.Network) (store.Invoice, error) {
-	return s.CreatePlanInvoiceWithPrice(ctx, seller, planCode, network, nil)
+func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, network store.Network) (store.Invoice, error) {
+	return s.CreatePlanInvoiceWithPrice(ctx, workspace, planCode, network, nil)
 }
 
-func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, seller store.Seller, planCode store.PlanCode, network store.Network, overridePriceUSD *decimal.Decimal) (store.Invoice, error) {
+func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, network store.Network, overridePriceUSD *decimal.Decimal) (store.Invoice, error) {
 	source := metrics.SourceFromContext(ctx)
 	planCode = store.NormalizePlanCode(string(planCode))
-	if seller.IsBlocked {
-		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(planCode), "failure", "seller_blocked")
-		return store.Invoice{}, errors.New("seller account is blocked")
+	if workspace.IsBlocked {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(planCode), "failure", "workspace_blocked")
+		return store.Invoice{}, errors.New("workspace is blocked")
 	}
 	plan := store.ResolvePlan(planCode)
 	if plan.Code == store.PlanCodeTrial {
@@ -169,7 +169,7 @@ func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, seller 
 	}
 
 	invoice, err := s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
-		SellerID:           seller.ID,
+		WorkspaceID:        workspace.ID,
 		Kind:               store.InvoiceKindSubscription,
 		SubscriptionDays:   plan.BillingDays,
 		PlanCode:           plan.Code,
