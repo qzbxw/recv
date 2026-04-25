@@ -24,7 +24,7 @@ import {
 import { formatApiError } from "../lib/errors";
 import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus, getInvoiceStatusMeta, formatNetworkLabel } from "../lib/status";
-import type { APIKey, Invoice, MeResponse, Network, Wallet, WebhookEndpoint, Plan, Environment } from "../lib/types";
+import type { APIKey, Invoice, MeResponse, Network, Wallet, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { SELLER_CONSOLE_COPY as COPY } from "../i18n";
 
@@ -299,7 +299,7 @@ export function SellerConsolePage() {
     return (
       <div className="dev-portal">
         <div className="dev-portal__backdrop dev-portal__backdrop--grid" />
-        <div style={{ display: "grid", placeItems: "center", minHeight: "100vh", color: "var(--muted)" }}>
+        <div className="dev-portal__loading-wrapper">
           {t.common.loading}
         </div>
       </div>
@@ -333,14 +333,13 @@ export function SellerConsolePage() {
       <div className="dev-portal__shell">
         <header className="dev-portal__topbar portal-animate-in">
           <Link className="dev-portal__brand" to="/" onClick={() => setIsMobileMenuOpen(false)}>reqst</Link>
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <div className="dev-portal__header-actions">
             <div className="env-toggle">
               <button className={`env-toggle__btn ${environment === 'live' ? 'is-active' : ''}`} onClick={() => setEnvironment('live')}>{t.common.liveMode}</button>
               <button className={`env-toggle__btn ${environment === 'test' ? 'is-active' : ''}`} onClick={() => setEnvironment('test')}>{t.common.testMode}</button>
             </div>
             {session.me.workspaces.length > 1 && (
               <div className="workspace-switcher">
-                {/* Simplified switcher for now */}
                 <span className="dev-portal__nav-link dev-portal__seller-badge">{workspaceName}</span>
               </div>
             )}
@@ -360,7 +359,7 @@ export function SellerConsolePage() {
         </header>
 
         <div className="dev-portal__main">
-          <nav className={`dev-portal__nav portal-animate-in ${isMobileMenuOpen ? "is-open" : ""}`} style={{ animationDelay: "0.1s" }}>
+          <nav className={`dev-portal__nav portal-animate-in ${isMobileMenuOpen ? "is-open" : ""}`}>
             <div className="dev-portal__nav-group">
               <span className="dev-portal__nav-label">{t.common.management}</span>
               {navItems.slice(0, 4).map(item => (
@@ -377,8 +376,8 @@ export function SellerConsolePage() {
                 </button>
               ))}
             </div>
-            <div className="dev-portal__nav-group" style={{ marginTop: "auto" }}>
-              <button className="dev-portal__nav-link" onClick={handleLogout} style={{ color: "var(--danger)" }}>{t.nav.logout}</button>
+            <div className="dev-portal__nav-group dev-portal__nav-logout dev-portal__nav-logout--margin">
+              <button className="dev-portal__nav-link dev-btn--danger-color" onClick={handleLogout}>{t.nav.logout}</button>
             </div>
           </nav>
 
@@ -387,8 +386,8 @@ export function SellerConsolePage() {
 
             {activePanel === "overview" && (
               <div className="dev-portal__section portal-animate-in">
-                <div className="dev-portal__hero" style={{ padding: "1rem 0 2rem" }}>
-                  <span className="dev-api-badge dev-api-badge--post" style={{ width: "fit-content" }}>{t.overview.badge}</span>
+                <div className="dev-portal__hero dev-portal__hero--compact">
+                  <span className="dev-api-badge dev-api-badge--post dev-api-badge--fit">{t.overview.badge}</span>
                   <h1>{t.overview.welcome} {session.me.user.username || 'User'}</h1>
                   <p>{t.overview.subtitle} {t.overview.currentWorkspace}: <strong>{workspaceName}</strong></p>
                 </div>
@@ -426,22 +425,22 @@ export function SellerConsolePage() {
                 )}
 
                 <div className="dev-card">
-                  <div className="dev-portal__section-header" style={{ marginBottom: "1.5rem" }}>
+                  <div className="dev-portal__section-header dev-portal__section-header--margin">
                     <h3>{t.overview.activity} ({environment})</h3>
                   </div>
                   {filteredInvoices.length === 0 ? (
-                    <div style={{ padding: "2rem", textAlign: "center", color: "var(--muted)" }}>{t.overview.noActivity}</div>
+                    <div className="dev-portal__empty-state">{t.overview.noActivity}</div>
                   ) : (
                     <div className="dev-resource-list">
                       {filteredInvoices.slice(0, 5).map(inv => (
-                        <div key={inv.id} className="dev-resource-card" style={{ padding: "0.75rem 1rem" }} onClick={() => setActivePanel("invoices")}>
-                          <div className="dev-resource-card__info" style={{ gap: "0.15rem" }}>
-                            <div className="dev-resource-card__title" style={{ fontSize: "0.95rem" }}>{inv.title}</div>
-                            <div className="dev-resource-card__meta" style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.75rem" }}>
-                              <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'}`} style={{ padding: "0.1rem 0.4rem", fontSize: "0.65rem" }}>
+                        <div key={inv.id} className="dev-resource-card dev-resource-card--compact" onClick={() => setActivePanel("invoices")}>
+                          <div className="dev-resource-card__info dev-resource-card__info--tight">
+                            <div className="dev-resource-card__title dev-resource-card__title--small">{inv.title}</div>
+                            <div className="dev-resource-card__meta dev-resource-card__meta--row">
+                              <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'} dev-api-badge--micro`}>
                                 {formatInvoiceStatus(inv.status, language, true)}
                               </span>
-                              <span style={{ opacity: 0.6 }}>{inv.payable_amount} {inv.payable_network}</span>
+                              <span className="dev-resource-card__amount">{inv.payable_amount} {inv.payable_network}</span>
                             </div>
                           </div>
                           <div className="dev-resource-card__actions" onClick={e => e.stopPropagation()}>
@@ -489,9 +488,9 @@ export function SellerConsolePage() {
                     </div>
                   </form>
 
-                  <div className="dev-resource-list" style={{ marginTop: "2.5rem" }}>
+                  <div className="dev-resource-list dev-resource-list--margin">
                     {filteredWallets.length === 0 ? (
-                      <div style={{ padding: "3rem", textAlign: "center", color: "var(--muted)", border: "1px dashed var(--line)", borderRadius: "20px" }}>
+                      <div className="dev-portal__empty-dashed">
                         {t.wallets.empty}
                       </div>
                     ) : filteredWallets.map(w => (
@@ -516,34 +515,34 @@ export function SellerConsolePage() {
                 </div>
                 <div className="dev-resource-list">
                   {filteredInvoices.length === 0 ? (
-                    <div className="dev-card" style={{ textAlign: "center", padding: "4rem", color: "var(--muted)" }}>{t.invoices.empty}</div>
+                    <div className="dev-card dev-portal__empty-large">{t.invoices.empty}</div>
                   ) : filteredInvoices.map(inv => (
-                    <div key={inv.id} className="dev-card" style={{ padding: "1.5rem" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+                    <div key={inv.id} className="dev-card dev-card--invoice">
+                      <div className="dev-card__head">
                         <div>
-                          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                          <div className="dev-card__status-row">
                             <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'}`}>
                               {formatInvoiceStatus(inv.status, language, true)}
                             </span>
-                            <span className="dev-api-badge" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--line)" }}>{formatNetworkLabel(inv.payable_network)}</span>
+                            <span className="dev-api-badge dev-api-badge--secondary">{formatNetworkLabel(inv.payable_network)}</span>
                           </div>
-                          <h3 style={{ fontSize: "1.25rem", margin: 0 }}>{inv.title}</h3>
-                          <code style={{ fontSize: "0.8rem", opacity: 0.4 }}>{inv.public_id}</code>
+                          <h3 className="dev-card__title">{inv.title}</h3>
+                          <code className="dev-card__id">{inv.public_id}</code>
                         </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{inv.payable_amount} <small style={{ fontSize: "0.9rem", opacity: 0.5 }}>{inv.payable_network}</small></div>
-                          <div style={{ fontSize: "0.85rem", opacity: 0.5 }}>{new Date(inv.created_at).toLocaleString()}</div>
+                        <div className="dev-card__amount-col">
+                          <div className="dev-card__amount">{inv.payable_amount} <small className="dev-card__currency">{inv.payable_network}</small></div>
+                          <div className="dev-card__date">{new Date(inv.created_at).toLocaleString()}</div>
                         </div>
                       </div>
-                      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                        <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1 }} onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `inv-${inv.id}`)}>
+                      <div className="dev-card__actions">
+                        <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `inv-${inv.id}`)}>
                           {copiedId === `inv-${inv.id}` ? t.common.copied : t.invoices.copyLink}
                         </button>
-                        <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary" style={{ flexGrow: 1, textAlign: "center" }}>{t.invoices.view}</a>
+                        <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--flex-grow dev-btn--centered">{t.invoices.view}</a>
                         {(getInvoiceStatusMeta(inv.status).canSellerMarkPaid || getInvoiceStatusMeta(inv.status).canSellerCancel) && (
                           <>
-                            {getInvoiceStatusMeta(inv.status).canSellerMarkPaid ? <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1, color: "var(--success)" }} onClick={() => void onInvoiceAction(inv.id, "mark_paid")}>{t.invoices.confirm}</button> : null}
-                            {getInvoiceStatusMeta(inv.status).canSellerCancel ? <button className="dev-btn dev-btn--danger" style={{ flexGrow: 1 }} onClick={() => void onInvoiceAction(inv.id, "cancel")}>{t.invoices.cancel}</button> : null}
+                            {getInvoiceStatusMeta(inv.status).canSellerMarkPaid ? <button className="dev-btn dev-btn--secondary dev-btn--flex-grow dev-btn--success-color" onClick={() => void onInvoiceAction(inv.id, "mark_paid")}>{t.invoices.confirm}</button> : null}
+                            {getInvoiceStatusMeta(inv.status).canSellerCancel ? <button className="dev-btn dev-btn--danger dev-btn--flex-grow" onClick={() => void onInvoiceAction(inv.id, "cancel")}>{t.invoices.cancel}</button> : null}
                           </>
                         )}
                       </div>
@@ -559,13 +558,13 @@ export function SellerConsolePage() {
                   <h2>{t.create.title} ({environment})</h2>
                   <p>{t.create.subtitle}</p>
                 </div>
-                <div className="dev-card" style={{ maxWidth: "640px" }}>
+                <div className="dev-card dev-card--max-width">
                   <form onSubmit={onCreateInvoice} className="dev-form">
                     <div className="dev-input-group">
                       <label>{t.create.service}</label>
                       <input className="dev-input" value={invoiceForm.title} onChange={e => setInvoiceForm(c => ({ ...c, title: e.target.value }))} required />
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                    <div className="dev-form__grid">
                       <div className="dev-input-group">
                         <label>{t.create.amount}</label>
                         <input className="dev-input" value={invoiceForm.amount} onChange={e => setInvoiceForm(c => ({ ...c, amount: e.target.value }))} required />
@@ -584,14 +583,14 @@ export function SellerConsolePage() {
                         onChange={(v) => setInvoiceForm(c => ({ ...c, network: v as Network }))}
                       />
                     </div>
-                    <button type="submit" className="dev-btn dev-btn--primary" style={{ padding: "1.25rem", fontSize: "1rem" }} disabled={isCreatingInvoice || activeWalletsCount === 0}>
+                    <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={isCreatingInvoice || activeWalletsCount === 0}>
                       {isCreatingInvoice ? t.common.creating : t.create.generate}
                     </button>
                   </form>
                   {createdInvoice ? (
-                    <div className="alert alert--success" style={{ marginTop: "1rem" }}>
+                    <div className="alert alert--success alert--margin">
                       <strong>{t.create.success}</strong>
-                      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+                      <div className="alert__actions">
                         <button className="dev-btn dev-btn--secondary" onClick={() => handleCopy(buildCheckoutUrl(createdInvoice.public_id), "created-invoice")}>
                           {copiedId === "created-invoice" ? t.common.copied : t.invoices.copyLink}
                         </button>
@@ -618,12 +617,12 @@ export function SellerConsolePage() {
                 ) : (
                   <>
                     <div className="dev-card">
-                      <div className="dev-portal__section-header" style={{ marginBottom: "1.5rem" }}>
+                      <div className="dev-portal__section-header dev-portal__section-header--margin">
                         <h3>{t.developer.keysTitle}</h3>
                         <p>{t.developer.keysSubtitle}</p>
                       </div>
                       <form onSubmit={onCreateKey} className="dev-form">
-                        <div className="dev-api-grid" style={{ gridTemplateColumns: "1fr auto", alignItems: "flex-end", gap: "1rem" }}>
+                        <div className="dev-form__row-grid">
                           <div className="dev-input-group">
                             <label>{t.developer.keyLabel}</label>
                             <input className="dev-input" value={keyForm.label} onChange={e => setKeyForm({ label: e.target.value })} placeholder="Production App" required />
@@ -633,10 +632,10 @@ export function SellerConsolePage() {
                       </form>
 
                       {latestKeySecret && (
-                        <div className="alert alert--success" style={{ marginTop: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div className="alert alert--success alert--secret">
                           <div>
-                            <small style={{ display: "block", marginBottom: "0.25rem" }}>{t.developer.warning}</small>
-                            <code style={{ fontSize: "1.1rem" }}>{latestKeySecret}</code>
+                            <small className="alert__label">{t.developer.warning}</small>
+                            <code className="alert__code">{latestKeySecret}</code>
                           </div>
                           <button className="dev-code-box__copy" onClick={() => handleCopy(latestKeySecret, "latest-key")}>
                             {copiedId === "latest-key" ? t.common.copied : t.common.copy}
@@ -644,7 +643,7 @@ export function SellerConsolePage() {
                         </div>
                       )}
 
-                      <div className="dev-resource-list" style={{ marginTop: "2rem" }}>
+                      <div className="dev-resource-list dev-resource-list--margin">
                         {filteredKeys.map(key => (
                           <div key={key.id} className="dev-resource-card">
                             <div className="dev-resource-card__info">
@@ -658,7 +657,7 @@ export function SellerConsolePage() {
                     </div>
 
                     <div className="dev-card">
-                      <div className="dev-portal__section-header" style={{ marginBottom: "1.5rem" }}>
+                      <div className="dev-portal__section-header dev-portal__section-header--margin">
                         <h3>{t.developer.hooksTitle}</h3>
                         <p>{t.developer.hooksSubtitle}</p>
                       </div>
@@ -676,20 +675,20 @@ export function SellerConsolePage() {
                         </div>
                       </form>
 
-                      <div className="dev-resource-list" style={{ marginTop: "2rem" }}>
+                      <div className="dev-resource-list dev-resource-list--margin">
                         {filteredHooks.map(hook => (
-                          <div key={hook.id} className="dev-resource-card" style={{ flexDirection: "column", alignItems: "stretch", gap: "1rem" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div key={hook.id} className="dev-resource-card dev-resource-card--column">
+                            <div className="dev-resource-card__header">
                               <div className="dev-resource-card__info">
                                 <div className="dev-resource-card__title">{hook.label}</div>
-                                <code style={{ opacity: 0.6, fontSize: "0.85rem" }}>{hook.url}</code>
+                                <code className="dev-resource-card__url">{hook.url}</code>
                               </div>
                               <button className="dev-btn dev-btn--danger" onClick={() => void onDeleteHook(hook.id)}>{t.common.delete}</button>
                             </div>
-                            <div className="dev-card" style={{ padding: "0.75rem 1rem", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div className="dev-card dev-card--secret-box">
                               <div>
-                                <span style={{ fontSize: "0.7rem", textTransform: "uppercase", opacity: 0.5, display: "block" }}>{t.developer.hookSecret}</span>
-                                <code style={{ fontSize: "0.85rem" }}>{hook.secret}</code>
+                                <span className="dev-card__secret-label">{t.developer.hookSecret}</span>
+                                <code className="dev-card__secret-code">{hook.secret}</code>
                               </div>
                               <button className="dev-code-box__copy" onClick={() => handleCopy(hook.secret, `hook-${hook.id}`)}>
                                 {copiedId === `hook-${hook.id}` ? t.common.copied : t.common.copy}
@@ -719,8 +718,8 @@ export function SellerConsolePage() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ marginTop: "2rem", padding: "1.5rem", border: "1px dashed var(--line)", borderRadius: "20px", textAlign: "center" }}>
-                    <p style={{ color: "var(--muted)", marginBottom: "1rem" }}>{t.team.inviteBody}</p>
+                  <div className="dev-portal__empty-dashed">
+                    <p className="dev-settings__hint">{t.team.inviteBody}</p>
                     <button className="dev-btn dev-btn--secondary" disabled>{t.team.add} ({t.team.comingSoon})</button>
                   </div>
                 </div>
@@ -756,21 +755,21 @@ export function SellerConsolePage() {
                     </div>
                     <button className="dev-btn dev-btn--primary" onClick={onUpgrade}>{t.billing.upgrade}</button>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", borderLeft: "1px solid var(--line)", paddingLeft: "2rem", gap: "1.5rem" }}>
+                  <div className="dev-card__side-col">
                     {checkoutUrl ? (
                       <div className="dev-form">
-                        <div className="alert alert--success" style={{ marginBottom: 0 }}>{t.common.checkoutGenerated}</div>
-                        <code className="dev-input" style={{ fontSize: "0.85rem", background: "rgba(0,0,0,0.2)" }}>{checkoutUrl}</code>
-                        <div style={{ display: "flex", gap: "1rem" }}>
-                          <button className="dev-btn dev-btn--secondary" style={{ flexGrow: 1 }} onClick={() => handleCopy(checkoutUrl, "billing-url")}>
+                        <div className="alert alert--success">{t.common.checkoutGenerated}</div>
+                        <code className="dev-input dev-input--readonly-box">{checkoutUrl}</code>
+                        <div className="dev-form__actions-row">
+                          <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(checkoutUrl, "billing-url")}>
                             {copiedId === "billing-url" ? t.common.copied : t.common.copy}
                           </button>
-                          <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary" style={{ flexGrow: 1, textAlign: "center" }}>{t.common.payNow}</a>
+                          <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered">{t.common.payNow}</a>
                         </div>
                       </div>
                     ) : (
-                      <div style={{ textAlign: "center", color: "var(--muted)" }}>
-                        <p style={{ fontSize: "0.95rem" }}>{t.billing.current}: <strong style={{ color: "var(--ink)" }}>{session.me.plan.name}</strong></p>
+                      <div className="dev-card__footer-text">
+                        <p className="dev-card__plan-label">{t.billing.current}: <strong className="dev-card__plan-strong">{session.me.plan.name}</strong></p>
                       </div>
                     )}
                   </div>
@@ -784,19 +783,19 @@ export function SellerConsolePage() {
                   <h2>{t.settings.title}</h2>
                   <p>{t.settings.subtitle}</p>
                 </div>
-                <div className="dev-card" style={{ maxWidth: "600px" }}>
+                <div className="dev-card dev-card--max-width">
                   <div className="dev-input-group">
                     <label>{t.settings.language}</label>
-                    <div className="dev-api-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                    <div className="dev-form__grid">
                       <button className={`dev-btn ${language === 'ru' ? 'dev-btn--primary' : 'dev-btn--secondary'}`} onClick={() => setLanguage('ru')}>RU</button>
                       <button className={`dev-btn ${language === 'en' ? 'dev-btn--primary' : 'dev-btn--secondary'}`} onClick={() => setLanguage('en')}>EN</button>
                     </div>
                   </div>
 
-                  <div className="dev-input-group" style={{ marginTop: "2.5rem", padding: "1.5rem", borderRadius: "20px", background: "rgba(255, 137, 125, 0.05)", border: "1px solid rgba(255, 137, 125, 0.1)" }}>
-                    <label style={{ color: "var(--danger)" }}>{t.settings.session}</label>
-                    <p style={{ fontSize: "0.9rem", color: "var(--muted)", marginBottom: "1rem" }}>{t.settings.logoutHint}</p>
-                    <button className="dev-btn dev-btn--danger" style={{ width: "100%" }} onClick={handleLogout}>{t.nav.logout}</button>
+                  <div className="dev-card--danger-zone">
+                    <label className="dev-settings__label--danger">{t.settings.session}</label>
+                    <p className="dev-settings__hint">{t.settings.logoutHint}</p>
+                    <button className="dev-btn dev-btn--danger dev-btn--full-width" onClick={handleLogout}>{t.nav.logout}</button>
                   </div>
                 </div>
               </div>

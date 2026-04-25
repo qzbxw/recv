@@ -35,7 +35,7 @@ Reqst is a cryptocurrency payment gateway focused on Telegram bots and SaaS bill
 
 ## Machine Readable Assets
 - OpenAPI Spec: ${siteUrl}/openapi.json
-- Raw Documentation: ${siteUrl}/docs/raw/[slug]
+- Raw Documentation: ${siteUrl}/en/docs/raw/[slug]
 
 ## Documentation
 ${docsLinks || "- [Introduction](${siteUrl}/en/docs/introduction)"}

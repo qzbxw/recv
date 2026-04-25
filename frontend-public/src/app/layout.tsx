@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "./tailwind.css";
 import "./globals.css";
 
 const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://reqst.xyz").replace(/\/+$/, "");

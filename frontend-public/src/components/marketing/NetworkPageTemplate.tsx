@@ -42,7 +42,7 @@ export function NetworkPageTemplate({
             <Link className="lend-primary" href="/app/auth">
               {copy.accept} {network.name}
             </Link>
-            <Link className="lend-secondary" href="/docs">
+            <Link className="lend-secondary" href={`/${language}/docs/introduction`}>
               {copy.technicalDocs}
             </Link>
           </div>

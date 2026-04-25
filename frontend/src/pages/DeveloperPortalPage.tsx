@@ -319,13 +319,13 @@ export function DeveloperPortalPage() {
       <div className="dev-portal__shell">
         <header className="dev-portal__topbar portal-animate-in">
           <Link className="dev-portal__brand" to="/">reqst</Link>
-          <div style={{ display: "flex", gap: "1rem" }}>
+          <div className="dev-portal__header-links">
             <Link className="dev-btn dev-btn--primary" to="/console">{t.common.console}</Link>
           </div>
         </header>
 
         <div className="dev-portal__main">
-          <nav className="dev-portal__nav portal-animate-in" style={{ animationDelay: "0.1s" }}>
+          <nav className="dev-portal__nav portal-animate-in">
             <div className="dev-portal__nav-group">
               <span className="dev-portal__nav-label">Platform</span>
               <a href="#hero" className={`dev-portal__nav-link ${activeSection === "hero" ? "is-active" : ""}`}>{t.nav.docs}</a>
@@ -343,7 +343,7 @@ export function DeveloperPortalPage() {
             {error && <div className="alert portal-animate-in">{error}</div>}
 
             <section id="hero" className="dev-portal__hero portal-animate-in">
-              <span className="dev-api-badge dev-api-badge--post" style={{ width: "fit-content" }}>{t.hero.kicker}</span>
+              <span className="dev-api-badge dev-api-badge--post dev-api-badge--fit">{t.hero.kicker}</span>
               <h1>{t.hero.title}</h1>
               <p>{t.hero.subtitle}</p>
             </section>
@@ -361,7 +361,7 @@ export function DeveloperPortalPage() {
                 </div>
                 <div className="dev-card dev-widget">
                   <span className="dev-widget__label">{t.dashboard.usage}</span>
-                  <div className="dev-widget__value">{usage?.usage.monthly_requests ?? 0} <small style={{fontSize: "1rem", opacity: 0.5}}>/ {usage?.usage.monthly_limit || "∞"}</small></div>
+                  <div className="dev-widget__value">{usage?.usage.monthly_requests ?? 0} <small className="dev-widget__usage-meta">/ {usage?.usage.monthly_limit || "∞"}</small></div>
                   <div className="dev-usage-bar">
                     <div className="dev-usage-fill" style={{ width: `${Math.min(100, ((usage?.usage.monthly_requests ?? 0) / (usage?.usage.monthly_limit || 1)) * 100)}%` }} />
                   </div>
@@ -389,17 +389,17 @@ export function DeveloperPortalPage() {
                 ].map((step) => (
                   <div key={step.title} className="portal-quickstart__step">
                     <span className={`dev-api-badge dev-api-badge--${step.done ? "done" : "post"}`}>{step.done ? t.quickstart.done : t.quickstart.next}</span>
-                    <h3 style={{ margin: "0.75rem 0 0.35rem", fontSize: "1rem" }}>{step.title}</h3>
-                    <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.82rem", overflowWrap: "anywhere" }}>{step.body}</p>
+                    <h3 className="portal-quickstart__title">{step.title}</h3>
+                    <p className="portal-quickstart__body">{step.body}</p>
                   </div>
                 ))}
               </div>
               <div className="dev-card">
-                <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
+                <div className="dev-portal__section-header dev-portal__section-header--tight">
                   <h3>{t.quickstart.simulatorTitle}</h3>
                   <p>{t.quickstart.simulatorDesc}</p>
                 </div>
-                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                <div className="dev-portal__actions-row">
                   <button className="dev-btn dev-btn--primary" disabled={sampleBusy || !sampleSecret} onClick={() => void handleCreateSampleInvoice()}>
                     {t.quickstart.createInvoice}
                   </button>
@@ -409,7 +409,7 @@ export function DeveloperPortalPage() {
                   {sampleInvoice ? <a className="dev-btn dev-btn--secondary" href={buildCheckoutUrl(sampleInvoice.public_id)} target="_blank" rel="noreferrer">{t.quickstart.openCheckout}</a> : null}
                 </div>
                 {sampleInvoice ? (
-                  <div className="dev-resource-card" style={{ marginTop: "1rem" }}>
+                  <div className="dev-resource-card dev-resource-card--margin">
                     <div className="dev-resource-card__info">
                       <div className="dev-resource-card__title">{sampleInvoice.title}</div>
                       <div className="dev-resource-card__meta">{sampleInvoice.public_id} • {formatInvoiceStatus(sampleInvoice.status, language)} • {sampleInvoice.environment}</div>
@@ -430,28 +430,32 @@ export function DeveloperPortalPage() {
 
               <div className="dev-api-grid">
                 <div className="dev-api-docs">
-                  <div className="dev-card" style={{ marginBottom: "1rem" }}>
-                    <h3 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>{t.api.authTitle}</h3>
-                    <p style={{ fontSize: "0.9rem", color: "var(--muted)" }}>{t.api.authDesc}</p>
+                  <div className="dev-card dev-card--margin-bottom">
+                    <h3 className="dev-card__title--small">{t.api.authTitle}</h3>
+                    <p className="dev-card__desc--small">{t.api.authDesc}</p>
                   </div>
 
                   {endpoints.map((ep, idx) => (
-                    <div key={ep.path} className={`dev-api-method ${selectedMethod === idx ? "is-selected" : ""}`} onClick={() => setSelectedMethod(idx)} style={{ cursor: "pointer", padding: "1rem", borderRadius: "16px", background: selectedMethod === idx ? "rgba(255,255,255,0.04)" : "transparent", transition: "all 0.2s" }}>
+                    <div 
+                      key={ep.path} 
+                      className={`dev-api-method dev-api-method--interactive ${selectedMethod === idx ? "is-selected" : ""}`} 
+                      onClick={() => setSelectedMethod(idx)}
+                    >
                       <div className="dev-api-method__head">
                         <span className={`dev-api-badge dev-api-badge--${ep.method.toLowerCase()}`}>{ep.method}</span>
                         <code className="dev-api-path">{ep.path}</code>
                       </div>
-                      <h3 style={{ fontSize: "1.1rem", marginTop: "0.5rem" }}>{ep.title}</h3>
-                      <p style={{ fontSize: "0.9rem" }}>{ep.desc}</p>
+                      <h3 className="dev-api-method__title">{ep.title}</h3>
+                      <p className="dev-api-method__desc">{ep.desc}</p>
                       
                       {selectedMethod === idx && ep.params.length > 0 && (
-                        <div style={{ marginTop: "1rem", borderTop: "1px solid var(--line)", paddingTop: "1rem" }}>
-                          <span className="dev-widget__label" style={{ marginBottom: "0.5rem" }}>{t.api.params}</span>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                        <div className="dev-api-method__params">
+                          <span className="dev-widget__label dev-api-method__params-label">{t.api.params}</span>
+                          <div className="dev-api-method__params-list">
                             {ep.params.map(p => (
-                              <div key={p.name} style={{ display: "flex", gap: "1rem", fontSize: "0.85rem" }}>
-                                <code style={{ color: "var(--accent)" }}>{p.name}</code>
-                                <span style={{ opacity: 0.5 }}>{p.type}</span>
+                              <div key={p.name} className="dev-api-method__param-row">
+                                <code className="dev-api-method__param-name">{p.name}</code>
+                                <span className="dev-api-method__param-type">{p.type}</span>
                                 <span>{p.desc}</span>
                               </div>
                             ))}
@@ -478,7 +482,7 @@ export function DeveloperPortalPage() {
                 </div>
               </div>
               <div className="dev-card">
-                <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
+                <div className="dev-portal__section-header dev-portal__section-header--tight">
                   <h3>{t.api.errorsTitle}</h3>
                   <p>{t.api.errorsSubtitle}</p>
                 </div>
@@ -510,24 +514,24 @@ export function DeveloperPortalPage() {
               ) : (
                 <div className="dev-card">
                   <form onSubmit={handleCreateKey} className="dev-form">
-                    <div className="portal-mode-tabs" role="tablist" aria-label="API key mode">
+                    <div className="portal-mode-tabs portal-mode-tabs--margin" role="tablist" aria-label="API key mode">
                       {(["test", "live"] as const).map(mode => (
                         <button key={mode} type="button" className={keyEnvironment === mode ? "is-active" : ""} onClick={() => setKeyEnvironment(mode)}>
                           {mode === 'test' ? t.common.testMode : t.common.liveMode}
                         </button>
                       ))}
                     </div>
-                    <div className="dev-api-grid" style={{ gridTemplateColumns: "1fr auto", alignItems: "flex-end" }}>
+                    <div className="dev-form__row-grid">
                       <div className="dev-input-group">
                         <label>{t.keys.label}</label>
                         <input className="dev-input" value={keyLabel} onChange={e => setKeyLabel(e.target.value)} placeholder={t.keys.placeholder} required />
                       </div>
                       <button type="submit" className="dev-btn dev-btn--primary" disabled={!me?.plan.has_api}>{t.keys.create}</button>
                     </div>
-                    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                    <div className="dev-form__scopes-row">
                       {["invoices:read", "invoices:write"].map(s => (
-                        <label key={s} className={`dev-scope-pill ${keyScopes.includes(s) ? "is-active" : ""}`} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <input type="checkbox" checked={keyScopes.includes(s)} onChange={() => toggleScope(s)} style={{ width: "auto" }} />
+                        <label key={s} className={`dev-scope-pill dev-scope-pill--interactive ${keyScopes.includes(s) ? "is-active" : ""}`}>
+                          <input type="checkbox" className="dev-scope-pill__checkbox" checked={keyScopes.includes(s)} onChange={() => toggleScope(s)} />
                           {s}
                         </label>
                       ))}
@@ -535,10 +539,10 @@ export function DeveloperPortalPage() {
                   </form>
 
                   {latestSecret && (
-                    <div className="alert alert--success" style={{ marginTop: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div className="alert alert--success alert--secret">
                       <div>
-                        <small style={{ display: "block", marginBottom: "0.25rem" }}>{t.keys.warning}</small>
-                        <code style={{ fontSize: "1.1rem" }}>{latestSecret}</code>
+                        <small className="alert__label">{t.keys.warning}</small>
+                        <code className="alert__code">{latestSecret}</code>
                       </div>
                       <button className="dev-code-box__copy" onClick={() => handleCopy(latestSecret, "latest")}>
                         {copiedId === "latest" ? t.common.copied : t.common.copy}
@@ -546,7 +550,7 @@ export function DeveloperPortalPage() {
                     </div>
                   )}
 
-                  <div className="dev-resource-list" style={{ marginTop: "2rem" }}>
+                  <div className="dev-resource-list dev-resource-list--margin">
                     {apiKeys.map(key => (
                       <div key={key.id} className="dev-resource-card">
                         <div className="dev-resource-card__info">
@@ -554,7 +558,7 @@ export function DeveloperPortalPage() {
                           <div className="dev-resource-card__meta">
                             <code>{key.prefix}***</code> • {key.environment} • {formatDate(key.created_at, language)}
                           </div>
-                          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                          <div className="dev-form__scopes-row dev-form__scopes-row--margin">
                             {key.scopes.map(s => <span key={s} className="dev-scope-pill">{s}</span>)}
                           </div>
                         </div>
@@ -575,15 +579,15 @@ export function DeveloperPortalPage() {
               <div className="dev-api-grid">
                 <div className="dev-form">
                   <div className="dev-card">
-                    <h3 style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>{t.webhooks.verification}</h3>
-                    <p style={{ fontSize: "0.9rem", color: "var(--muted)", marginBottom: "1rem" }}>{t.webhooks.verificationDesc}</p>
-                    <pre className="dev-code-box__content" style={{ borderRadius: "12px", fontSize: "0.75rem" }}>
+                    <h3 className="dev-card__title--small">{t.webhooks.verification}</h3>
+                    <p className="dev-card__desc--small dev-card__desc--margin">{t.webhooks.verificationDesc}</p>
+                    <pre className="dev-code-box__content dev-code-box__content--compact">
                       <code>{`// Verification example\nconst hash = crypto.createHmac('sha256', secret)\n  .update(payload)\n  .digest('hex');`}</code>
                     </pre>
                   </div>
 
                   <form onSubmit={handleCreateWebhook} className="dev-card dev-form">
-                    <div className="portal-mode-tabs" role="tablist" style={{ marginBottom: "1rem" }}>
+                    <div className="portal-mode-tabs portal-mode-tabs--margin" role="tablist">
                         {(["test", "live"] as const).map(mode => (
                           <button key={mode} type="button" className={hookForm.environment === mode ? "is-active" : ""} onClick={() => setHookForm({ ...hookForm, environment: mode })}>
                             {mode === 'test' ? t.common.testMode : t.common.liveMode}
@@ -604,19 +608,19 @@ export function DeveloperPortalPage() {
 
                 <div className="dev-resource-list">
                   {webhooks.map(hook => (
-                    <div key={hook.id} className="dev-resource-card" style={{ flexDirection: "column", alignItems: "stretch", gap: "1rem" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div key={hook.id} className="dev-resource-card dev-resource-card--column">
+                      <div className="dev-resource-card__header">
                         <div className="dev-resource-card__info">
                           <div className="dev-resource-card__title">{hook.label}</div>
-                          <code style={{ opacity: 0.6, fontSize: "0.85rem" }}>{hook.url}</code>
-                          <div style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.25rem" }}>{t.common.environment}: {hook.environment}</div>
+                          <code className="dev-resource-card__url">{hook.url}</code>
+                          <div className="dev-resource-card__meta-extra">{t.common.environment}: {hook.environment}</div>
                         </div>
                         <button className="dev-btn dev-btn--danger" onClick={() => handleDeleteWebhook(hook.id)}>{t.common.delete}</button>
                       </div>
-                      <div className="dev-card" style={{ padding: "0.75rem 1rem", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div className="dev-card dev-card--secret-box">
                         <div>
-                          <span style={{ fontSize: "0.7rem", textTransform: "uppercase", opacity: 0.5, display: "block" }}>{t.webhooks.secret}</span>
-                          <code style={{ fontSize: "0.85rem" }}>{hook.secret}</code>
+                          <span className="dev-card__secret-label">{t.webhooks.secret}</span>
+                          <code className="dev-card__secret-code">{hook.secret}</code>
                         </div>
                         <button className="dev-code-box__copy" onClick={() => handleCopy(hook.secret, `hook-${hook.id}`)}>
                           {copiedId === `hook-${hook.id}` ? t.common.copied : t.common.copy}
@@ -627,13 +631,13 @@ export function DeveloperPortalPage() {
                 </div>
               </div>
               <div className="dev-card">
-                <div className="dev-portal__section-header" style={{ marginBottom: "1rem" }}>
+                <div className="dev-portal__section-header dev-portal__section-header--tight">
                   <h3>{t.common.deliveriesTitle}</h3>
                   <p>{t.common.deliveriesSubtitle}</p>
                 </div>
                 <div className="dev-resource-list">
                   {deliveries.length === 0 ? (
-                    <div style={{ color: "var(--muted)", padding: "1rem" }}>{t.common.noDeliveries}</div>
+                    <div className="dev-portal__empty-state dev-portal__empty-state--padding">{t.common.noDeliveries}</div>
                   ) : deliveries.map(delivery => (
                     <div key={delivery.id} className="dev-resource-card delivery-row">
                       <div className="dev-resource-card__info">
@@ -641,7 +645,7 @@ export function DeveloperPortalPage() {
                         <div className="dev-resource-card__meta">
                           {delivery.status} • {delivery.attempts}/{delivery.max_attempts} {t.common.attempts} • {delivery.last_http_status ?? t.common.noStatus}
                         </div>
-                        {delivery.last_error ? <code style={{ color: "var(--danger)", fontSize: "0.78rem" }}>{delivery.last_error}</code> : null}
+                        {delivery.last_error ? <code className="dev-resource-card__error">{delivery.last_error}</code> : null}
                       </div>
                       <span className={`dev-api-badge dev-api-badge--${delivery.status === "delivered" ? "done" : "post"}`}>{delivery.status}</span>
                       <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void handleResendDelivery(delivery.id)}>
@@ -673,12 +677,12 @@ export function DeveloperPortalPage() {
                   <button className="dev-btn dev-btn--primary" onClick={handleUpgrade}>{t.billing.upgrade}</button>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", borderLeft: "1px solid var(--line)", paddingLeft: "2rem", gap: "1.5rem" }}>
+                <div className="dev-card__side-col">
                   {checkoutUrl ? (
                     <div className="dev-form">
                       <div className="alert alert--success">{t.common.checkoutGenerated}</div>
-                      <code className="dev-input" style={{ fontSize: "0.8rem" }}>{checkoutUrl}</code>
-                      <div style={{ display: "flex", gap: "1rem" }}>
+                      <code className="dev-input dev-input--readonly-box">{checkoutUrl}</code>
+                      <div className="dev-form__actions-row">
                         <button className="dev-btn dev-btn--secondary" onClick={() => handleCopy(checkoutUrl, "billing")}>
                           {copiedId === "billing" ? t.common.copied : t.common.copy}
                         </button>
@@ -686,11 +690,11 @@ export function DeveloperPortalPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="dev-form" style={{ textAlign: "center", gap: "1rem" }}>
-                      <div style={{ padding: "1rem", borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}>
-                        <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--muted)" }}>{t.billing.enterpriseNote}</p>
+                    <div className="dev-form dev-form--centered">
+                      <div className="dev-card--note">
+                        <p className="dev-card__note-text">{t.billing.enterpriseNote}</p>
                       </div>
-                      <Link to="/enterprise" className="dev-btn dev-btn--secondary" style={{ width: "100%" }}>{t.billing.contactSupport}</Link>
+                      <Link to="/enterprise" className="dev-btn dev-btn--secondary dev-btn--large dev-btn--full-width">{t.billing.contactSupport}</Link>
                     </div>
                   )}
                 </div>

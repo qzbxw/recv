@@ -41,7 +41,7 @@ export function UseCasePageTemplate({
             <Link className="lend-primary" href="/app/auth">
               {copy.startIntegration}
             </Link>
-            <Link className="lend-secondary" href="/docs">
+            <Link className="lend-secondary" href={`/${language}/docs/introduction`}>
               {copy.docs}
             </Link>
           </div>

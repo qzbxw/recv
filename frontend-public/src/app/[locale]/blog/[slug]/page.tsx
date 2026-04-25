@@ -58,8 +58,8 @@ export default async function BlogPost(props: Props) {
   if (!post) {
     return (
       <MarketingLayout language={language}>
-        <div style={{ textAlign: "center", padding: "10rem 2rem" }}>
-          <h1 style={{ color: "var(--ink)", fontSize: "2rem", marginBottom: "1rem" }}>Post Not Found</h1>
+        <div className="blog-empty" style={{ padding: "10rem 2rem" }}>
+          <h1 className="blog-card__title" style={{ fontSize: "2rem", marginBottom: "1rem" }}>Post Not Found</h1>
           <Link href={`/${language}/blog`} style={{ color: "var(--accent)" }}>&larr; Back to Blog</Link>
         </div>
       </MarketingLayout>
@@ -84,12 +84,12 @@ export default async function BlogPost(props: Props) {
   return (
     <MarketingLayout language={language}>
         <JsonLd schema={blogPostSchema} />
-        <article style={{ maxWidth: "768px", margin: "4rem auto 8rem", padding: "0 1.5rem" }}>
-          <header style={{ marginBottom: "3rem", textAlign: "center" }}>
-            <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--ink)", lineHeight: 1.1, marginBottom: "1.5rem", letterSpacing: "-0.03em" }}>
+        <article className="article-shell">
+          <header className="article-header">
+            <h1 className="article-title">
               {post.title}
             </h1>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1rem", color: "var(--muted)", fontSize: "0.9rem" }}>
+            <div className="article-meta">
               <span>{post.author || "Reqst Core Team"}</span>
               <span>&bull;</span>
               <time dateTime={post.published_at}>{new Date(post.published_at).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}</time>
@@ -97,27 +97,23 @@ export default async function BlogPost(props: Props) {
           </header>
 
           {post.cover_image_url && (
-            <img src={post.cover_image_url} alt={post.title} style={{ width: "100%", height: "auto", borderRadius: "16px", marginBottom: "3rem", border: "1px solid var(--line)" }} />
+            <img src={post.cover_image_url} alt={post.title} className="article-cover" />
           )}
 
-          <div className="markdown-body" style={{ 
-            color: "rgba(255, 255, 255, 0.8)", 
-            lineHeight: 1.8, 
-            fontSize: "1.05rem"
-          }}>
+          <div className="markdown-body">
             <ReactMarkdown
               components={{
-                h2: ({node: _node, ...props}) => <h2 style={{ color: "var(--ink)", marginTop: "2.5rem", marginBottom: "1rem", fontSize: "1.75rem", letterSpacing: "-0.02em" }} {...props} />,
-                h3: ({node: _node, ...props}) => <h3 style={{ color: "var(--ink)", marginTop: "2rem", marginBottom: "1rem", fontSize: "1.3rem" }} {...props} />,
-                p: ({node: _node, ...props}) => <p style={{ marginBottom: "1.25rem" }} {...props} />,
-                a: ({node: _node, ...props}) => <a style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: "4px" }} {...props} />,
+                h2: ({node: _node, ...props}) => <h2 {...props} />,
+                h3: ({node: _node, ...props}) => <h3 {...props} />,
+                p: ({node: _node, ...props}) => <p {...props} />,
+                a: ({node: _node, ...props}) => <a {...props} />,
                 code: ({inline, ...props}: { inline?: boolean; children?: React.ReactNode }) => 
-                  inline ? <code style={{ background: "rgba(255,255,255,0.1)", padding: "0.2em 0.4em", borderRadius: "4px", fontSize: "0.9em", fontFamily: "monospace" }} {...props} />
-                         : <pre style={{ background: "#0a0a0c", padding: "1.25rem", borderRadius: "12px", overflowX: "auto", border: "1px solid var(--line)", marginBottom: "1.5rem" }}><code style={{ fontFamily: "monospace", fontSize: "0.9em" }} {...props} /></pre>,
-                blockquote: ({node: _node, ...props}) => <blockquote style={{ borderLeft: "4px solid var(--accent)", paddingLeft: "1rem", color: "var(--muted)", fontStyle: "italic", margin: "1.5rem 0" }} {...props} />,
-                ul: ({node: _node, ...props}) => <ul style={{ marginBottom: "1.5rem", paddingLeft: "1.5rem" }} {...props} />,
-                ol: ({node: _node, ...props}) => <ol style={{ marginBottom: "1.5rem", paddingLeft: "1.5rem" }} {...props} />,
-                li: ({node: _node, ...props}) => <li style={{ marginBottom: "0.5rem" }} {...props} />
+                  inline ? <code {...props} />
+                         : <pre {...props}><code {...props} /></pre>,
+                blockquote: ({node: _node, ...props}) => <blockquote {...props} />,
+                ul: ({node: _node, ...props}) => <ul {...props} />,
+                ol: ({node: _node, ...props}) => <ol {...props} />,
+                li: ({node: _node, ...props}) => <li {...props} />
               }}
             >
               {post.content_md}

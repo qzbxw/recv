@@ -54,26 +54,22 @@ export default async function BlogIndex(props: { params: Promise<{ locale: strin
 
         <section className="lend-split-section">
           {posts.length === 0 ? (
-            <div style={{ textAlign: "center", color: "var(--muted)", padding: "4rem" }}>
+            <div className="blog-empty">
               <p>No posts available yet.</p>
             </div>
           ) : (
-            <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+            <div className="blog-grid">
               {posts.map((post) => (
-                <Link key={post.slug} href={`/${locale}/blog/${post.slug}`} className="lend-card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <Link key={post.slug} href={`/${locale}/blog/${post.slug}`} className="lend-card blog-card">
                   {post.cover_image_url && (
-                    <div style={{ 
-                      width: "100%", 
-                      height: "180px", 
-                      borderRadius: "12px", 
-                      backgroundImage: `url(${post.cover_image_url})`, 
-                      backgroundSize: "cover", 
-                      backgroundPosition: "center" 
-                    }} />
+                    <div 
+                      className="blog-card__cover"
+                      style={{ backgroundImage: `url(${post.cover_image_url})` }} 
+                    />
                   )}
-                  <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--ink)" }}>{post.title}</h3>
-                  {post.excerpt && <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.95rem" }}>{post.excerpt}</p>}
-                  <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--muted)" }}>
+                  <h3 className="blog-card__title">{post.title}</h3>
+                  {post.excerpt && <p className="blog-card__excerpt">{post.excerpt}</p>}
+                  <div className="blog-card__meta">
                     <span>{post.author || "Reqst Team"}</span>
                     <span>{new Date(post.published_at).toLocaleDateString()}</span>
                   </div>

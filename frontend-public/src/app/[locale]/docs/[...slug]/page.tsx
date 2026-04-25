@@ -33,7 +33,6 @@ export default async function DocPage(props: {
       <Header language={locale as "ru" | "en"} />
       <main className="docs-container">
         <aside className="docs-sidebar">
-          {/* TODO: Implement sidebar navigation */}
           <nav>
             <ul>
               <li>
@@ -53,50 +52,6 @@ export default async function DocPage(props: {
         </article>
       </main>
       <Footer language={locale as "ru" | "en"} />
-      
-      <style dangerouslySetInnerHTML={{ __html: `
-        .docs-page {
-          background: #000;
-          color: #fff;
-          min-height: 100vh;
-        }
-        .docs-container {
-          display: flex;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 2rem;
-          gap: 2rem;
-        }
-        .docs-sidebar {
-          width: 250px;
-          flex-shrink: 0;
-          border-right: 1px solid #333;
-          padding-right: 2rem;
-        }
-        .docs-content {
-          flex-grow: 1;
-          min-width: 0;
-        }
-        .docs-header {
-          margin-bottom: 2rem;
-          border-bottom: 1px solid #333;
-          padding-bottom: 1rem;
-        }
-        .prose h1, .prose h2, .prose h3 {
-          margin-top: 2rem;
-          margin-bottom: 1rem;
-        }
-        .prose p {
-          margin-bottom: 1rem;
-          line-height: 1.6;
-          color: #ccc;
-        }
-        .prose ul {
-          margin-bottom: 1rem;
-          padding-left: 1.5rem;
-          list-style: disc;
-        }
-      `}} />
     </div>
   );
 }

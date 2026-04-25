@@ -50,16 +50,18 @@ export function MarketingLayout({
   }, [canonicalUrl, baseUrl]);
 
   return (
-    <main className="lend-page">
+    <div className="lend-page min-h-screen bg-black text-white selection:bg-purple-500/30">
       <div className="lend-backdrop lend-backdrop--grid" />
       <div className="lend-backdrop lend-backdrop--glow lend-backdrop--left" />
       <div className="lend-backdrop lend-backdrop--glow lend-backdrop--right" />
 
-      <div className="lend-shell">
-        <Header language={language} />
+      <Header language={language} />
+      
+      <main className="lend-shell relative z-10 pt-40 min-h-[calc(100vh-200px)]">
         {children}
-        <Footer language={language} />
-      </div>
-    </main>
+      </main>
+
+      <Footer language={language} />
+    </div>
   );
 }

@@ -1,179 +1,126 @@
 const en = {
     hero: {
-      title: "Keep 100% of Your Profit. Zero Turnover Fees.",
+      title: "The Protocol for Digital Revenue.",
       body:
-        "Professional crypto processing with instant payouts directly to your wallets. We automate payment acceptance while you scale your business.",
+        "Non-custodial infrastructure for scale. Direct-to-wallet payouts, 0% turnover fees, and native multi-chain support in one unified engine.",
       subcopy:
-        "Non-custodial infrastructure. Your money never touches our accounts.",
-      primary: "Start Accepting Payments",
-      secondary: "Open in Telegram",
-      badges: ["Direct-to-Wallet", "Telegram Native", "0% Fee", "API Beta", "B2B Scale"],
+        "Engineered for Telegram, SaaS, and Global Commerce.",
+      primary: "Launch Console",
+      secondary: "View Docs",
+      badges: ["Direct-to-Wallet", "0% Fees", "Non-Custodial", "High-Throughput"],
     },
     heroPanel: {
-      eyebrow: "live demo",
-      title: "Test the Experience",
-      body: "Experience firsthand how seamless payments are for your customers. No delays, no friction, just results.",
-      amount: "149 USDT",
-      invoice: "REQST-DEMO-149",
-      status: "Awaiting payment",
-      primary: "Try Live Demo",
-      secondary: "Merchant Dashboard",
-      helper: "No hidden fees. Just a simple flat subscription.",
-      chips: ["TON", "TRON", "Base", "0% FEE"],
+      eyebrow: "Infrastructure",
+      title: "Performance First",
+      body: "Experience raw efficiency with our optimized blockchain monitoring protocol.",
+      amount: "149.00 USDT",
+      invoice: "REQST-INFRA-99",
+      status: "Confirmed",
+      primary: "Demo Checkout",
+      secondary: "Console",
+      helper: "Flat subscription. Unlimited volume.",
+      chips: ["TON", "TRON", "SOL", "BASE"],
     },
-    overview: {
-      kicker: "AUTOMATION",
-      title: "Buy Your Time Back.",
-      body:
-        "Stop chasing manual verifications and waiting for screenshots. Reqst handles blockchain monitoring 24/7, confirming payments in seconds.",
-      cards: [
-        {
-          title: "Command Center",
-          body: "Manage projects, invoices, and analytics in one interface.",
-        },
-        {
-          title: "Trust by Default",
-          body: "A clean checkout UI that eliminates friction and builds trust.",
-        },
-        {
-          title: "Full Automation",
-          body: "API and webhooks for instant delivery right after payment.",
-        },
-      ],
-    },
-    capabilities: {
-      kicker: "TECHNOLOGY",
-      title: "Infrastructure That Saves You Money.",
-      body: "We've removed the noise, leaving only speed, security, and transparency.",
+    bento: {
+      kicker: "INFRASTRUCTURE",
+      title: "Built for the next billion transactions.",
       items: [
         {
-          kicker: "01",
-          title: "Direct-to-Wallet",
-          body: "Funds go directly from the client to your address. We are non-custodial and never hold your money for a single second.",
+          id: "api",
+          title: "Unified API v1",
+          body: "A high-performance gateway for all liquid networks. One integration, infinite reach.",
+          kicker: "INTEGRATION",
+          size: "large"
         },
         {
-          kicker: "02",
-          title: "All Liquid Chains",
-          body: "Full support for TON, TRON (USDT), Solana, and popular L2 solutions (Base, Arbitrum, BSC) in a single interface.",
+          id: "checkout",
+          title: "Smart Checkout",
+          body: "A clean, high-conversion payment interface optimized for every device and platform.",
+          kicker: "UX",
+          size: "medium"
         },
         {
-          kicker: "03",
-          title: "Smart Tracking",
-          body: "An intelligent monitoring system automatically detects underpayments and overpayments, notifying you instantly.",
+          id: "direct",
+          title: "Direct Payouts",
+          body: "Revenue flows directly to your wallets. We never touch, hold, or middle-man your funds.",
+          kicker: "TRUST",
+          size: "small"
         },
         {
-          kicker: "04",
-          title: "Inside Telegram",
-          body: "Issue invoices, track notifications, and manage projects through the official bot without switching to a browser.",
+          id: "monitoring",
+          title: "Real-time Watchers",
+          body: "Low-latency blockchain monitoring with intelligent underpayment detection.",
+          kicker: "STABILITY",
+          size: "small"
         },
         {
-          kicker: "05",
-          title: "Flat Fee Model",
-          body: "Forget about turnover commissions. You only pay for platform usage, keeping 100% of your profit at any volume.",
-        },
-        {
-          kicker: "06",
-          title: "Enterprise Ready",
-          body: "Tools for teamwork, flexible API key management, and expanded limits for large-scale tasks.",
-        },
-      ],
-    },
-    compare: {
-      kicker: "EVOLUTION",
-      title: "Efficiency by default.",
-      body: "How Reqst optimizes your operations and saves your time.",
-      rows: [
-        {
-          legacy: "Manual verification and chasing screenshots.",
-          reqst: "Instant blockchain confirmation and automated alerts.",
-        },
-        {
-          legacy: "Dealing with wrong amounts and network errors.",
-          reqst: "Smart UI with QR codes and automatic edge-case handling.",
-        },
-        {
-          legacy: "Gateway fees eating into your profit margin.",
-          reqst: "Zero turnover fees. Flat subscription. 100% yours.",
-        },
-      ],
-    },
-    networks: {
-      kicker: "NETWORKS",
-      title: "Ubiquitous Connectivity.",
-      body: "Native support for the most liquid protocols. Low fees, instant confirmation, maximum reach.",
-      rails: [
-        {
-          name: "TON",
-          title: "The Open Network",
-          body: "The native choice for Telegram-based commerce and the growing TON ecosystem.",
-        },
-        {
-          name: "TRON",
-          title: "TRON Network",
-          body: "The global standard for USDT settlement with high throughput and low costs.",
-        },
-        {
-          name: "SOL",
-          title: "Solana",
-          body: "Unrivaled speed and efficiency for businesses that can't afford to wait.",
-        },
-        {
-          name: "EVM",
-          title: "EVM & L2",
-          body: "Base, Arbitrum, BSC — capture liquidity across any popular blockchain.",
-        },
-      ],
-      soon: {
-        title: "Coming Soon",
-        api: "Public API 2.0 Beta",
-        b2b: "Team Access",
-        body: "Constantly expanding features for enterprise businesses.",
-      },
-    },
-    dogfooding: {
-      kicker: "SKIN IN THE GAME",
-      title: "Built for Us. Scaled for You.",
-      cards: [
-        {
-          title: "100% Load",
-          body: "Every cent earned by Reqst flows through this exact engine. We don’t use third-party gateways."
-        },
-        {
-          title: "Anchor Merchant",
-          body: "We are our own most demanding customer. If a feature isn’t perfect for us, it doesn't reach you."
-        },
-        {
-          title: "Hardened Logic",
-          body: "Optimized through thousands of internal transactions to handle every complex blockchain edge case with precision."
+          id: "tg",
+          title: "Telegram Native",
+          body: "Manage your revenue flow and infrastructure via our official Telegram bot.",
+          kicker: "NATIVE",
+          size: "small"
         }
       ]
     },
+    useCases: {
+      kicker: "USE CASES",
+      title: "Proven in the most demanding environments.",
+      tabs: [
+        { id: "tg-shops", title: "TG Shops", body: "Automate physical and digital goods sales inside Telegram with instant delivery.", cta: "Explore TG Commerce" },
+        { id: "saas", title: "SaaS Billing", body: "Reliable infrastructure for software platforms. Flat fees mean higher margins for your business.", cta: "Optimize Margins" },
+        { id: "digital", title: "Digital Goods", body: "Instant fulfillment for keys and accounts immediately after blockchain confirmation.", cta: "Scale Automation" },
+        { id: "communities", title: "Communities", body: "Automated access management for private channels and groups with recurring logic.", cta: "Manage Members" },
+      ]
+    },
+    networks: {
+      kicker: "NETWORKS",
+      title: "Global Connectivity.",
+      list: ["TON", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC", "ETHEREUM"]
+    },
+    compare: {
+      kicker: "EVOLUTION",
+      title: "The Reqst Advantage.",
+      rows: [
+        {
+          legacy: "Manual verification and screenshot chasing.",
+          reqst: "Automated blockchain watchers & instant alerts.",
+        },
+        {
+          legacy: "Gateway fees (1-5%) eating your profit.",
+          reqst: "0% turnover fees. Keep 100% of what you earn.",
+        },
+        {
+          legacy: "Custodial risk & withdrawal delays.",
+          reqst: "Non-custodial. Direct-to-wallet. Instant liquidity.",
+        },
+      ],
+    },
     pricing: {
-      kicker: "PRICING",
-      title: "Flexible scale. Zero commissions.",
+      kicker: "ACCESS",
+      title: "Transparent pricing. No fees.",
       merchant: {
         name: "Merchant",
         price: "39",
         trial: "Free in Test Mode",
-        features: ["Unlimited Invoice Sales", "Manual Overrides", "0% Fee (Direct-to-Wallet)", "Basic Analytics"],
-        cta: "Get Started"
+        features: ["Direct-to-Wallet Payouts", "Manual Invoice Management", "0% Turnover Fees", "Standard Analytics"],
+        cta: "Activate Merchant"
       },
       developer: {
         name: "Developer",
         price: "199",
-        features: ["Full API & Webhooks", "50k monthly requests", "3 Seat / 3 Workspace", "Standard Support"],
-        cta: "Explore"
+        features: ["Full API & Webhooks", "50k Monthly Requests", "3 Seats / Workspaces", "Priority Support"],
+        cta: "Activate Developer"
       },
       business: {
         name: "Business",
         price: "499",
-        features: ["200k monthly requests", "10 Seat / 10 Workspace", "Advanced Analytics", "Priority Support"],
-        cta: "Explore"
+        features: ["200k Monthly Requests", "10 Seats / Workspaces", "Advanced Reporting", "Dedicated Support"],
+        cta: "Activate Business"
       },
       enterprise: {
         name: "Enterprise",
         price: "Custom",
-        features: ["1M+ monthly requests", "Unlimited Seats", "B2B / SLA", "Dedicated Support"],
+        features: ["Unlimited Requests", "Unlimited Seats", "Custom SLA / B2B", "Direct Dev Channel"],
         cta: "Contact Sales"
       }
     },
@@ -198,6 +145,18 @@ const en = {
           question: "How are underpayments or incorrect amounts handled?",
           answer: "Reqst intelligently detects any deviations from the expected amount. If an underpayment occurs, the transaction is flagged as 'Underpaid,' allowing you to either request the balance or manually approve the order.",
         },
+        {
+          question: "Do I need to pass KYC to start using Reqst?",
+          answer: "No. Since we operate strictly as non-custodial middleware and do not hold or process fiat currency, we do not require KYC verification from merchants. You can start accepting crypto immediately.",
+        },
+        {
+          question: "Is there a limit on how many invoices I can create?",
+          answer: "There are absolutely no limits on invoice creation. You can generate millions of payment links. Our subscription tiers only restrict the number of API requests to our monitoring nodes.",
+        },
+        {
+          question: "What happens if a network (e.g., Solana) goes down?",
+          answer: "Our watchers are distributed across multiple global RPC providers. If a network halts, Reqst queues the monitoring tasks. Once the blockchain resumes block production, all pending transactions will be automatically verified and webhooks fired.",
+        },
       ],
     },
     final: {
@@ -215,9 +174,47 @@ const en = {
       privacy: "Privacy",
       terms: "Terms",
       console: "Console",
-      status: "Roadmap",
+      status: "Status",
       api: "API",
       b2b: "B2B",
+      company: "Company",
+      resources: "Resources",
+      solutions: "Solutions",
+      social: "Social",
+    },
+    nav: {
+      products: {
+        title: "Products",
+        checkout: { title: "Checkout", desc: "High-converting payment UI" },
+        api: { title: "API", desc: "Infrastructure for developers" },
+        invoicing: { title: "Invoicing", desc: "Professional billing tools" },
+      },
+      useCases: {
+        title: "Use Cases",
+        tgShops: "Telegram Shops",
+        saas: "SaaS Billing",
+        digital: "Digital Goods",
+        communities: "Paid Communities",
+      },
+      networks: {
+        title: "Networks",
+        ton: "TON",
+        tron: "TRON",
+        solana: "Solana",
+        base: "Base",
+        bsc: "BSC",
+        arbitrum: "Arbitrum",
+      },
+      pricing: {
+        title: "Pricing",
+        merchant: "Merchant",
+        developer: "Developer",
+        business: "Business",
+        enterprise: "Enterprise",
+      },
+      docs: "Docs",
+      blog: "Blog",
+      console: "Console",
     },
   marketing: {
     activate: "Get Started",
@@ -250,12 +247,81 @@ const en = {
         },
       ],
     },
+    invoicingProduct: {
+      title: "Invoicing: Professional Billing for Modern Business",
+      description: "Stop using spreadsheets for billing. Reqst Invoicing provides a professional way to issue, track, and manage crypto invoices.",
+      kicker: "PRODUCT",
+      cards: [
+        {
+          title: "Custom Invoices",
+          body: "Create branded payment links for any amount with flexible network options.",
+        },
+        {
+          title: "Status Tracking",
+          body: "Real-time updates on every invoice. Know exactly when your client pays.",
+        },
+        {
+          title: "Client Management",
+          body: "Keep track of your clients and their payment history in a unified dashboard.",
+        },
+      ],
+    },
     breadcrumbs: {
       home: "Home",
       blog: "Blog",
       compare: "Compare",
       useCases: "Use Cases",
       networks: "Networks",
+      products: "Products",
+      invoicing: "Invoicing",
+    },
+    productsHub: {
+      title: "Solutions for Every Business Scale",
+      description: "From simple payment links to enterprise-grade infrastructure. Choose the product that fits your current growth stage.",
+      kicker: "PRODUCTS",
+      checkout: {
+        title: "Checkout",
+        desc: "A ready-to-use, high-converting payment UI that supports all major networks. Perfect for selling digital goods and services.",
+        link: "Learn more",
+      },
+      api: {
+        title: "API & Webhooks",
+        desc: "Full-featured infrastructure for developers. Automate payments, track transactions in real-time, and scale with confidence.",
+        link: "Learn more",
+      },
+      invoicing: {
+        title: "Invoicing",
+        desc: "Professional billing tools for B2B and freelancers. Issue invoices, track status, and manage your clients in one place.",
+        link: "Learn more",
+      }
+    },
+    networksHub: {
+      title: "Universal Blockchain Connectivity",
+      description: "We bridge the gap between businesses and decentralized liquidity. Reqst supports all major protocols with a single integration.",
+      kicker: "NETWORKS",
+      explanation: "All networks operate on a direct-to-wallet basis. We never touch your funds, ensuring maximum security and zero counterparty risk."
+    },
+    useCasesHub: {
+      title: "Built for Real-World Commerce",
+      description: "Explore how different industries use Reqst to automate their crypto operations and eliminate manual overhead.",
+      kicker: "USE CASES",
+    },
+    compareHub: {
+      title: "The Smarter Way to Process Crypto",
+      description: "See how Reqst compares to manual verification and traditional custodial gateways. Transparency and efficiency in every transaction.",
+      kicker: "COMPARE",
+    },
+    statusHub: {
+      title: "System Status",
+      description: "Real-time monitoring of Reqst infrastructure and network connectivity.",
+      kicker: "STATUS",
+      allSystemsOperational: "All Systems Operational",
+      operational: "Operational",
+      services: "Core Services",
+      networks: "Network Connectivity",
+      coreApi: "Core API",
+      watchers: "Blockchain Watchers",
+      checkout: "Checkout UI",
     },
   },
   plan: {

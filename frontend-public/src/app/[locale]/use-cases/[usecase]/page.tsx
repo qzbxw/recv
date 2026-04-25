@@ -90,37 +90,37 @@ export default async function UseCasePage(props: Props) {
 
   return (
     <MarketingLayout language={locale as "en" | "ru"}>
-      <div style={{ maxWidth: "1200px", margin: "4rem auto", padding: "0 1.5rem" }}>
+      <div className="page-container">
         <Breadcrumbs items={breadcrumbs} locale={locale} />
         
-        <header style={{ marginTop: "3rem", marginBottom: "5rem", textAlign: "center" }}>
-          <h1 style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", color: "var(--ink)", lineHeight: 1.1, marginBottom: "1.5rem", letterSpacing: "-0.03em" }}>
+        <header className="page-header">
+          <h1 className="page-title">
             {data.title}
           </h1>
-          <p style={{ fontSize: "1.25rem", color: "var(--muted)", maxWidth: "800px", lineHeight: 1.6, margin: "0 auto" }}>
+          <p className="page-subtitle">
             {data.description}
           </p>
           
-          <div style={{ display: "flex", gap: "1rem", marginTop: "3rem", justifyContent: "center" }}>
+          <div className="page-cta-row">
             <Link href="/app/auth" className="lend-primary">Get Started Now</Link>
             <Link href={`/${locale}/dev`} className="lend-secondary">View Documentation</Link>
           </div>
         </header>
 
-        <section style={{ marginBottom: "8rem" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem" }}>
+        <section className="page-section">
+          <div className="benefits-grid">
             {data.benefits.map((benefit, i) => (
-              <article key={i} className="lend-card" style={{ padding: "2.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <span style={{ color: "var(--accent)", fontSize: "1.5rem", fontWeight: "bold" }}>0{i + 1}</span>
-                <p style={{ fontSize: "1.1rem", color: "var(--ink)", lineHeight: 1.5 }}>{benefit}</p>
+              <article key={i} className="lend-card benefit-card">
+                <span className="benefit-number">0{i + 1}</span>
+                <p className="benefit-text">{benefit}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section style={{ textAlign: "center", padding: "6rem 2rem", background: "linear-gradient(to bottom, rgba(255,255,255,0.02), transparent)", borderRadius: "32px", border: "1px solid var(--line)" }}>
-          <h2 style={{ fontSize: "2.5rem", color: "var(--ink)", marginBottom: "1.5rem" }}>Built for Professionals</h2>
-          <p style={{ color: "var(--muted)", fontSize: "1.1rem", maxWidth: "600px", margin: "0 auto 3rem" }}>
+        <section className="page-final-section">
+          <h2 className="page-final-title">Built for Professionals</h2>
+          <p className="page-final-text">
             Whether you are running a boutique Telegram shop or a high-traffic SaaS, Reqst provides the infrastructure you need to scale without friction.
           </p>
           <Link href="/app/auth" className="lend-primary">Start Accepting Payments</Link>

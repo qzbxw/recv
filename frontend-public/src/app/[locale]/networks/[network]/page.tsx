@@ -126,56 +126,58 @@ export default async function NetworkPage(props: Props) {
     "description": data.description
   };
 
+  const kickerStyle = { color: "var(--accent)", fontWeight: 600, fontSize: "0.9rem", textTransform: "uppercase" as const, letterSpacing: "0.1em" };
+
   return (
     <MarketingLayout language={locale as "en" | "ru"}>
       <JsonLd schema={softwareSchema} />
-      <div style={{ maxWidth: "1200px", margin: "4rem auto", padding: "0 1.5rem" }}>
+      <div className="page-container">
         <Breadcrumbs items={breadcrumbs} locale={locale} />
         
-        <header style={{ marginTop: "3rem", marginBottom: "5rem" }}>
-          <span style={{ color: "var(--accent)", fontWeight: 600, fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+        <header className="page-header">
+          <span style={kickerStyle}>
             {data.fullName}
           </span>
-          <h1 style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", color: "var(--ink)", lineHeight: 1.1, marginTop: "1rem", marginBottom: "1.5rem", letterSpacing: "-0.03em" }}>
+          <h1 className="page-title" style={{ marginTop: "1rem" }}>
             {data.title}
           </h1>
-          <p style={{ fontSize: "1.25rem", color: "var(--muted)", maxWidth: "800px", lineHeight: 1.6 }}>
+          <p className="page-subtitle" style={{ margin: "0" }}>
             {data.description}
           </p>
           
-          <div style={{ display: "flex", gap: "1rem", marginTop: "3rem" }}>
+          <div className="page-cta-row">
             <Link href="/app/auth" className="lend-primary">Get Started</Link>
             <Link href={`/${locale}/dev`} className="lend-secondary">API Docs</Link>
           </div>
         </header>
 
-        <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "2rem", marginBottom: "8rem" }}>
+        <section className="benefits-grid page-section">
           {data.features.map((feature, i) => (
-            <div key={i} className="lend-card" style={{ padding: "2rem" }}>
-              <div style={{ color: "var(--accent)", marginBottom: "1rem", fontSize: "1.5rem" }}>✓</div>
-              <h3 style={{ fontSize: "1.2rem", color: "var(--ink)", marginBottom: "0.5rem" }}>{feature}</h3>
+            <div key={i} className="lend-card benefit-card">
+              <div className="benefit-check">✓</div>
+              <h3 className="benefit-title">{feature}</h3>
             </div>
           ))}
         </section>
 
-        <section className="lend-dogfood-section" style={{ borderRadius: "24px", padding: "4rem", background: "rgba(255,255,255,0.02)", border: "1px solid var(--line)" }}>
-          <h2 style={{ fontSize: "2.5rem", color: "var(--ink)", marginBottom: "2rem" }}>Why choose Reqst for {data.name}?</h2>
-          <p style={{ color: "var(--muted)", fontSize: "1.1rem", maxWidth: "700px", marginBottom: "3rem" }}>
+        <section className="page-final-section">
+          <h2 className="page-final-title">Why choose Reqst for {data.name}?</h2>
+          <p className="page-final-text page-final-text--wide">
             Reqst provides a pure non-custodial layer for {data.name} processing. Unlike traditional gateways, we don&apos;t hold your funds. 
             Payments go from your customers directly to your {data.name} wallet.
           </p>
-          <ul style={{ listStyle: "none", padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
-            <li style={{ color: "var(--ink)", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <span style={{ color: "var(--accent)" }}>●</span> Fixed $199/mo, no % fees
+          <ul className="page-feature-list">
+            <li className="page-feature-item">
+              <span className="page-feature-dot">●</span> Fixed $199/mo, no % fees
             </li>
-            <li style={{ color: "var(--ink)", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <span style={{ color: "var(--accent)" }}>●</span> Real-time monitoring
+            <li className="page-feature-item">
+              <span className="page-feature-dot">●</span> Real-time monitoring
             </li>
-            <li style={{ color: "var(--ink)", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <span style={{ color: "var(--accent)" }}>●</span> Instant webhooks
+            <li className="page-feature-item">
+              <span className="page-feature-dot">●</span> Instant webhooks
             </li>
-            <li style={{ color: "var(--ink)", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <span style={{ color: "var(--accent)" }}>●</span> 100% Direct-to-Wallet
+            <li className="page-feature-item">
+              <span className="page-feature-dot">●</span> 100% Direct-to-Wallet
             </li>
           </ul>
         </section>

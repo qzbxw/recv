@@ -152,7 +152,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
           <div className="lend-footer-links">
             <Link href={`/${language}/privacy`}>Privacy</Link>
             <Link href={`/${language}/terms`}>Terms</Link>
-            <Link href="/app/developers">Docs</Link>
+            <Link href={`/${language}/docs/introduction`}>Docs</Link>
             <Link href={`/${language}/dev`}>API</Link>
             <Link href={`/${language}/enterprise`}>B2B</Link>
             <Link href="/app/auth">Console</Link>

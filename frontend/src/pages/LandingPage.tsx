@@ -250,7 +250,7 @@ export function LandingPage() {
             <div className="lend-price">
               {copy.pricing.enterprise.price}
             </div>
-            <ul style={{ marginTop: copy.pricing.enterprise.price === 'Custom' ? '2.5rem' : '0' }}>
+            <ul className={copy.pricing.enterprise.price === 'Custom' ? 'lend-pricing-card__list--custom-margin' : ''}>
               {copy.pricing.enterprise.features.map(f => <li key={f}>{f}</li>)}
             </ul>
             <Link className="lend-secondary" to="/enterprise">{copy.pricing.enterprise.cta}</Link>

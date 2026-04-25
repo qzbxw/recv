@@ -214,9 +214,15 @@ func (s *Server) handleMe(c *gin.Context) {
 	now := time.Now()
 	plan := wc.Workspace.EffectivePlan(now)
 
+	workspaces, err := s.store.ListWorkspacesForUser(c.Request.Context(), wc.Claims.UserID)
+	if err != nil {
+		workspaces = []store.Workspace{wc.Workspace}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"workspace": wc.Workspace,
-		"user":      wc.Claims, // claims has user_id now
+		"workspace":  wc.Workspace,
+		"workspaces": workspaces,
+		"user":       wc.Claims, // claims has user_id now
 		"plan": map[string]any{
 			"code":            plan.Code,
 			"name":            plan.Name,

@@ -1,7 +1,40 @@
 :root {
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 10px;
+  /* Colors - Vibrant Purple */
+  --brand-50: #f5f3ff;
+  --brand-100: #ede9fe;
+  --brand-200: #ddd6fe;
+  --brand-300: #c4b5fd;
+  --brand-400: #a78bfa;
+  --brand-500: #8b5cf6;
+  --brand-600: #7c3aed;
+  
+  /* Orange Accents for Network Labels */
+  --accent-orange: #8b5cf6;
+  --accent-orange-soft: rgba(139, 92, 246, 0.15);
+  --brand-700: #6d28d9;
+  --brand-800: #5b21b6;
+  --brand-900: #4c1d95;
+  --brand-950: #2e1065;
+
+  /* Semantic Colors */
+  --accent: var(--brand-500);
+  --accent-strong: var(--brand-400);
+  --accent-soft: rgba(139, 92, 246, 0.14);
+  
+  --button-from: var(--brand-500);
+  --button-to: var(--brand-700);
+  --button-text: #ffffff;
+
+  /* Shapes & Borders - More Rounded */
+  --radius-xs: 10px;
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-xl: 40px;
+  --radius-xxl: 56px;
+  --radius-full: 9999px;
+
+  /* Space & Grid */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -9,8 +42,11 @@
   --space-5: 1.25rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
-  --focus-ring: 0 0 0 3px rgba(255, 148, 77, 0.25);
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* UI Tokens */
+  --focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.25);
   --status-info: #7db7ff;
   --status-review: #b9a3ff;
 }
-

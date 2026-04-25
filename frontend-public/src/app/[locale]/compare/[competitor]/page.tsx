@@ -97,44 +97,44 @@ export default async function ComparePage(props: Props) {
 
   return (
     <MarketingLayout language={locale as "en" | "ru"}>
-      <div style={{ maxWidth: "1200px", margin: "4rem auto", padding: "0 1.5rem" }}>
+      <div className="page-container">
         <Breadcrumbs items={breadcrumbs} locale={locale} />
         
-        <header style={{ marginTop: "3rem", marginBottom: "5rem" }}>
-          <h1 style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", color: "var(--ink)", lineHeight: 1.1, marginBottom: "1.5rem", letterSpacing: "-0.03em" }}>
+        <header className="page-header">
+          <h1 className="page-title">
             {data.title}
           </h1>
-          <p style={{ fontSize: "1.25rem", color: "var(--muted)", maxWidth: "800px", lineHeight: 1.6 }}>
+          <p className="page-subtitle" style={{ margin: "0" }}>
             {data.description}
           </p>
         </header>
 
-        <section style={{ marginBottom: "8rem" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+        <section className="page-section">
+          <div className="compare-grid">
             {data.points.map((point, i) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem", borderBottom: "1px solid var(--line)", paddingBottom: "2rem" }}>
+              <div key={i} className="compare-row">
                 <div>
-                  <h3 style={{ color: "var(--ink)", fontSize: "1.5rem", marginBottom: "1rem" }}>{point.title}</h3>
+                  <h3 className="compare-title">{point.title}</h3>
                 </div>
-                <div style={{ padding: "1.5rem", background: "rgba(255,255,255,0.02)", borderRadius: "12px" }}>
-                  <span style={{ color: "var(--muted)", fontSize: "0.8rem", textTransform: "uppercase", display: "block", marginBottom: "0.5rem" }}>{data.name}</span>
-                  <p style={{ color: "var(--muted)" }}>{(point as ComparisonPoint).manual || (point as ComparisonPoint).custodial}</p>
+                <div className="compare-box">
+                  <span className="compare-box__label">{data.name}</span>
+                  <p className="compare-box__text">{(point as ComparisonPoint).manual || (point as ComparisonPoint).custodial}</p>
                 </div>
-                <div style={{ padding: "1.5rem", background: "rgba(0, 102, 255, 0.05)", borderRadius: "12px", border: "1px solid rgba(0, 102, 255, 0.2)" }}>
-                  <span style={{ color: "var(--accent)", fontSize: "0.8rem", textTransform: "uppercase", display: "block", marginBottom: "0.5rem" }}>Reqst</span>
-                  <p style={{ color: "var(--ink)", fontWeight: 500 }}>{point.reqst}</p>
+                <div className="compare-box compare-box--accent">
+                  <span className="compare-box__label">Reqst</span>
+                  <p className="compare-box__text">{point.reqst}</p>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        <section style={{ textAlign: "center", padding: "4rem", background: "var(--ink)", color: "var(--paper)", borderRadius: "24px" }}>
-          <h2 style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>Ready to upgrade your infrastructure?</h2>
-          <p style={{ opacity: 0.8, marginBottom: "2.5rem", maxWidth: "500px", margin: "0 auto 2.5rem" }}>
+        <section className="compare-cta-block">
+          <h2>Ready to upgrade your infrastructure?</h2>
+          <p>
             Join forward-thinking companies that choose Reqst for secure, non-custodial processing.
           </p>
-          <Link href="/app/auth" className="lend-primary" style={{ background: "var(--paper)", color: "var(--ink)" }}>Start Free Trial</Link>
+          <Link href="/app/auth" className="lend-primary">Start Free Trial</Link>
         </section>
       </div>
     </MarketingLayout>

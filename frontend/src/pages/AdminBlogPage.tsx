@@ -221,8 +221,8 @@ export function AdminBlogPage() {
               </label>
               </div>
 
-              <div style={{ marginTop: "1rem" }} data-color-mode="dark">
-                <span style={{ display: "block", marginBottom: "0.5rem" }}>Content (Markdown)</span>
+              <div className="admin-editor-form__section" data-color-mode="dark">
+                <span className="admin-editor-form__label">Content (Markdown)</span>
                 <MDEditor
                   value={editingPost.content_md || ""}
                   onChange={(val) => updateEditingPost({ content_md: val || "" })}
@@ -230,11 +230,10 @@ export function AdminBlogPage() {
                 />
               </div>
 
-              <div style={{ marginTop: "1rem" }}>
+              <div className="admin-editor-form__footer">
                 <button
                   type="submit"
-                  className="admin-login-button"
-                  style={{ width: "auto", padding: "0.5rem 2rem" }}
+                  className="admin-login-button admin-login-button--compact"
                   disabled={isSaving}
                 >
                   {isSaving ? "Saving..." : "Save Post"}

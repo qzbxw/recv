@@ -30,7 +30,7 @@ export default function Page(props: { params: Promise<{ locale: string }> }) {
             <Link className="lend-primary" href="/app/auth">
               {copy.tryDemo}
             </Link>
-            <Link className="lend-secondary" href="/docs">
+            <Link className="lend-secondary" href={`/${language}/docs/introduction`}>
               {copy.docs}
             </Link>
           </div>
