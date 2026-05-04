@@ -4602,6 +4602,7 @@ html {
   line-height: 0.95;
   letter-spacing: -0.1em;
   max-width: 18ch;
+  font-weight: 800; /* Serious business weight */
 }
 
 .lend-hero-copy p,
@@ -5361,6 +5362,7 @@ html {
 .legal-card h2 {
   margin: 0.5rem 0 0.8rem;
   letter-spacing: -0.07em;
+  font-weight: 700;
 }
 
 .lend-card h2,

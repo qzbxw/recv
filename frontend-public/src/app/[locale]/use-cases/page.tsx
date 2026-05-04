@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
 import Link from "next/link";
 import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
@@ -37,21 +36,17 @@ export default async function UseCasesHubPage(props: Props) {
     { title: copy.nav.useCases.communities, slug: "paid-communities" },
   ];
 
-  const kickerStyle = { color: "var(--accent)", fontWeight: 600, fontSize: "0.9rem", textTransform: "uppercase" as const, letterSpacing: "0.1em" };
-
   return (
     <MarketingLayout language={locale as "en" | "ru"}>
       <div className="page-container">
-        <Breadcrumbs items={breadcrumbs} locale={locale} />
-        
         <header className="page-header">
-          <span style={kickerStyle}>
+          <span className="lend-section-kicker">
             {copy.useCasesHub.kicker}
           </span>
-          <h1 className="page-title" style={{ marginTop: "1rem" }}>
+          <h1 className="page-title font-extrabold tracking-tight" style={{ marginTop: "1rem" }}>
             {copy.useCasesHub.title}
           </h1>
-          <p className="page-subtitle" style={{ margin: "0" }}>
+          <p className="page-subtitle font-medium" style={{ margin: "0" }}>
             {copy.useCasesHub.description}
           </p>
         </header>
@@ -59,19 +54,24 @@ export default async function UseCasesHubPage(props: Props) {
         <section className="benefits-grid page-section">
           {useCases.map((uc) => (
             <Link key={uc.slug} href={`/${locale}/use-cases/${uc.slug}`} className="lend-card benefit-card hover:border-purple-500/50 transition-colors">
-              <h3 className="benefit-title">{uc.title}</h3>
-              <p className="benefit-text">
-                Explore how {uc.title} leverage Reqst infrastructure for automated crypto processing.
+              <h3 className="benefit-title font-bold">{uc.title}</h3>
+              <p className="benefit-text font-medium">
+                {locale === "ru" 
+                  ? `Узнайте, как ${uc.title} используют инфраструктуру Reqst для автоматизации крипто-платежей.`
+                  : `Explore how ${uc.title} leverage Reqst infrastructure for automated crypto processing.`
+                }
               </p>
-              <span className="lend-secondary" style={{ marginTop: "auto", fontSize: "0.9rem" }}>Read use case →</span>
+              <span className="lend-secondary" style={{ marginTop: "auto", fontSize: "0.9rem" }}>
+                {locale === "ru" ? "Изучить кейс →" : "Read use case →"}
+              </span>
             </Link>
           ))}
         </section>
 
         <section className="page-final-section">
-          <h2 className="page-final-title">Have a unique use case?</h2>
-          <p className="page-final-text">
-            Our API is flexible enough to power any payment flow. Let&apos;s discuss how Reqst can help your specific business.
+          <h2 className="page-final-title font-bold">{copy.useCasesHub.customUseCase.title}</h2>
+          <p className="page-final-text font-medium">
+            {copy.useCasesHub.customUseCase.body}
           </p>
           <div className="page-cta-row page-cta-row--centered">
             <Link href="/app/auth" className="lend-primary">{copy.final.primary}</Link>

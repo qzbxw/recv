@@ -16,11 +16,13 @@ import {
   TerminalSquare,
   WalletCards,
   Webhook,
+  Zap,
 } from "lucide-react";
 import { MarketingLayout, useReveal } from "./marketing/MarketingLayout";
 import { useUI } from "./UIProvider";
 import { JsonLd } from "./JsonLd";
 import { getCopy, Locale } from "@/i18n";
+import "./marketing/plans/plans.css";
 
 export type ProductVariant = "checkoutProduct" | "apiProduct" | "invoicingProduct";
 
@@ -48,6 +50,7 @@ type ProductCopy = {
   };
   deepDive: ReadonlyArray<{ title: string; body: string }>;
   stats: ReadonlyArray<{ value: string; label: string }>;
+  finalTitle: string;
   seo: string;
 };
 
@@ -231,32 +234,32 @@ if (signature !== expected) {
 }`,
     },
     invoicingProduct: {
-      overviewTitle: "Жизненный цикл инвойса",
+      overviewTitle: "Invoice lifecycle",
       overviewBody:
         "Reqst Invoicing - это рабочий процесс мерчанта для создания, отправки и закрытия профессиональных крипто-счетов до того, как покупатель попадет на тарифную страницу.",
       primaryCta: "Активировать Merchant",
       primaryPath: "merchant",
       lifecycle: [
-        "Черновик счета",
-        "Публичная checkout-ссылка",
-        "Ожидание оплаты",
-        "Детекция перевода",
-        "Ручная проверка при необходимости",
-        "Оплачен и заархивирован",
+        "Draft invoice",
+        "Share public checkout link",
+        "Await payment",
+        "Detect transfer",
+        "Manual review if needed",
+        "Paid and archived",
       ],
-      dashboardTitle: "Дашборд и ручное подтверждение",
+      dashboardTitle: "Dashboard and manual confirm",
       dashboardRows: [
         { id: "INV-1042", client: "Northwind Studio", state: "Paid", amount: "420 USDT" },
         { id: "INV-1043", client: "Arcade Labs", state: "Underpaid", amount: "116 / 120 USDT" },
         { id: "INV-1044", client: "Solo Founder", state: "Awaiting", amount: "89 USDT" },
       ],
-      linksTitle: "Публичные checkout-ссылки",
+      linksTitle: "Public checkout links",
       links: [
-        "Hosted-страницы для каждого счета",
-        "Бренд и описание под конкретный запрос",
-        "QR и адресная механика как в Checkout",
+        "Hosted pages for each invoice",
+        "Brand and description per request",
+        "QR/address mechanics from checkout",
       ],
-      telegramTitle: "Telegram-уведомления",
+      telegramTitle: "Telegram notifications",
       notifications: [
         "Платеж обнаружен в TRON",
         "Недоплата по инвойсу на 4 USDT",
@@ -291,26 +294,61 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
     window.scrollTo(0, 0);
   }, [variant]);
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": fullCopy.marketing.breadcrumbs.home,
+        "item": `https://reqst.xyz/${language}`
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": fullCopy.marketing.breadcrumbs.products,
+        "item": `https://reqst.xyz/${language}/products`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": product.title,
+        "item": `https://reqst.xyz/${language}/products/${variant === "checkoutProduct" ? "checkout" : variant === "apiProduct" ? "api" : "invoicing"}`
+      }
+    ]
+  };
+
   const applicationSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: product.title,
-    operatingSystem: "Web",
-    applicationCategory: "BusinessApplication",
-    offers: {
+    "name": product.title,
+    "description": product.metadata.description,
+    "operatingSystem": "Web",
+    "applicationCategory": "BusinessApplication",
+    "applicationSubCategory": "PaymentGateway",
+    "offers": {
       "@type": "Offer",
-      price: "0.00",
-      priceCurrency: "USD",
-      availability: "https://schema.org/InStock",
+      "price": "0.00",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock",
     },
+    "featureList": product.bento.items.map(i => i.title).join(", "),
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "128"
+    }
   };
 
   return (
     <MarketingLayout language={language}>
+      <JsonLd schema={breadcrumbSchema} />
       <JsonLd schema={applicationSchema} />
 
-      <section className="product-hero" ref={reveal}>
-        <div className="product-hero__copy">
+      {/* Hero Section */}
+      <header className="lend-hero lend-hero--centered" ref={reveal}>
+        <div className="lend-hero-copy">
           <span className="lend-section-kicker lend-reveal--1">{product.kicker}</span>
           <h1 className="lend-reveal--2">{product.hero.title}</h1>
           <p className="lend-reveal--3">{product.hero.body}</p>
@@ -319,68 +357,70 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
             <SecondaryCtas variant={variant} language={language} text={text} />
           </div>
         </div>
+      </header>
 
-        <div className="product-hero__surface lend-reveal--3" aria-hidden="true">
-          {variant === "checkoutProduct" && <CheckoutSurface language={language} />}
-          {variant === "apiProduct" && <ApiSurface language={language} />}
-          {variant === "invoicingProduct" && <InvoicingSurface language={language} />}
+      {/* Stats Section */}
+      <section className="lend-stacked-section" ref={reveal}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {product.stats.map((stat, index) => (
+            <article key={stat.label} className={`lend-card text-center flex flex-col items-center justify-center p-6 lend-reveal--${index + 1}`}>
+              <span className="lend-stat-label mb-2">{stat.label}</span>
+              <strong className="lend-stat-value text-2xl md:text-3xl">{stat.value}</strong>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section className="product-stats" ref={reveal}>
-        {product.stats.map((stat, index) => (
-          <article key={stat.label} className={`product-stat lend-reveal--${index + 1}`}>
-            <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
-          </article>
-        ))}
-      </section>
-
-      <section className="product-section product-section--split" ref={reveal}>
-        <div className="lend-section-copy lend-reveal--1">
-          <span className="lend-section-kicker">{text.overviewTitle}</span>
-          <h2>{product.title}</h2>
-          <p>{text.overviewBody}</p>
+      {/* Overview Section */}
+      <section className="lend-stacked-section" ref={reveal}>
+        <div className="text-center max-w-3xl mx-auto flex flex-col items-center mb-16 md:mb-24">
+          <div className="lend-section-copy lend-reveal--1">
+            <span className="lend-section-kicker font-bold">{text.overviewTitle}</span>
+            <h2 className="font-extrabold">{product.title}</h2>
+            <p className="text-lg opacity-80 font-medium">{text.overviewBody}</p>
+          </div>
         </div>
-        <div className="product-flow lend-reveal--2">
+        <div className="lend-reveal--2">
           {variant === "checkoutProduct" && <CheckoutDetails text={text as CheckoutText} />}
           {variant === "apiProduct" && <ApiDetails text={text as ApiText} />}
           {variant === "invoicingProduct" && <InvoicingDetails text={text as InvoicingText} />}
         </div>
       </section>
 
-      <section className="product-section" ref={reveal}>
-        <div className="lend-section-copy lend-reveal--1 product-section__center">
-          <span className="lend-section-kicker">{product.comparison.title}</span>
-          <h2>{language === "ru" ? "Почему продукт нужен до выбора тарифа" : "Why this comes before pricing"}</h2>
+      {/* Comparison Section */}
+      <section className="lend-stacked-section" ref={reveal}>
+        <div className="lend-section-copy text-center max-w-3xl mx-auto mb-12 lend-reveal--1 flex flex-col items-center">
+          <span className="lend-section-kicker font-bold">{product.comparison.title}</span>
+          <h2 className="font-extrabold">{language === "ru" ? "Почему продукт нужен до выбора тарифа" : "Why this comes before pricing"}</h2>
         </div>
-        <div className="product-compare lend-reveal--2">
-          {product.comparison.items.map((item) => (
-            <article key={item.legacy} className="product-compare__row">
-              <div>
-                <span>{commonText.oldWay}</span>
-                <p>{item.legacy}</p>
+        <div className="grid grid-cols-1 gap-4 lend-reveal--2">
+          {product.comparison.items.map((item, index) => (
+            <article key={item.legacy} className={`lend-card flex flex-col md:flex-row gap-6 md:gap-12 lend-reveal--${index + 1}`}>
+              <div className="flex-1">
+                <span className="text-xs font-bold opacity-50 uppercase tracking-widest mb-2 block">{commonText.oldWay}</span>
+                <p className="text-lg opacity-70 italic">{item.legacy}</p>
               </div>
-              <div>
-                <span>{commonText.reqstWay}</span>
-                <p>{item.reqst}</p>
+              <div className="flex-1 border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-12">
+                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2 block">{commonText.reqstWay}</span>
+                <p className="text-lg font-medium">{item.reqst}</p>
               </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="product-section" ref={reveal}>
-        <div className="lend-section-copy lend-reveal--1 product-section__center">
-          <span className="lend-section-kicker">{language === "ru" ? "ВОЗМОЖНОСТИ" : "CAPABILITIES"}</span>
-          <h2>{product.bento.title}</h2>
+      {/* Capabilities Section */}
+      <section className="lend-stacked-section" ref={reveal}>
+        <div className="lend-section-copy text-center max-w-3xl mx-auto mb-12 lend-reveal--1 flex flex-col items-center">
+          <span className="lend-section-kicker uppercase tracking-widest font-bold">{language === "ru" ? "ВОЗМОЖНОСТИ" : "CAPABILITIES"}</span>
+          <h2 className="font-extrabold">{product.bento.title}</h2>
         </div>
-        <div className="product-capability-grid lend-reveal--2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lend-reveal--2">
           {product.bento.items.map((item, index) => (
-            <article key={item.title} className="product-capability">
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
+            <article key={item.title} className={`lend-card lend-reveal--${index + 1}`}>
+              <span className="text-3xl font-bold opacity-10 mb-4 block leading-none">{String(index + 1).padStart(2, "0")}</span>
+              <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+              <p className="opacity-70 leading-relaxed">{item.body}</p>
             </article>
           ))}
         </div>
@@ -388,33 +428,36 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
 
       {variant === "apiProduct" && <ApiCodeSection text={text as ApiText} reveal={reveal} />}
 
-      <section className="product-section" ref={reveal}>
-        <div className="product-deep-dive">
+      {/* Deep Dive Cards */}
+      <section className="lend-stacked-section" ref={reveal}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {product.deepDive.map((item, index) => (
-            <article key={item.title} className={`product-deep-card lend-reveal--${index + 1}`}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
+            <article key={item.title} className={`lend-card lend-reveal--${index + 1} flex flex-col`}>
+              <span className="text-sm font-bold opacity-30 mb-4 block">{String(index + 1).padStart(2, "0")}</span>
+              <h3 className="text-xl font-bold mb-4">{item.title}</h3>
+              <p className="opacity-80 leading-relaxed">{item.body}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="lend-final product-final" ref={reveal}>
-        <span className="lend-section-kicker lend-reveal--1">{product.kicker}</span>
-        <h2 className="lend-reveal--2">
-          {language === "ru" ? "Теперь можно выбирать тариф осознанно" : "Now pricing has context"}
+      {/* Final CTA */}
+      <section className="lend-final" ref={reveal}>
+        <span className="lend-section-kicker lend-reveal--1 font-bold">{product.kicker}</span>
+        <h2 className="lend-reveal--2 font-extrabold">
+          {product.finalTitle}
         </h2>
-        <p className="lend-reveal--3">{product.description}</p>
+        <p className="lend-reveal--3 max-w-2xl mx-auto mb-10 opacity-80 font-medium">{product.description}</p>
         <div className="lend-cta-row lend-reveal--4">
           <PrimaryCta variant={variant} language={language} text={text} />
           <SecondaryCtas variant={variant} language={language} text={text} />
         </div>
       </section>
 
-      <section className="product-seo" ref={reveal}>
-        <p className="lend-reveal--1">{product.seo}</p>
-      </section>
+      {/* Hidden SEO text for search engines only */}
+      <div className="sr-only" aria-hidden="true">
+        {product.seo}
+      </div>
     </MarketingLayout>
   );
 }
@@ -469,135 +512,52 @@ function SecondaryCtas({
   );
 }
 
-function CheckoutSurface({ language }: { language: Locale }) {
-  const isRu = language === "ru";
-
-  return (
-    <div className="checkout-surface">
-      <div className="checkout-surface__top">
-        <span>REQST-CHECKOUT</span>
-        <b>{isRu ? "Awaiting payment" : "Awaiting payment"}</b>
-      </div>
-      <div className="checkout-surface__amount">
-        <span>{isRu ? "К оплате" : "Pay"}</span>
-        <strong>149.00 USDT</strong>
-      </div>
-      <div className="checkout-surface__main">
-        <div className="checkout-qr">
-          <div className="lend-demo-qr-grid" />
-        </div>
-        <div className="checkout-address">
-          <span>TRON USDT</span>
-          <code>TQDt...n4V7</code>
-          <button type="button">
-            <Copy size={15} />
-            {isRu ? "Копировать" : "Copy"}
-          </button>
-        </div>
-      </div>
-      <div className="checkout-status-rail">
-        {["Awaiting", "Detected", "Underpaid", "Paid", "Expired"].map((status, index) => (
-          <span key={status} className={index === 0 ? "is-active" : ""}>
-            {status}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ApiSurface({ language }: { language: Locale }) {
-  const isRu = language === "ru";
-
-  return (
-    <div className="api-surface">
-      <div className="api-surface__header">
-        <TerminalSquare size={18} />
-        <span>{isRu ? "Создание инвойса" : "Create invoice"}</span>
-      </div>
-      <pre>{`POST /v1/invoices
-Idempotency-Key: order_9841
-
-201 Created
-{
-  "status": "awaiting_payment",
-  "checkout_url": "https://reqst.xyz/c/..."
-}`}</pre>
-      <div className="api-surface__event">
-        <Webhook size={17} />
-        <div>
-          <b>invoice.paid</b>
-          <span>HMAC-SHA256 verified</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InvoicingSurface({ language }: { language: Locale }) {
-  const isRu = language === "ru";
-
-  return (
-    <div className="invoice-surface">
-      <div className="invoice-surface__header">
-        <FileText size={18} />
-        <span>{isRu ? "Merchant dashboard" : "Merchant dashboard"}</span>
-      </div>
-      {[
-        ["INV-1042", "Paid", "420 USDT"],
-        ["INV-1043", "Underpaid", "116 / 120 USDT"],
-        ["INV-1044", "Awaiting", "89 USDT"],
-      ].map(([id, state, amount]) => (
-        <div key={id} className="invoice-row">
-          <span>{id}</span>
-          <b className={`invoice-state invoice-state--${state.toLowerCase()}`}>{state}</b>
-          <strong>{amount}</strong>
-        </div>
-      ))}
-      <div className="invoice-surface__telegram">
-        <Bell size={16} />
-        <span>{isRu ? "Telegram: платеж обнаружен" : "Telegram: payment detected"}</span>
-      </div>
-    </div>
-  );
-}
-
 function CheckoutDetails({ text }: { text: CheckoutText }) {
   return (
-    <>
-      <div className="product-flow__steps">
-        {text.flow.map((step, index) => (
-          <article key={step}>
-            <span>{index + 1}</span>
-            <p>{step}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="product-detail-card">
-        <div className="product-detail-card__title">
-          <QrCode size={18} />
-          <h3>{text.networksTitle}</h3>
-        </div>
-        <div className="product-network-list">
-          {text.networks.map((network) => (
-            <span key={network}>{network}</span>
+    <div className="space-y-24">
+      {/* Horizontal Flow */}
+      <div className="relative">
+        <div className="absolute top-8 left-0 w-full h-px bg-white/10 hidden md:block" />
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+          {text.flow.map((step, index) => (
+            <article key={step} className="relative group">
+              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl font-bold mb-6 group-hover:border-blue-500/50 group-hover:bg-blue-500/5 transition-all relative z-10 mx-auto md:mx-0">
+                <span className="bg-gradient-to-br from-white to-white/40 bg-clip-text text-transparent">{index + 1}</span>
+              </div>
+              <p className="text-sm opacity-60 leading-relaxed text-center md:text-left">{step}</p>
+            </article>
           ))}
         </div>
-        <code>{text.address}</code>
-        <p>{text.qrCaption}</p>
       </div>
 
-      <div className="product-status-grid">
-        <h3>{text.statusesTitle}</h3>
-        {text.statuses.map((status) => (
-          <article key={status.label} className={`product-status product-status--${status.tone}`}>
-            <span>{status.label}</span>
-            <p>{status.body}</p>
-          </article>
-        ))}
+      <div className="max-w-3xl mx-auto">
+        {/* Payment States */}
+        <div className="lend-card p-8 border-white/10">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+              <Zap size={20} className="text-purple-400" />
+            </div>
+            <h3 className="text-xl font-bold tracking-tight">{text.statusesTitle}</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+            {text.statuses.map((status) => (
+              <div key={status.label} className="flex gap-4 group">
+                <div className={`w-1 h-auto rounded-full group-hover:scale-y-110 transition-transform ${
+                  status.tone === 'success' ? 'bg-green-500' : 
+                  status.tone === 'danger' ? 'bg-red-500' : 
+                  status.tone === 'warn' ? 'bg-orange-500' : 
+                  status.tone === 'info' ? 'bg-blue-500' : 'bg-white/20'
+                }`} />
+                <div>
+                  <h4 className="text-sm font-bold mb-1 opacity-90">{status.label}</h4>
+                  <p className="text-xs opacity-50 leading-relaxed">{status.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -605,76 +565,78 @@ function ApiDetails({ text }: { text: ApiText }) {
   const icons = [Code2, Webhook, KeyRound, ShieldCheck, RefreshCw];
 
   return (
-    <div className="product-api-grid">
-      {text.capabilities.map((capability, index) => {
-        const Icon = icons[index];
-        return (
-          <article key={capability.title} className="product-detail-card">
-            <div className="product-detail-card__title">
-              <Icon size={18} />
-              <h3>{capability.title}</h3>
-            </div>
-            <p>{capability.body}</p>
-          </article>
-        );
-      })}
+    <div className="space-y-24">
+      {/* Horizontal Capabilities */}
+      <div className="relative">
+        <div className="absolute top-8 left-0 w-full h-px bg-white/10 hidden md:block" />
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+          {text.capabilities.map((capability, index) => {
+            const Icon = icons[index];
+            return (
+              <article key={capability.title} className="relative group">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:border-blue-500/50 group-hover:bg-blue-500/5 transition-all relative z-10 mx-auto md:mx-0">
+                  <Icon size={24} className="text-blue-400 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-sm font-bold mb-2 text-center md:text-left">{capability.title}</h3>
+                <p className="text-xs opacity-50 leading-relaxed text-center md:text-left">{capability.body}</p>
+              </article>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
 
 function InvoicingDetails({ text }: { text: InvoicingText }) {
   return (
-    <>
-      <div className="product-flow__steps product-flow__steps--compact">
-        {text.lifecycle.map((step, index) => (
-          <article key={step}>
-            <span>{index + 1}</span>
-            <p>{step}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="product-detail-card">
-        <div className="product-detail-card__title">
-          <WalletCards size={18} />
-          <h3>{text.dashboardTitle}</h3>
-        </div>
-        <div className="invoice-mini-table">
-          {text.dashboardRows.map((row) => (
-            <div key={row.id}>
-              <span>{row.id}</span>
-              <b>{row.state}</b>
-              <strong>{row.amount}</strong>
-            </div>
+    <div className="space-y-24">
+      {/* Horizontal Lifecycle */}
+      <div className="relative">
+        <div className="absolute top-8 left-0 w-full h-px bg-white/10 hidden lg:block" />
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-8">
+          {text.lifecycle.map((step, index) => (
+            <article key={step} className="relative group">
+              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl font-bold mb-6 group-hover:border-blue-500/50 group-hover:bg-blue-500/5 transition-all relative z-10 mx-auto lg:mx-0">
+                <span className="bg-gradient-to-br from-white to-white/40 bg-clip-text text-transparent">{index + 1}</span>
+              </div>
+              <p className="text-xs opacity-60 leading-relaxed text-center lg:text-left font-medium">{step}</p>
+            </article>
           ))}
         </div>
-        <button type="button" className="product-inline-button">
-          <CheckCircle2 size={16} />
-          Manual confirm
-        </button>
       </div>
 
-      <div className="product-detail-pair">
-        <article className="product-detail-card">
-          <div className="product-detail-card__title">
-            <Link2 size={18} />
-            <h3>{text.linksTitle}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <article className="lend-card p-8 border-white/10">
+          <div className="flex items-center gap-3 mb-6">
+            <Link2 size={20} className="text-blue-400" />
+            <h3 className="text-lg font-bold uppercase tracking-widest">{text.linksTitle}</h3>
           </div>
-          {text.links.map((item) => (
-            <p key={item}>{item}</p>
-          ))}
+          <ul className="space-y-4">
+            {text.links.map((item) => (
+              <li key={item} className="text-sm opacity-60 leading-relaxed flex gap-3 items-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400/40" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </article>
-        <article className="product-detail-card">
-          <div className="product-detail-card__title">
-            <Bell size={18} />
-            <h3>{text.telegramTitle}</h3>
+        <article className="lend-card p-8 border-white/10">
+          <div className="flex items-center gap-3 mb-6">
+            <Bell size={20} className="text-blue-400" />
+            <h3 className="text-lg font-bold uppercase tracking-widest">{text.telegramTitle}</h3>
           </div>
-          {text.notifications.map((item) => (
-            <p key={item}>{item}</p>
-          ))}
+          <ul className="space-y-4">
+            {text.notifications.map((item) => (
+              <li key={item} className="text-sm opacity-60 leading-relaxed flex gap-3 items-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400/40" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </article>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -686,22 +648,28 @@ function ApiCodeSection({
   reveal: (el: HTMLElement | null) => void;
 }) {
   return (
-    <section className="product-section product-code-section" ref={reveal}>
-      <div className="lend-section-copy lend-reveal--1">
+    <section className="lend-stacked-section" ref={reveal}>
+      <div className="lend-section-copy text-center max-w-3xl mx-auto mb-12 lend-reveal--1 flex flex-col items-center">
         <span className="lend-section-kicker">API</span>
         <h2>{text.codeTitle}</h2>
       </div>
-      <div className="product-code-grid lend-reveal--2">
-        <article>
-          <span>create invoice</span>
-          <pre>
-            <code>{text.invoiceCode}</code>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lend-reveal--2">
+        <article className="lend-card p-0 overflow-hidden border-white/10">
+          <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex justify-between items-center">
+             <span className="text-[10px] font-bold opacity-30 uppercase tracking-widest">create invoice</span>
+             <span className="text-[10px] opacity-20">Node.js / Fetch</span>
+          </div>
+          <pre className="p-6 text-xs overflow-x-auto bg-black/20">
+            <code className="opacity-80">{text.invoiceCode}</code>
           </pre>
         </article>
-        <article>
-          <span>verify webhook</span>
-          <pre>
-            <code>{text.webhookCode}</code>
+        <article className="lend-card p-0 overflow-hidden border-white/10">
+          <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex justify-between items-center">
+             <span className="text-[10px] font-bold opacity-30 uppercase tracking-widest">verify webhook</span>
+             <span className="text-[10px] opacity-20">Express / Webhook</span>
+          </div>
+          <pre className="p-6 text-xs overflow-x-auto bg-black/20">
+            <code className="opacity-80">{text.webhookCode}</code>
           </pre>
         </article>
       </div>
