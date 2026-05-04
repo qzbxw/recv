@@ -257,44 +257,211 @@ const ru = {
     accept: "Запустить прием в",
     technicalDocs: "Техническая документация",
     tryDemo: "Попробовать демо",
+    common: {
+      whyChoose: "Почему выбирают",
+      engineered: "Разработано для максимальной эффективности и безопасности в децентрализованной экономике.",
+      implementation: "ВНЕДРЕНИЕ",
+      readyInMinutes: "Готовность к работе за минуты",
+      integrateEase: "Легко интегрируйте наше высокопроизводительное API в ваш существующий стек.",
+      management: "УПРАВЛЕНИЕ",
+      workflow: "ПРОЦЕСС",
+      intelligence: "АНАЛИТИКА",
+      readyToScale: "Готовы к масштабированию?",
+      joinMerchants: "Присоединяйтесь к сотням мерчантов, которые уже оптимизировали свои доходы с Reqst.",
+      benefits: "ПРЕИМУЩЕСТВА",
+    },
     ogSubtitle: "Инфраструктура криптоплатежей нового поколения",
     checkoutProduct: {
-      title: "Checkout: Бесшовная оплата для ваших клиентов",
-      description: "Современный и быстрый интерфейс оплаты, который увеличивает конверсию и минимизирует ошибки.",
-      kicker: "ПРОДУКТ",
-      cards: [
+      metadata: {
+        title: "Smart Checkout | Высококонверсионные криптоплатежи | Reqst",
+        description: "Ультимативный non-custodial интерфейс оплаты для TON, TRON, Solana и EVM. Разработано для максимальной конверсии и нулевого трения.",
+        keywords: "крипто чекаут, прием платежей в крипте, TON платежи, TRON USDT, Solana оплата, non-custodial шлюз"
+      },
+      kicker: "ДВИЖОК КОНВЕРСИИ",
+      title: "Checkout: Золотой стандарт крипто-UX",
+      description: "Зачем использовать обычные ссылки? Предложите клиентам премиальный non-custodial опыт, созданный для исключения ошибок копирования и минимизации недоплат.",
+      hero: {
+        title: "Максимальная конверсия. Минимальное трение.",
+        body: "Reqst Checkout — это ультимативный интерфейс, превращающий брошенные корзины в подтвержденные транзакции. Бесшовная интеграция, мультичейн по умолчанию и оптимизация под любые устройства.",
+        cta: "Попробовать Демо"
+      },
+      comparison: {
+        title: "Эволюция Reqst",
+        items: [
+          {
+            legacy: "Ручное копирование адресов ведет к ошибкам и потере средств.",
+            reqst: "QR-native поток и deep-linking в один тап гарантируют 100% точность."
+          },
+          {
+            legacy: "Клиенты минутами ждут подтверждения на экране ожидания.",
+            reqst: "Мониторинг мемпула дает визуальный отклик менее чем за секунду."
+          },
+          {
+            legacy: "Недоплаты создают нагрузку на поддержку и ведут к потере заказов.",
+            reqst: "Интеллектуальное решение предлагает мгновенно доплатить остаток."
+          }
+        ]
+      },
+      bento: {
+        title: "Микро-фичи, макро-эффект",
+        items: [
+          { title: "Оптимизация для TWA", body: "Бесшовная работа в Telegram Mini Apps с виброоткликом." },
+          { title: "Биометрия", body: "Поддержка FaceID/TouchID через мобильные кошельки." },
+          { title: "Динамические дельты", body: "Автоматический расчет курсов и комиссий сети." },
+          { title: "Глобальный охват", body: "Локализация интерфейса для 20+ регионов." },
+          { title: "Брендирование", body: "Добавьте свой логотип и цвета для нативного вида." },
+          { title: "Безопасность сетей", body: "Защита от выбора неверного блокчейна." }
+        ]
+      },
+      deepDive: [
         {
-          title: "Адаптивность",
-          body: "Идеально работает на мобильных устройствах, в браузерах и внутри Telegram WebApps.",
+          title: "Интеллектуальное решение недоплат",
+          body: "Недоплаты — причина №1 обращений в поддержку. Reqst решает это, обнаруживая частичную сумму, мгновенно обновляя интерфейс и предлагая клиенту доплатить остаток без потери прогресса. Больше никаких потерянных заказов и ручных возвратов."
         },
         {
-          title: "Умный мониторинг",
-          body: "Автоматическое распознавание транзакций, обработка недоплат и переплат.",
+          title: "Нативная интеграция с Telegram",
+          body: "Наш Checkout UI спроектирован специально для экосистемы Telegram. В режиме Web App (TWA) Reqst использует нативную тактильную отдачу, системные темы и ускорение через deep-links, создавая ощущение части приложения, а не внешнего сервиса."
         },
         {
-          title: "Безопасность",
-          body: "Non-custodial решение: средства идут напрямую на ваш кошелек.",
-        },
+          title: "Унифицированный интерфейс мультичейна",
+          body: "Будь то 10 знаков после запятой в Solana или уникальные мемо в TON, Reqst берет сложность на себя. Ваши клиенты получают привычный, качественный интерфейс независимо от блокчейна, что повышает доверие и снижает когнитивную нагрузку."
+        }
       ],
+      stats: [
+        { value: "1.2с", label: "Детекция" },
+        { value: "0%", label: "Комиссия" },
+        { value: "99.9%", label: "Аптайм нод" },
+        { value: "<5мс", label: "Задержка UI" }
+      ],
+      seo: "В быстро меняющемся мире децентрализованной коммерции надежная система крипто-чекаута становится необходимостью. Reqst предоставляет высокопроизводительный non-custodial платежный шлюз, созданный для современного цифрового бизнеса. Продаете ли вы цифровые товары, SaaS-подписки или доступ к сообществам, наш интерфейс оплаты обеспечивает бесшовный опыт работы со стейблкоинами в сетях TON, TRON, Solana и EVM (Base, Arbitrum). Фокусируясь на оптимизации конверсии, Reqst устраняет основные барьеры при приеме криптовалют. Наша технология умного сопоставления гарантирует решение проблем с недоплатами без потери клиента, а вотчеры блокчейна обеспечивают мгновенный отклик, который пользователи ожидают от современных веб-приложений. Для разработчиков Reqst предлагает готовое решение, которое нативно интегрируется с Telegram Mini Apps и стандартными веб-средами. Безопасность — наш приоритет: как non-custodial решение, мы гарантируем, что ваш доход поступает напрямую на ваш кошелек, исключая кастодиальные риски и задержки выплат. Масштабируйте глобальные продажи с интерфейсом, поддерживающим USDT, USDC и нативные активы с 0% комиссии с оборота."
+    },
+    apiProduct: {
+      metadata: {
+        title: "Unified Blockchain API | Вебхуки и Мониторинг | Reqst",
+        description: "Высокопроизводительная инфраструктура для разработчиков. Единый API для TON, TRON и EVM с гарантированной доставкой.",
+        keywords: "крипто api, мониторинг блокчейна, платежные вебхуки, TON api, TRON trc20 api, автоматизация платежей"
+      },
+      kicker: "DEVELOPER FIRST",
+      title: "API и инфраструктура для масштабирования",
+      description: "Надежность — единственная метрика, которая имеет значение. Reqst API предоставляет мощные примитивы для создания платежных сценариев любого уровня.",
+      hero: {
+        title: "Создано разработчиками для разработчиков.",
+        body: "Автоматизируйте потоки доходов с помощью нашего надежного API и высокопроизводительного ядра мониторинга. От идемпотентных запросов до HMAC-подписей.",
+        cta: "Документация"
+      },
+      comparison: {
+        title: "Инженерное превосходство",
+        items: [
+          {
+            legacy: "Управление множеством RPC-нод и нестабильных эксплореров.",
+            reqst: "Единый API для 7+ сетей со стандартизированным JSON."
+          },
+          {
+            legacy: "Вебхуки, которые падают без логики повторов и подписей.",
+            reqst: "Гарантированная доставка с экспоненциальной задержкой и HMAC."
+          },
+          {
+            legacy: "Дублирование обработки одной и той же транзакции.",
+            reqst: "Встроенные ключи идемпотентности для обработки 'точно один раз'."
+          }
+        ]
+      },
+      bento: {
+        title: "Защищенная инфраструктура",
+        items: [
+          { title: "HMAC подписи", body: "Каждый вебхук подписан SHA-256 для максимальной защиты." },
+          { title: "Идемпотентность", body: "Защитите базу от двойных записей нативным слоем." },
+          { title: "Rate Limiting", body: "Гибкие лимиты для высоконагруженных приложений." },
+          { title: "SDK и Доки", body: "OpenAPI спецификации и библиотеки для быстрого старта." },
+          { title: "Логирование", body: "Подробная история каждого запроса и попытки вебхука." },
+          { title: "Статус-коды", body: "Стандартные HTTP-ответы для предсказуемой обработки." }
+        ]
+      },
+      deepDive: [
+        {
+          title: "Гарантированная доставка вебхуков",
+          body: "Наш движок использует персистентную очередь. Если ваш сервер недоступен, мы будем повторять попытки с экспоненциальной задержкой до 24 часов. Каждый пакет подписан криптографически, гарантируя, что ваш бэкенд обработает только проверенные события."
+        },
+        {
+          title: "Абстракция блокчейн-сетей",
+          body: "Интеграция TON, TRON и EVM обычно требует разных библиотек и логики. Reqst дает единую схему для всех сетей. Создавайте инвойс для TRC-20 USDT так же просто, как для TON Jettons или активов в сети Solana."
+        },
+        {
+          title: "Высокопроизводительные вотчеры",
+          body: "Наша инфраструктура обходит узкие места публичных RPC, используя частный кластер выделенных нод. Это позволяет обнаруживать события в мемпуле быстрее, чем это делают 95% стандартных эксплореров, давая вашему приложению мгновенную реактивность."
+        }
+      ],
+      stats: [
+        { value: "50мс", label: "Отклик API" },
+        { value: "100%", label: "Доставка хуков" },
+        { value: "7+", label: "Сетей" },
+        { value: "128-бит", label: "Шифрование" }
+      ],
+      seo: "Расширьте возможности своей платформы с помощью самого надежного в индустрии API для мониторинга блокчейна. Инфраструктура Reqst создана для разработчиков, которым нужна минимальная задержка и 100% надежность вебхуков. Наш унифицированный крипто-API абстрагирует сложность различных блокчейн-протоколов, предлагая единый стандартный интерфейс для TON, TRON, Solana и Ethereum-совместимых сетей. С такими функциями, как вебхуки с подписью HMAC-SHA256, автоматическая логика повторов и нативная идемпотентность, Reqst предоставляет строительные блоки для безопасной автоматизации платежей. Откажитесь от нестабильного ручного мониторинга в пользу нашего распределенного кластера высокопроизводительных нод. Наша инфраструктура спроектирована для работы в высоконагруженных приложениях — от игровых платформ до корпоративных систем биллинга. Используя Reqst, разработчики избавляются от затрат на управление собственной RPC-инфраструктурой, получая при этом доступ к продвинутому отслеживанию мемпула и детекции транзакций в реальном времени. Интегрированная документация и OpenAPI спецификации гарантируют запуск вашей интеграции за считанные минуты. Почувствуйте будущее программируемых денег с API, где надежность и безопасность стоят на первом месте."
     },
     invoicingProduct: {
-      title: "Invoicing: Профессиональные счета для бизнеса",
-      description: "Перестаньте использовать таблицы для выставления счетов. Reqst Invoicing предоставляет профессиональный способ выставления и контроля крипто-инвойсов.",
-      kicker: "ПРОДУКТ",
-      cards: [
+      metadata: {
+        title: "Профессиональный крипто-инвойсинг | B2B Биллинг | Reqst",
+        description: "Забудьте о скриншотах кошельков. Выставляйте и управляйте профессиональными счетами с 0% комиссии.",
+        keywords: "крипто инвойсинг, b2b платежи, счета для фриланса, профессиональный биллинг, USDT инвойсы"
+      },
+      kicker: "BUSINESS GRADE",
+      title: "Invoicing: Профессиональный биллинг для бизнеса",
+      description: "Перестаньте использовать таблицы. Reqst Invoicing предоставляет современный способ выставления и контроля платежей с нулевой комиссией с оборота.",
+      hero: {
+        title: "Биллинг для тех, кто ценит профессионализм.",
+        body: "Забудьте о ручных проверках скриншотов и хаосе в таблицах. Выставляйте счета с интерфейсом, который вызывает уважение у ваших клиентов и партнеров.",
+        cta: "Создать первый счет"
+      },
+      comparison: {
+        title: "Обновите ваш ворклоу",
+        items: [
+          {
+            legacy: "Пересылка адресов кошельков в личных сообщениях.",
+            reqst: "Брендированные страницы счетов со статусом в реальном времени."
+          },
+          {
+            legacy: "Ручная проверка транзакций в блокчейн-эксплорерах.",
+            reqst: "Мгновенные уведомления в Telegram и Email при оплате."
+          },
+          {
+            legacy: "Запутанные таблицы для ежемесячного учета.",
+            reqst: "Централизованная консоль с экспортом в CSV/JSON."
+          }
+        ]
+      },
+      bento: {
+        title: "Полный контроль, 0% комиссии",
+        items: [
+          { title: "Консоль мерчанта", body: "Единый центр управления всеми инвойсами и клиентами." },
+          { title: "Telegram алерты", body: "Узнавайте об оплате в ту же секунду через нашего бота." },
+          { title: "Ручное управление", body: "Возможность подтвердить платеж вручную при необходимости." },
+          { title: "База клиентов", body: "Храните адреса и детали постоянных плательщиков." },
+          { title: "Экспорт в CSV", body: "Отчетность для бухгалтерии и налогов в один клик." },
+          { title: "Брендированные ссылки", body: "Свои заголовки и описания для каждого счета." }
+        ]
+      },
+      deepDive: [
         {
-          title: "Персональные счета",
-          body: "Создавайте брендированные ссылки на оплату на любую сумму с выбором сетей.",
+          title: "Автоматизация B2B процессов",
+          body: "Reqst Invoicing создан для бизнеса, которому нужно больше, чем просто ссылка. Управляйте жизненным циклом от черновика до оплаты. Отслеживайте статусы 'Просрочен' или 'Недоплата' и общайтесь с партнерами профессионально."
         },
         {
-          title: "Отслеживание статуса",
-          body: "Обновления в реальном времени по каждому счету. Знайте точно, когда клиент оплатил.",
+          title: "Безопасность Direct-to-Wallet",
+          body: "В отличие от кастодиальных решений, Reqst не касается ваших средств. Клиенты платят вам напрямую на блокчейне. Наш сервис служит профессиональным слоем мониторинга, избавляя вас от необходимости следить за реестром вручную."
         },
         {
-          title: "Управление клиентами",
-          body: "Следите за историей платежей ваших клиентов в едином интерфейсе.",
-        },
+          title: "Мультивалютная поддержка",
+          body: "Выставляйте счета в USD или любых стейблкоинах. Reqst берет на себя расчет курсов в реальном времени, гарантируя, что сумма в USDT, TON или SOL соответствует фиатному значению в момент генерации счета."
+        }
       ],
+      stats: [
+        { value: "0%", label: "Риск кастоди" },
+        { value: "24/7", label: "Мониторинг" },
+        { value: "<1 мин", label: "На создание" },
+        { value: "100%", label: "Non-Custodial" }
+      ],
+      seo: "Reqst Invoicing переопределяет то, как бизнес работает с B2B крипто-платежами. Наша профессиональная платформа для биллинга позволяет фрилансерам, агентствам и предприятиям выставлять брендированные инвойсы с 0% комиссии с оборота. Оставив в прошлом эру ручной пересылки адресов и таблиц, Reqst предоставляет централизованную панель мерчанта для мониторинга платежей в реальном времени. Каждый счет поддерживается нашей высокопроизводительной сетью вотчеров, гарантируя мгновенные уведомления в Telegram или по Email сразу после обнаружения средств в сети. Наша non-custodial архитектура гарантирует, что платежи направляются напрямую от вашего клиента на ваш кошелек, обеспечивая максимальную ликвидность и безопасность. Благодаря поддержке основных сетей, включая TRON (USDT), TON и Solana, Reqst Invoicing берет на себя конвертацию валют и интеллектуальное обнаружение недоплат. Экспортируйте историю транзакций для бухгалтерии, управляйте базой клиентов и профессионализируйте свои потоки доходов. Созданный для глобальной цифровой экономики, Reqst Invoicing — это идеальный инструмент для компаний, стремящихся масштабировать свои крипто-операции без сложности традиционных финансовых посредников."
     },
     breadcrumbs: {
       home: "Главная",
@@ -331,10 +498,846 @@ const ru = {
       kicker: "СЕТИ",
       explanation: "Все сети работают по принципу direct-to-wallet. Мы никогда не касаемся ваших средств, обеспечивая максимальную безопасность."
     },
+    networkPages: {
+      ton: {
+        name: "TON",
+        fullName: "The Open Network",
+        metadata: {
+          title: "Прием TON-платежей для Telegram-коммерции",
+          description: "Используйте Reqst для приема TON и поддерживаемых Jettons через Checkout, API-инвойсы, payment comments и direct-to-wallet выплаты.",
+        },
+        kicker: "TON NETWORK",
+        hero: {
+          title: "TON-платежи для Telegram-native коммерции.",
+          body: "Reqst превращает TON-переводы в понятные checkout-статусы для Telegram-магазинов, закрытых сообществ и mobile-first покупателей, сохраняя прямые выплаты на ваш кошелек.",
+        },
+        snapshot: {
+          kicker: "NETWORK INVOICE",
+          title: "checkout.network.ton",
+          amount: "79.00 USDT",
+          items: [
+            { label: "Сеть", value: "TON" },
+            { label: "Матчинг", value: "Comment" },
+            { label: "Выплата", value: "Direct" },
+          ],
+        },
+        assets: {
+          kicker: "SUPPORTED ASSETS",
+          title: "TON-native активы для buyer-facing checkout.",
+          body: "Используйте TON для Telegram-native payment flows и поддерживаемые Jettons, если они включены в вашем workspace.",
+          items: [
+            { name: "TON", body: "Нативные TON-переводы для простых Telegram и wallet-native платежей." },
+            { name: "Jettons", body: "Поддерживаемые TON Jettons можно показывать как checkout options для совместимых кошельков." },
+            { name: "TON USDT", body: "Stablecoin checkout в TON доступен там, где актив включен для merchant setup." },
+          ],
+        },
+        why: {
+          kicker: "WHY TON",
+          title: "Естественная платежная сеть для Telegram-покупателей.",
+          body: "TON снижает friction, когда клиенты уже находятся в Telegram, используют TON-кошельки или покупают доступ и цифровые товары из мобильных чатов.",
+        },
+        mechanics: {
+          kicker: "CHECKOUT AND API MECHANICS",
+          title: "Payment comments делают TON-матчинг надежным.",
+          steps: [
+            { title: "Создание инвойса", body: "Checkout или API создает TON payment request с точной суммой, активом, адресом и обязательным комментарием." },
+            { title: "Показ оплаты", body: "Покупатель видит hosted page с QR, копируемым адресом, суммой и понятной инструкцией по comment." },
+            { title: "Детекция перевода", body: "Вотчеры Reqst сопоставляют входящий перевод по сумме и обязательному payment comment." },
+            { title: "Отправка события", body: "Dashboard или webhook получает paid state для fulfillment, выдачи доступа или обновления заказа." },
+          ],
+        },
+        limitations: {
+          kicker: "LIMITATIONS AND NOTES",
+          title: "Payment comment должен остаться неизменным.",
+          body: "TON-матчинг зависит от обязательного comment. Отсутствующий или измененный comment, неверный актив или платеж в другой сети могут потребовать ручной проверки.",
+        },
+        useCases: {
+          kicker: "RELEVANT USE CASES",
+          title: "Лучше всего для revenue из Telegram.",
+          body: "TON особенно полезен, когда путь покупателя начинается в чате или Telegram Mini App.",
+          items: [
+            { name: "Telegram-магазины", body: "Создавайте checkout-ссылки для заказов и перестаньте просить скриншоты." },
+            { name: "Закрытые сообщества", body: "Связывайте membership payments с выдачей доступа в приватные каналы и группы." },
+            { name: "Цифровые товары", body: "Продавайте файлы, ключи и доступ из Telegram-native storefronts." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Соберите TON payment flow.",
+          links: [
+            { kicker: "Кейс", label: "Telegram-магазины", body: "Telegram commerce flows с checkout-ссылками и живыми статусами оплаты.", href: "/use-cases/telegram-shops" },
+            { kicker: "Продукт", label: "Checkout", body: "Hosted payment screens для TON-заказов.", href: "/products/checkout" },
+            { kicker: "Тариф", label: "Merchant", body: "Dashboard workflow для продавцов и операторов.", href: "/merchant" },
+          ],
+        },
+        cta: {
+          title: "Запустите TON checkout с прямыми выплатами.",
+          body: "Используйте Reqst, чтобы принимать TON-платежи, автоматически находить переводы и получать оплату напрямую на ваш кошелек.",
+          primary: { label: "Начать прием TON", href: "/app/auth" },
+          secondary: { label: "Изучить Checkout", href: "/products/checkout" },
+        },
+        seoLabel: "Детали TON-платежей",
+        seo: "Reqst поддерживает TON-платежи для Telegram commerce через hosted Checkout, API создание инвойсов, обязательные payment comments, blockchain watchers, direct-to-wallet выплаты и webhooks для автоматизации заказов или доступа.",
+      },
+      tron: {
+        name: "TRON",
+        fullName: "TRON Network",
+        metadata: {
+          title: "Прием TRON USDT платежей для SaaS и бизнеса",
+          description: "Принимайте USDT TRC-20 через Reqst Checkout и API со stablecoin-friendly инвойсами, watcher matching, signed webhooks и прямыми выплатами.",
+        },
+        kicker: "TRON NETWORK",
+        hero: {
+          title: "TRON USDT платежи для глобальных stablecoin-покупателей.",
+          body: "Reqst делает TRC-20 USDT практичным для SaaS, инвойсов и business checkout flows без процентной комиссии и кастодиальных settlement accounts.",
+        },
+        snapshot: {
+          kicker: "STABLECOIN INVOICE",
+          title: "invoice.network.tron",
+          amount: "199.00 USDT",
+          items: [
+            { label: "Актив", value: "USDT TRC-20" },
+            { label: "Матчинг", value: "Amount" },
+            { label: "Webhook", value: "Signed" },
+          ],
+        },
+        assets: {
+          kicker: "SUPPORTED ASSETS",
+          title: "USDT-first прием stablecoin-платежей.",
+          body: "TRON обычно выбирают для предсказуемых USD-denominated платежей и клиентов, которые уже используют TRC-20 переводы.",
+          items: [
+            { name: "USDT TRC-20", body: "Основная stablecoin-сеть для checkout, SaaS billing и B2B invoice payments." },
+            { name: "TRX", body: "Нативный актив TRON, который кошельки используют для transaction costs и operational balances." },
+            { name: "Настроенные tokens", body: "Дополнительные TRC-20 assets можно обрабатывать там, где они включены для workspace." },
+          ],
+        },
+        why: {
+          kicker: "WHY TRON",
+          title: "Stablecoin-привычка влияет на конверсию.",
+          body: "Многие глобальные клиенты уже держат USDT в TRON. Поддержка этой сети позволяет собирать предсказуемые платежи без перевода покупателя на новый rail.",
+        },
+        mechanics: {
+          kicker: "CHECKOUT AND API MECHANICS",
+          title: "Точный invoice matching для TRC-20 transfers.",
+          steps: [
+            { title: "Создание инвойса", body: "Checkout или API создает TRON invoice на точную сумму USDT и destination wallet." },
+            { title: "Инструкция покупателю", body: "Checkout показывает TRC-20 network instructions, QR, адрес и живой payment state." },
+            { title: "Отслеживание перевода", body: "Вотчеры Reqst находят входящий TRC-20 transfer и сопоставляют его с invoice." },
+            { title: "Подтверждение оплаты", body: "Signed webhooks и dashboard events переводят заказ, инвойс или подписку в paid." },
+          ],
+        },
+        limitations: {
+          kicker: "LIMITATIONS AND NOTES",
+          title: "TRC-20 не взаимозаменяем с другими USDT-сетями.",
+          body: "Покупатели должны отправить USDT в TRON, а не ERC-20, BEP-20 или другой сети. В кошельке также должно хватать TRX или energy для перевода.",
+        },
+        useCases: {
+          kicker: "RELEVANT USE CASES",
+          title: "Лучше всего для stablecoin-heavy продуктов.",
+          body: "Используйте TRON, когда цена привязана к USD и покупатели ожидают оплату в USDT.",
+          items: [
+            { name: "SaaS billing", body: "Собирайте subscription payments и renewals с предсказуемыми stablecoin-суммами." },
+            { name: "Business invoices", body: "Отправляйте payment requests клиентам, которые уже предпочитают TRC-20 USDT." },
+            { name: "Цифровые товары", body: "Дайте привычный stablecoin-вариант для ключей, файлов и account access." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Стройте flow вокруг спроса на USDT.",
+          links: [
+            { kicker: "Stablecoin", label: "USDT Checkout", body: "Hosted payment pages для USDT-denominated заказов.", href: "/products/checkout" },
+            { kicker: "Кейс", label: "SaaS Billing", body: "API и webhooks для subscription payment flows.", href: "/use-cases/saas-billing" },
+            { kicker: "Тариф", label: "Business", body: "Повышенные лимиты и team workflow для payment operations.", href: "/business" },
+          ],
+        },
+        cta: {
+          title: "Принимайте TRON USDT без ручной сверки.",
+          body: "Используйте Reqst, чтобы выпускать TRC-20 invoices, отслеживать переводы в реальном времени и подключать stablecoin-платежи к бизнес-системам.",
+          primary: { label: "Начать с USDT", href: "/app/auth" },
+          secondary: { label: "Смотреть Business", href: "/business" },
+        },
+        seoLabel: "Детали TRON USDT платежей",
+        seo: "Reqst включает TRON USDT платежи через Checkout, API-инвойсы, TRC-20 watcher detection, signed webhooks, direct-to-wallet выплаты и stablecoin payment flows для SaaS и бизнеса.",
+      },
+      solana: {
+        name: "Solana",
+        fullName: "Solana Blockchain",
+        metadata: {
+          title: "Прием Solana-платежей через API и Checkout",
+          description: "Используйте Reqst для приема SOL и поддерживаемых SPL assets через быстрые checkout flows, API-инвойсы, watcher detection и signed webhooks.",
+        },
+        kicker: "SOLANA NETWORK",
+        hero: {
+          title: "Solana-платежи для быстрого developer-owned checkout.",
+          body: "Reqst добавляет SOL и поддерживаемые SPL assets в единый payment API, чтобы web3-продукты создавали инвойсы и реагировали на подтвержденные переводы без собственной watcher logic.",
+        },
+        snapshot: {
+          kicker: "API EVENT",
+          title: "payment.network.solana",
+          amount: "49.00 USDC",
+          items: [
+            { label: "Активы", value: "SOL / SPL" },
+            { label: "Flow", value: "API" },
+            { label: "Статус", value: "Detected" },
+          ],
+        },
+        assets: {
+          kicker: "SUPPORTED ASSETS",
+          title: "Нативные и SPL-платежи там, где они включены.",
+          body: "Solana подходит командам, которым нужны быстрые wallet-native платежи для web3-аудитории.",
+          items: [
+            { name: "SOL", body: "Нативные Solana transfers для wallet-native checkout и balances." },
+            { name: "SPL USDC", body: "Stablecoin payments для продуктов с ценами в USD." },
+            { name: "SPL USDT", body: "Альтернативная SPL stablecoin support там, где она настроена для merchant." },
+          ],
+        },
+        why: {
+          kicker: "WHY SOLANA",
+          title: "Быстрый payment feedback для web3 users.",
+          body: "Solana сильна там, где покупатели уже используют Solana wallets и ожидают быстрое подтверждение в developer tools, apps или digital goods flows.",
+        },
+        mechanics: {
+          kicker: "CHECKOUT AND API MECHANICS",
+          title: "Единый invoice flow для SOL и SPL assets.",
+          steps: [
+            { title: "Создание инвойса", body: "Backend создает Solana invoice через Reqst API или использует hosted Checkout." },
+            { title: "Показ wallet data", body: "Checkout показывает сеть, актив, сумму, адрес и QR в buyer-friendly экране." },
+            { title: "Watch transfer", body: "Reqst отслеживает native или SPL transfers и сопоставляет оплату с invoice." },
+            { title: "Trigger backend", body: "Signed webhook сообщает продукту, когда нужно открыть доступ, выдать товар или обновить статус." },
+          ],
+        },
+        limitations: {
+          kicker: "LIMITATIONS AND NOTES",
+          title: "Asset и wallet selection должны быть точными.",
+          body: "Покупатель должен отправить настроенный Solana asset в сети Solana. Token account behavior, поддержка кошельков и временная congestion могут влиять на платежный опыт.",
+        },
+        useCases: {
+          kicker: "RELEVANT USE CASES",
+          title: "Лучше всего для web3-native продуктов.",
+          body: "Solana полезна, когда платежи являются частью продукта для разработчиков, creators или crypto-native покупателей.",
+          items: [
+            { name: "Developer tools", body: "Создавайте инвойсы из backend и используйте webhooks для automated access." },
+            { name: "Цифровые товары", body: "Продавайте ключи, downloads или лицензии Solana wallet users." },
+            { name: "Web3 apps", body: "Добавьте быстрый payment option для пользователей Solana ecosystem." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Подключите Solana к вашему backend.",
+          links: [
+            { kicker: "Продукт", label: "API", body: "Создавайте инвойсы и получайте normalized payment events.", href: "/products/api" },
+            { kicker: "Тариф", label: "Developer", body: "API и webhooks для production integrations.", href: "/dev" },
+            { kicker: "Docs", label: "Integration", body: "Изучите developer docs для payment automation.", href: "/docs" },
+          ],
+        },
+        cta: {
+          title: "Добавьте Solana-платежи в продукт.",
+          body: "Используйте Reqst API и Checkout, чтобы принимать Solana assets и управлять payment state через signed events.",
+          primary: { label: "Начать интеграцию", href: "/app/auth" },
+          secondary: { label: "Изучить API", href: "/products/api" },
+        },
+        seoLabel: "Детали Solana-платежей",
+        seo: "Reqst поддерживает Solana-платежи с SOL и настроенными SPL assets, hosted Checkout, API созданием инвойсов, blockchain watchers, signed webhooks и developer-focused payment automation.",
+      },
+      base: {
+        name: "Base",
+        fullName: "Base L2",
+        metadata: {
+          title: "Прием Base-платежей через Unified API",
+          description: "Принимайте ETH и поддерживаемые ERC-20 assets в Base через Reqst Checkout, API-инвойсы, watcher monitoring и business-ready webhooks.",
+        },
+        kicker: "BASE NETWORK",
+        hero: {
+          title: "Base-платежи для EVM buyers и low-cost checkout.",
+          body: "Reqst позволяет добавить Base в тот же checkout и API flow, который вы используете для других сетей, с прямыми выплатами и normalized payment events.",
+        },
+        snapshot: {
+          kicker: "L2 INVOICE",
+          title: "payment.network.base",
+          amount: "99.00 USDC",
+          items: [
+            { label: "Сеть", value: "Base" },
+            { label: "Активы", value: "ETH / ERC-20" },
+            { label: "API", value: "Unified" },
+          ],
+        },
+        assets: {
+          kicker: "SUPPORTED ASSETS",
+          title: "Base-native EVM payments.",
+          body: "Используйте Base для покупателей, которые уже работают в Coinbase-aligned или EVM-compatible L2 rails.",
+          items: [
+            { name: "ETH on Base", body: "Нативный gas и payment asset для Base wallets." },
+            { name: "USDC on Base", body: "Популярный stablecoin option для USD-priced checkout." },
+            { name: "Configured ERC-20", body: "Дополнительные Base tokens можно принимать там, где они включены для workspace." },
+          ],
+        },
+        why: {
+          kicker: "WHY BASE",
+          title: "EVM compatibility с меньшим checkout friction.",
+          body: "Base подходит бизнесам с onchain-пользователями, которым нужны привычные EVM wallets, меньшие fees, чем на mainnet, и stablecoin-friendly payment options.",
+        },
+        mechanics: {
+          kicker: "CHECKOUT AND API MECHANICS",
+          title: "Тот же Reqst flow, Base-specific watcher.",
+          steps: [
+            { title: "Создание инвойса", body: "Используйте Checkout или API с Base как payable network и настроенным asset." },
+            { title: "Показ оплаты", body: "Покупатель видит Base network instructions, сумму, адрес и QR." },
+            { title: "Мониторинг сети", body: "Reqst отслеживает native и ERC-20 transfers в Base и сопоставляет их с invoices." },
+            { title: "Webhook event", body: "Backend получает тот же normalized payment state, что и по другим поддерживаемым сетям." },
+          ],
+        },
+        limitations: {
+          kicker: "LIMITATIONS AND NOTES",
+          title: "Base assets должны быть отправлены в Base.",
+          body: "Ethereum mainnet, Arbitrum, BSC и другие EVM transfers - отдельные сети. Wrong-chain deposits не взаимозаменяются автоматически с Base payments.",
+        },
+        useCases: {
+          kicker: "RELEVANT USE CASES",
+          title: "Лучше всего для EVM-oriented checkout.",
+          body: "Base хорошо работает, когда клиенты уже используют EVM wallets или Coinbase-aligned onchain products.",
+          items: [
+            { name: "Business checkout", body: "Предложите low-cost EVM option для high-volume payment flows." },
+            { name: "API integrations", body: "Добавьте Base без отдельной invoice и webhook logic." },
+            { name: "Digital products", body: "Обслуживайте web3 buyers, которые предпочитают Base wallets и stablecoins." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Добавьте Base в business payments.",
+          links: [
+            { kicker: "Продукт", label: "API", body: "Unified invoice creation и webhook events.", href: "/products/api" },
+            { kicker: "Тариф", label: "Business", body: "Повышенные лимиты и team operations для scale.", href: "/business" },
+            { kicker: "Тариф", label: "Developer", body: "Production API access для backend integrations.", href: "/dev" },
+          ],
+        },
+        cta: {
+          title: "Принимайте Base-платежи через одну интеграцию.",
+          body: "Используйте Reqst, чтобы добавить Base checkout, мониторить transfers и сохранить единый backend payment logic для всех сетей.",
+          primary: { label: "Начать интеграцию", href: "/app/auth" },
+          secondary: { label: "Изучить API", href: "/products/api" },
+        },
+        seoLabel: "Детали Base-платежей",
+        seo: "Reqst поддерживает Base-платежи с ETH и настроенными ERC-20 assets, hosted Checkout, API-инвойсы, Base watchers, normalized webhooks, direct-to-wallet выплаты и business payment workflows.",
+      },
+      bsc: {
+        name: "BSC",
+        fullName: "BNB Smart Chain",
+        metadata: {
+          title: "Прием BSC-платежей через Checkout и API",
+          description: "Принимайте BNB и поддерживаемые BEP-20 assets в BSC через Reqst payment links, API-инвойсы, watcher detection и direct-to-wallet выплаты.",
+        },
+        kicker: "BSC NETWORK",
+        hero: {
+          title: "BSC-платежи для широкой retail stablecoin аудитории.",
+          body: "Reqst помогает бизнесу принимать BNB Smart Chain платежи через понятный checkout и unified API flow с прямыми выплатами.",
+        },
+        snapshot: {
+          kicker: "BEP-20 INVOICE",
+          title: "payment.network.bsc",
+          amount: "149.00 USDT",
+          items: [
+            { label: "Сеть", value: "BSC" },
+            { label: "Активы", value: "BNB / BEP-20" },
+            { label: "Статус", value: "Live" },
+          ],
+        },
+        assets: {
+          kicker: "SUPPORTED ASSETS",
+          title: "BNB и BEP-20 checkout options.",
+          body: "BSC дает клиентам знакомую low-fee payment network для native и token transfers.",
+          items: [
+            { name: "BNB", body: "Нативный asset для BSC payments и wallet gas." },
+            { name: "BEP-20 USDT", body: "Stablecoin checkout для покупателей, которые держат USDT в BNB Smart Chain." },
+            { name: "BEP-20 USDC", body: "USD-priced payments там, где USDC on BSC настроен." },
+          ],
+        },
+        why: {
+          kicker: "WHY BSC",
+          title: "Низкие fees и широкая retail-привычка.",
+          body: "BSC полезен бизнесам, чьи клиенты уже используют BEP-20 stablecoins и ожидают недорогие transfers.",
+        },
+        mechanics: {
+          kicker: "CHECKOUT AND API MECHANICS",
+          title: "BEP-20 monitoring без отдельной business logic.",
+          steps: [
+            { title: "Создание инвойса", body: "Выберите BSC и payable asset через hosted Checkout или Reqst API." },
+            { title: "Показ инструкции", body: "Checkout показывает BSC network details, QR, адрес, сумму и payment state." },
+            { title: "Детекция перевода", body: "Вотчеры Reqst отслеживают native BNB и BEP-20 transfers для invoice." },
+            { title: "Обновление системы", body: "Dashboard и webhooks обновляют order, invoice или account state после confirmation." },
+          ],
+        },
+        limitations: {
+          kicker: "LIMITATIONS AND NOTES",
+          title: "BEP-20 означает только BSC.",
+          body: "Покупатели должны отправить выбранный актив в BSC и иметь достаточно BNB для gas. USDT или USDC в другой сети не попадает в automatic BSC matching.",
+        },
+        useCases: {
+          kicker: "RELEVANT USE CASES",
+          title: "Лучше всего для retail и business checkout.",
+          body: "Используйте BSC, когда buyer base уже держит BEP-20 assets или хочет low-cost EVM-compatible option.",
+          items: [
+            { name: "Business payments", body: "Принимайте stablecoins от клиентов, которые уже используют BSC wallets." },
+            { name: "Checkout links", body: "Создавайте payment pages с понятными BSC instructions для каждого заказа." },
+            { name: "API automation", body: "Передавайте BEP-20 payment events в backend workflow." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Подключите BSC к operations.",
+          links: [
+            { kicker: "Продукт", label: "API", body: "Unified invoices и webhooks для BSC payments.", href: "/products/api" },
+            { kicker: "Тариф", label: "Business", body: "Team и limit structure для растущего payment volume.", href: "/business" },
+            { kicker: "Продукт", label: "Checkout", body: "Hosted BSC payment pages для заказов и инвойсов.", href: "/products/checkout" },
+          ],
+        },
+        cta: {
+          title: "Добавьте BSC-платежи без лишней сверки.",
+          body: "Используйте Reqst, чтобы принимать BNB Smart Chain transfers через Checkout, API-инвойсы и real-time payment events.",
+          primary: { label: "Начать прием BSC", href: "/app/auth" },
+          secondary: { label: "Смотреть Business", href: "/business" },
+        },
+        seoLabel: "Детали BSC-платежей",
+        seo: "Reqst поддерживает BSC-платежи с BNB и настроенными BEP-20 assets, hosted Checkout, API созданием инвойсов, blockchain watchers, webhooks и direct-to-wallet выплатами для business payment flows.",
+      },
+      arbitrum: {
+        name: "Arbitrum",
+        fullName: "Arbitrum One",
+        metadata: {
+          title: "Прием Arbitrum-платежей через Reqst API",
+          description: "Принимайте ETH и поддерживаемые ERC-20 assets в Arbitrum One через Checkout, API-инвойсы, watcher monitoring, webhooks и direct settlement.",
+        },
+        kicker: "ARBITRUM NETWORK",
+        hero: {
+          title: "Arbitrum-платежи для Ethereum-aligned покупателей.",
+          body: "Reqst добавляет Arbitrum One в payment stack с тем же checkout, invoice и webhook model, который используется во всех поддерживаемых сетях.",
+        },
+        snapshot: {
+          kicker: "L2 PAYMENT",
+          title: "payment.network.arbitrum",
+          amount: "249.00 USDC",
+          items: [
+            { label: "Сеть", value: "Arbitrum One" },
+            { label: "Активы", value: "ETH / ERC-20" },
+            { label: "Settlement", value: "Direct" },
+          ],
+        },
+        assets: {
+          kicker: "SUPPORTED ASSETS",
+          title: "Arbitrum-native ETH и ERC-20 payments.",
+          body: "Используйте Arbitrum для клиентов, которым нужны Ethereum-compatible assets с меньшими transaction costs, чем на mainnet.",
+          items: [
+            { name: "ETH on Arbitrum", body: "Нативные Arbitrum ETH payments и wallet gas." },
+            { name: "USDC on Arbitrum", body: "Stablecoin checkout для USD-priced invoices и services." },
+            { name: "Configured ERC-20", body: "Дополнительные Arbitrum One tokens можно принимать там, где они включены." },
+          ],
+        },
+        why: {
+          kicker: "WHY ARBITRUM",
+          title: "Ethereum alignment без mainnet costs.",
+          body: "Arbitrum - практичный вариант для EVM-native клиентов, которым нужны Ethereum tooling и меньшие fees для регулярных платежей.",
+        },
+        mechanics: {
+          kicker: "CHECKOUT AND API MECHANICS",
+          title: "Normalized events для Arbitrum transfers.",
+          steps: [
+            { title: "Создание инвойса", body: "Используйте Reqst Checkout или API с Arbitrum One как payable network." },
+            { title: "Инструкция оплаты", body: "Покупатель видит Arbitrum-specific address, amount, asset и QR instructions." },
+            { title: "Мониторинг transfer", body: "Вотчеры Reqst находят native и ERC-20 transfers в Arbitrum One." },
+            { title: "Sync backend", body: "Signed webhooks обновляют order или billing system тем же event shape, что и другие сети." },
+          ],
+        },
+        limitations: {
+          kicker: "LIMITATIONS AND NOTES",
+          title: "Arbitrum One отделен от mainnet и других L2.",
+          body: "Платежи должны быть отправлены в Arbitrum One. Ethereum mainnet, Base, BSC или другие EVM transfers - другие rails и не будут автоматически считаться тем же платежом.",
+        },
+        useCases: {
+          kicker: "RELEVANT USE CASES",
+          title: "Лучше всего для EVM-native бизнеса.",
+          body: "Arbitrum хорошо работает для команд, чьи покупатели уже используют Ethereum L2 environments.",
+          items: [
+            { name: "API payments", body: "Добавьте Arbitrum в backend-driven invoice и webhook flows." },
+            { name: "Business billing", body: "Собирайте stablecoin invoices от Ethereum-aligned customers." },
+            { name: "Web3 services", body: "Поддержите покупателей, которые предпочитают L2 settlement для recurring или one-time services." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Используйте Arbitrum в production flows.",
+          links: [
+            { kicker: "Продукт", label: "API", body: "Создавайте Arbitrum invoices и обрабатывайте signed payment events.", href: "/products/api" },
+            { kicker: "Тариф", label: "Business", body: "Масштабируйте EVM payment operations с team features.", href: "/business" },
+            { kicker: "Тариф", label: "Developer", body: "Backend integration access для production-команд.", href: "/dev" },
+          ],
+        },
+        cta: {
+          title: "Добавьте Arbitrum-платежи в checkout stack.",
+          body: "Используйте Reqst, чтобы принимать Arbitrum One payments, мониторить transfers и получать средства напрямую на ваш wallet.",
+          primary: { label: "Начать интеграцию", href: "/app/auth" },
+          secondary: { label: "Изучить API", href: "/products/api" },
+        },
+        seoLabel: "Детали Arbitrum-платежей",
+        seo: "Reqst поддерживает Arbitrum One payments с ETH и настроенными ERC-20 assets, hosted Checkout, API-инвойсы, blockchain watchers, signed webhooks и direct-to-wallet settlement для EVM business workflows.",
+      },
+    },
     useCasesHub: {
       title: "Создано для реальной коммерции",
       description: "Узнайте, как различные индустрии используют Reqst для автоматизации своих крипто-операций.",
       kicker: "КЕЙСЫ",
+    },
+    useCasePages: {
+      "telegram-shops": {
+        name: "Telegram-магазины",
+        metadata: {
+          title: "Криптоплатежи для Telegram-магазинов",
+          description: "Автоматизируйте оплаты в Telegram-магазине через TON-first checkout, direct-to-wallet выплаты и мгновенные события по заказам.",
+        },
+        kicker: "TELEGRAM COMMERCE",
+        hero: {
+          title: "Превратите заказы из Telegram в подтвержденные криптоплатежи.",
+          body: "Reqst дает продавцам в Telegram понятный checkout, живую детекцию платежей в блокчейне и прямые выплаты без просьб прислать скриншот.",
+        },
+        snapshot: {
+          kicker: "ЖИВОЙ ЗАКАЗ",
+          title: "Telegram order #4821",
+          amount: "79.00 USDT",
+          items: [
+            { label: "Сеть", value: "TON" },
+            { label: "Статус", value: "Detected" },
+            { label: "Выплата", value: "Direct" },
+          ],
+        },
+        problem: {
+          kicker: "ПРОБЛЕМА",
+          title: "Ручная проверка оплат тормозит каждую продажу.",
+          body: "Telegram-магазину часто приходится вручную сверять скриншоты кошельков, сети, суммы и сообщения покупателей. Ошибка в сети или частичная оплата быстро превращают простой заказ в переписку с поддержкой.",
+        },
+        solution: {
+          kicker: "REQST FLOW",
+          title: "Checkout-ссылки заменяют охоту за скриншотами.",
+          body: "Создайте ссылку на оплату для заказа, дайте покупателю оплатить в правильной сети, а Reqst проведет заказ от awaiting до paid, когда перевод совпадет.",
+        },
+        productPlan: {
+          kicker: "ПРОДУКТ И ТАРИФ",
+          title: "Начните с Checkout и Merchant.",
+          body: "Telegram-магазину сначала нужен платежный экран, а автоматизация может расти вместе с оборотом.",
+          product: {
+            label: "Продукт",
+            title: "Checkout",
+            body: "Hosted-страницы оплаты с суммой, сетью, QR, копированием адреса и живыми статусами для покупателя.",
+            href: "/products/checkout",
+            linkLabel: "Открыть Checkout",
+          },
+          plan: {
+            label: "Тариф",
+            title: "Merchant",
+            body: "Подходит владельцам магазинов, которые создают и отправляют ссылки на оплату, следят за инвойсами и разбирают исключения в дашборде.",
+            href: "/merchant",
+            linkLabel: "Смотреть Merchant",
+          },
+        },
+        networks: {
+          kicker: "СЕТИ",
+          title: "TON в приоритете, stablecoin-сети готовы.",
+          body: "Telegram-native покупатели часто выбирают TON, а USDT в TRON и другие ликвидные сети закрывают клиентов, у которых stablecoin уже лежит в другом кошельке.",
+          items: [
+            { name: "TON", body: "Лучший выбор для Telegram-native покупателей и Jetton-платежей." },
+            { name: "TRON USDT", body: "Полезен для клиентов, которые каждый день используют stablecoin-переводы." },
+            { name: "Solana / Base", body: "Альтернативы для web3-аудитории с низким трением." },
+          ],
+        },
+        flow: {
+          kicker: "ПРИМЕР FLOW",
+          title: "От заказа в чате до выдачи товара.",
+          steps: [
+            { title: "Создан заказ", body: "Продавец или бот создает платежный запрос для заказа в Telegram." },
+            { title: "Открыт Checkout", body: "Покупатель получает hosted-ссылку с точной суммой, сетью, QR и адресом." },
+            { title: "Перевод найден", body: "Вотчеры Reqst сопоставляют входящую транзакцию и отмечают недоплату при необходимости." },
+            { title: "Заказ исполнен", body: "Магазин видит статус paid и отправляет товар или цифровой доступ." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Соберите Telegram payment stack.",
+          links: [
+            { kicker: "Сеть", label: "TON", body: "Telegram-native платежная сеть для магазинов и сообществ.", href: "/networks/ton" },
+            { kicker: "Продукт", label: "Checkout", body: "Hosted-экран оплаты для каждого заказа.", href: "/products/checkout" },
+            { kicker: "Тариф", label: "Merchant", body: "Дашборд и workflow инвойсов для операторов.", href: "/merchant" },
+          ],
+        },
+        cta: {
+          title: "Запустите платежный flow для Telegram.",
+          body: "Используйте Reqst, чтобы перестать проверять скриншоты и подтверждать заказы по on-chain событиям.",
+          primary: { label: "Начать прием оплат", href: "/app/auth" },
+          secondary: { label: "Изучить Checkout", href: "/products/checkout" },
+        },
+        seoLabel: "Детали кейса Telegram-магазинов",
+        seo: "Reqst помогает Telegram-магазинам принимать криптоплатежи через hosted checkout-ссылки, TON, stablecoin-сети, direct-to-wallet выплаты и детекцию оплат в реальном времени для исполнения заказов.",
+      },
+      "saas-billing": {
+        name: "SaaS биллинг",
+        metadata: {
+          title: "Крипто-биллинг инфраструктура для SaaS",
+          description: "Используйте Reqst API и подписанные webhooks для надежного crypto billing в SaaS подписках, инвойсах и цифровых сервисах.",
+        },
+        kicker: "SAAS BILLING",
+        hero: {
+          title: "Надежный крипто-биллинг для глобального SaaS.",
+          body: "Reqst дает SaaS-командам создание инвойсов, idempotent API-вызовы, подписанные webhooks и direct-to-wallet выплаты без процентной комиссии с выручки.",
+        },
+        snapshot: {
+          kicker: "BILLING EVENT",
+          title: "subscription.renewal.paid",
+          amount: "199.00 USDT",
+          items: [
+            { label: "API", value: "Idempotent" },
+            { label: "Webhook", value: "HMAC" },
+            { label: "Тариф", value: "Developer" },
+          ],
+        },
+        problem: {
+          kicker: "ПРОБЛЕМА",
+          title: "SaaS-биллинг ломается, если платежные события ненадежны.",
+          body: "Командам нужны duplicate-safe создание инвойсов, предсказуемые статусы, подписанные callback-события и достаточная пропускная способность для renewals без блокировки доступа к продукту.",
+        },
+        solution: {
+          kicker: "REQST FLOW",
+          title: "Один API создает инвойсы, webhooks управляют доступом.",
+          body: "Создавайте инвойсы из backend, повторно используйте idempotency keys при retries, проверяйте HMAC-подписи webhooks и обновляйте подписку только после финального платежного статуса.",
+        },
+        productPlan: {
+          kicker: "ПРОДУКТ И ТАРИФ",
+          title: "Используйте API на Developer или Business.",
+          body: "Developer закрывает production-автоматизацию, Business подходит командам с большим объемом запросов и несколькими workspaces.",
+          product: {
+            label: "Продукт",
+            title: "API",
+            body: "Создание инвойсов, мониторинг оплат, подписанные callbacks и предсказуемая работа со статусами для backend-owned billing flows.",
+            href: "/products/api",
+            linkLabel: "Открыть API",
+          },
+          plan: {
+            label: "Тариф",
+            title: "Developer / Business",
+            body: "Developer включает API и webhooks для production. Business добавляет повышенные лимиты, больше мест и командные операции.",
+            href: "/dev",
+            linkLabel: "Смотреть Developer",
+          },
+        },
+        networks: {
+          kicker: "СЕТИ",
+          title: "Выбирайте сети под аудиторию SaaS.",
+          body: "Stablecoin-сети обычно становятся базой для SaaS, а TON или L2 добавляются, когда покупатели уже работают в этих экосистемах.",
+          items: [
+            { name: "TRON USDT", body: "Практичный default для stablecoin-платежей и renewals." },
+            { name: "Base / Arbitrum", body: "Подходит EVM-native командам и клиентам." },
+            { name: "TON / Solana", body: "Добавляет Telegram-native и быстрые web3 варианты оплаты." },
+          ],
+        },
+        flow: {
+          kicker: "ПРИМЕР FLOW",
+          title: "Renewal flow, которому backend может доверять.",
+          steps: [
+            { title: "Создание инвойса", body: "Billing-сервис создает инвойс с idempotency key." },
+            { title: "Показ оплаты", body: "Клиент платит через hosted checkout или ваш собственный UI." },
+            { title: "Проверка webhook", body: "Backend проверяет подпись Reqst и игнорирует повторные доставки." },
+            { title: "Обновление доступа", body: "Подписка продлевается только после обработки paid event." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Подключите billing к вашему stack.",
+          links: [
+            { kicker: "Продукт", label: "API", body: "Backend primitives для автоматизации биллинга.", href: "/products/api" },
+            { kicker: "Docs", label: "Webhooks", body: "Подписанные события оплаты для изменения subscription state.", href: "/docs/webhooks" },
+            { kicker: "Тариф", label: "Business", body: "Повышенные лимиты и командные функции для роста.", href: "/business" },
+          ],
+        },
+        cta: {
+          title: "Сделайте crypto billing предсказуемым.",
+          body: "Используйте Reqst API и webhooks, чтобы связать on-chain оплаты с состоянием подписки без ручной проверки.",
+          primary: { label: "Начать интеграцию", href: "/app/auth" },
+          secondary: { label: "Читать Webhooks docs", href: "/docs/webhooks" },
+        },
+        seoLabel: "Детали кейса SaaS биллинга",
+        seo: "Reqst поддерживает SaaS crypto billing через API создание инвойсов, idempotency, HMAC signed webhooks, stablecoin-сети, direct-to-wallet выплаты и тарифы Developer или Business для production-команд.",
+      },
+      "digital-goods": {
+        name: "Цифровые товары",
+        metadata: {
+          title: "Crypto Checkout для цифровых товаров",
+          description: "Продавайте лицензии, файлы, ключи и downloads через crypto checkout, API automation, webhooks и direct-to-wallet выплаты.",
+        },
+        kicker: "DIGITAL GOODS",
+        hero: {
+          title: "Продавайте цифровые продукты без ожидания ручного подтверждения.",
+          body: "Reqst связывает checkout-оплаты с fulfillment-событиями, чтобы ключи, файлы и доступ выдавались после подтверждения on-chain платежа.",
+        },
+        snapshot: {
+          kicker: "FULFILLMENT",
+          title: "license.delivery.ready",
+          amount: "49.00 USDT",
+          items: [
+            { label: "Продукт", value: "Checkout" },
+            { label: "Webhook", value: "Paid" },
+            { label: "Risk", value: "No chargeback" },
+          ],
+        },
+        problem: {
+          kicker: "ПРОБЛЕМА",
+          title: "Цифровой выдаче нужен чистый paid signal.",
+          body: "Магазины лицензий и downloads не могут опираться на скриншоты или отложенную ручную проверку. Fulfillment должен происходить только после обнаружения точной оплаты.",
+        },
+        solution: {
+          kicker: "REQST FLOW",
+          title: "Checkout принимает оплату, webhooks запускают выдачу.",
+          body: "Используйте hosted Checkout для buyer experience или API-инвойсы для custom store, а затем отправляйте paid event в ваш fulfillment service.",
+        },
+        productPlan: {
+          kicker: "ПРОДУКТ И ТАРИФ",
+          title: "Checkout для быстрого старта, API для автоматизации.",
+          body: "Начните с Checkout, если нужен готовый платежный экран. Добавьте API и webhooks, когда fulfillment полностью управляется backend.",
+          product: {
+            label: "Продукт",
+            title: "Checkout + API",
+            body: "Платежная страница для покупателя плюс backend primitives для автоматической выдачи и обновления статусов заказа.",
+            href: "/products/checkout",
+            linkLabel: "Открыть Checkout",
+          },
+          plan: {
+            label: "Тариф",
+            title: "Merchant / Developer",
+            body: "Merchant подходит для простых продаж. Developer лучше, если webhooks выдают лицензии, файлы или доступ.",
+            href: "/dev",
+            linkLabel: "Смотреть Developer",
+          },
+        },
+        networks: {
+          kicker: "СЕТИ",
+          title: "Поддержите платежные rails, которыми уже пользуются покупатели.",
+          body: "Покупатели цифровых товаров часто предпочитают stablecoins, но TON и быстрые сети снижают friction для Telegram и web3-native аудиторий.",
+          items: [
+            { name: "TRON USDT", body: "Популярная stablecoin-сеть для покупки software и ключей." },
+            { name: "TON", body: "Сильный вариант для цифровых продуктов, распространяемых через Telegram." },
+            { name: "Solana / Base", body: "Быстрые альтернативы для web3-native покупателей." },
+          ],
+        },
+        flow: {
+          kicker: "ПРИМЕР FLOW",
+          title: "От оплаты к выдаче без ручной проверки.",
+          steps: [
+            { title: "Корзина создает платеж", body: "Магазин создает checkout или invoice на точную сумму заказа." },
+            { title: "Покупатель платит", body: "Reqst показывает сеть, сумму, QR, адрес и живой статус." },
+            { title: "Приходит webhook", body: "Backend проверяет paid event и сопоставляет его с заказом." },
+            { title: "Товар выдан", body: "Лицензия, файл, ключ или доступ отправляются автоматически." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Свяжите оплату с fulfillment.",
+          links: [
+            { kicker: "Продукт", label: "Checkout", body: "Hosted payment pages для цифровых заказов.", href: "/products/checkout" },
+            { kicker: "Продукт", label: "API", body: "Создание инвойсов из вашего backend.", href: "/products/api" },
+            { kicker: "Docs", label: "Webhooks", body: "Отправляйте paid events в fulfillment services.", href: "/docs/webhooks" },
+          ],
+        },
+        cta: {
+          title: "Автоматизируйте выдачу цифровых товаров через on-chain signals.",
+          body: "Используйте Reqst, чтобы принимать crypto и выдавать цифровые товары только после реального подтверждения оплаты.",
+          primary: { label: "Начать продажи", href: "/app/auth" },
+          secondary: { label: "Изучить API", href: "/products/api" },
+        },
+        seoLabel: "Детали кейса цифровых товаров",
+        seo: "Reqst включает криптоплатежи для цифровых товаров через Checkout, API создание инвойсов, webhooks для fulfillment, stablecoin support, TON support и direct-to-wallet выплаты.",
+      },
+      "paid-communities": {
+        name: "Закрытые сообщества",
+        metadata: {
+          title: "Криптоплатежи для закрытых сообществ",
+          description: "Принимайте crypto за приватные Telegram-каналы, группы, newsletters и member communities через direct-to-wallet checkout flows.",
+        },
+        kicker: "PAID COMMUNITIES",
+        hero: {
+          title: "Выдавайте доступ в сообщество после подтверждения оплаты.",
+          body: "Reqst помогает creators и операторам продавать доступ в приватные сообщества через checkout-ссылки, Telegram-friendly сети и платежные события для ваших инструментов.",
+        },
+        snapshot: {
+          kicker: "ACCESS EVENT",
+          title: "member.access.granted",
+          amount: "29.00 USDT",
+          items: [
+            { label: "Сеть", value: "TON" },
+            { label: "Канал", value: "Private" },
+            { label: "Тариф", value: "Merchant" },
+          ],
+        },
+        problem: {
+          kicker: "ПРОБЛЕМА",
+          title: "Ручное управление доступом не масштабируется.",
+          body: "Владельцы сообществ тратят время на проверку переводов, сопоставление usernames, выдачу доступа и разбор истекших или недоплаченных membership-платежей.",
+        },
+        solution: {
+          kicker: "REQST FLOW",
+          title: "Статус оплаты становится сигналом доступа.",
+          body: "Reqst превращает membership payment в понятный paid event, чтобы ваш процесс мог приглашать, продлевать или отправлять участников на review без скриншотов.",
+        },
+        productPlan: {
+          kicker: "ПРОДУКТ И ТАРИФ",
+          title: "Используйте Checkout с Merchant workflow.",
+          body: "Большинству сообществ сначала нужны простые payment links, а webhook-driven access automation можно добавить с ростом базы участников.",
+          product: {
+            label: "Продукт",
+            title: "Checkout",
+            body: "Публичная страница оплаты для memberships, renewals и разовых passes в закрытое сообщество.",
+            href: "/products/checkout",
+            linkLabel: "Открыть Checkout",
+          },
+          plan: {
+            label: "Тариф",
+            title: "Merchant",
+            body: "Подходит creators и операторам, которые управляют инвойсами, Telegram alerts и ручными исключениями из одного места.",
+            href: "/merchant",
+            linkLabel: "Смотреть Merchant",
+          },
+        },
+        networks: {
+          kicker: "СЕТИ",
+          title: "Telegram-native платежи со stablecoin fallback.",
+          body: "TON естественно подходит Telegram-сообществам. Stablecoin-сети помогают, когда участникам нужны предсказуемые USD-denominated платежи.",
+          items: [
+            { name: "TON", body: "Лучшее совпадение для Telegram-каналов и wallet-native участников." },
+            { name: "TRON USDT", body: "Знакомый stablecoin-вариант для платных подписок." },
+            { name: "Base / Arbitrum", body: "Полезно для web3-native групп и EVM-сообществ." },
+          ],
+        },
+        flow: {
+          kicker: "ПРИМЕР FLOW",
+          title: "От membership payment к доступу.",
+          steps: [
+            { title: "Участник выбирает доступ", body: "Покупатель выбирает pass, renewal или доступ в paid channel." },
+            { title: "Открывается payment link", body: "Checkout показывает сумму, сеть и инструкции для кошелька." },
+            { title: "Оплата подтверждена", body: "Reqst обнаруживает транзакцию и фиксирует paid state." },
+            { title: "Доступ выдан", body: "Команда или бот приглашает участника и записывает период продления." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Свяжите сообщества и Telegram payments.",
+          links: [
+            { kicker: "Сеть", label: "TON", body: "Telegram-native network support для member payments.", href: "/networks/ton" },
+            { kicker: "Telegram", label: "Telegram-магазины", body: "Соседний Telegram commerce flow на Reqst.", href: "/use-cases/telegram-shops" },
+            { kicker: "Тариф", label: "Merchant", body: "Payment links, dashboard и alerts для операторов.", href: "/merchant" },
+          ],
+        },
+        cta: {
+          title: "Создайте более чистый flow для paid community.",
+          body: "Используйте Reqst, чтобы подтверждать membership payments и привязывать доступ к реальному on-chain status.",
+          primary: { label: "Начать прием оплат", href: "/app/auth" },
+          secondary: { label: "Смотреть Merchant", href: "/merchant" },
+        },
+        seoLabel: "Детали кейса закрытых сообществ",
+        seo: "Reqst помогает paid communities принимать crypto за приватные Telegram-каналы, newsletters и группы через TON support, Checkout links, Merchant workflows, webhooks и direct-to-wallet выплаты.",
+      },
     },
     compareHub: {
       title: "Умный способ приема крипты",

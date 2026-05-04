@@ -1,185 +1,211 @@
-import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
-import Link from "next/link";
-import { PUBLIC_MARKETING_COPY } from "@/i18n";
-
-const NETWORKS = {
-  ton: {
-    name: "TON",
-    fullName: "The Open Network",
-    title: "Accept TON Payments Directly to Your Wallet",
-    description: "Scale your business with lightning-fast TON payments. Zero-commission processing, non-custodial architecture, and instant payouts.",
-    features: [
-      "Native TON & Jettons support",
-      "Instant transaction detection",
-      "Deep Telegram integration",
-      "Non-custodial Direct-to-Wallet"
-    ]
-  },
-  tron: {
-    name: "TRON",
-    fullName: "TRON Network",
-    title: "Accept TRON USDT Payments with Fixed Fees",
-    description: "The most popular network for USDT payments. Reqst provides high-performance TRON monitoring without percentage-based fees.",
-    features: [
-      "USDT (TRC-20) support",
-      "Energy-efficient processing",
-      "High throughput reliability",
-      "No intermediary accounts"
-    ]
-  },
-  solana: {
-    name: "Solana",
-    fullName: "Solana Blockchain",
-    title: "Ultra-Fast Solana & USDT Payments for your Business",
-    description: "Leverage Solana's speed with Reqst's professional infrastructure. Accept SOL and SPL tokens with zero friction.",
-    features: [
-      "SOL & SPL Tokens (USDC/USDT)",
-      "Sub-second detection",
-      "Scalable for high-load projects",
-      "Direct-to-Wallet security"
-    ]
-  },
-  base: {
-    name: "Base",
-    fullName: "Base (Coinbase L2)",
-    title: "Accept Base L2 Payments with Professional Gateway",
-    description: "Onboard the next billion users on Base. Reqst offers seamless L2 processing with instant settlement.",
-    features: [
-      "ETH & ERC-20 on Base",
-      "Low transaction costs",
-      "Ethereum-grade security",
-      "Instant webhook notifications"
-    ]
-  },
-  bsc: {
-    name: "BSC",
-    fullName: "BNB Smart Chain",
-    title: "Accept BNB & BEP-20 Payments with Zero Commission",
-    description: "Connect to the massive BSC ecosystem. Reqst provides high-speed BEP-20 token monitoring and direct-to-wallet payouts.",
-    features: [
-      "BNB & BEP-20 (USDT/USDC)",
-      "Ultra-low network fees",
-      "High reliability architecture",
-      "Instant checkout integration"
-    ]
-  },
-  arbitrum: {
-    name: "Arbitrum",
-    fullName: "Arbitrum One",
-    title: "Scale your Business with Arbitrum L2 Payments",
-    description: "Enjoy Ethereum's security with L2 performance. Reqst offers seamless Arbitrum processing for high-volume merchants.",
-    features: [
-      "ETH & ERC-20 on Arbitrum",
-      "Optimistic Rollup efficiency",
-      "Secure direct-to-wallet flow",
-      "Real-time event monitoring"
-    ]
-  }
-};
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { getCopy, normalizeLocale, type Locale } from "@/i18n";
 
 type Props = {
   params: Promise<{ network: string; locale: string }>;
 };
 
+type NetworkSlug = keyof ReturnType<typeof getCopy>["marketing"]["networkPages"];
+
+const NETWORK_SLUGS = [
+  "ton",
+  "tron",
+  "solana",
+  "base",
+  "bsc",
+  "arbitrum",
+] as const satisfies readonly NetworkSlug[];
+
+function isNetworkSlug(value: string): value is NetworkSlug {
+  return NETWORK_SLUGS.includes(value as NetworkSlug);
+}
+
+function localizedHref(locale: Locale, path: string) {
+  if (path.startsWith("/app/")) return path;
+  return `/${locale}${path}`;
+}
+
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { network, locale } = await props.params;
-  const data = NETWORKS[network as keyof typeof NETWORKS];
-  
-  if (!data) return { title: "Network Not Found" };
+  const { network, locale: rawLocale } = await props.params;
+  const locale = normalizeLocale(rawLocale);
+
+  if (!isNetworkSlug(network)) return { title: "Network Not Found" };
+
+  const page = getCopy(locale).marketing.networkPages[network];
 
   return {
-    title: `${data.title} | Reqst`,
-    description: data.description,
+    title: `${page.metadata.title} | Reqst`,
+    description: page.metadata.description,
     alternates: {
       canonical: `/${locale}/networks/${network}`,
     },
     openGraph: {
-      title: data.title,
-      description: data.description,
-    }
+      title: page.metadata.title,
+      description: page.metadata.description,
+    },
   };
 }
 
 export default async function NetworkPage(props: Props) {
-  const { network, locale } = await props.params;
-  const data = NETWORKS[network as keyof typeof NETWORKS];
+  const { network, locale: rawLocale } = await props.params;
+  const locale = normalizeLocale(rawLocale);
 
-  if (!data) notFound();
+  if (!isNetworkSlug(network)) notFound();
 
-  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
+  const copy = getCopy(locale);
+  const page = copy.marketing.networkPages[network];
   const breadcrumbs = [
-    { label: copy.breadcrumbs.home, href: `/${locale}` },
-    { label: copy.breadcrumbs.networks, href: `/${locale}/networks` },
-    { label: data.name, href: `/${locale}/networks/${network}` },
+    { label: copy.marketing.breadcrumbs.home, href: `/${locale}` },
+    { label: copy.marketing.breadcrumbs.networks, href: `/${locale}/networks` },
+    { label: page.name, href: `/${locale}/networks/${network}` },
   ];
 
   const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": `Reqst ${data.name} Gateway`,
-    "operatingSystem": "Web",
-    "applicationCategory": "PaymentApplication",
-    "description": data.description
+    name: `Reqst ${page.name} Gateway`,
+    operatingSystem: "Web",
+    applicationCategory: "PaymentApplication",
+    description: page.metadata.description,
+    offers: {
+      "@type": "Offer",
+      availability: "https://schema.org/InStock",
+    },
   };
 
-  const kickerStyle = { color: "var(--accent)", fontWeight: 600, fontSize: "0.9rem", textTransform: "uppercase" as const, letterSpacing: "0.1em" };
-
   return (
-    <MarketingLayout language={locale as "en" | "ru"}>
+    <MarketingLayout language={locale}>
       <JsonLd schema={softwareSchema} />
-      <div className="page-container">
+      <div className="page-container use-case-page">
         <Breadcrumbs items={breadcrumbs} locale={locale} />
-        
-        <header className="page-header">
-          <span style={kickerStyle}>
-            {data.fullName}
-          </span>
-          <h1 className="page-title" style={{ marginTop: "1rem" }}>
-            {data.title}
-          </h1>
-          <p className="page-subtitle" style={{ margin: "0" }}>
-            {data.description}
-          </p>
-          
-          <div className="page-cta-row">
-            <Link href="/app/auth" className="lend-primary">Get Started</Link>
-            <Link href={`/${locale}/dev`} className="lend-secondary">API Docs</Link>
+
+        <header className="use-case-hero">
+          <div className="use-case-hero__copy">
+            <span className="lend-section-kicker">{page.kicker}</span>
+            <h1 className="page-title">{page.hero.title}</h1>
+            <p className="page-subtitle">{page.hero.body}</p>
+            <div className="page-cta-row">
+              <Link href={localizedHref(locale, page.cta.primary.href)} className="lend-primary">
+                {page.cta.primary.label}
+              </Link>
+              <Link href={localizedHref(locale, page.cta.secondary.href)} className="lend-secondary">
+                {page.cta.secondary.label}
+              </Link>
+            </div>
           </div>
+
+          <aside className="use-case-hero__surface" aria-label={page.snapshot.title}>
+            <span>{page.snapshot.kicker}</span>
+            <h2>{page.snapshot.title}</h2>
+            <div className="use-case-snapshot__amount">{page.snapshot.amount}</div>
+            <div className="use-case-snapshot__meta">
+              {page.snapshot.items.map((item) => (
+                <div key={item.label}>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          </aside>
         </header>
 
-        <section className="benefits-grid page-section">
-          {data.features.map((feature, i) => (
-            <div key={i} className="lend-card benefit-card">
-              <div className="benefit-check">✓</div>
-              <h3 className="benefit-title">{feature}</h3>
-            </div>
-          ))}
+        <section className="use-case-network-section page-section">
+          <div className="use-case-section-copy">
+            <span className="lend-section-kicker">{page.assets.kicker}</span>
+            <h2>{page.assets.title}</h2>
+            <p>{page.assets.body}</p>
+          </div>
+          <div className="use-case-network-grid">
+            {page.assets.items.map((asset) => (
+              <article key={asset.name} className="use-case-network">
+                <strong>{asset.name}</strong>
+                <span>{asset.body}</span>
+              </article>
+            ))}
+          </div>
         </section>
 
-        <section className="page-final-section">
-          <h2 className="page-final-title">Why choose Reqst for {data.name}?</h2>
-          <p className="page-final-text page-final-text--wide">
-            Reqst provides a pure non-custodial layer for {data.name} processing. Unlike traditional gateways, we don&apos;t hold your funds. 
-            Payments go from your customers directly to your {data.name} wallet.
-          </p>
-          <ul className="page-feature-list">
-            <li className="page-feature-item">
-              <span className="page-feature-dot">●</span> Fixed $199/mo, no % fees
-            </li>
-            <li className="page-feature-item">
-              <span className="page-feature-dot">●</span> Real-time monitoring
-            </li>
-            <li className="page-feature-item">
-              <span className="page-feature-dot">●</span> Instant webhooks
-            </li>
-            <li className="page-feature-item">
-              <span className="page-feature-dot">●</span> 100% Direct-to-Wallet
-            </li>
-          </ul>
+        <section className="use-case-narrative page-section">
+          <article>
+            <span>{page.why.kicker}</span>
+            <h2>{page.why.title}</h2>
+            <p>{page.why.body}</p>
+          </article>
+          <article>
+            <span>{page.limitations.kicker}</span>
+            <h2>{page.limitations.title}</h2>
+            <p>{page.limitations.body}</p>
+          </article>
+        </section>
+
+        <section className="use-case-flow page-section">
+          <div className="use-case-section-copy">
+            <span className="lend-section-kicker">{page.mechanics.kicker}</span>
+            <h2>{page.mechanics.title}</h2>
+          </div>
+          <div className="use-case-flow__steps">
+            {page.mechanics.steps.map((step, index) => (
+              <article key={step.title}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="use-case-network-section page-section">
+          <div className="use-case-section-copy">
+            <span className="lend-section-kicker">{page.useCases.kicker}</span>
+            <h2>{page.useCases.title}</h2>
+            <p>{page.useCases.body}</p>
+          </div>
+          <div className="use-case-network-grid">
+            {page.useCases.items.map((item) => (
+              <article key={item.name} className="use-case-network">
+                <strong>{item.name}</strong>
+                <span>{item.body}</span>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="use-case-related page-section">
+          <div className="use-case-section-copy">
+            <span className="lend-section-kicker">{page.related.kicker}</span>
+            <h2>{page.related.title}</h2>
+          </div>
+          <div className="use-case-related__grid">
+            {page.related.links.map((link) => (
+              <Link key={link.href} href={localizedHref(locale, link.href)} className="lend-card use-case-related-link">
+                <span>{link.kicker}</span>
+                <strong>{link.label}</strong>
+                <p>{link.body}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="page-final-section use-case-final">
+          <h2 className="page-final-title">{page.cta.title}</h2>
+          <p className="page-final-text page-final-text--wide">{page.cta.body}</p>
+          <div className="page-cta-row page-cta-row--centered">
+            <Link href={localizedHref(locale, page.cta.primary.href)} className="lend-primary">
+              {page.cta.primary.label}
+            </Link>
+            <Link href={localizedHref(locale, page.cta.secondary.href)} className="lend-secondary">
+              {page.cta.secondary.label}
+            </Link>
+          </div>
+        </section>
+
+        <section className="use-case-seo" aria-label={page.seoLabel}>
+          <p>{page.seo}</p>
         </section>
       </div>
     </MarketingLayout>

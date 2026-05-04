@@ -1,0 +1,59 @@
+---
+title: Webhooks
+description: Как получать и проверять платежные уведомления.
+---
+
+# Webhooks
+
+Webhooks позволяют получать уведомления в реальном времени, когда статус инвойса меняется.
+
+## Настройка
+
+Укажите webhook URL в [Developer Portal](https://reqst.xyz/app/developer-portal). Reqst будет отправлять `POST` запрос на этот URL с JSON payload при каждом обновлении инвойса.
+
+## Payload webhook
+
+```json
+{
+  "event": "invoice.paid",
+  "invoice": {
+    "id": "INV-123",
+    "amount": "100.00",
+    "currency": "USD",
+    "status": "paid",
+    "metadata": {
+      "user_id": "user_456"
+    }
+  }
+}
+```
+
+## Проверка подписи
+
+Чтобы убедиться, что webhook действительно отправлен Reqst, проверяйте заголовок `X-Reqst-Signature`.
+
+Подпись представляет собой HMAC-SHA256 hash от тела запроса с использованием вашего **Webhook Secret** в качестве ключа.
+
+### Пример проверки на Node.js
+
+```javascript
+const crypto = require("crypto");
+
+function verifyWebhook(payload, signature, secret) {
+  const hmac = crypto.createHmac("sha256", secret);
+  hmac.update(JSON.stringify(payload));
+  const expectedSignature = hmac.digest("hex");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
+```
+
+## Best practices
+
+- **Возвращайте 200 OK**: подтверждайте получение webhook успешным HTTP-статусом.
+- **Idempotency**: обработчик должен быть идемпотентным, потому что Reqst может повторить доставку, если не получил 200 response.
+- **Проверяйте подписи**: всегда валидируйте подпись, чтобы защититься от spoofing.
+- **Обрабатывайте асинхронно**: быстро подтверждайте webhook и переносите тяжелую обработку в очередь или background job.
