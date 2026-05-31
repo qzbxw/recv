@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -48,6 +49,29 @@ type workspaceContext struct {
 	Workspace store.Workspace
 }
 
+// respondError writes a JSON error response. For 5xx statuses it logs the
+// underlying error server-side and returns a generic message, so internal
+// details (SQL, driver, schema) never reach clients. For 4xx it surfaces the
+// error text, which is request-shaped (validation/auth/conflict) and safe.
+func respondError(c *gin.Context, status int, err error) {
+	if status >= http.StatusInternalServerError {
+		log.Printf("http %s %s: %v", c.Request.Method, c.FullPath(), err)
+		c.JSON(status, gin.H{"error": "internal server error"})
+		return
+	}
+	c.JSON(status, gin.H{"error": err.Error()})
+}
+
+// abortError is respondError for middleware paths that must abort the chain.
+func abortError(c *gin.Context, status int, err error) {
+	if status >= http.StatusInternalServerError {
+		log.Printf("http %s %s: %v", c.Request.Method, c.FullPath(), err)
+		c.AbortWithStatusJSON(status, gin.H{"error": "internal server error"})
+		return
+	}
+	c.AbortWithStatusJSON(status, gin.H{"error": err.Error()})
+}
+
 func NewServer(cfg config.Config, st *store.Store, authService *service.AuthService, adminService *service.AdminService, invoiceService *service.InvoiceService, paymentService *service.PaymentService) *gin.Engine {
 	server := &Server{
 		cfg:            cfg,
@@ -60,17 +84,24 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	}
 
 	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery(), corsMiddleware(), requestMetricsMiddleware())
+	router.Use(gin.Logger(), gin.Recovery(), corsMiddleware(cfg), requestMetricsMiddleware())
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true, "service": "reqst-api"})
 	})
 
 	router.POST("/api/auth/telegram", server.handleTelegramAuth)
+	router.POST("/api/auth/agent/bootstrap", server.handleAgentBootstrap)
 	router.POST("/api/auth/telegram/request-code", server.handleTelegramCodeRequest)
 	router.POST("/api/auth/telegram/login", server.handleTelegramCodeLogin)
+	router.POST("/api/auth/refresh", server.handleAuthRefresh)
+	router.POST("/api/auth/logout", server.handleAuthLogout)
 	router.POST("/api/admin/login", server.handleAdminLogin)
+	router.POST("/api/admin/login/verify-totp", server.handleAdminVerifyTOTP)
+	router.POST("/api/admin/refresh", server.handleAdminRefresh)
+	router.POST("/api/admin/logout", server.handleAdminLogout)
 	router.GET("/api/public/invoices/:public_id", server.handlePublicInvoice)
+	router.POST("/api/public/events", server.handlePublicProductEvent)
 
 	internal := router.Group("/internal")
 	internal.Use(server.internalTokenMiddleware())
@@ -88,6 +119,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api.Use(server.authMiddleware())
 	api.GET("/me", server.handleMe)
 	api.POST("/me/contact-email", server.handleUpdateContactEmail)
+	api.POST("/events", server.handleProductEvent)
 	api.GET("/developer/usage", server.handleDeveloperUsage)
 	api.GET("/developer/api-keys", server.handleListAPIKeys)
 	api.POST("/developer/api-keys", server.handleCreateAPIKey)
@@ -107,6 +139,12 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api.GET("/invoices/:id", server.handleGetInvoice)
 	api.POST("/invoices/:id/cancel", server.handleCancelInvoice)
 	api.POST("/invoices/:id/mark-paid", server.handleMarkInvoicePaid)
+	api.GET("/team", server.handleListTeam)
+	api.POST("/team/invites", server.handleInviteMember)
+	api.DELETE("/team/invites/:id", server.handleRevokeInvite)
+	api.POST("/team/members/:userId/role", server.handleUpdateMemberRole)
+	api.DELETE("/team/members/:userId", server.handleRemoveMember)
+	api.POST("/workspaces/:id/switch", server.handleSwitchWorkspace)
 
 	devAPI := router.Group("/v1")
 	devAPI.Use(server.apiKeyMiddleware())
@@ -127,7 +165,9 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	adminAPI.GET("/watchers", server.handleAdminWatchers)
 	adminAPI.GET("/notifications", server.handleAdminNotifications)
 	adminAPI.GET("/analytics", server.handleAdminAnalytics)
+	adminAPI.GET("/audit-events", server.handleAdminAuditEvents)
 	adminAPI.GET("/seo-targets", server.handleAdminSEOTargets)
+	adminAPI.POST("/sessions/revoke", server.handleAdminRevokeSession)
 	adminAPI.POST("/workspaces/:id/block", server.handleAdminBlockWorkspace)
 	adminAPI.POST("/workspaces/:id/plan", server.handleAdminSetWorkspacePlan)
 	adminAPI.POST("/workspaces/:id/billing-checkout", server.handleAdminCreateBillingCheckout)
@@ -167,6 +207,7 @@ func (s *Server) handleTelegramAuth(c *gin.Context) {
 	}
 
 	metrics.IncAuthAttempt("telegram", "success", "authenticated")
+	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusOK, result)
 }
 
@@ -206,7 +247,81 @@ func (s *Server) handleTelegramCodeLogin(c *gin.Context) {
 	}
 
 	metrics.IncAuthAttempt("telegram_code_login", "success", "authenticated")
+	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) handleAgentBootstrap(c *gin.Context) {
+	ctx := metrics.WithSource(c.Request.Context(), "agent_bootstrap")
+	var body service.AgentBootstrapInput
+	if err := c.ShouldBindJSON(&body); err != nil {
+		metrics.IncAuthAttempt("agent_bootstrap", "failure", "invalid_payload")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := s.authService.BootstrapAgentWorkspace(ctx, body)
+	if err != nil {
+		metrics.IncAuthAttempt("agent_bootstrap", "failure", "bootstrap")
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	metrics.IncAuthAttempt("agent_bootstrap", "success", "created")
+	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
+	c.JSON(http.StatusCreated, result)
+}
+
+func (s *Server) handleAuthRefresh(c *gin.Context) {
+	refreshToken := refreshTokenFromRequest(c, "reqst_refresh")
+	if refreshToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing refresh token"})
+		return
+	}
+	result, err := s.authService.Refresh(c.Request.Context(), refreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) handleAuthLogout(c *gin.Context) {
+	refreshToken := refreshTokenFromRequest(c, "reqst_refresh")
+	if refreshToken != "" {
+		_ = s.authService.Logout(c.Request.Context(), refreshToken)
+	}
+	clearRefreshCookie(c, "reqst_refresh", s.cfg.AppEnv)
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func (s *Server) handleProductEvent(c *gin.Context) {
+	wc := workspaceFromContext(c)
+	var body store.ProductEventInput
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event payload"})
+		return
+	}
+	body.WorkspaceID = &wc.Workspace.ID
+	if err := s.store.RecordProductEvent(c.Request.Context(), body); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to record event"})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (s *Server) handlePublicProductEvent(c *gin.Context) {
+	var body store.ProductEventInput
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event payload"})
+		return
+	}
+	if err := s.store.RecordProductEvent(c.Request.Context(), body); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to record event"})
+		return
+	}
+	c.Status(http.StatusNoContent)
 }
 
 func (s *Server) handleMe(c *gin.Context) {
@@ -260,11 +375,11 @@ func (s *Server) handleUpdateContactEmail(c *gin.Context) {
 
 	workspace, err := s.store.UpdateWorkspaceEmail(c.Request.Context(), wc.Workspace.ID, email)
 	if err != nil {
-		status := http.StatusInternalServerError
 		if strings.Contains(strings.ToLower(err.Error()), "duplicate key") {
-			status = http.StatusConflict
+			c.JSON(http.StatusConflict, gin.H{"error": "email already in use"})
+			return
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -275,7 +390,7 @@ func (s *Server) handleListWallets(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	wallets, err := s.store.ListWallets(c.Request.Context(), wc.Workspace.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"items": wallets})
@@ -323,17 +438,18 @@ func (s *Server) handleDeleteWallet(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
 }
 
 func (s *Server) handleListInvoices(c *gin.Context) {
-	_, _ = s.store.ExpireOverdueInvoices(c.Request.Context())
 	wc := workspaceFromContext(c)
 	page := parseIntDefault(c.Query("page"), 1)
 	pageSize := parseIntDefault(c.Query("page_size"), 20)
+	status := strings.TrimSpace(c.Query("status"))
+	query := strings.TrimSpace(c.Query("query"))
 	if page < 1 {
 		page = 1
 	}
@@ -341,14 +457,20 @@ func (s *Server) handleListInvoices(c *gin.Context) {
 		pageSize = 20
 	}
 
-	items, err := s.store.ListInvoices(c.Request.Context(), wc.Workspace.ID, pageSize, (page-1)*pageSize)
+	items, total, err := s.store.ListInvoices(c.Request.Context(), wc.Workspace.ID, store.ListInvoicesFilter{
+		Limit:  pageSize,
+		Offset: (page - 1) * pageSize,
+		Status: status,
+		Query:  query,
+	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"items":     items,
+		"total":     total,
 		"page":      page,
 		"page_size": pageSize,
 	})
@@ -388,7 +510,6 @@ func (s *Server) handleCreateInvoice(c *gin.Context) {
 }
 
 func (s *Server) handleGetInvoice(c *gin.Context) {
-	_, _ = s.store.ExpireOverdueInvoices(c.Request.Context())
 	wc := workspaceFromContext(c)
 	invoiceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -402,7 +523,7 @@ func (s *Server) handleGetInvoice(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.JSON(http.StatusOK, publicInvoiceResponse(invoice))
@@ -421,7 +542,7 @@ func (s *Server) handleCancelInvoice(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	if !isWorkspaceManagedInvoice(currentInvoice) {
@@ -434,7 +555,7 @@ func (s *Server) handleCancelInvoice(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.JSON(http.StatusOK, publicInvoiceResponse(invoice))
@@ -453,7 +574,7 @@ func (s *Server) handleMarkInvoicePaid(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	if !isWorkspaceManagedInvoice(currentInvoice) {
@@ -467,7 +588,7 @@ func (s *Server) handleMarkInvoicePaid(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.JSON(http.StatusOK, publicInvoiceResponse(invoice))
@@ -475,14 +596,13 @@ func (s *Server) handleMarkInvoicePaid(c *gin.Context) {
 
 func (s *Server) handlePublicInvoice(c *gin.Context) {
 	ctx := metrics.WithSource(c.Request.Context(), "public_checkout")
-	_, _ = s.store.ExpireOverdueInvoices(ctx)
 	invoice, err := s.store.GetInvoiceByPublicID(ctx, c.Param("public_id"))
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.JSON(http.StatusOK, publicInvoiceResponse(invoice))
@@ -557,7 +677,7 @@ func (s *Server) handleGrantPRO(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	metrics.IncAdminOperation("grant_pro", "success")
@@ -587,7 +707,7 @@ func (s *Server) handleBlockWorkspace(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	metrics.IncAdminOperation("set_blocked", "success")
@@ -785,17 +905,73 @@ func validateWallet(network store.Network, address string) error {
 	return store.ValidateWalletAddress(network, address)
 }
 
-func corsMiddleware() gin.HandlerFunc {
+func corsMiddleware(cfg config.Config) gin.HandlerFunc {
+	allowedOrigins := map[string]struct{}{}
+	for _, origin := range strings.Split(cfg.AllowedOrigins, ",") {
+		origin = strings.TrimSpace(origin)
+		if origin != "" {
+			allowedOrigins[origin] = struct{}{}
+		}
+	}
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := strings.TrimSpace(c.GetHeader("Origin"))
+		if len(allowedOrigins) == 0 && cfg.AppEnv == "development" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		} else if _, ok := allowedOrigins[origin]; ok {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Vary", "Origin")
+		}
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Internal-Token, X-API-Key, Idempotency-Key")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
 		c.Next()
 	}
+}
+
+func setRefreshCookie(c *gin.Context, name string, value string, appEnv string) {
+	if strings.TrimSpace(value) == "" {
+		return
+	}
+	secure := appEnv != "development"
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		MaxAge:   30 * 24 * 60 * 60,
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func clearRefreshCookie(c *gin.Context, name string, appEnv string) {
+	secure := appEnv != "development"
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     name,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func refreshTokenFromRequest(c *gin.Context, cookieName string) string {
+	if cookie, err := c.Cookie(cookieName); err == nil && strings.TrimSpace(cookie) != "" {
+		return strings.TrimSpace(cookie)
+	}
+	var body struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := c.ShouldBindJSON(&body); err == nil {
+		return strings.TrimSpace(body.RefreshToken)
+	}
+	return ""
 }
 
 func parseIntDefault(value string, fallback int) int {

@@ -1,0 +1,42 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: GHCR image tag to deploy
+        required: true
+        default: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          GHCR_IMAGE_TAG: ${{ inputs.image_tag }}
+          GHCR_IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: GHCR_IMAGE_TAG,GHCR_IMAGE_PREFIX
+          script_stop: true
+          script: |
+            cd /opt/reqst
+            mkdir -p backups
+            docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > "backups/predeploy-$(date -u +%Y%m%dT%H%M%SZ).sql"
+            docker compose run --rm restic backup /backup
+            docker compose pull
+            docker compose up -d postgres
+            docker compose up -d api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
+            for i in $(seq 1 60); do
+              if docker compose exec -T api wget -qO- http://127.0.0.1:8080/healthz >/dev/null; then
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "Health gate failed. Roll back with: GHCR_IMAGE_TAG=<previous-tag> docker compose up -d"
+            exit 1

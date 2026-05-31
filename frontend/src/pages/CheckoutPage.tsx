@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import QRCode from "qrcode";
-import { fetchPublicInvoice } from "../lib/api";
+import { fetchPublicInvoice, trackPublicEvent } from "../lib/api";
 import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel } from "../lib/status";
 import type { Invoice } from "../lib/types";
 import { useUI } from "../lib/ui";
@@ -95,34 +95,49 @@ export function CheckoutPage() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [now, setNow] = useState(Date.now());
   const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "">("");
+  const [retryNonce, setRetryNonce] = useState(0);
+  const statusRef = useRef("");
+  const trackedCheckoutRef = useRef("");
+
+  const loadInvoice = useCallback(async (active = true) => {
+    if (publicId === DEMO_PUBLIC_ID) {
+      if (active) {
+        setInvoice(demoInvoice);
+        setError("");
+      }
+      return;
+    }
+
+    try {
+      const result = await fetchPublicInvoice(publicId);
+      if (!active) {
+        return;
+      }
+      setInvoice(result);
+      setError("");
+    } catch (err) {
+      if (!active) {
+        return;
+      }
+      setError((err as Error).message);
+    }
+  }, [demoInvoice, publicId]);
+
+  useEffect(() => {
+    statusRef.current = invoice?.status || "";
+  }, [invoice?.status]);
 
   useEffect(() => {
     let active = true;
 
-    async function load() {
-      if (publicId === DEMO_PUBLIC_ID) {
-        setInvoice(demoInvoice);
-        setError("");
+    void loadInvoice(active);
+    const poll = window.setInterval(() => {
+      if (["paid", "expired", "overpaid", "manual_review"].includes(statusRef.current)) {
+        window.clearInterval(poll);
         return;
       }
-
-      try {
-        const result = await fetchPublicInvoice(publicId);
-        if (!active) {
-          return;
-        }
-        setInvoice(result);
-        setError("");
-      } catch (err) {
-        if (!active) {
-          return;
-        }
-        setError((err as Error).message);
-      }
-    }
-
-    void load();
-    const poll = window.setInterval(load, 5000);
+      void loadInvoice(active);
+    }, 5000);
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
 
     return () => {
@@ -130,12 +145,21 @@ export function CheckoutPage() {
       window.clearInterval(poll);
       window.clearInterval(clock);
     };
-  }, [demoInvoice, publicId]);
+  }, [loadInvoice, retryNonce]);
 
   useEffect(() => {
     if (!invoice) {
       setQrDataUrl("");
       return;
+    }
+    if (trackedCheckoutRef.current !== invoice.public_id) {
+      trackedCheckoutRef.current = invoice.public_id;
+      trackPublicEvent({
+        event_name: "checkout_viewed",
+        source: "checkout",
+        invoice_public_id: invoice.public_id,
+        properties: { status: invoice.status, network: invoice.payable_network },
+      });
     }
 
     const source = invoice.payment_uri || fallbackPaymentURI(invoice);
@@ -145,8 +169,8 @@ export function CheckoutPage() {
       margin: 1,
       errorCorrectionLevel: "M",
       color: {
-        dark: "#f7f3ea",
-        light: "#050505",
+        dark: "#050505",
+        light: "#ffffff",
       },
     })
       .then(setQrDataUrl)
@@ -157,8 +181,8 @@ export function CheckoutPage() {
             margin: 1,
             errorCorrectionLevel: "M",
             color: {
-              dark: "#f7f3ea",
-              light: "#050505",
+              dark: "#050505",
+              light: "#ffffff",
             },
           });
           setQrDataUrl(fallback);
@@ -230,8 +254,12 @@ export function CheckoutPage() {
     : [];
 
   async function copyValue(key: "amount" | "address" | "comment", value: string) {
-    await navigator.clipboard.writeText(value);
-    setCopiedField(key);
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(key);
+    } catch {
+      setError(language === "ru" ? "Не удалось скопировать. Скопируйте значение вручную." : "Copy failed. Copy the value manually.");
+    }
   }
 
   return (
@@ -254,7 +282,7 @@ export function CheckoutPage() {
       </header>
 
       <section className={`checkout-card checkout-card--lux checkout-card--${checkoutVariant}`}>
-        {error ? <div className="alert">{error}</div> : null}
+        {error ? <div className="alert" role="status">{error} <button type="button" className="ghost-button compact-button" onClick={() => setRetryNonce((value) => value + 1)}>{text.retry}</button></div> : null}
         {!invoice ? <p className="muted">{text.loading}</p> : null}
 
         {invoice ? (
@@ -341,7 +369,7 @@ export function CheckoutPage() {
                     {paymentRows
                       .filter((row) => row.key !== "amount")
                       .map((row) => (
-                        <div key={row.key} className={`payment-field ${canCopyDetails ? "payment-field--button" : ""}`} onClick={() => canCopyDetails && void copyValue(row.key, row.value)}>
+                        <button key={row.key} type="button" className={`payment-field ${canCopyDetails ? "payment-field--button" : ""}`} onClick={() => canCopyDetails && void copyValue(row.key, row.value)} disabled={!canCopyDetails}>
                           <div>
                             <label>{row.label}</label>
                             <code>{row.value}</code>
@@ -353,7 +381,7 @@ export function CheckoutPage() {
                               {copiedField === row.key ? text.copied : row.copyLabel}
                             </span>
                           )}
-                        </div>
+                        </button>
                       ))}
                   </div>
                 </section>
@@ -373,6 +401,11 @@ export function CheckoutPage() {
                       {copiedField === "amount" ? text.copied : text.copyAmount}
                     </button>
                   )}
+                  {canCopyDetails && invoice.payment_uri ? (
+                    <a className="ghost-button compact-button payment-rail-action" href={invoice.payment_uri}>
+                      {text.openWallet}
+                    </a>
+                  ) : null}
                 </div>
 
                 <aside className="qr-stage qr-stage--receipt">

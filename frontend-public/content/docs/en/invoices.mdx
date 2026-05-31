@@ -1,76 +1,223 @@
 ---
-title: Creating Invoices
-description: How to create and manage payment invoices.
+title: Invoices
+description: Create, fetch, list and cancel invoices — full field reference, statuses, and lifecycle.
 ---
 
-# Creating Invoices
+# Invoices
 
-Invoices are the core of Reqst's payment flow. An invoice represents a single payment request for a user.
+An invoice is a single payment request. You create it with a USD amount and a network; Reqst converts the price to the on-chain `payable_amount`, assigns one of your payout wallets as the `destination_address`, and tracks the payment until it settles.
 
-## Create Invoice
+All endpoints below live under `https://reqst.xyz/v1` and require an [API key](/en/docs/authentication).
 
-To create a new invoice, send a `POST` request to `/v1/invoices`.
+## Create an invoice
 
-### Request Parameters
+```text
+POST /v1/invoices        (scope: invoices:write)
+```
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `amount` | string | Yes | The amount in decimal format (e.g., "10.50"). |
-| `currency` | string | Yes | The currency code (e.g., "USD", "EUR"). |
-| `description` | string | No | A short description shown to the user. |
-| `metadata` | object | No | Custom data to store with the invoice. |
+### Request body
 
-### Example Request (Python)
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | string | Yes | Label shown on checkout (e.g. `"Order #9841"`). Must be non-empty. |
+| `base_amount_usd` | string | Yes | Amount in USD as a decimal string (e.g. `"149.00"`). Must be positive. |
+| `payable_network` | string | Yes | One of `TON`, `TRON`, `SOLANA`, `EVM`, `BASE`, `ARBITRUM`, `BSC`. You must have an active payout wallet for the matching wallet bucket. |
+| `expires_in_minutes` | integer | No | Payment window in minutes. Defaults to **30** when omitted or ≤ 0. |
+
+The invoice environment (`test`/`live`) is inherited from the API key — there is no `mode` field in the body.
+
+### Headers
+
+| Header | Purpose |
+|--------|---------|
+| `Content-Type: application/json` | Required. |
+| `Idempotency-Key` | Optional. Makes the create call safe to retry — see [Idempotency](#idempotency). |
+
+### Example (curl)
+
+```bash
+curl -X POST https://reqst.xyz/v1/invoices \
+  -H "X-API-Key: $REQST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-9841" \
+  -d '{
+    "title": "Premium Subscription",
+    "base_amount_usd": "100.00",
+    "payable_network": "TON",
+    "expires_in_minutes": 60
+  }'
+```
+
+### Example (Python)
 
 ```python
 import requests
 
-url = "https://reqst.xyz/v1/invoices"
-headers = {
-    "X-API-Key": "YOUR_API_KEY",
-    "Content-Type": "application/json"
-}
-payload = {
-    "amount": "100.00",
-    "currency": "USD",
-    "description": "Premium Subscription"
-}
-
-response = requests.post(url, json=payload, headers=headers)
-invoice = response.json()
-print(f"Checkout URL: {invoice['checkout_url']}")
+resp = requests.post(
+    "https://reqst.xyz/v1/invoices",
+    headers={"X-API-Key": "YOUR_API_KEY", "Content-Type": "application/json"},
+    json={
+        "title": "Premium Subscription",
+        "base_amount_usd": "100.00",
+        "payable_network": "TON",
+        "expires_in_minutes": 60,
+    },
+)
+invoice = resp.json()
+print("Checkout:", "https://reqst.xyz" + invoice["checkout_url"])
 ```
 
-## Get Invoice Status
+## Invoice object
 
-To check the status of an invoice, send a `GET` request to `/v1/invoices/:id`.
+A `201`/`200` response returns the invoice object:
 
-### Invoice Statuses
+```json
+{
+  "id": 482,
+  "public_id": "pub_abcdef123",
+  "title": "Premium Subscription",
+  "kind": "merchant",
+  "subscription_days": 0,
+  "plan_code": "developer",
+  "checkout_badge": "Merchant Checkout",
+  "base_amount_usd": "100.00",
+  "payable_amount": "100.000000",
+  "payable_network": "TON",
+  "destination_address": "EQC...",
+  "payment_comment": "",
+  "status": "awaiting_payment",
+  "environment": "live",
+  "mode": "live",
+  "expires_at": "2026-05-31T22:00:00Z",
+  "created_at": "2026-05-31T21:00:00Z",
+  "tx_hash": null,
+  "received_amount": "0.000000",
+  "review_reason": null,
+  "finalized_at": null,
+  "checkout_url": "/app/checkout/pub_abcdef123",
+  "payment_uri": "ton://transfer/EQC...?amount=100000000000&text="
+}
+```
 
-- `awaiting_payment`: The user hasn't paid yet.
-- `paid`: The payment was received and confirmed.
-- `expired`: The payment window closed before payment was made.
-- `cancelled`: The invoice was manually cancelled.
+### Field reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | Numeric invoice ID. Use this in the path of get/cancel/simulate calls. |
+| `public_id` | string | Public identifier used in the checkout URL. |
+| `title` | string | The title you supplied. |
+| `kind` | string | `merchant` for API-created invoices; `subscription` for Reqst plan billing. |
+| `subscription_days` | integer | Days granted by a subscription invoice; `0` for merchant invoices. |
+| `plan_code` | string | Plan associated with the invoice. |
+| `checkout_badge` | string | Badge text shown on the hosted checkout. |
+| `base_amount_usd` | string | USD price, 2 decimals. |
+| `payable_amount` | string | On-chain amount to pay, 6 decimals. |
+| `payable_network` | string | Network the customer pays on. |
+| `destination_address` | string | Your payout wallet that must receive the payment. |
+| `payment_comment` | string | Memo/comment required by some networks (empty string if none). |
+| `status` | string | Current status — see [Statuses](#statuses). |
+| `environment` / `mode` | string | `test` or `live`. Both fields carry the same value. |
+| `expires_at` | timestamp | When the payment window closes (RFC 3339). |
+| `created_at` | timestamp | Creation time. |
+| `tx_hash` | string \| null | Matching transaction hash once observed. |
+| `received_amount` | string | Total received so far, 6 decimals. |
+| `review_reason` | string \| null | Why the invoice is in `manual_review`, when applicable. |
+| `finalized_at` | timestamp \| null | When the invoice reached a terminal state. |
+| `checkout_url` | string | Relative hosted-checkout path: `https://reqst.xyz{checkout_url}`. |
+| `payment_uri` | string | Deep-link / address for the customer's wallet. For TON, a `ton://transfer/...` URI with amount in nanotons; for other networks, the destination address. |
+
+## Statuses
+
+| Status | Meaning |
+|--------|---------|
+| `draft` | Created but not yet active. |
+| `awaiting_payment` | Open and waiting for payment. |
+| `paid` | The expected amount was received and confirmed. |
+| `expired` | The payment window closed before payment (also the state set when you cancel). |
+| `underpaid` | A transfer arrived but was less than `payable_amount`. |
+| `overpaid` | A transfer exceeded `payable_amount`. |
+| `manual_review` | Needs merchant confirmation — e.g. a payment arrived after expiry, or an overpayment. |
+
+A read of an invoice whose window has elapsed while still `awaiting_payment` is reported as `expired`.
+
+## Get an invoice
+
+```text
+GET /v1/invoices/:id     (scope: invoices:read)
+```
+
+```bash
+curl https://reqst.xyz/v1/invoices/482 -H "X-API-Key: $REQST_API_KEY"
+```
+
+Returns the invoice object above, or `404` if it does not belong to your workspace.
+
+## List invoices
+
+```text
+GET /v1/invoices         (scope: invoices:read)
+```
+
+| Query param | Default | Notes |
+|-------------|---------|-------|
+| `page` | `1` | 1-based page number. |
+| `page_size` | `20` | Clamped to `1–100`; out-of-range values reset to 20. |
+
+```bash
+curl "https://reqst.xyz/v1/invoices?page=1&page_size=50" \
+  -H "X-API-Key: $REQST_API_KEY"
+```
+
+```json
+{ "items": [ /* invoices */ ], "total": 134, "page": 1, "page_size": 50 }
+```
+
+## Cancel an invoice
+
+```text
+POST /v1/invoices/:id/cancel     (scope: invoices:write)
+```
+
+Cancelling sets the invoice to `expired`. Only workspace-created merchant invoices can be cancelled; subscription/plan invoices cannot (`400`).
+
+```bash
+curl -X POST https://reqst.xyz/v1/invoices/482/cancel \
+  -H "X-API-Key: $REQST_API_KEY"
+```
+
+## Simulating payments (test mode)
+
+```text
+POST /v1/test/invoices/:id/simulate-payment     (scope: invoices:write)
+```
+
+Marks a **test** invoice as `paid` and fires webhooks, without any on-chain transfer. Requires an `rqst_test_` key and a test invoice; otherwise returns `403`/`400`.
+
+```bash
+curl -X POST https://reqst.xyz/v1/test/invoices/482/simulate-payment \
+  -H "X-API-Key: $REQST_API_KEY"
+```
+
+## Idempotency
+
+`POST /v1/invoices` accepts an `Idempotency-Key` header. Reqst stores the result against the key + request body hash:
+
+- **Same key, same body** → returns the original stored response.
+- **Same key, different body** → `409 Conflict`.
+- **Same key, original still processing** → `409 Conflict`.
+
+Use a stable key per logical order (e.g. your order ID) so network retries never create duplicate invoices.
 
 ## Example (Go)
 
 ```go
-import (
-    "encoding/json"
-    "fmt"
-    "net/http"
-)
+req, _ := http.NewRequest("GET", "https://reqst.xyz/v1/invoices/"+id, nil)
+req.Header.Set("X-API-Key", apiKey)
 
-func getInvoice(id string, apiKey string) {
-    req, _ := http.NewRequest("GET", "https://reqst.xyz/v1/invoices/"+id, nil)
-    req.Header.Add("X-API-Key", apiKey)
-    
-    client := &http.Client{}
-    resp, _ := client.Do(req)
-    defer resp.Body.Close()
-    
-    var result map[string]interface{}
-    json.NewDecoder(resp.Body).Decode(&result)
-    fmt.Println("Status:", result["status"])
-}
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+
+var invoice map[string]any
+json.NewDecoder(resp.Body).Decode(&invoice)
+fmt.Println("Status:", invoice["status"])
 ```

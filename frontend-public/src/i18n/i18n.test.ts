@@ -11,8 +11,8 @@ describe("public site i18n", () => {
   });
 
   it("returns localized landing copy", () => {
-    expect(getCopy("en").hero.title).toContain("Digital Revenue");
-    expect(getCopy("ru").hero.title).toContain("цифрового дохода");
+    expect(getCopy("en").hero.title).toContain("Crypto Payments");
+    expect(getCopy("ru").hero.title).toContain("Прием платежей");
     expect(copyByLocale.en.footer.console).toBe("Console");
     expect(copyByLocale.ru.footer.console).toBe("Консоль");
   });

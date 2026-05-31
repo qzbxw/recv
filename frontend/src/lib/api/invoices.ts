@@ -1,8 +1,13 @@
 import type { Environment, Invoice, InvoiceListResponse } from "../types";
 import { request } from "./core";
 
-export async function fetchInvoices(token: string) {
-  return request<InvoiceListResponse>("/api/invoices?page=1&page_size=50", {}, token);
+export async function fetchInvoices(token: string, params: { page?: number; page_size?: number; status?: string; query?: string } = {}) {
+  const search = new URLSearchParams();
+  search.set("page", String(params.page || 1));
+  search.set("page_size", String(params.page_size || 20));
+  if (params.status && params.status !== "all") search.set("status", params.status);
+  if (params.query?.trim()) search.set("query", params.query.trim());
+  return request<InvoiceListResponse>(`/api/invoices?${search.toString()}`, {}, token);
 }
 
 export async function createInvoice(token: string, payload: {

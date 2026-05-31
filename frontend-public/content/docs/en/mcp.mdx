@@ -1,0 +1,190 @@
+---
+title: MCP / AI Agents
+description: Drive Reqst from AI agents (Claude Desktop, Cursor) with the Reqst Model Context Protocol server.
+---
+
+# MCP / AI Agents
+
+Reqst ships a **Model Context Protocol (MCP) server** that exposes the payment gateway to AI agents as tools and resources. Any MCP-compatible client — **Claude Desktop**, **Cursor**, and others — can use it to create invoices, check payment status, verify webhooks, and look up supported networks, all in natural language.
+
+The server is `reqst-agent-mcp` and runs locally over stdio. Under the hood it calls the same Reqst API documented elsewhere in these docs. It can also bootstrap a new agent workspace, create a Reqst subscription checkout, and issue API credentials after the subscription is paid.
+
+## Configuration
+
+The server reads these environment variables:
+
+| Variable | Required | Default | Purpose |
+|----------|----------|---------|---------|
+| `REQST_ACCESS_TOKEN` | For self-service tools | — | Reqst console bearer token. If the agent does not have one yet, call `bootstrap_agent_workspace` first and persist the returned `token`/`access_token`. |
+| `REQST_API_KEY` | Yes (for invoice tools) | — | Your Reqst API key. A `rqst_test_` key is recommended while developing. |
+| `REQST_WEBHOOK_SECRET` | For `verify_webhook` | — | Webhook signing secret used to validate signatures. |
+| `REQST_APP_URL` | No | derived from `REQST_API_URL` | Base origin for console endpoints, e.g. `https://reqst.xyz`. |
+| `REQST_API_URL` | No | `https://reqst.xyz/v1` | Base URL of the REST API. |
+| `REQST_DOCS_URL` | No | `https://reqst.xyz/en/docs` | Base URL used to fetch raw docs for resources. |
+
+### Claude Desktop
+
+Add the server to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "reqst": {
+      "command": "npx",
+      "args": ["-y", "tsx", "/path/to/reqst/mcp-server/src/index.ts"],
+      "env": {
+        "REQST_ACCESS_TOKEN": "your_console_token_here",
+        "REQST_API_KEY": "rqst_test_your_key_here",
+        "REQST_WEBHOOK_SECRET": "whsec_your_secret_here"
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Add the same `mcpServers` block to Cursor's MCP settings (Settings → MCP), then reload. The Reqst tools appear to the agent automatically.
+
+### Local development
+
+```bash
+cd mcp-server
+npm install
+npm run dev
+```
+
+## Tools
+
+The agent can call these tools.
+
+### `bootstrap_agent_workspace`
+
+Create a new trial workspace for a fully autonomous agent. The tool returns a normal Reqst console auth result; persist `token` or `access_token` as `REQST_ACCESS_TOKEN` before calling self-service tools.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `workspace_name` | string | No | Short label used in the generated workspace slug. |
+| `contact_email` | string | No | Owner/contact email for receipts and support. |
+
+### `get_account`
+
+Return the authenticated workspace, active plan, and available paid plans. Requires `REQST_ACCESS_TOKEN`.
+
+### `create_subscription_checkout`
+
+Create a Reqst billing checkout for the current workspace. Requires `REQST_ACCESS_TOKEN`.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `plan_code` | string | Yes | One of `merchant`, `developer`, `business`. Use `developer` or `business` when the agent needs API keys and webhooks. |
+| `payable_network` | string | Yes | Network used to pay Reqst. One of: `TON`, `TRON`, `SOLANA`, `EVM`, `BASE`, `ARBITRUM`, `BSC`. |
+
+### `get_checkout_invoice`
+
+Read a public checkout invoice by `public_id`. Use it to poll a subscription checkout until `status` is `paid`.
+
+### `create_api_key`
+
+Create a developer API key after the workspace has an API-capable plan. Requires `REQST_ACCESS_TOKEN`.
+
+### `create_webhook_endpoint`
+
+Register a webhook endpoint after the workspace has webhooks enabled. Requires `REQST_ACCESS_TOKEN`.
+
+### `create_invoice`
+
+Create a new payment invoice.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | string | Yes | Human-readable title shown to the payer (e.g. `"Order #1290"`). |
+| `base_amount_usd` | string | Yes | Amount in USD as a decimal string (e.g. `"10.50"`). |
+| `payable_network` | string | Yes | Network the customer pays on. One of: `TON`, `TRON`, `SOLANA`, `EVM`, `BASE`, `ARBITRUM`, `BSC`. |
+| `expires_in_minutes` | number | No | Optional invoice lifetime in minutes (default 30). |
+
+The tool `POST`s the arguments directly to `/v1/invoices`. The created invoice's environment follows the API key (`rqst_test_` → test). See [Invoices](/en/docs/invoices).
+
+### `get_invoice`
+
+Retrieve status and details of an invoice.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | The invoice ID. |
+
+Calls `GET /v1/invoices/{id}`.
+
+### `list_invoices`
+
+List recent invoices with pagination.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `page` | number | No | Page number (default 1). |
+| `page_size` | number | No | Page size (default 20, max 100). |
+
+Calls `GET /v1/invoices?page=&page_size=`.
+
+### `simulate_payment`
+
+Mark a **test** invoice as paid without an on-chain transfer.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | The invoice ID. |
+
+Calls `POST /v1/test/invoices/{id}/simulate-payment`. Requires an `rqst_test_` key.
+
+### `verify_webhook`
+
+Verify a webhook signature locally using `REQST_WEBHOOK_SECRET`. The tool reproduces the production signing scheme exactly: it computes `v1=` + HMAC-SHA256 of `<timestamp>.<raw_body>` and compares it against the provided signature with a constant-time check.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `raw_body` | string | Yes | The raw, unparsed request body exactly as received — do not re-serialize it. |
+| `timestamp` | string | Yes | The value of the `X-Reqst-Timestamp` header. |
+| `signature` | string | Yes | The value of the `X-Reqst-Signature` header (e.g. `v1=abc...`). |
+
+Pass the body bytes verbatim. Re-encoding the JSON (which can reorder keys or change whitespace) changes the hash and the check will fail. If `REQST_WEBHOOK_SECRET` is unset, the tool returns an error. See [Webhooks](/en/docs/webhooks) for the full signing scheme.
+
+### `list_supported_networks`
+
+List the blockchain networks Reqst supports. Takes no parameters and returns a static summary of the `payable_network` values (TON, TRON, SOLANA, EVM, BASE, ARBITRUM, BSC). See [Supported Networks](/en/docs/networks) for the authoritative list.
+
+## Resources
+
+The server also exposes documentation as MCP resources, which the agent can read for context. Each is fetched from `${REQST_DOCS_URL}/raw/<slug>`:
+
+| URI | Description |
+|-----|-------------|
+| `reqst://docs/auth` | Authentication guide. |
+| `reqst://docs/invoices` | Invoices API guide. |
+| `reqst://docs/webhooks` | Webhook integration guide. |
+| `reqst://docs/errors` | Error handling and rate limits. |
+| `reqst://docs/mcp` | MCP and agent onboarding guide. |
+
+## Walkthrough: an AI agent accepts a crypto payment
+
+For a brand-new autonomous agent:
+
+1. Call `bootstrap_agent_workspace` and store the returned access token as `REQST_ACCESS_TOKEN`.
+2. Call `create_subscription_checkout` with `plan_code: "developer"`.
+3. Open or return the checkout URL, then poll `get_checkout_invoice` until the subscription invoice is `paid`.
+4. Call `create_api_key` and store the returned `secret` as `REQST_API_KEY`.
+5. Optionally call `create_webhook_endpoint` and store the returned webhook secret as `REQST_WEBHOOK_SECRET`.
+
+With the server configured against an `rqst_test_` or `rqst_live_` key, you can drive the customer payment flow conversationally:
+
+1. **You:** "Create a $25 USDT invoice on TRON for order #5512."
+   The agent calls `create_invoice` and reads back the `public_id`, `destination_address`, and `checkout_url`.
+2. **You:** "Has it been paid yet?"
+   The agent calls `get_invoice` with the returned `id` and reports `status: awaiting_payment`.
+3. **You:** "Simulate the payment so I can test my fulfillment."
+   The agent calls `simulate_payment`; the invoice flips to `paid` and a webhook fires.
+4. **You:** "Verify this webhook for me — here are the raw body, timestamp, and signature headers."
+   The agent calls `verify_webhook` with `raw_body`, `timestamp`, and `signature`, and reports whether the signature is valid.
+5. **You:** "Which networks can I charge on?"
+   The agent calls `list_supported_networks`.
+
+Because every tool ultimately hits the same `/v1` API, the agent's actions are subject to the same [scopes](/en/docs/authentication#scopes), [rate limits](/en/docs/errors#per-plan-quotas), and idempotency rules as any other integration.

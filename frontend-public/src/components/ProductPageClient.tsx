@@ -4,17 +4,11 @@ import { useEffect } from "react";
 import Link from "next/link";
 import {
   Bell,
-  CheckCircle2,
   Code2,
-  Copy,
-  FileText,
   KeyRound,
   Link2,
-  QrCode,
   RefreshCw,
   ShieldCheck,
-  TerminalSquare,
-  WalletCards,
   Webhook,
   Zap,
 } from "lucide-react";
@@ -24,7 +18,7 @@ import { JsonLd } from "./JsonLd";
 import { getCopy, Locale } from "@/i18n";
 import "./marketing/plans/plans.css";
 
-export type ProductVariant = "checkoutProduct" | "apiProduct" | "invoicingProduct";
+export type ProductVariant = "checkoutProduct" | "apiProduct" | "invoicingProduct" | "mcpProduct";
 
 type ProductCopy = {
   metadata: {
@@ -106,7 +100,7 @@ const productContent = {
         { title: "Rate limits", body: "Clear request ceilings with upgrade paths for higher volume business workloads." },
       ],
       codeTitle: "Code examples",
-      invoiceCode: `const invoice = await fetch("https://api.reqst.xyz/v1/invoices", {
+      invoiceCode: `const invoice = await fetch("https://reqst.xyz/v1/invoices", {
   method: "POST",
   headers: {
     "Authorization": "Bearer rqst_live_...",
@@ -114,14 +108,15 @@ const productContent = {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    amount: "149.00",
-    asset: "USDT",
-    network: "TRON",
-    success_url: "https://shop.example/orders/9841"
+    title: "Order #9841",
+    base_amount_usd: "149.00",
+    payable_network: "TRON",
+    expires_in_minutes: 60
   })
 });`,
       webhookCode: `const signature = req.headers["x-reqst-signature"];
-const expected = hmacSha256(rawBody, webhookSecret);
+const timestamp = req.headers["x-reqst-timestamp"];
+const expected = "v1=" + hmacSha256(timestamp + "." + rawBody, webhookSecret);
 
 if (signature !== expected) {
   return res.status(401).send("invalid signature");
@@ -158,6 +153,41 @@ if (signature !== expected) {
         "Payment detected on TRON",
         "Invoice underpaid by 4 USDT",
         "Manual confirm requested",
+      ],
+    },
+    mcpProduct: {
+      overviewTitle: "How it works",
+      overviewBody:
+        "Drop the Reqst MCP server into any MCP-compatible host. Your agent immediately gets 12 tools for onboarding, billing, and payment verification — no dashboard, no manual setup.",
+      primaryCta: "Read MCP Docs",
+      primaryPath: "docs/mcp",
+      configTitle: "Add to claude_desktop_config.json",
+      configCode: `{
+  "mcpServers": {
+    "reqst": {
+      "command": "npx",
+      "args": ["-y", "reqst-mcp"],
+      "env": {
+        "REQST_API_KEY": "rqst_live_...",
+        "REQST_ACCESS_TOKEN": "your_token"
+      }
+    }
+  }
+}`,
+      toolsTitle: "12 Agent Tools",
+      tools: [
+        { name: "bootstrap_agent_workspace", desc: "Self-register a new workspace and get an access token" },
+        { name: "create_subscription_checkout", desc: "Buy a plan — merchant, developer, or business" },
+        { name: "get_checkout_invoice", desc: "Poll subscription payment until confirmed" },
+        { name: "get_account", desc: "Read current workspace, plan, and balance" },
+        { name: "create_invoice", desc: "Create a payment invoice on any supported network" },
+        { name: "get_invoice", desc: "Fetch status of an existing invoice" },
+        { name: "list_invoices", desc: "Paginate your invoice history" },
+        { name: "simulate_payment", desc: "Trigger a test payment in sandbox mode" },
+        { name: "create_api_key", desc: "Issue a scoped API key after plan is active" },
+        { name: "create_webhook_endpoint", desc: "Register an HTTPS endpoint for events" },
+        { name: "verify_webhook", desc: "Validate HMAC-SHA256 signature locally" },
+        { name: "list_supported_networks", desc: "List all payable blockchain networks" },
       ],
     },
   },
@@ -212,7 +242,7 @@ if (signature !== expected) {
         { title: "Rate limits", body: "Понятные лимиты запросов с переходом на business-объемы при росте нагрузки." },
       ],
       codeTitle: "Примеры кода",
-      invoiceCode: `const invoice = await fetch("https://api.reqst.xyz/v1/invoices", {
+      invoiceCode: `const invoice = await fetch("https://reqst.xyz/v1/invoices", {
   method: "POST",
   headers: {
     "Authorization": "Bearer rqst_live_...",
@@ -220,14 +250,15 @@ if (signature !== expected) {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    amount: "149.00",
-    asset: "USDT",
-    network: "TRON",
-    success_url: "https://shop.example/orders/9841"
+    title: "Order #9841",
+    base_amount_usd: "149.00",
+    payable_network: "TRON",
+    expires_in_minutes: 60
   })
 });`,
       webhookCode: `const signature = req.headers["x-reqst-signature"];
-const expected = hmacSha256(rawBody, webhookSecret);
+const timestamp = req.headers["x-reqst-timestamp"];
+const expected = "v1=" + hmacSha256(timestamp + "." + rawBody, webhookSecret);
 
 if (signature !== expected) {
   return res.status(401).send("invalid signature");
@@ -266,13 +297,49 @@ if (signature !== expected) {
         "Запрошено ручное подтверждение",
       ],
     },
+    mcpProduct: {
+      overviewTitle: "Как это работает",
+      overviewBody:
+        "Добавьте MCP-сервер Reqst в любой MCP-совместимый хост. Агент сразу получает 12 инструментов для онбординга, биллинга и проверки платежей — без дашборда и ручной настройки.",
+      primaryCta: "Документация MCP",
+      primaryPath: "docs/mcp",
+      configTitle: "Добавить в claude_desktop_config.json",
+      configCode: `{
+  "mcpServers": {
+    "reqst": {
+      "command": "npx",
+      "args": ["-y", "reqst-mcp"],
+      "env": {
+        "REQST_API_KEY": "rqst_live_...",
+        "REQST_ACCESS_TOKEN": "your_token"
+      }
+    }
+  }
+}`,
+      toolsTitle: "12 инструментов агента",
+      tools: [
+        { name: "bootstrap_agent_workspace", desc: "Саморегистрация воркспейса, получение access token" },
+        { name: "create_subscription_checkout", desc: "Покупка плана — merchant, developer или business" },
+        { name: "get_checkout_invoice", desc: "Поллинг оплаты подписки до подтверждения" },
+        { name: "get_account", desc: "Чтение воркспейса, плана и баланса" },
+        { name: "create_invoice", desc: "Создание платежного инвойса на любой сети" },
+        { name: "get_invoice", desc: "Получение статуса существующего инвойса" },
+        { name: "list_invoices", desc: "Пагинация истории инвойсов" },
+        { name: "simulate_payment", desc: "Тестовый платеж в sandbox-режиме" },
+        { name: "create_api_key", desc: "Выдача скопированного API-ключа после активации плана" },
+        { name: "create_webhook_endpoint", desc: "Регистрация HTTPS-эндпойнта для событий" },
+        { name: "verify_webhook", desc: "Проверка HMAC-SHA256 подписи локально" },
+        { name: "list_supported_networks", desc: "Список доступных блокчейн-сетей" },
+      ],
+    },
   },
 } as const;
 
 type CheckoutText = (typeof productContent)[Locale]["checkoutProduct"];
 type ApiText = (typeof productContent)[Locale]["apiProduct"];
 type InvoicingText = (typeof productContent)[Locale]["invoicingProduct"];
-type ProductText = CheckoutText | ApiText | InvoicingText;
+type McpText = (typeof productContent)[Locale]["mcpProduct"];
+type ProductText = CheckoutText | ApiText | InvoicingText | McpText;
 
 function localizedPath(language: Locale, path: string) {
   return `/${language}/${path}`;
@@ -280,6 +347,24 @@ function localizedPath(language: Locale, path: string) {
 
 function getProduct(copy: ReturnType<typeof getCopy>, variant: ProductVariant): ProductCopy {
   return copy.marketing[variant] as ProductCopy;
+}
+
+const GRADIENT_WORDS = new Set([
+  "checkout",
+  "api",
+  "invoicing",
+  "инвойсинг",
+  "вебхуки",
+  "webhooks",
+  "reqst",
+  "usdt",
+  "ton",
+  "tron",
+]);
+
+function isGradientWord(raw: string) {
+  const clean = raw.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()—]/g, "").toLowerCase();
+  return GRADIENT_WORDS.has(clean);
 }
 
 export function ProductPageClient({ variant }: { variant: ProductVariant }) {
@@ -293,6 +378,12 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [variant]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+  };
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -314,7 +405,7 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
         "@type": "ListItem",
         "position": 3,
         "name": product.title,
-        "item": `https://reqst.xyz/${language}/products/${variant === "checkoutProduct" ? "checkout" : variant === "apiProduct" ? "api" : "invoicing"}`
+        "item": `https://reqst.xyz/${language}/products/${variant === "checkoutProduct" ? "checkout" : variant === "apiProduct" ? "api" : variant === "mcpProduct" ? "mcp" : "invoicing"}`
       }
     ]
   };
@@ -347,110 +438,193 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
       <JsonLd schema={applicationSchema} />
 
       {/* Hero Section */}
-      <header className="lend-hero lend-hero--centered" ref={reveal}>
-        <div className="lend-hero-copy">
-          <span className="lend-section-kicker lend-reveal--1">{product.kicker}</span>
-          <h1 className="lend-reveal--2">{product.hero.title}</h1>
-          <p className="lend-reveal--3">{product.hero.body}</p>
-          <div className="lend-cta-row lend-reveal--4">
-            <PrimaryCta variant={variant} language={language} text={text} />
+      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
+          <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
+        </div>
+        <div className="container mx-auto px-6 relative z-10 text-center max-w-4xl">
+          <nav aria-label="Breadcrumb" className="lend-reveal--1 flex items-center justify-center gap-2 text-[11px] font-bold tracking-[0.2em] uppercase text-white/30 mb-10">
+            <Link href={`/${language}`} className="hover:text-accent transition-colors">{fullCopy.marketing.breadcrumbs.home}</Link>
+            <span className="text-white/15">/</span>
+            <Link href={`/${language}/products`} className="hover:text-accent transition-colors">{fullCopy.marketing.breadcrumbs.products}</Link>
+            <span className="text-white/15">/</span>
+            <span className="text-accent/70">{product.kicker}</span>
+          </nav>
+
+          <span className="lend-reveal--2 lend-section-kicker justify-center mx-auto">{product.kicker}</span>
+
+          <h1 className="lend-reveal--2 !text-4xl md:!text-6xl lg:!text-7xl font-black tracking-tighter leading-[1.05] mb-8 text-white">
+            {product.hero.title.split(" ").map((word, i) => (
+              <span
+                key={i}
+                className={`inline-block mr-[0.22em] last:mr-0 transition-all duration-300 hover:scale-105 ${
+                  isGradientWord(word)
+                    ? "bg-gradient-to-r from-purple-400 via-violet-500 to-indigo-500 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(124,58,237,0.15)]"
+                    : "text-white hover:text-white"
+                }`}
+              >
+                {word}
+              </span>
+            ))}
+          </h1>
+
+          <p className="lend-reveal--3 !text-lg md:!text-xl text-white/55 leading-relaxed max-w-2xl mx-auto mb-12">
+            {product.hero.body}
+          </p>
+
+          <div className="lend-reveal--4 flex flex-col sm:flex-row items-center justify-center gap-5">
+            <div className="relative group/btn-wrap">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-70 group-hover/btn-wrap:scale-110 transition-all duration-700" />
+              <PrimaryCta variant={variant} language={language} text={text} />
+            </div>
             <SecondaryCtas variant={variant} language={language} text={text} />
           </div>
         </div>
-      </header>
+      </section>
 
       {/* Stats Section */}
-      <section className="lend-stacked-section" ref={reveal}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {product.stats.map((stat, index) => (
-            <article key={stat.label} className={`lend-card text-center flex flex-col items-center justify-center p-6 lend-reveal--${index + 1}`}>
-              <span className="lend-stat-label mb-2">{stat.label}</span>
-              <strong className="lend-stat-value text-2xl md:text-3xl">{stat.value}</strong>
-            </article>
-          ))}
+      <section className="py-12 md:py-16" ref={reveal}>
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lend-reveal--2">
+            {product.stats.map((stat) => (
+              <article
+                key={stat.label}
+                className="lend-card lend-spotlight-card group relative text-center flex flex-col items-center justify-center p-8 transition-all duration-500 hover:scale-[1.02]"
+                onMouseMove={handleMouseMove}
+              >
+                <div className="lend-card-spotlight" />
+                <span className="relative z-10 text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase mb-2 block">{stat.label}</span>
+                <strong className="relative z-10 text-3xl md:text-4xl font-black text-white font-['Montserrat']">{stat.value}</strong>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Overview Section */}
-      <section className="lend-stacked-section" ref={reveal}>
-        <div className="text-center max-w-3xl mx-auto flex flex-col items-center mb-16 md:mb-24">
-          <div className="lend-section-copy lend-reveal--1">
-            <span className="lend-section-kicker font-bold">{text.overviewTitle}</span>
-            <h2 className="font-extrabold">{product.title}</h2>
-            <p className="text-lg opacity-80 font-medium">{text.overviewBody}</p>
+      <section className="py-20 md:py-28" ref={reveal}>
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto flex flex-col items-center mb-16 md:mb-24">
+            <div className="lend-section-copy lend-reveal--1">
+              <span className="lend-section-kicker justify-center mx-auto">{text.overviewTitle}</span>
+              <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mt-3 mb-6">{product.title}</h2>
+              <p className="text-base md:text-lg text-white/55 leading-relaxed">{text.overviewBody}</p>
+            </div>
           </div>
-        </div>
-        <div className="lend-reveal--2">
-          {variant === "checkoutProduct" && <CheckoutDetails text={text as CheckoutText} />}
-          {variant === "apiProduct" && <ApiDetails text={text as ApiText} />}
-          {variant === "invoicingProduct" && <InvoicingDetails text={text as InvoicingText} />}
+          <div className="lend-reveal--2">
+            {variant === "checkoutProduct" && <CheckoutDetails text={text as CheckoutText} handleMouseMove={handleMouseMove} />}
+            {variant === "apiProduct" && <ApiDetails text={text as ApiText} handleMouseMove={handleMouseMove} />}
+            {variant === "invoicingProduct" && <InvoicingDetails text={text as InvoicingText} handleMouseMove={handleMouseMove} />}
+            {variant === "mcpProduct" && <McpDetails text={text as McpText} handleMouseMove={handleMouseMove} />}
+          </div>
         </div>
       </section>
 
       {/* Comparison Section */}
-      <section className="lend-stacked-section" ref={reveal}>
-        <div className="lend-section-copy text-center max-w-3xl mx-auto mb-12 lend-reveal--1 flex flex-col items-center">
-          <span className="lend-section-kicker font-bold">{product.comparison.title}</span>
-          <h2 className="font-extrabold">{language === "ru" ? "Почему продукт нужен до выбора тарифа" : "Why this comes before pricing"}</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-4 lend-reveal--2">
-          {product.comparison.items.map((item, index) => (
-            <article key={item.legacy} className={`lend-card flex flex-col md:flex-row gap-6 md:gap-12 lend-reveal--${index + 1}`}>
-              <div className="flex-1">
-                <span className="text-xs font-bold opacity-50 uppercase tracking-widest mb-2 block">{commonText.oldWay}</span>
-                <p className="text-lg opacity-70 italic">{item.legacy}</p>
-              </div>
-              <div className="flex-1 border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-12">
-                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2 block">{commonText.reqstWay}</span>
-                <p className="text-lg font-medium">{item.reqst}</p>
-              </div>
-            </article>
-          ))}
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+        <div className="container mx-auto px-6 max-w-4xl">
+          <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
+            <span className="lend-section-kicker justify-center mx-auto">{product.comparison.title}</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-3">
+              {language === "ru" ? "Почему продукт нужен до выбора тарифа" : "Why this comes before pricing"}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 lend-reveal--2">
+            {product.comparison.items.map((item) => (
+              <article
+                key={item.legacy}
+                className="lend-card lend-spotlight-card group relative flex flex-col md:flex-row gap-6 md:gap-12 p-8 md:p-10 transition-all duration-500 hover:scale-[1.005]"
+                onMouseMove={handleMouseMove}
+              >
+                <div className="lend-card-spotlight" />
+                <div className="flex-1 relative z-10">
+                  <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-2 block">{commonText.oldWay}</span>
+                  <p className="text-base text-white/55 leading-relaxed italic">{item.legacy}</p>
+                </div>
+                <div className="flex-1 border-t md:border-t-0 md:border-l border-white/[0.08] pt-6 md:pt-0 md:pl-12 relative z-10">
+                  <span className="text-[10px] font-bold text-accent/80 uppercase tracking-widest mb-2 block">{commonText.reqstWay}</span>
+                  <p className="text-base text-white/80 leading-relaxed font-semibold">{item.reqst}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Capabilities Section */}
-      <section className="lend-stacked-section" ref={reveal}>
-        <div className="lend-section-copy text-center max-w-3xl mx-auto mb-12 lend-reveal--1 flex flex-col items-center">
-          <span className="lend-section-kicker uppercase tracking-widest font-bold">{language === "ru" ? "ВОЗМОЖНОСТИ" : "CAPABILITIES"}</span>
-          <h2 className="font-extrabold">{product.bento.title}</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lend-reveal--2">
-          {product.bento.items.map((item, index) => (
-            <article key={item.title} className={`lend-card lend-reveal--${index + 1}`}>
-              <span className="text-3xl font-bold opacity-10 mb-4 block leading-none">{String(index + 1).padStart(2, "0")}</span>
-              <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-              <p className="opacity-70 leading-relaxed">{item.body}</p>
-            </article>
-          ))}
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+        <div className="container mx-auto px-6">
+          <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
+            <span className="lend-section-kicker justify-center mx-auto">{language === "ru" ? "ВОЗМОЖНОСТИ" : "CAPABILITIES"}</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-3">{product.bento.title}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lend-reveal--2">
+            {product.bento.items.map((item, index) => (
+              <article
+                key={item.title}
+                className="lend-card lend-spotlight-card group relative p-8 flex flex-col min-h-[220px] transition-all duration-500 hover:scale-[1.02]"
+                onMouseMove={handleMouseMove}
+              >
+                <div className="lend-card-spotlight" />
+                <div className="relative z-10">
+                  <span className="text-3xl font-black italic text-white/5 mb-4 block leading-none font-['Montserrat']">{String(index + 1).padStart(2, "0")}</span>
+                  <h3 className="text-lg font-bold mb-3 group-hover:text-white transition-colors">{item.title}</h3>
+                  <p className="text-sm text-white/55 leading-relaxed group-hover:text-white/75 transition-opacity">{item.body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
-      {variant === "apiProduct" && <ApiCodeSection text={text as ApiText} reveal={reveal} />}
+      {variant === "apiProduct" && <ApiCodeSection text={text as ApiText} reveal={reveal} handleMouseMove={handleMouseMove} />}
+      {variant === "mcpProduct" && <McpConfigSection text={text as McpText} reveal={reveal} handleMouseMove={handleMouseMove} />}
 
       {/* Deep Dive Cards */}
-      <section className="lend-stacked-section" ref={reveal}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {product.deepDive.map((item, index) => (
-            <article key={item.title} className={`lend-card lend-reveal--${index + 1} flex flex-col`}>
-              <span className="text-sm font-bold opacity-30 mb-4 block">{String(index + 1).padStart(2, "0")}</span>
-              <h3 className="text-xl font-bold mb-4">{item.title}</h3>
-              <p className="opacity-80 leading-relaxed">{item.body}</p>
-            </article>
-          ))}
+      <section className="py-20 md:py-28" ref={reveal}>
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lend-reveal--2">
+            {product.deepDive.map((item, index) => (
+              <article
+                key={item.title}
+                className="lend-card lend-spotlight-card group relative p-8 flex flex-col transition-all duration-500 hover:scale-[1.02]"
+                onMouseMove={handleMouseMove}
+              >
+                <div className="lend-card-spotlight" />
+                <div className="relative z-10">
+                  <span className="text-sm font-bold text-accent/60 mb-4 block">{String(index + 1).padStart(2, "0")}</span>
+                  <h3 className="text-lg font-bold mb-4 group-hover:text-white transition-colors">{item.title}</h3>
+                  <p className="text-sm text-white/55 leading-relaxed group-hover:text-white/75 transition-opacity">{item.body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="lend-final" ref={reveal}>
-        <span className="lend-section-kicker lend-reveal--1 font-bold">{product.kicker}</span>
-        <h2 className="lend-reveal--2 font-extrabold">
-          {product.finalTitle}
-        </h2>
-        <p className="lend-reveal--3 max-w-2xl mx-auto mb-10 opacity-80 font-medium">{product.description}</p>
-        <div className="lend-cta-row lend-reveal--4">
-          <PrimaryCta variant={variant} language={language} text={text} />
-          <SecondaryCtas variant={variant} language={language} text={text} />
+      <section className="py-32 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+        <div className="lend-card-spotlight opacity-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
+
+        <div className="container mx-auto px-6 text-center relative z-10">
+          <div className="lend-reveal--1 max-w-3xl mx-auto mb-12">
+            <span className="lend-section-kicker justify-center mx-auto">{product.kicker}</span>
+            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tighter leading-[0.95] font-['Montserrat'] bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent mb-6">
+              {product.finalTitle}
+            </h2>
+            <p className="text-base md:text-lg text-white/50 max-w-xl mx-auto leading-relaxed font-medium">
+              {product.description}
+            </p>
+          </div>
+
+          <div className="lend-reveal--2 flex flex-col sm:flex-row justify-center items-center gap-5">
+            <div className="relative group/btn-wrap">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-75 group-hover/btn-wrap:scale-110 transition-all duration-700" />
+              <PrimaryCta variant={variant} language={language} text={text} />
+            </div>
+            <SecondaryCtas variant={variant} language={language} text={text} />
+          </div>
         </div>
       </section>
 
@@ -474,16 +648,22 @@ function PrimaryCta({
   if (variant === "checkoutProduct") {
     const checkoutText = text as CheckoutText;
     return (
-      <Link className="lend-primary" href={checkoutText.primaryHref}>
-        {checkoutText.primaryCta}
+      <Link className="lend-primary relative z-10 px-9 py-4 text-base min-w-[220px] rounded-2xl group/btn flex items-center justify-center" href={checkoutText.primaryHref}>
+        <span className="relative z-10 flex items-center justify-center gap-3">
+          {checkoutText.primaryCta}
+          <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">→</span>
+        </span>
       </Link>
     );
   }
 
-  const planText = text as ApiText | InvoicingText;
+  const planText = text as ApiText | InvoicingText | McpText;
   return (
-    <Link className="lend-primary" href={localizedPath(language, planText.primaryPath)}>
-      {planText.primaryCta}
+    <Link className="lend-primary relative z-10 px-9 py-4 text-base min-w-[220px] rounded-2xl group/btn flex items-center justify-center" href={localizedPath(language, planText.primaryPath)}>
+      <span className="relative z-10 flex items-center justify-center gap-3">
+        {planText.primaryCta}
+        <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">→</span>
+      </span>
     </Link>
   );
 }
@@ -497,63 +677,70 @@ function SecondaryCtas({
   language: Locale;
   text: ProductText;
 }) {
-  if (variant === "invoicingProduct") return null;
+  if (variant === "invoicingProduct" || variant === "mcpProduct") return null;
 
   const secondaryText = text as CheckoutText | ApiText;
   return (
     <>
-      <Link className="lend-secondary" href={localizedPath(language, secondaryText.secondaryPath)}>
-        {secondaryText.secondaryCta}
+      <Link className="lend-secondary px-9 py-4 text-base min-w-[220px] rounded-2xl group/sec flex items-center justify-center" href={localizedPath(language, secondaryText.secondaryPath)}>
+        <span className="relative z-10 flex items-center justify-center gap-2">
+          {secondaryText.secondaryCta}
+        </span>
       </Link>
-      <Link className="lend-secondary" href={localizedPath(language, secondaryText.tertiaryPath)}>
-        {secondaryText.tertiaryCta}
+      <Link className="lend-secondary px-9 py-4 text-base min-w-[220px] rounded-2xl group/sec flex items-center justify-center" href={localizedPath(language, secondaryText.tertiaryPath)}>
+        <span className="relative z-10 flex items-center justify-center gap-2">
+          {secondaryText.tertiaryCta}
+        </span>
       </Link>
     </>
   );
 }
 
-function CheckoutDetails({ text }: { text: CheckoutText }) {
+function CheckoutDetails({ text, handleMouseMove }: { text: CheckoutText; handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void }) {
   return (
-    <div className="space-y-24">
+    <div className="space-y-20">
       {/* Horizontal Flow */}
       <div className="relative">
-        <div className="absolute top-8 left-0 w-full h-px bg-white/10 hidden md:block" />
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+        <div className="absolute top-8 left-0 w-full h-px bg-white/[0.06] hidden md:block" />
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
           {text.flow.map((step, index) => (
-            <article key={step} className="relative group">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl font-bold mb-6 group-hover:border-blue-500/50 group-hover:bg-blue-500/5 transition-all relative z-10 mx-auto md:mx-0">
-                <span className="bg-gradient-to-br from-white to-white/40 bg-clip-text text-transparent">{index + 1}</span>
+            <article key={step} className="text-center md:text-left group">
+              <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-xl font-bold mb-6 group-hover:border-accent/40 group-hover:bg-accent/[0.05] transition-all relative z-10 mx-auto md:mx-0">
+                <span className="bg-gradient-to-br from-white to-white/40 bg-clip-text text-transparent font-['Montserrat']">{index + 1}</span>
               </div>
-              <p className="text-sm opacity-60 leading-relaxed text-center md:text-left">{step}</p>
+              <p className="text-sm text-white/55 leading-relaxed">{step}</p>
             </article>
           ))}
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto pt-10">
         {/* Payment States */}
-        <div className="lend-card p-8 border-white/10">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-              <Zap size={20} className="text-purple-400" />
-            </div>
-            <h3 className="text-xl font-bold tracking-tight">{text.statusesTitle}</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-            {text.statuses.map((status) => (
-              <div key={status.label} className="flex gap-4 group">
-                <div className={`w-1 h-auto rounded-full group-hover:scale-y-110 transition-transform ${
-                  status.tone === 'success' ? 'bg-green-500' : 
-                  status.tone === 'danger' ? 'bg-red-500' : 
-                  status.tone === 'warn' ? 'bg-orange-500' : 
-                  status.tone === 'info' ? 'bg-blue-500' : 'bg-white/20'
-                }`} />
-                <div>
-                  <h4 className="text-sm font-bold mb-1 opacity-90">{status.label}</h4>
-                  <p className="text-xs opacity-50 leading-relaxed">{status.body}</p>
-                </div>
+        <div className="lend-card lend-spotlight-card group relative p-8 md:p-10 transition-all duration-500" onMouseMove={handleMouseMove}>
+          <div className="lend-card-spotlight" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+                <Zap size={20} />
               </div>
-            ))}
+              <h3 className="text-xl font-bold tracking-tight text-white">{text.statusesTitle}</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+              {text.statuses.map((status) => (
+                <div key={status.label} className="flex gap-4 group/status">
+                  <div className={`w-1 h-auto rounded-full group-hover/status:scale-y-110 transition-transform ${
+                    status.tone === 'success' ? 'bg-green-500' : 
+                    status.tone === 'danger' ? 'bg-red-500' : 
+                    status.tone === 'warn' ? 'bg-orange-500' : 
+                    status.tone === 'info' ? 'bg-blue-500' : 'bg-white/20'
+                  }`} />
+                  <div>
+                    <h4 className="text-sm font-bold mb-1 text-white/90">{status.label}</h4>
+                    <p className="text-xs text-white/50 leading-relaxed">{status.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -561,24 +748,24 @@ function CheckoutDetails({ text }: { text: CheckoutText }) {
   );
 }
 
-function ApiDetails({ text }: { text: ApiText }) {
+function ApiDetails({ text }: { text: ApiText; handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void }) {
   const icons = [Code2, Webhook, KeyRound, ShieldCheck, RefreshCw];
 
   return (
-    <div className="space-y-24">
+    <div className="space-y-20">
       {/* Horizontal Capabilities */}
       <div className="relative">
-        <div className="absolute top-8 left-0 w-full h-px bg-white/10 hidden md:block" />
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+        <div className="absolute top-8 left-0 w-full h-px bg-white/[0.06] hidden md:block" />
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
           {text.capabilities.map((capability, index) => {
             const Icon = icons[index];
             return (
-              <article key={capability.title} className="relative group">
-                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:border-blue-500/50 group-hover:bg-blue-500/5 transition-all relative z-10 mx-auto md:mx-0">
-                  <Icon size={24} className="text-blue-400 group-hover:scale-110 transition-transform" />
+              <article key={capability.title} className="text-center md:text-left group">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-6 group-hover:border-accent/40 group-hover:bg-accent/[0.05] transition-all relative z-10 mx-auto md:mx-0">
+                  <Icon size={24} className="text-accent group-hover:scale-110 transition-transform" />
                 </div>
-                <h3 className="text-sm font-bold mb-2 text-center md:text-left">{capability.title}</h3>
-                <p className="text-xs opacity-50 leading-relaxed text-center md:text-left">{capability.body}</p>
+                <h3 className="text-sm font-bold mb-2 text-white/90">{capability.title}</h3>
+                <p className="text-xs text-white/55 leading-relaxed">{capability.body}</p>
               </article>
             );
           })}
@@ -588,52 +775,58 @@ function ApiDetails({ text }: { text: ApiText }) {
   );
 }
 
-function InvoicingDetails({ text }: { text: InvoicingText }) {
+function InvoicingDetails({ text, handleMouseMove }: { text: InvoicingText; handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void }) {
   return (
-    <div className="space-y-24">
+    <div className="space-y-20">
       {/* Horizontal Lifecycle */}
       <div className="relative">
-        <div className="absolute top-8 left-0 w-full h-px bg-white/10 hidden lg:block" />
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-8">
+        <div className="absolute top-8 left-0 w-full h-px bg-white/[0.06] hidden lg:block" />
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 relative z-10">
           {text.lifecycle.map((step, index) => (
-            <article key={step} className="relative group">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl font-bold mb-6 group-hover:border-blue-500/50 group-hover:bg-blue-500/5 transition-all relative z-10 mx-auto lg:mx-0">
-                <span className="bg-gradient-to-br from-white to-white/40 bg-clip-text text-transparent">{index + 1}</span>
+            <article key={step} className="text-center lg:text-left group">
+              <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-xl font-bold mb-6 group-hover:border-accent/40 group-hover:bg-accent/[0.05] transition-all relative z-10 mx-auto lg:mx-0">
+                <span className="bg-gradient-to-br from-white to-white/40 bg-clip-text text-transparent font-['Montserrat']">{index + 1}</span>
               </div>
-              <p className="text-xs opacity-60 leading-relaxed text-center lg:text-left font-medium">{step}</p>
+              <p className="text-xs text-white/65 leading-relaxed font-medium">{step}</p>
             </article>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        <article className="lend-card p-8 border-white/10">
-          <div className="flex items-center gap-3 mb-6">
-            <Link2 size={20} className="text-blue-400" />
-            <h3 className="text-lg font-bold uppercase tracking-widest">{text.linksTitle}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto pt-10">
+        <article className="lend-card lend-spotlight-card group relative p-8 border-white/10" onMouseMove={handleMouseMove}>
+          <div className="lend-card-spotlight" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+              <Link2 size={20} className="text-accent" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-white">{text.linksTitle}</h3>
+            </div>
+            <ul className="space-y-4">
+              {text.links.map((item) => (
+                <li key={item} className="text-sm text-white/55 leading-relaxed flex gap-3 items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent/40" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="space-y-4">
-            {text.links.map((item) => (
-              <li key={item} className="text-sm opacity-60 leading-relaxed flex gap-3 items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400/40" />
-                {item}
-              </li>
-            ))}
-          </ul>
         </article>
-        <article className="lend-card p-8 border-white/10">
-          <div className="flex items-center gap-3 mb-6">
-            <Bell size={20} className="text-blue-400" />
-            <h3 className="text-lg font-bold uppercase tracking-widest">{text.telegramTitle}</h3>
+        <article className="lend-card lend-spotlight-card group relative p-8 border-white/10" onMouseMove={handleMouseMove}>
+          <div className="lend-card-spotlight" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+              <Bell size={20} className="text-accent" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-white">{text.telegramTitle}</h3>
+            </div>
+            <ul className="space-y-4">
+              {text.notifications.map((item) => (
+                <li key={item} className="text-sm text-white/55 leading-relaxed flex gap-3 items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent/40" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="space-y-4">
-            {text.notifications.map((item) => (
-              <li key={item} className="text-sm opacity-60 leading-relaxed flex gap-3 items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400/40" />
-                {item}
-              </li>
-            ))}
-          </ul>
         </article>
       </div>
     </div>
@@ -643,36 +836,115 @@ function InvoicingDetails({ text }: { text: InvoicingText }) {
 function ApiCodeSection({
   text,
   reveal,
+  handleMouseMove,
 }: {
   text: ApiText;
   reveal: (el: HTMLElement | null) => void;
+  handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   return (
-    <section className="lend-stacked-section" ref={reveal}>
-      <div className="lend-section-copy text-center max-w-3xl mx-auto mb-12 lend-reveal--1 flex flex-col items-center">
-        <span className="lend-section-kicker">API</span>
-        <h2>{text.codeTitle}</h2>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lend-reveal--2">
-        <article className="lend-card p-0 overflow-hidden border-white/10">
-          <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex justify-between items-center">
-             <span className="text-[10px] font-bold opacity-30 uppercase tracking-widest">create invoice</span>
-             <span className="text-[10px] opacity-20">Node.js / Fetch</span>
-          </div>
-          <pre className="p-6 text-xs overflow-x-auto bg-black/20">
-            <code className="opacity-80">{text.invoiceCode}</code>
-          </pre>
-        </article>
-        <article className="lend-card p-0 overflow-hidden border-white/10">
-          <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex justify-between items-center">
-             <span className="text-[10px] font-bold opacity-30 uppercase tracking-widest">verify webhook</span>
-             <span className="text-[10px] opacity-20">Express / Webhook</span>
-          </div>
-          <pre className="p-6 text-xs overflow-x-auto bg-black/20">
-            <code className="opacity-80">{text.webhookCode}</code>
-          </pre>
-        </article>
+    <section className="py-20 md:py-28" ref={reveal}>
+      <div className="container mx-auto px-6">
+        <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
+          <span className="lend-section-kicker justify-center mx-auto">API</span>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-3">{text.codeTitle}</h2>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lend-reveal--2">
+          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10" onMouseMove={handleMouseMove}>
+            <div className="lend-card-spotlight" />
+            <div className="relative z-10">
+              <div className="bg-white/[0.03] px-5 py-3 border-b border-white/[0.06] flex justify-between items-center">
+                 <span className="text-[10px] font-bold text-accent/80 uppercase tracking-widest">create invoice</span>
+                 <span className="text-[10px] text-white/35">Node.js / Fetch</span>
+              </div>
+              <pre className="p-6 text-xs overflow-x-auto bg-black/10 font-mono text-white/80">
+                <code>{text.invoiceCode}</code>
+              </pre>
+            </div>
+          </article>
+          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10" onMouseMove={handleMouseMove}>
+            <div className="lend-card-spotlight" />
+            <div className="relative z-10">
+              <div className="bg-white/[0.03] px-5 py-3 border-b border-white/[0.06] flex justify-between items-center">
+                 <span className="text-[10px] font-bold text-accent/80 uppercase tracking-widest">verify webhook</span>
+                 <span className="text-[10px] text-white/35">Express / Webhook</span>
+              </div>
+              <pre className="p-6 text-xs overflow-x-auto bg-black/10 font-mono text-white/80">
+                <code>{text.webhookCode}</code>
+              </pre>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
   );
 }
+
+function McpDetails({
+  text,
+  handleMouseMove,
+}: {
+  text: McpText;
+  handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
+}) {
+  return (
+    <div className="space-y-12">
+      <div className="text-center max-w-3xl mx-auto">
+        <h3 className="text-xl font-bold tracking-tight text-white mb-2">{text.toolsTitle}</h3>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+        {text.tools.map((tool) => (
+          <article
+            key={tool.name}
+            className="lend-card lend-spotlight-card group relative p-6 transition-all duration-500 hover:scale-[1.02] border-white/10"
+            onMouseMove={handleMouseMove}
+          >
+            <div className="lend-card-spotlight" />
+            <div className="relative z-10 flex flex-col h-full justify-between">
+              <div>
+                <span className="font-mono text-xs text-accent font-bold mb-2 block">{tool.name}</span>
+                <p className="text-xs text-white/55 leading-relaxed">{tool.desc}</p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function McpConfigSection({
+  text,
+  reveal,
+  handleMouseMove,
+}: {
+  text: McpText;
+  reveal: (el: HTMLElement | null) => void;
+  handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
+}) {
+  return (
+    <section className="py-20 md:py-28" ref={reveal}>
+      <div className="container mx-auto px-6">
+        <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
+          <span className="lend-section-kicker justify-center mx-auto">MCP CONFIG</span>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-3">{text.configTitle}</h2>
+        </div>
+        <div className="max-w-3xl mx-auto lend-reveal--2">
+          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10" onMouseMove={handleMouseMove}>
+            <div className="lend-card-spotlight" />
+            <div className="relative z-10">
+              <div className="bg-white/[0.03] px-5 py-3 border-b border-white/[0.06] flex justify-between items-center">
+                 <span className="text-[10px] font-bold text-accent/80 uppercase tracking-widest">claude_desktop_config.json</span>
+                 <span className="text-[10px] text-white/35">JSON Config</span>
+              </div>
+              <pre className="p-6 text-xs overflow-x-auto bg-black/10 font-mono text-white/80">
+                <code>{text.configCode}</code>
+              </pre>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}
+

@@ -68,7 +68,7 @@ func (w *Watcher) tick(ctx context.Context) error {
 		w.logger.Info("expired invoices", "count", expired)
 	}
 
-	wallets, err := w.store.GetWatchedWallets(ctx)
+	wallets, err := w.store.GetWatchedWallets(ctx, w.cfg.WatcherGraceWindow)
 	if err != nil {
 		return err
 	}
@@ -265,8 +265,10 @@ func (w *Watcher) pollTON(ctx context.Context, wallet store.WatchedWallet) ([]st
 }
 
 func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) ([]store.ObservedTransfer, error) {
-	// USDT on TON Mainnet
-	const usdtMaster = "EQCxE6mNZcc9K4DnS-4s5E6mNZcc9K4DnS-4s5E6mNZcc9k4"
+	usdtMaster := strings.TrimSpace(w.cfg.TonUSDTMasterAddress)
+	if usdtMaster == "" {
+		return nil, errors.New("TON_USDT_MASTER_ADDRESS is required")
+	}
 	base := strings.TrimRight(w.cfg.TonCenterBaseURL, "/")
 	endpoint := fmt.Sprintf("%s/getJettonTransfers?address=%s&limit=30", base, url.QueryEscape(wallet.Address))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)

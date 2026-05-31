@@ -1,0 +1,83 @@
+---
+title: Аутентификация
+description: API-ключи, окружения test и live, scopes и заголовки, которые принимает Reqst.
+---
+
+# Аутентификация
+
+Developer API Reqst (`https://reqst.xyz/v1`) авторизует каждый запрос **API-ключом**. Ключи создаются в [Developer Portal](https://reqst.xyz/app/developer-portal) и принадлежат одному workspace.
+
+Доступ к API требует тарифа, который включает API. Тарифы **Developer**, **Business** и **Enterprise** включают его; **Trial** и **Merchant** — нет. Ключ на тарифе без API-доступа получает `403 Forbidden`.
+
+## Передача ключа
+
+Передавайте ключ в **любом** из заголовков — оба принимаются:
+
+```bash
+# Предпочтительно
+curl https://reqst.xyz/v1/me -H "X-API-Key: $REQST_API_KEY"
+
+# Также поддерживается
+curl https://reqst.xyz/v1/me -H "Authorization: Bearer $REQST_API_KEY"
+```
+
+Если присутствуют оба, используется `X-API-Key`.
+
+## Окружения: test и live
+
+Каждый ключ привязан к одному окружению, закодированному в префиксе:
+
+| Префикс | Окружение | Поведение |
+|---------|-----------|-----------|
+| `rqst_test_` | **test** | Создает тестовые счета. Live-воркеры блокчейна их игнорируют. Их можно пометить оплаченными через [симулятор платежей](/ru/docs/invoices#симуляция-платежей-test-mode). |
+| `rqst_live_` | **live** | Создает реальные счета, оплачиваемые on-chain на ваш кошелек. |
+
+Окружение созданного счета следует за ключом, который его создал — в теле запроса нет поля `mode`. Держите отдельные ключи для test и live и никогда не используйте live-ключ в staging.
+
+## Scopes
+
+Ключи несут один или оба scope:
+
+| Scope | Дает доступ |
+|-------|-------------|
+| `invoices:read` | `GET /v1/invoices`, `GET /v1/invoices/:id` |
+| `invoices:write` | `POST /v1/invoices`, `POST /v1/invoices/:id/cancel`, `POST /v1/test/invoices/:id/simulate-payment` |
+
+Если создать ключ без указания scopes, он получает **оба** по умолчанию. Вызов, требующий отсутствующий scope, возвращает `403` с ошибкой вроде `API key scope invoices:write is required`. (Для `GET /v1/me` scope не требуется.)
+
+## Информация о текущем ключе
+
+`GET /v1/me` возвращает workspace, тариф, текущее использование и метаданные самого ключа:
+
+```bash
+curl https://reqst.xyz/v1/me -H "X-API-Key: $REQST_API_KEY"
+```
+
+```json
+{
+  "key": {
+    "id": 7,
+    "label": "Server key",
+    "prefix": "rqst_live_b3c4",
+    "environment": "live",
+    "scopes": ["invoices:read", "invoices:write"]
+  },
+  "usage": { "monthly_requests": 128, "monthly_limit": 50000 }
+}
+```
+
+## Лучшие практики безопасности
+
+- **Только на сервере.** Никогда не передавайте ключ в браузер, мобильное приложение или клиентский код и не коммитьте его в репозиторий.
+- **Используйте переменные окружения.** Храните секрет в `REQST_API_KEY` или менеджере секретов вашей платформы.
+- **Ротируйте при подозрении.** Отзовите скомпрометированный ключ в Developer Portal и создайте новый. Полный секрет показывается только один раз при создании.
+- **Разделяйте окружения.** Используйте разные ключи `rqst_test_` и `rqst_live_`.
+
+## Пример (Node.js)
+
+```javascript
+const response = await fetch("https://reqst.xyz/v1/me", {
+  headers: { "X-API-Key": process.env.REQST_API_KEY }
+});
+const data = await response.json();
+```

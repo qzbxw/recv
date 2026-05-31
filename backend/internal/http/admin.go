@@ -41,7 +41,7 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 	if s.store != nil {
 		_, allowed, err := s.store.AllowRateLimit(c.Request.Context(), "admin_login:"+c.ClientIP()+":"+strings.ToLower(username), 5, time.Minute)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			respondError(c, http.StatusInternalServerError, err)
 			return
 		}
 		if !allowed {
@@ -51,7 +51,7 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 		}
 	}
 
-	token, err := s.adminService.Authenticate(username, body.Password)
+	result, err := s.adminService.StartLogin(c.Request.Context(), username, body.Password)
 	if err != nil {
 		if s.store != nil {
 			_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login_failed", "admin", username, gin.H{"ip": c.ClientIP()})
@@ -60,11 +60,62 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 		return
 	}
 	if s.store != nil {
-		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login", "admin", username, gin.H{"ip": c.ClientIP()})
+		action := "admin_login_password_verified"
+		if !result.MFARequired {
+			action = "admin_login"
+		}
+		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, action, "admin", username, gin.H{"ip": c.ClientIP(), "mfa_required": result.MFARequired})
 	}
 
 	c.Request = c.Request.WithContext(ctx)
-	c.JSON(http.StatusOK, gin.H{"token": token, "username": username})
+	if result.RefreshToken != "" {
+		setRefreshCookie(c, "reqst_admin_refresh", result.RefreshToken, s.cfg.AppEnv)
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) handleAdminVerifyTOTP(c *gin.Context) {
+	var body struct {
+		ChallengeToken string `json:"challenge_token"`
+		Code           string `json:"code"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	result, err := s.adminService.VerifyTOTP(c.Request.Context(), body.ChallengeToken, body.Code, service.AdminSessionInput{UserAgent: c.Request.UserAgent(), IPAddress: c.ClientIP()})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	if s.store != nil {
+		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), result.Email, "admin_mfa_verified", "admin", result.Email, gin.H{"ip": c.ClientIP(), "recovery_codes_issued": len(result.RecoveryCodes)})
+	}
+	setRefreshCookie(c, "reqst_admin_refresh", result.RefreshToken, s.cfg.AppEnv)
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) handleAdminRefresh(c *gin.Context) {
+	refreshToken := refreshTokenFromRequest(c, "reqst_admin_refresh")
+	if refreshToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing admin refresh token"})
+		return
+	}
+	result, err := s.adminService.Refresh(c.Request.Context(), refreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) handleAdminLogout(c *gin.Context) {
+	refreshToken := refreshTokenFromRequest(c, "reqst_admin_refresh")
+	if refreshToken != "" {
+		_ = s.adminService.RevokeRefreshToken(c.Request.Context(), refreshToken)
+	}
+	clearRefreshCookie(c, "reqst_admin_refresh", s.cfg.AppEnv)
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 func (s *Server) adminMiddleware() gin.HandlerFunc {
@@ -95,10 +146,35 @@ func (s *Server) adminMiddleware() gin.HandlerFunc {
 	}
 }
 
+func (s *Server) handleAdminRevokeSession(c *gin.Context) {
+	adminCtx := adminFromContext(c)
+	if !adminHasRole(adminCtx.Claims, "super_admin") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "super_admin role required"})
+		return
+	}
+	var body struct {
+		SessionID int64 `json:"session_id"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if body.SessionID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "session_id is required"})
+		return
+	}
+	if err := s.adminService.RevokeSession(c.Request.Context(), body.SessionID); err != nil {
+		writeAdminStoreError(c, err, "admin session not found")
+		return
+	}
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "admin_session_revoke", "admin_session", strconv.FormatInt(body.SessionID, 10), gin.H{})
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
 func (s *Server) handleAdminOverview(c *gin.Context) {
 	overview, err := s.store.GetAdminOverview(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -147,7 +223,7 @@ func (s *Server) handleAdminInvoices(c *gin.Context) {
 		Query:    c.Query("query"),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -162,27 +238,27 @@ func (s *Server) handleAdminInvoices(c *gin.Context) {
 func (s *Server) handleAdminOpsOverview(c *gin.Context) {
 	overview, err := s.store.GetAdminOverview(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	manualReview, err := s.store.ListAdminInvoices(c.Request.Context(), store.AdminInvoiceFilters{Page: 1, PageSize: 12, Status: string(store.InvoiceStatusManualReview)})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	failedWebhooks, err := s.store.ListAdminFailedWebhooks(c.Request.Context(), 12)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	watchers, err := s.store.ListAdminWatchers(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	notifications, err := s.store.GetAdminNotificationHealth(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -205,7 +281,7 @@ func (s *Server) handleAdminOpsOverview(c *gin.Context) {
 func (s *Server) handleAdminWorkspaces(c *gin.Context) {
 	items, err := s.store.ListAdminWorkspaces(c.Request.Context(), parseIntDefault(c.Query("limit"), 100))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"items": items})
@@ -214,7 +290,7 @@ func (s *Server) handleAdminWorkspaces(c *gin.Context) {
 func (s *Server) handleAdminFailedWebhooks(c *gin.Context) {
 	items, err := s.store.ListAdminFailedWebhooks(c.Request.Context(), parseIntDefault(c.Query("limit"), 50))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"items": items})
@@ -223,7 +299,7 @@ func (s *Server) handleAdminFailedWebhooks(c *gin.Context) {
 func (s *Server) handleAdminWatchers(c *gin.Context) {
 	items, err := s.store.ListAdminWatchers(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"items": items})
@@ -232,7 +308,7 @@ func (s *Server) handleAdminWatchers(c *gin.Context) {
 func (s *Server) handleAdminNotifications(c *gin.Context) {
 	item, err := s.store.GetAdminNotificationHealth(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, item)
@@ -320,7 +396,7 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 
@@ -443,7 +519,7 @@ func (s *Server) handleAdminCreateInternalComment(c *gin.Context) {
 	adminCtx := adminFromContext(c)
 	comment, err := s.store.CreateAdminInternalComment(c.Request.Context(), body.TargetType, body.TargetID, body.Body, adminCtx.Claims.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_internal_comment", body.TargetType, body.TargetID, gin.H{"comment_id": comment.ID})
@@ -476,16 +552,26 @@ func (s *Server) handleAdminAnalytics(c *gin.Context) {
 	}
 	item, err := s.store.GetAdminAnalytics(c.Request.Context(), from, to, groupBy)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, adminAnalyticsResponse(item))
 }
 
+func (s *Server) handleAdminAuditEvents(c *gin.Context) {
+	limit := parseIntDefault(c.Query("limit"), 100)
+	items, err := s.store.ListAdminAuditEvents(c.Request.Context(), limit)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": items})
+}
+
 func (s *Server) handleAdminSEOTargets(c *gin.Context) {
 	items, err := s.store.ListSEOTargets(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"items": items})
@@ -645,4 +731,20 @@ func writeAdminStoreError(c *gin.Context, err error, notFoundMessage string) {
 func adminFromContext(c *gin.Context) adminContext {
 	value, _ := c.Get("admin_ctx")
 	return value.(adminContext)
+}
+
+func adminHasRole(claims service.AdminClaims, allowed ...string) bool {
+	for _, role := range claims.Roles {
+		for _, want := range allowed {
+			if role == want {
+				return true
+			}
+		}
+	}
+	for _, want := range allowed {
+		if claims.Role == want || (claims.Role == "admin" && want == "super_admin") {
+			return true
+		}
+	}
+	return false
 }

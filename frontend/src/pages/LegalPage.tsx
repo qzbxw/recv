@@ -28,13 +28,13 @@ type LegalCopy = {
 
 
 const LEGAL_PROFILE = {
-  operatorName: "[Укажи юрлицо / ИП / физлицо-оператора]",
-  contactEmail: "legal@your-domain.tld",
-  supportEmail: "support@your-domain.tld",
-  address: "[Укажи юридический адрес / адрес для уведомлений]",
-  jurisdiction: "[Укажи страну и применимое право]",
-  domain: "[Укажи основной домен сервиса]",
-  refundPolicy: "[Опиши правила возврата или явно укажи no refunds]",
+  operatorName: "Reqst",
+  contactEmail: "legal@reqst.xyz",
+  supportEmail: "support@reqst.xyz",
+  address: "Contact legal@reqst.xyz for formal notices.",
+  jurisdiction: "To be specified in the merchant agreement.",
+  domain: "reqst.xyz",
+  refundPolicy: "Reqst platform subscription refunds are handled case by case according to the active service agreement.",
   effectiveDate: {
     ru: "13 марта 2026",
     en: "March 13, 2026",

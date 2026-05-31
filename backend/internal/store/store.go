@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,8 @@ import (
 )
 
 var ErrNotFound = errors.New("not found")
+var ErrAmbiguousPaymentMatch = errors.New("ambiguous payment match")
+var ErrActivePaymentCollision = errors.New("active invoice with same payment details already exists")
 
 type Store struct {
 	pool *pgxpool.Pool
@@ -128,7 +131,18 @@ func (s *Store) UpsertUser(ctx context.Context, telegramID int64, username strin
 
 func (s *Store) ListWorkspacesForUser(ctx context.Context, userID int64) ([]Workspace, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT `+strings.ReplaceAll(workspaceSelectColumns, "id,", "w.id,")+`
+		SELECT
+			w.id,
+			w.owner_telegram_id,
+			COALESCE(w.username, ''),
+			COALESCE(w.email, ''),
+			w.default_network,
+			w.plan_code,
+			w.subscription_ends_at,
+			w.free_invoices_used,
+			w.is_blocked,
+			w.telegram_linked_at,
+			w.created_at
 		FROM workspaces w
 		JOIN workspace_members wm ON w.id = wm.workspace_id
 		WHERE wm.user_id = $1
@@ -157,6 +171,45 @@ func (s *Store) AddWorkspaceMember(ctx context.Context, workspaceID, userID int6
 		ON CONFLICT (workspace_id, user_id) DO UPDATE SET role = EXCLUDED.role
 	`, workspaceID, userID, role)
 	return err
+}
+
+func (s *Store) CreateAgentWorkspace(ctx context.Context, syntheticTelegramID int64, username string, email string) (User, Workspace, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return User{}, Workspace{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	var user User
+	if err := tx.QueryRow(ctx, `
+		INSERT INTO users (telegram_id, username, email)
+		VALUES ($1, NULLIF($2, ''), NULLIF($3, ''))
+		RETURNING id, telegram_id, COALESCE(username, ''), COALESCE(email, ''), created_at
+	`, syntheticTelegramID, username, email).Scan(&user.ID, &user.TelegramID, &user.Username, &user.Email, &user.CreatedAt); err != nil {
+		return User{}, Workspace{}, fmt.Errorf("create agent user: %w", err)
+	}
+
+	row := tx.QueryRow(ctx, `
+		INSERT INTO workspaces (owner_telegram_id, username, email)
+		VALUES (NULL, NULLIF($1, ''), NULLIF($2, ''))
+		RETURNING `+workspaceSelectColumns+`
+	`, username, email)
+	workspace, err := scanWorkspace(row)
+	if err != nil {
+		return User{}, Workspace{}, fmt.Errorf("create agent workspace: %w", err)
+	}
+
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO workspace_members (workspace_id, user_id, role)
+		VALUES ($1, $2, $3)
+	`, workspace.ID, user.ID, RoleOwner); err != nil {
+		return User{}, Workspace{}, fmt.Errorf("create agent workspace member: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return User{}, Workspace{}, err
+	}
+	return user, workspace, nil
 }
 
 func (s *Store) UpsertWorkspaceByTelegram(ctx context.Context, telegramID int64, username string) (Workspace, error) {
@@ -454,7 +507,8 @@ func (s *Store) SuffixRecentlyUsed(ctx context.Context, address string, network 
 			WHERE destination_address = $1
 			  AND payable_network = $2
 			  AND matching_suffix = $3
-			  AND created_at >= NOW() - INTERVAL '48 hours'
+			  AND mode = 'live'
+			  AND status IN ('awaiting_payment', 'underpaid')
 		)
 	`, address, network, suffix).Scan(&exists)
 	if err != nil {
@@ -465,7 +519,7 @@ func (s *Store) SuffixRecentlyUsed(ctx context.Context, address string, network 
 
 type CreateInvoiceParams struct {
 	PublicID           string
-	WorkspaceID           int64
+	WorkspaceID        int64
 	Kind               InvoiceKind
 	SubscriptionDays   int
 	PlanCode           PlanCode
@@ -489,6 +543,26 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 	defer tx.Rollback(ctx)
 	if params.Mode == "" {
 		params.Mode = "live"
+	}
+	if params.Mode == "live" {
+		var collision bool
+		if err := tx.QueryRow(ctx, `
+			SELECT EXISTS(
+				SELECT 1
+				FROM invoices
+				WHERE destination_address = $1
+				  AND payable_network = $2
+				  AND payable_amount = $3
+				  AND mode = 'live'
+				  AND status IN ('awaiting_payment', 'underpaid')
+				FOR UPDATE
+			)
+		`, params.DestinationAddress, params.PayableNetwork, params.PayableAmount).Scan(&collision); err != nil {
+			return Invoice{}, fmt.Errorf("check active payment collision: %w", err)
+		}
+		if collision {
+			return Invoice{}, ErrActivePaymentCollision
+		}
 	}
 
 	var invoice Invoice
@@ -536,28 +610,59 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 	return invoice, nil
 }
 
-func (s *Store) ListInvoices(ctx context.Context, workspaceID int64, limit int, offset int) ([]Invoice, error) {
+type ListInvoicesFilter struct {
+	Limit  int
+	Offset int
+	Status string
+	Query  string
+}
+
+func (s *Store) ListInvoices(ctx context.Context, workspaceID int64, filter ListInvoicesFilter) ([]Invoice, int, error) {
+	if filter.Limit <= 0 || filter.Limit > 100 {
+		filter.Limit = 20
+	}
+	if filter.Offset < 0 {
+		filter.Offset = 0
+	}
 	invoices := make([]Invoice, 0)
+	args := []any{workspaceID}
+	where := []string{"workspace_id = $1"}
+	if filter.Status != "" && filter.Status != "all" {
+		args = append(args, filter.Status)
+		where = append(where, fmt.Sprintf("status = $%d::invoice_status", len(args)))
+	}
+	if strings.TrimSpace(filter.Query) != "" {
+		args = append(args, "%"+strings.ToLower(strings.TrimSpace(filter.Query))+"%")
+		where = append(where, fmt.Sprintf("(LOWER(title) LIKE $%d OR LOWER(public_id) LIKE $%d OR LOWER(COALESCE(tx_hash, '')) LIKE $%d)", len(args), len(args), len(args)))
+	}
+	whereSQL := strings.Join(where, " AND ")
+
+	var total int
+	if err := s.pool.QueryRow(ctx, `SELECT COUNT(1) FROM invoices WHERE `+whereSQL, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count invoices: %w", err)
+	}
+
+	args = append(args, filter.Limit, filter.Offset)
 	rows, err := s.pool.Query(ctx, `
 		SELECT `+invoiceSelectColumns+`
 		FROM invoices
-		WHERE workspace_id = $1
+		WHERE `+whereSQL+`
 		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3
-	`, workspaceID, limit, offset)
+		LIMIT $`+strconv.Itoa(len(args)-1)+` OFFSET $`+strconv.Itoa(len(args))+`
+	`, args...)
 	if err != nil {
-		return nil, fmt.Errorf("list invoices: %w", err)
+		return nil, 0, fmt.Errorf("list invoices: %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		invoice, err := scanInvoice(rows)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		invoices = append(invoices, invoice)
 	}
-	return invoices, rows.Err()
+	return invoices, total, rows.Err()
 }
 
 func (s *Store) GetInvoiceByID(ctx context.Context, workspaceID int64, invoiceID int64) (Invoice, error) {
@@ -708,7 +813,7 @@ func (s *Store) FindInvoiceByTONComment(ctx context.Context, address string, com
 }
 
 func (s *Store) FindInvoiceByExactAmount(ctx context.Context, address string, network Network, amount decimal.Decimal) (Invoice, error) {
-	row := s.pool.QueryRow(ctx, `
+	rows, err := s.pool.Query(ctx, `
 		SELECT `+invoiceSelectColumns+`
 		FROM invoices
 		WHERE destination_address = $1
@@ -717,13 +822,34 @@ func (s *Store) FindInvoiceByExactAmount(ctx context.Context, address string, ne
 		  AND mode = 'live'
 		  AND status IN ('awaiting_payment', 'underpaid', 'expired')
 		ORDER BY created_at DESC
-		LIMIT 1
+		LIMIT 2
 	`, address, network, amount)
-	return scanInvoice(row)
+	if err != nil {
+		return Invoice{}, fmt.Errorf("find invoice by exact amount: %w", err)
+	}
+	defer rows.Close()
+	invoices := make([]Invoice, 0, 2)
+	for rows.Next() {
+		invoice, err := scanInvoice(rows)
+		if err != nil {
+			return Invoice{}, err
+		}
+		invoices = append(invoices, invoice)
+	}
+	if err := rows.Err(); err != nil {
+		return Invoice{}, err
+	}
+	if len(invoices) == 0 {
+		return Invoice{}, ErrNotFound
+	}
+	if len(invoices) > 1 {
+		return Invoice{}, ErrAmbiguousPaymentMatch
+	}
+	return invoices[0], nil
 }
 
 func (s *Store) FindPotentialUnderpaidInvoice(ctx context.Context, address string, network Network, amount decimal.Decimal) (Invoice, error) {
-	row := s.pool.QueryRow(ctx, `
+	rows, err := s.pool.Query(ctx, `
 		SELECT `+invoiceSelectColumns+`
 		FROM invoices
 		WHERE destination_address = $1
@@ -734,9 +860,99 @@ func (s *Store) FindPotentialUnderpaidInvoice(ctx context.Context, address strin
 		  AND payable_amount - $3 <= 2.500000
 		  AND ROUND(payable_amount - TRUNC(payable_amount), 6) = ROUND($3 - TRUNC($3), 6)
 		ORDER BY payable_amount - $3 ASC, created_at DESC
-		LIMIT 1
+		LIMIT 2
 	`, address, network, amount)
-	return scanInvoice(row)
+	if err != nil {
+		return Invoice{}, fmt.Errorf("find potential underpaid invoice: %w", err)
+	}
+	defer rows.Close()
+	invoices := make([]Invoice, 0, 2)
+	for rows.Next() {
+		invoice, err := scanInvoice(rows)
+		if err != nil {
+			return Invoice{}, err
+		}
+		invoices = append(invoices, invoice)
+	}
+	if err := rows.Err(); err != nil {
+		return Invoice{}, err
+	}
+	if len(invoices) == 0 {
+		return Invoice{}, ErrNotFound
+	}
+	if len(invoices) > 1 {
+		return Invoice{}, ErrAmbiguousPaymentMatch
+	}
+	return invoices[0], nil
+}
+
+func (s *Store) MarkPaymentEventUnmatched(ctx context.Context, eventID int64, classification string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE payment_events
+		SET classification = $1
+		WHERE id = $2
+	`, classification, eventID)
+	if err != nil {
+		return fmt.Errorf("mark payment event unmatched: %w", err)
+	}
+	return nil
+}
+
+type InvoicePaymentDecision struct {
+	Classification string
+	Status         InvoiceStatus
+	TotalReceived  decimal.Decimal
+	ReviewReason   *string
+}
+
+func DecideInvoicePaymentStatus(invoice Invoice, observedAmount decimal.Decimal, observedAt time.Time, classificationHint string) InvoicePaymentDecision {
+	totalReceived := invoice.ReceivedAmount.Add(observedAmount).Round(9)
+	if classificationHint == "manual_mark_paid" || classificationHint == "test_simulated" {
+		return InvoicePaymentDecision{
+			Classification: classificationHint,
+			Status:         InvoiceStatusPaid,
+			TotalReceived:  invoice.PayableAmount,
+		}
+	}
+	if invoice.Status == InvoiceStatusExpired || observedAt.After(invoice.ExpiresAt) {
+		reason := "late_payment"
+		return InvoicePaymentDecision{
+			Classification: reason,
+			Status:         InvoiceStatusManualReview,
+			TotalReceived:  totalReceived,
+			ReviewReason:   &reason,
+		}
+	}
+	if totalReceived.LessThan(invoice.PayableAmount) {
+		classification := "underpaid"
+		if isLikelyExchangeFeeUnderpayment(invoice, totalReceived) {
+			classification = "underpaid_fee_window"
+		}
+		return InvoicePaymentDecision{Classification: classification, Status: InvoiceStatusUnderpaid, TotalReceived: totalReceived}
+	}
+	if totalReceived.GreaterThan(invoice.PayableAmount) {
+		reason := "overpaid"
+		return InvoicePaymentDecision{
+			Classification: reason,
+			Status:         InvoiceStatusOverpaid,
+			TotalReceived:  totalReceived,
+			ReviewReason:   &reason,
+		}
+	}
+	return InvoicePaymentDecision{Classification: "paid_exact", Status: InvoiceStatusPaid, TotalReceived: totalReceived}
+}
+
+func isLikelyExchangeFeeUnderpayment(invoice Invoice, totalReceived decimal.Decimal) bool {
+	if invoice.MatchingSuffix == nil {
+		return false
+	}
+	diff := invoice.PayableAmount.Sub(totalReceived)
+	if diff.LessThanOrEqual(decimal.Zero) || diff.GreaterThan(decimal.RequireFromString("2.500000")) {
+		return false
+	}
+	expectedFraction := invoice.PayableAmount.Sub(invoice.PayableAmount.Truncate(0)).Round(6)
+	receivedFraction := totalReceived.Sub(totalReceived.Truncate(0)).Round(6)
+	return expectedFraction.Equal(receivedFraction)
 }
 
 func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, previousStatus InvoiceStatus, paymentEventID int64, txHash string, status InvoiceStatus, classification string, observedAmount decimal.Decimal, paidAt time.Time) (Invoice, error) {
@@ -758,27 +974,12 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, pre
 		return Invoice{}, err
 	}
 	previousStatus = current.Status
+	decision := DecideInvoicePaymentStatus(current, observedAmount, paidAt, classification)
+	status = decision.Status
+	classification = decision.Classification
 	reviewReason := any(nil)
-	totalReceived := current.ReceivedAmount.Add(observedAmount).Round(9)
-	nextStatus := status
-	if classification == "manual_mark_paid" || classification == "test_simulated" {
-		nextStatus = InvoiceStatusPaid
-		totalReceived = current.PayableAmount
-	} else if current.Status == InvoiceStatusExpired || paidAt.After(current.ExpiresAt) {
-		nextStatus = InvoiceStatusManualReview
-		reviewReason = "late_payment"
-		classification = "late_payment"
-	} else {
-		switch {
-		case totalReceived.LessThan(current.PayableAmount):
-			nextStatus = InvoiceStatusUnderpaid
-		case totalReceived.Equal(current.PayableAmount):
-			nextStatus = InvoiceStatusPaid
-		default:
-			nextStatus = InvoiceStatusOverpaid
-			reviewReason = "overpaid"
-			classification = "overpaid"
-		}
+	if decision.ReviewReason != nil {
+		reviewReason = *decision.ReviewReason
 	}
 
 	var invoice Invoice
@@ -793,7 +994,7 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, pre
 		    finalized_at = CASE WHEN $1::invoice_status IN ('paid'::invoice_status, 'overpaid'::invoice_status, 'manual_review'::invoice_status) THEN COALESCE(finalized_at, NOW()) ELSE finalized_at END
 		WHERE id = $4
 		RETURNING `+invoiceSelectColumns+`
-	`, nextStatus, txHash, paidAt, invoiceID, totalReceived, paymentEventID, reviewReason)
+	`, status, txHash, paidAt, invoiceID, decision.TotalReceived, paymentEventID, reviewReason)
 	invoice, err = scanInvoice(row)
 	if err != nil {
 		return Invoice{}, err
@@ -861,7 +1062,10 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, pre
 	return invoice, nil
 }
 
-func (s *Store) GetWatchedWallets(ctx context.Context) ([]WatchedWallet, error) {
+func (s *Store) GetWatchedWallets(ctx context.Context, graceWindow time.Duration) ([]WatchedWallet, error) {
+	if graceWindow <= 0 {
+		graceWindow = 24 * time.Hour
+	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT DISTINCT
 			CASE
@@ -874,8 +1078,8 @@ func (s *Store) GetWatchedWallets(ctx context.Context) ([]WatchedWallet, error) 
 		FROM invoices i
 		WHERE i.mode = 'live'
 		  AND i.status IN ('awaiting_payment', 'underpaid', 'expired')
-		  AND i.expires_at >= NOW() - INTERVAL '24 hours'
-	`)
+		  AND i.expires_at >= NOW() - $1::interval
+	`, graceWindow.String())
 	if err != nil {
 		return nil, fmt.Errorf("get watched wallets: %w", err)
 	}

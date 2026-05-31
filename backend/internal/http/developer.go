@@ -71,14 +71,14 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 		requestsThisMonth, err := s.store.CountAPIRequestsSince(c.Request.Context(), workspace.ID, nil, monthStart)
 		if err != nil {
 			metrics.IncAuthAttempt("api_key", "failure", "count_month_usage")
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			abortError(c, http.StatusInternalServerError, err)
 			return
 		}
 
 		remainingMinute, allowed, err := s.store.AllowRateLimit(c.Request.Context(), fmt.Sprintf("api:%d:%d", workspace.ID, record.ID), plan.RequestsPerMinute, time.Minute)
 		if err != nil {
 			metrics.IncAuthAttempt("api_key", "failure", "rate_limit")
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			abortError(c, http.StatusInternalServerError, err)
 			return
 		}
 		c.Header("X-RateLimit-Limit-Minute", strconv.Itoa(plan.RequestsPerMinute))
@@ -116,22 +116,22 @@ func (s *Server) handleDeveloperUsage(c *gin.Context) {
 	plan := wc.Workspace.EffectivePlan(time.Now())
 	monthUsage, err := s.store.CountAPIRequestsSince(c.Request.Context(), wc.Workspace.ID, nil, monthWindowStart(time.Now().UTC()))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	minuteUsage, err := s.store.CountAPIRequestsSince(c.Request.Context(), wc.Workspace.ID, nil, time.Now().UTC().Add(-1*time.Minute))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	keyCount, err := s.store.CountActiveAPIKeys(c.Request.Context(), wc.Workspace.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	webhooks, err := s.store.ListWebhookEndpoints(c.Request.Context(), wc.Workspace.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -154,7 +154,7 @@ func (s *Server) handleListAPIKeys(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	items, err := s.store.ListAPIKeys(c.Request.Context(), wc.Workspace.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"items": items})
@@ -170,7 +170,7 @@ func (s *Server) handleCreateAPIKey(c *gin.Context) {
 
 	count, err := s.store.CountActiveAPIKeys(c.Request.Context(), wc.Workspace.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	if plan.APIKeyLimit > 0 && count >= plan.APIKeyLimit {
@@ -203,13 +203,13 @@ func (s *Server) handleCreateAPIKey(c *gin.Context) {
 	}
 	token, prefix, err := generateTokenWithPrefix(prefixName, 24)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	key, err := s.store.CreateAPIKey(c.Request.Context(), wc.Workspace.ID, label, prefix, hashSecret(token), scopes, mode)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{
@@ -230,7 +230,7 @@ func (s *Server) handleDeleteAPIKey(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -240,7 +240,7 @@ func (s *Server) handleListWebhookEndpoints(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	items, err := s.store.ListWebhookEndpoints(c.Request.Context(), wc.Workspace.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	for index := range items {
@@ -277,7 +277,7 @@ func (s *Server) handleCreateWebhookEndpoint(c *gin.Context) {
 	}
 	secret, _, err := generateTokenWithPrefix("whsec_", 18)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	environment := "live"
@@ -286,7 +286,7 @@ func (s *Server) handleCreateWebhookEndpoint(c *gin.Context) {
 	}
 	endpoint, err := s.store.CreateWebhookEndpoint(c.Request.Context(), wc.Workspace.ID, label, endpointURL, secret, environment)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"webhook": endpoint})
@@ -301,7 +301,7 @@ func (s *Server) handleRotateWebhookEndpointSecret(c *gin.Context) {
 	}
 	secret, _, err := generateTokenWithPrefix("whsec_", 18)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	endpoint, err := s.store.RotateWebhookEndpointSecret(c.Request.Context(), wc.Workspace.ID, endpointID, secret)
@@ -310,7 +310,7 @@ func (s *Server) handleRotateWebhookEndpointSecret(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"webhook": endpoint})
@@ -328,7 +328,7 @@ func (s *Server) handleDeleteWebhookEndpoint(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -374,12 +374,15 @@ func (s *Server) handleAPIListInvoices(c *gin.Context) {
 	if pageSize < 1 || pageSize > 100 {
 		pageSize = 20
 	}
-	items, err := s.store.ListInvoices(c.Request.Context(), wc.Workspace.ID, pageSize, (page-1)*pageSize)
+	items, total, err := s.store.ListInvoices(c.Request.Context(), wc.Workspace.ID, store.ListInvoicesFilter{
+		Limit:  pageSize,
+		Offset: (page - 1) * pageSize,
+	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"items": items, "page": page, "page_size": pageSize})
+	c.JSON(http.StatusOK, gin.H{"items": items, "total": total, "page": page, "page_size": pageSize})
 }
 
 func (s *Server) handleAPICreateInvoice(c *gin.Context) {
@@ -414,12 +417,12 @@ func (s *Server) handleAPICreateInvoice(c *gin.Context) {
 			return
 		}
 		if !errors.Is(err, store.ErrNotFound) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			respondError(c, http.StatusInternalServerError, err)
 			return
 		}
 		created, err := s.store.CreateIdempotencyRecord(c.Request.Context(), wc.Workspace.ID, keyCtx.Key.ID, c.Request.Method, c.FullPath(), idempotencyKey, requestHash)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			respondError(c, http.StatusInternalServerError, err)
 			return
 		}
 		idempotencyRecord = &created
@@ -478,7 +481,7 @@ func (s *Server) handleAPIGetInvoice(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.JSON(http.StatusOK, publicInvoiceResponse(invoice))
@@ -509,7 +512,7 @@ func (s *Server) handleAPICancelInvoice(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	if !isWorkspaceManagedInvoice(currentInvoice) {
@@ -522,7 +525,7 @@ func (s *Server) handleAPICancelInvoice(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	c.JSON(http.StatusOK, publicInvoiceResponse(invoice))
@@ -551,7 +554,7 @@ func (s *Server) handleAPISimulatePayment(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	if invoice.Mode != "test" {
@@ -574,7 +577,7 @@ func (s *Server) handleListWebhookDeliveries(c *gin.Context) {
 	}
 	items, err := s.store.ListWebhookDeliveries(c.Request.Context(), wc.Workspace.ID, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"items": items})
@@ -593,7 +596,7 @@ func (s *Server) handleResendWebhookDelivery(c *gin.Context) {
 		if errors.Is(err, store.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		respondError(c, status, err)
 		return
 	}
 	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), fmt.Sprintf("workspace:%d", wc.Workspace.ID), "webhook_resend", "webhook_delivery", strconv.FormatInt(deliveryID, 10), gin.H{"new_delivery_id": item.ID})

@@ -2,7 +2,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { JsonLd } from "@/components/JsonLd";
 import Link from "next/link";
 import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
@@ -40,42 +40,57 @@ export default async function AuthorPage(props: Props) {
 
   if (!data) notFound();
 
-  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
-  const breadcrumbs = [
-    { label: copy.breadcrumbs.home, href: `/${locale}` },
-    { label: copy.breadcrumbs.blog, href: `/${locale}/blog` },
-    { label: data.name, href: `/${locale}/blog/author/${slug}` },
-  ];
+  const lang = locale === "ru" ? "ru" : "en";
+  const copy = PUBLIC_MARKETING_COPY[lang];
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://reqst.xyz").replace(/\/+$/, "");
+
+  const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: data.name,
+    jobTitle: data.role,
+    description: data.bio,
+    url: `${baseUrl}/${locale}/blog/author/${slug}`,
+    worksFor: { "@type": "Organization", name: "Reqst" },
+  };
 
   return (
-    <MarketingLayout language={locale as "en" | "ru"}>
-      <div style={{ maxWidth: "800px", margin: "4rem auto", padding: "0 1.5rem" }}>
-        <Breadcrumbs items={breadcrumbs} locale={locale} />
-        
-        <header style={{ marginTop: "3rem", marginBottom: "5rem", textAlign: "center" }}>
-          <img 
-            src={data.avatar} 
-            alt={data.name} 
-            style={{ width: "120px", height: "120px", borderRadius: "50%", marginBottom: "2rem", border: "4px solid var(--line)" }} 
-          />
-          <h1 style={{ fontSize: "2.5rem", color: "var(--ink)", marginBottom: "1rem" }}>{data.name}</h1>
-          <span style={{ color: "var(--accent)", fontWeight: 600, textTransform: "uppercase", fontSize: "0.9rem", letterSpacing: "0.1em" }}>
-            {data.role}
-          </span>
-          <p style={{ fontSize: "1.2rem", color: "var(--muted)", marginTop: "1.5rem", lineHeight: 1.6 }}>
-            {data.bio}
-          </p>
-        </header>
+    <MarketingLayout language={lang}>
+      <JsonLd schema={personSchema} />
+      <section className="relative overflow-hidden py-16 md:py-24">
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/15 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse pointer-events-none" />
+        <div className="container mx-auto px-6 relative z-10 max-w-3xl">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[11px] font-bold tracking-[0.2em] uppercase text-white/30 mb-12">
+            <Link href={`/${locale}`} className="hover:text-accent transition-colors">{copy.breadcrumbs.home}</Link>
+            <span className="text-white/15">/</span>
+            <Link href={`/${locale}/blog`} className="hover:text-accent transition-colors">{copy.breadcrumbs.blog}</Link>
+          </nav>
 
-        <section>
-          <h2 style={{ fontSize: "1.5rem", color: "var(--ink)", marginBottom: "2rem", borderBottom: "1px solid var(--line)", paddingBottom: "1rem" }}>
-            Articles by {data.name}
-          </h2>
-          <p style={{ color: "var(--muted)" }}>
-            Coming soon... Browse our <Link href={`/${locale}/blog`} style={{ color: "var(--accent)" }}>full blog</Link> for recent updates.
-          </p>
-        </section>
-      </div>
+          <div className="lend-card lend-spotlight-card relative p-10 md:p-14 text-center flex flex-col items-center">
+            <div className="lend-card-spotlight" />
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-accent/30 rounded-full blur-2xl opacity-40" />
+              <img src={data.avatar} alt={data.name} className="relative w-28 h-28 rounded-full object-cover border-2 border-accent/30" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-3">{data.name}</h1>
+            <span className="text-[11px] font-bold tracking-[0.3em] text-accent/70 uppercase mb-6">{data.role}</span>
+            <p className="text-base md:text-lg text-white/55 leading-relaxed max-w-xl">{data.bio}</p>
+          </div>
+
+          <div className="mt-12 text-center">
+            <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-white/40 mb-4">
+              {lang === "ru" ? `Статьи автора` : `Articles by ${data.name}`}
+            </h2>
+            <p className="text-white/40">
+              {lang === "ru" ? "Скоро. Загляните в " : "Coming soon. Browse the "}
+              <Link href={`/${locale}/blog`} className="text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent transition-colors">
+                {lang === "ru" ? "блог" : "full blog"}
+              </Link>
+              {lang === "ru" ? " — там свежие материалы." : " for recent updates."}
+            </p>
+          </div>
+        </div>
+      </section>
     </MarketingLayout>
   );
 }

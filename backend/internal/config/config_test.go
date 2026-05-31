@@ -32,7 +32,10 @@ func TestLoadAppliesDefaultsAndParsesDurations(t *testing.T) {
 	t.Setenv("ALLOW_INSECURE_DEV_AUTH", "true")
 	t.Setenv("TELEGRAM_INIT_MAX_AGE_SECONDS", "120")
 	t.Setenv("WATCHER_POLL_INTERVAL", "45s")
-	t.Setenv("ADMIN_SESSION_TTL", "2h")
+	t.Setenv("ACCESS_TOKEN_TTL", "10m")
+	t.Setenv("REFRESH_TOKEN_TTL", "720h")
+	t.Setenv("ADMIN_ACCESS_TOKEN_TTL", "2h")
+	t.Setenv("ADMIN_REFRESH_TOKEN_TTL", "12h")
 	t.Setenv("ADMIN_JWT_SECRET", "")
 
 	cfg, err := Load()
@@ -51,8 +54,11 @@ func TestLoadAppliesDefaultsAndParsesDurations(t *testing.T) {
 	if cfg.WatcherPollInterval != 45*time.Second {
 		t.Fatalf("unexpected watcher poll interval: %s", cfg.WatcherPollInterval)
 	}
-	if cfg.AdminSessionTTL != 2*time.Hour {
-		t.Fatalf("unexpected admin session ttl: %s", cfg.AdminSessionTTL)
+	if cfg.AccessTokenTTL != 10*time.Minute {
+		t.Fatalf("unexpected access token ttl: %s", cfg.AccessTokenTTL)
+	}
+	if cfg.AdminAccessTokenTTL != 2*time.Hour {
+		t.Fatalf("unexpected admin access ttl: %s", cfg.AdminAccessTokenTTL)
 	}
 	if cfg.AdminJWTSecret != "secret" {
 		t.Fatalf("expected admin secret to fall back to JWT secret, got %q", cfg.AdminJWTSecret)

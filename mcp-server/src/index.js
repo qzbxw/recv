@@ -1,0 +1,447 @@
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { CallToolRequestSchema, ListResourcesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
+import { createHmac, timingSafeEqual } from "node:crypto";
+const API_BASE_URL = process.env.REQST_API_URL || "https://reqst.xyz/v1";
+const API_KEY = process.env.REQST_API_KEY || "";
+const ACCESS_TOKEN = process.env.REQST_ACCESS_TOKEN || "";
+const WEBHOOK_SECRET = process.env.REQST_WEBHOOK_SECRET || "";
+const DOCS_BASE_URL = process.env.REQST_DOCS_URL || "https://reqst.xyz/en/docs";
+const APP_BASE_URL = process.env.REQST_APP_URL || deriveAppBaseUrl(API_BASE_URL);
+const server = new Server({
+    name: "reqst-agent-mcp",
+    version: "1.0.0",
+}, {
+    capabilities: {
+        resources: {},
+        tools: {},
+    },
+});
+/**
+ * Resources: Provide static or dynamic documentation to the agent.
+ */
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    return {
+        resources: [
+            {
+                uri: "reqst://docs/auth",
+                name: "Authentication Guide",
+                mimeType: "text/markdown",
+                description: "How to authenticate with the Reqst API.",
+            },
+            {
+                uri: "reqst://docs/invoices",
+                name: "Invoices API Guide",
+                mimeType: "text/markdown",
+                description: "How to create and manage payment invoices.",
+            },
+            {
+                uri: "reqst://docs/webhooks",
+                name: "Webhook Integration Guide",
+                mimeType: "text/markdown",
+                description: "How to receive and verify webhooks from Reqst.",
+            },
+            {
+                uri: "reqst://docs/errors",
+                name: "Error Handling and Rate Limits",
+                mimeType: "text/markdown",
+                description: "Reqst API error codes and rate limit policies.",
+            },
+            {
+                uri: "reqst://docs/mcp",
+                name: "MCP Agent Guide",
+                mimeType: "text/markdown",
+                description: "How AI agents onboard, buy a plan, and use Reqst through MCP.",
+            },
+        ],
+    };
+});
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    const { uri } = request.params;
+    const slug = uri.replace("reqst://docs/", "");
+    try {
+        const response = await fetch(`${DOCS_BASE_URL}/raw/${slug}`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch doc: ${response.status}`);
+        }
+        const text = await response.text();
+        return {
+            contents: [
+                {
+                    uri,
+                    mimeType: "text/markdown",
+                    text,
+                },
+            ],
+        };
+    }
+    catch (error) {
+        console.error(`Resource ${uri} failed:`, error);
+        throw new Error(`Resource not found or unavailable: ${uri}`);
+    }
+});
+/**
+ * Tools: Actionable capabilities for the agent.
+ */
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+        tools: [
+            {
+                name: "create_invoice",
+                description: "Create a new payment invoice in Reqst. The amount is always priced in USD and converted to the payable crypto network.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        title: { type: "string", description: "Human-readable title shown to the payer (e.g. 'Order #1290')" },
+                        base_amount_usd: { type: "string", description: "Amount in USD as a decimal string (e.g. '10.50')" },
+                        payable_network: {
+                            type: "string",
+                            description: "Network the customer pays on. One of: TON, TRON, SOLANA, EVM, BASE, ARBITRUM, BSC.",
+                            enum: ["TON", "TRON", "SOLANA", "EVM", "BASE", "ARBITRUM", "BSC"],
+                        },
+                        expires_in_minutes: { type: "number", description: "Optional invoice lifetime in minutes (default 30)" },
+                    },
+                    required: ["title", "base_amount_usd", "payable_network"],
+                },
+            },
+            {
+                name: "get_account",
+                description: "Return the authenticated Reqst console account, workspace, active plan, and available paid plans. Requires REQST_ACCESS_TOKEN.",
+                inputSchema: { type: "object", properties: {} },
+            },
+            {
+                name: "bootstrap_agent_workspace",
+                description: "Create a new Reqst trial workspace for an autonomous agent and return a console access token. Use the returned token as REQST_ACCESS_TOKEN, then buy a Developer or Business subscription.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        workspace_name: { type: "string", description: "Optional short workspace label used in the generated workspace slug" },
+                        contact_email: { type: "string", description: "Optional owner/contact email for receipts and support" },
+                    },
+                },
+            },
+            {
+                name: "create_subscription_checkout",
+                description: "Create a Reqst plan checkout for this workspace. Use this for self-service onboarding or upgrades before API keys exist. Requires REQST_ACCESS_TOKEN. For AI agents that need to accept payments, choose developer or business because merchant does not include API keys.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        plan_code: {
+                            type: "string",
+                            description: "Plan to buy. merchant is checkout-only; developer and business include API keys and webhooks.",
+                            enum: ["merchant", "developer", "business"],
+                        },
+                        payable_network: {
+                            type: "string",
+                            description: "Network used to pay Reqst for the subscription. One of: TON, TRON, SOLANA, EVM, BASE, ARBITRUM, BSC.",
+                            enum: ["TON", "TRON", "SOLANA", "EVM", "BASE", "ARBITRUM", "BSC"],
+                        },
+                    },
+                    required: ["plan_code", "payable_network"],
+                },
+            },
+            {
+                name: "get_checkout_invoice",
+                description: "Read any public Reqst checkout invoice by public_id. Useful for polling a subscription checkout until it becomes paid.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        public_id: { type: "string", description: "Public checkout invoice ID, for example RQST-9N2QK7" },
+                    },
+                    required: ["public_id"],
+                },
+            },
+            {
+                name: "create_api_key",
+                description: "Create a developer API key for the authenticated workspace after a Developer/Business/Enterprise subscription is active. Requires REQST_ACCESS_TOKEN.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        label: { type: "string", description: "Human-readable key label" },
+                        environment: { type: "string", description: "Key environment", enum: ["live", "test"] },
+                        scopes: {
+                            type: "array",
+                            items: { type: "string", enum: ["invoices:read", "invoices:write"] },
+                            description: "Optional scopes. Defaults to invoices:read and invoices:write.",
+                        },
+                    },
+                },
+            },
+            {
+                name: "create_webhook_endpoint",
+                description: "Create a webhook endpoint for invoice and subscription events. Requires REQST_ACCESS_TOKEN and an active plan with webhooks.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        url: { type: "string", description: "HTTPS webhook URL that receives Reqst events" },
+                        label: { type: "string", description: "Human-readable endpoint label" },
+                        environment: { type: "string", description: "Endpoint environment", enum: ["live", "test"] },
+                    },
+                    required: ["url"],
+                },
+            },
+            {
+                name: "get_invoice",
+                description: "Retrieve status and details of an existing Reqst invoice.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        id: { type: "string", description: "The unique invoice ID" },
+                    },
+                    required: ["id"],
+                },
+            },
+            {
+                name: "list_invoices",
+                description: "List recent invoices with pagination.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        page: { type: "number", description: "Page number (default 1)" },
+                        page_size: { type: "number", description: "Page size (default 20, max 100)" },
+                    },
+                },
+            },
+            {
+                name: "simulate_payment",
+                description: "Simulate a payment for an invoice (Test Mode only).",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        id: { type: "string", description: "The unique invoice ID" },
+                    },
+                    required: ["id"],
+                },
+            },
+            {
+                name: "verify_webhook",
+                description: "Verify a Reqst webhook signature. Pass the RAW request body string exactly as received (do not re-serialize), the X-Reqst-Timestamp header, and the X-Reqst-Signature header.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        raw_body: { type: "string", description: "The raw, unparsed request body string exactly as received" },
+                        timestamp: { type: "string", description: "The value of the X-Reqst-Timestamp header" },
+                        signature: { type: "string", description: "The value of the X-Reqst-Signature header (e.g. 'v1=abc...')" },
+                    },
+                    required: ["raw_body", "timestamp", "signature"],
+                },
+            },
+            {
+                name: "list_supported_networks",
+                description: "List blockchain networks and assets currently supported by Reqst.",
+                inputSchema: { type: "object", properties: {} },
+            },
+        ],
+    };
+});
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+    const headers = {
+        "X-API-Key": API_KEY,
+        "Content-Type": "application/json",
+    };
+    const consoleHeaders = {
+        "Authorization": `Bearer ${ACCESS_TOKEN}`,
+        "Content-Type": "application/json",
+    };
+    try {
+        switch (name) {
+            case "list_supported_networks": {
+                return {
+                    content: [{
+                            type: "text",
+                            text: "Reqst supports the following payable_network values:\n- TON — The Open Network (Mainnet)\n- TRON — USDT TRC-20\n- SOLANA — USDC/USDT\n- EVM — Ethereum Mainnet and EVM-compatible chains\n- BASE — Base (EVM)\n- ARBITRUM — Arbitrum One (EVM)\n- BSC — BNB Smart Chain (EVM)"
+                        }],
+                };
+            }
+            case "verify_webhook": {
+                if (!WEBHOOK_SECRET) {
+                    return {
+                        content: [{ type: "text", text: "Error: REQST_WEBHOOK_SECRET is not set. Verification cannot be performed." }],
+                        isError: true,
+                    };
+                }
+                const { raw_body, timestamp, signature } = args;
+                // Reqst signs: "v1=" + HMAC_SHA256(secret, `${timestamp}.${rawBody}`)
+                const hmac = createHmac("sha256", WEBHOOK_SECRET.trim());
+                hmac.update(timestamp);
+                hmac.update(".");
+                hmac.update(raw_body);
+                const expected = "v1=" + hmac.digest("hex");
+                const provided = String(signature || "");
+                const isValid = provided.length === expected.length &&
+                    timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+                return {
+                    content: [{ type: "text", text: isValid ? "Signature is VALID" : "Signature is INVALID" }],
+                };
+            }
+            case "create_invoice": {
+                if (!API_KEY)
+                    throw new Error("API_KEY not set");
+                const { title, base_amount_usd, payable_network, expires_in_minutes } = args || {};
+                const body = {
+                    title,
+                    base_amount_usd,
+                    payable_network: String(payable_network || "").toUpperCase(),
+                };
+                if (expires_in_minutes != null)
+                    body.expires_in_minutes = expires_in_minutes;
+                const response = await fetch(`${API_BASE_URL}/invoices`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify(body),
+                });
+                const data = await response.json();
+                return {
+                    content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+                    isError: !response.ok,
+                };
+            }
+            case "get_account": {
+                if (!ACCESS_TOKEN)
+                    throw new Error("REQST_ACCESS_TOKEN not set");
+                const response = await fetch(appApiUrl("/api/me"), { headers: consoleHeaders });
+                const data = await response.json();
+                return jsonToolResult(data, response.ok);
+            }
+            case "bootstrap_agent_workspace": {
+                const { workspace_name = "", contact_email = "" } = args || {};
+                const response = await fetch(appApiUrl("/api/auth/agent/bootstrap"), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ workspace_name, contact_email }),
+                });
+                const data = await response.json();
+                return jsonToolResult(data, response.ok);
+            }
+            case "create_subscription_checkout": {
+                if (!ACCESS_TOKEN)
+                    throw new Error("REQST_ACCESS_TOKEN not set");
+                const { plan_code = "developer", payable_network = "TRON" } = args || {};
+                const response = await fetch(appApiUrl("/api/billing/checkout"), {
+                    method: "POST",
+                    headers: consoleHeaders,
+                    body: JSON.stringify({
+                        plan_code: String(plan_code || "developer").toLowerCase(),
+                        payable_network: String(payable_network || "TRON").toUpperCase(),
+                    }),
+                });
+                const data = await response.json();
+                if (data && typeof data.checkout_url === "string" && data.checkout_url.startsWith("/")) {
+                    data.checkout_url = `${APP_BASE_URL}${data.checkout_url}`;
+                }
+                return jsonToolResult(data, response.ok);
+            }
+            case "get_checkout_invoice": {
+                const { public_id } = args;
+                const response = await fetch(appApiUrl(`/api/public/invoices/${encodeURIComponent(public_id)}`));
+                const data = await response.json();
+                if (data && typeof data.checkout_url === "string" && data.checkout_url.startsWith("/")) {
+                    data.checkout_url = `${APP_BASE_URL}${data.checkout_url}`;
+                }
+                return jsonToolResult(data, response.ok);
+            }
+            case "create_api_key": {
+                if (!ACCESS_TOKEN)
+                    throw new Error("REQST_ACCESS_TOKEN not set");
+                const { label = "Reqst MCP agent", environment = "live", scopes } = args || {};
+                const response = await fetch(appApiUrl("/api/developer/api-keys"), {
+                    method: "POST",
+                    headers: consoleHeaders,
+                    body: JSON.stringify({
+                        label,
+                        environment,
+                        scopes: Array.isArray(scopes) && scopes.length > 0 ? scopes : ["invoices:read", "invoices:write"],
+                    }),
+                });
+                const data = await response.json();
+                return jsonToolResult(data, response.ok);
+            }
+            case "create_webhook_endpoint": {
+                if (!ACCESS_TOKEN)
+                    throw new Error("REQST_ACCESS_TOKEN not set");
+                const { url, label = "Reqst MCP webhook", environment = "live" } = args || {};
+                const response = await fetch(appApiUrl("/api/developer/webhooks"), {
+                    method: "POST",
+                    headers: consoleHeaders,
+                    body: JSON.stringify({ url, label, environment }),
+                });
+                const data = await response.json();
+                return jsonToolResult(data, response.ok);
+            }
+            case "get_invoice": {
+                if (!API_KEY)
+                    throw new Error("API_KEY not set");
+                const { id } = args;
+                const response = await fetch(`${API_BASE_URL}/invoices/${id}`, { headers });
+                const data = await response.json();
+                return {
+                    content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+                    isError: !response.ok,
+                };
+            }
+            case "list_invoices": {
+                if (!API_KEY)
+                    throw new Error("API_KEY not set");
+                const { page = 1, page_size = 20 } = args || {};
+                const response = await fetch(`${API_BASE_URL}/invoices?page=${page}&page_size=${page_size}`, { headers });
+                const data = await response.json();
+                return {
+                    content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+                    isError: !response.ok,
+                };
+            }
+            case "simulate_payment": {
+                if (!API_KEY)
+                    throw new Error("API_KEY not set");
+                const { id } = args;
+                const response = await fetch(`${API_BASE_URL}/test/invoices/${id}/simulate-payment`, {
+                    method: "POST",
+                    headers,
+                });
+                const data = await response.json();
+                return {
+                    content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+                    isError: !response.ok,
+                };
+            }
+            default:
+                throw new Error(`Unknown tool: ${name}`);
+        }
+    }
+    catch (error) {
+        return {
+            content: [{ type: "text", text: `Action failed: ${error.message}` }],
+            isError: true,
+        };
+    }
+});
+function deriveAppBaseUrl(apiBaseUrl) {
+    const trimmed = apiBaseUrl.replace(/\/+$/, "");
+    if (trimmed.endsWith("/v1")) {
+        return trimmed.slice(0, -3);
+    }
+    return trimmed;
+}
+function appApiUrl(path) {
+    return `${APP_BASE_URL}${path}`;
+}
+function jsonToolResult(data, ok) {
+    return {
+        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+        isError: !ok,
+    };
+}
+/**
+ * Start the server using stdio transport.
+ */
+async function main() {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error("Reqst MCP Server running on stdio");
+}
+main().catch((error) => {
+    console.error("Fatal error in main():", error);
+    process.exit(1);
+});
+//# sourceMappingURL=index.js.map

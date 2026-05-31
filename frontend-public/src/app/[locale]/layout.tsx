@@ -1,5 +1,12 @@
 import { UIProvider } from "@/components/UIProvider";
 import { Metadata } from "next";
+import { LOCALES } from "@/i18n";
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return LOCALES.map((locale) => ({ locale }));
+}
 
 export async function generateMetadata(props: {
   params: Promise<{ locale: string }>;

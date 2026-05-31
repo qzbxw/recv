@@ -1,84 +1,107 @@
 import { Metadata } from "next";
-import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import Link from "next/link";
-import { PUBLIC_MARKETING_COPY } from "@/i18n";
+import { HubPageClient } from "@/components/HubPageClient";
+import { getCopy, normalizeLocale } from "@/i18n";
+import { JsonLd } from "@/components/JsonLd";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { locale } = await props.params;
-  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
+  const { locale: rawLocale } = await props.params;
+  const locale = normalizeLocale(rawLocale);
+  const copy = getCopy(locale);
 
   return {
-    title: `${copy.useCasesHub.title} | Reqst`,
-    description: copy.useCasesHub.description,
+    title: `${copy.marketing.useCasesHub.title} | Reqst`,
+    description: copy.marketing.useCasesHub.description,
+    keywords: locale === "ru"
+      ? "кейсы использования, Telegram крипто-шоп, SaaS биллинг криптовалюты, цифровые товары"
+      : "crypto payment use cases, telegram shop crypto, saas crypto billing, digital goods payments",
     alternates: {
       canonical: `/${locale}/use-cases`,
+      languages: { en: "/en/use-cases", ru: "/ru/use-cases", "x-default": "/en/use-cases" },
+    },
+    openGraph: {
+      title: copy.marketing.useCasesHub.title,
+      description: copy.marketing.useCasesHub.description,
     },
   };
 }
 
 export default async function UseCasesHubPage(props: Props) {
-  const { locale } = await props.params;
-  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
-  
-  const breadcrumbs = [
-    { label: copy.breadcrumbs.home, href: `/${locale}` },
-    { label: copy.breadcrumbs.useCases, href: `/${locale}/use-cases` },
-  ];
+  const { locale: rawLocale } = await props.params;
+  const locale = normalizeLocale(rawLocale);
+  const copy = getCopy(locale);
+  const hub = copy.marketing.useCasesHub;
 
   const useCases = [
-    { title: copy.nav.useCases.tgShops, slug: "telegram-shops" },
-    { title: copy.nav.useCases.saas, slug: "saas-billing" },
-    { title: copy.nav.useCases.digital, slug: "digital-goods" },
-    { title: copy.nav.useCases.communities, slug: "paid-communities" },
+    {
+      slug: "telegram-shops",
+      title: copy.nav.useCases.tgShops,
+      body: locale === "ru"
+        ? "Принимайте криптоплатежи в Telegram-ботах и Mini Apps. TON-первый чекаут с прямым зачислением на ваши кошельки."
+        : "Accept crypto payments in Telegram bots and Mini Apps. TON-first checkout with direct-to-wallet settlement.",
+    },
+    {
+      slug: "saas-billing",
+      title: copy.nav.useCases.saas,
+      body: locale === "ru"
+        ? "Автоматизируйте подписочный биллинг в крипте. Webhook-уведомления для CRM-интеграции и мгновенная верификация."
+        : "Automate subscription billing in crypto. Webhook notifications for CRM integration and instant payment verification.",
+    },
+    {
+      slug: "digital-goods",
+      title: copy.nav.useCases.digital,
+      body: locale === "ru"
+        ? "Продавайте цифровые товары с мгновенным подтверждением оплаты. Поддержка всех мажорных сетей и стейблкоинов."
+        : "Sell digital goods with instant payment confirmation across all major networks and stablecoins.",
+    },
+    {
+      slug: "paid-communities",
+      title: copy.nav.useCases.communities,
+      body: locale === "ru"
+        ? "Монетизируйте закрытые сообщества и контент с помощью крипто-подписок и разовых платежей."
+        : "Monetize exclusive communities and content with crypto subscriptions and one-time payments.",
+    },
   ];
 
+  const cards = useCases.map((uc) => ({
+    title: uc.title,
+    body: uc.body,
+    slug: uc.slug,
+    href: `/${locale}/use-cases/${uc.slug}`,
+    linkLabel: locale === "ru" ? "Изучить кейс →" : "Read use case →",
+  }));
+
+  const siteListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: hub.title,
+    description: hub.description,
+    itemListElement: useCases.map((uc, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: uc.title,
+      url: `https://reqst.xyz/${locale}/use-cases/${uc.slug}`,
+    })),
+  };
+
   return (
-    <MarketingLayout language={locale as "en" | "ru"}>
-      <div className="page-container">
-        <header className="page-header">
-          <span className="lend-section-kicker">
-            {copy.useCasesHub.kicker}
-          </span>
-          <h1 className="page-title font-extrabold tracking-tight" style={{ marginTop: "1rem" }}>
-            {copy.useCasesHub.title}
-          </h1>
-          <p className="page-subtitle font-medium" style={{ margin: "0" }}>
-            {copy.useCasesHub.description}
-          </p>
-        </header>
-
-        <section className="benefits-grid page-section">
-          {useCases.map((uc) => (
-            <Link key={uc.slug} href={`/${locale}/use-cases/${uc.slug}`} className="lend-card benefit-card hover:border-purple-500/50 transition-colors">
-              <h3 className="benefit-title font-bold">{uc.title}</h3>
-              <p className="benefit-text font-medium">
-                {locale === "ru" 
-                  ? `Узнайте, как ${uc.title} используют инфраструктуру Reqst для автоматизации крипто-платежей.`
-                  : `Explore how ${uc.title} leverage Reqst infrastructure for automated crypto processing.`
-                }
-              </p>
-              <span className="lend-secondary" style={{ marginTop: "auto", fontSize: "0.9rem" }}>
-                {locale === "ru" ? "Изучить кейс →" : "Read use case →"}
-              </span>
-            </Link>
-          ))}
-        </section>
-
-        <section className="page-final-section">
-          <h2 className="page-final-title font-bold">{copy.useCasesHub.customUseCase.title}</h2>
-          <p className="page-final-text font-medium">
-            {copy.useCasesHub.customUseCase.body}
-          </p>
-          <div className="page-cta-row page-cta-row--centered">
-            <Link href="/app/auth" className="lend-primary">{copy.final.primary}</Link>
-            <Link href={`/${locale}/enterprise`} className="lend-secondary">{copy.nav.pricing.enterprise}</Link>
-          </div>
-        </section>
-      </div>
-    </MarketingLayout>
+    <>
+      <JsonLd schema={siteListSchema} />
+      <HubPageClient
+        language={locale}
+        kicker={hub.kicker}
+        title={hub.title}
+        description={hub.description}
+        cards={cards}
+        finalTitle={hub.customUseCase.title}
+        finalBody={hub.customUseCase.body}
+        finalPrimary={copy.final.primary}
+        finalSecondaryLabel={copy.nav.pricing.enterprise}
+        finalSecondaryHref={`/${locale}/enterprise`}
+      />
+    </>
   );
 }

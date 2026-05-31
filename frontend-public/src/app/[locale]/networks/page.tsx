@@ -1,88 +1,83 @@
 import { Metadata } from "next";
-import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
-import Link from "next/link";
-import { PUBLIC_MARKETING_COPY } from "@/i18n";
+import { HubPageClient } from "@/components/HubPageClient";
+import { getCopy, normalizeLocale } from "@/i18n";
+import { JsonLd } from "@/components/JsonLd";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { locale } = await props.params;
-  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
+  const { locale: rawLocale } = await props.params;
+  const locale = normalizeLocale(rawLocale);
+  const copy = getCopy(locale);
 
   return {
-    title: `${copy.networksHub.title} | Reqst`,
-    description: copy.networksHub.description,
+    title: `${copy.marketing.networksHub.title} | Reqst`,
+    description: copy.marketing.networksHub.description,
     alternates: {
       canonical: `/${locale}/networks`,
+      languages: { en: "/en/networks", ru: "/ru/networks", "x-default": "/en/networks" },
+    },
+    openGraph: {
+      title: copy.marketing.networksHub.title,
+      description: copy.marketing.networksHub.description,
     },
   };
 }
 
 export default async function NetworksHubPage(props: Props) {
-  const { locale } = await props.params;
-  const copy = PUBLIC_MARKETING_COPY[locale as "en" | "ru"];
-  
-  const breadcrumbs = [
-    { label: copy.breadcrumbs.home, href: `/${locale}` },
-    { label: copy.breadcrumbs.networks, href: `/${locale}/networks` },
-  ];
+  const { locale: rawLocale } = await props.params;
+  const locale = normalizeLocale(rawLocale);
+  const copy = getCopy(locale);
 
   const networks = [
-    { id: "ton", name: copy.nav.networks.ton, slug: "ton", desc: locale === "ru" ? "TON и Jettons для Telegram-native платежных сценариев." : "TON and Jettons for Telegram-native payment flows." },
-    { id: "tron", name: copy.nav.networks.tron, slug: "tron", desc: locale === "ru" ? "USDT TRC-20 для привычных stablecoin-переводов." : "USDT TRC-20 for familiar stablecoin transfers." },
-    { id: "solana", name: copy.nav.networks.solana, slug: "solana", desc: locale === "ru" ? "SOL и SPL tokens для быстрых web3-платежей." : "SOL and SPL tokens for fast web3 payments." },
-    { id: "base", name: copy.nav.networks.base, slug: "base", desc: locale === "ru" ? "Base L2 для EVM-покупателей и low-cost checkout." : "Base L2 for EVM buyers and low-cost checkout." },
-    { id: "bsc", name: copy.nav.networks.bsc, slug: "bsc", desc: locale === "ru" ? "BEP-20 активы для широкой retail-аудитории." : "BEP-20 assets for broad retail audiences." },
-    { id: "arbitrum", name: copy.nav.networks.arbitrum, slug: "arbitrum", desc: locale === "ru" ? "Arbitrum One для Ethereum-aligned платежей с меньшими fees." : "Arbitrum One for Ethereum-aligned payments with lower fees." },
+    { name: "TON", slug: "ton", desc: locale === "ru" ? "Нативная сеть Telegram для быстрых и дешёвых переводов с поддержкой TON USDT." : "Telegram-native network for fast, low-cost transfers with TON USDT support." },
+    { name: "TRON", slug: "tron", desc: locale === "ru" ? "Самая популярная сеть для USDT. Высокая ликвидность и широкое принятие." : "The most popular network for USDT payments with high liquidity and adoption." },
+    { name: "Solana", slug: "solana", desc: locale === "ru" ? "Молниеносные транзакции с минимальными комиссиями для масштабируемого процессинга." : "Lightning-fast transactions with minimal fees for scalable payment processing." },
+    { name: "Base", slug: "base", desc: locale === "ru" ? "L2 сеть от Coinbase для надёжных EVM-совместимых платежей." : "Coinbase's L2 for reliable EVM-compatible payments with institutional backing." },
+    { name: "BSC", slug: "bsc", desc: locale === "ru" ? "Binance Smart Chain с широкой поддержкой токенов и высокой ликвидностью." : "Binance Smart Chain with broad token support and high DeFi liquidity." },
+    { name: "Arbitrum", slug: "arbitrum", desc: locale === "ru" ? "Ведущий Ethereum L2 с низкими комиссиями и надёжностью EVM." : "Leading Ethereum L2 with low fees and full EVM compatibility." },
   ];
 
-  const kickerStyle = { color: "var(--accent)", fontWeight: 600, fontSize: "0.9rem", textTransform: "uppercase" as const, letterSpacing: "0.1em" };
+  const cards = networks.map((net) => ({
+    title: net.name,
+    body: net.desc,
+    slug: net.slug,
+    href: `/${locale}/networks/${net.slug}`,
+    linkLabel: locale === "ru" ? "Подробнее" : "Explore network",
+  }));
+
+  const siteListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: copy.marketing.networksHub.title,
+    description: copy.marketing.networksHub.description,
+    itemListElement: networks.map((net, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: net.name,
+      url: `https://reqst.xyz/${locale}/networks/${net.slug}`,
+    })),
+  };
 
   return (
-    <MarketingLayout language={locale as "en" | "ru"}>
-      <div className="page-container">
-        <Breadcrumbs items={breadcrumbs} locale={locale} />
-        
-        <header className="page-header">
-          <span style={kickerStyle}>
-            {copy.networksHub.kicker}
-          </span>
-          <h1 className="page-title" style={{ marginTop: "1rem" }}>
-            {copy.networksHub.title}
-          </h1>
-          <p className="page-subtitle" style={{ margin: "0" }}>
-            {copy.networksHub.description}
-          </p>
-        </header>
-
-        <section className="benefits-grid page-section">
-          {networks.map((network) => (
-            <Link key={network.id} href={`/${locale}/networks/${network.slug}`} className="lend-card benefit-card hover:border-purple-500/50 transition-colors">
-              <h3 className="benefit-title">{network.name}</h3>
-              <p className="benefit-text">
-                {network.desc}
-              </p>
-              <span className="lend-secondary" style={{ marginTop: "auto", fontSize: "0.9rem" }}>
-                {locale === "ru" ? "Подробнее о сети" : "View network details"} →
-              </span>
-            </Link>
-          ))}
-        </section>
-
-        <section className="page-final-section">
-          <h2 className="page-final-title">Non-Custodial by Design</h2>
-          <p className="page-final-text">
-            {copy.networksHub.explanation}
-          </p>
-          <div className="page-cta-row page-cta-row--centered">
-            <Link href="/app/auth" className="lend-primary">{copy.final.primary}</Link>
-            <Link href={`/${locale}/dev`} className="lend-secondary">{copy.nav.docs}</Link>
-          </div>
-        </section>
-      </div>
-    </MarketingLayout>
+    <>
+      <JsonLd schema={siteListSchema} />
+      <HubPageClient
+        language={locale}
+        kicker={copy.marketing.networksHub.kicker}
+        title={copy.marketing.networksHub.title}
+        description={copy.marketing.networksHub.description}
+        cards={cards}
+        finalTitle={locale === "ru" ? "Запустить Reqst" : "Launch Reqst"}
+        finalBody={locale === "ru"
+          ? "Non-custodial криптоплатежи напрямую на ваши кошельки. Без комиссии с оборота."
+          : "Non-custodial crypto payments straight to your wallets. Zero turnover fees."}
+        finalPrimary={copy.hero.primary}
+        finalSecondaryLabel={copy.nav.docs}
+        finalSecondaryHref={`/${locale}/docs`}
+      />
+    </>
   );
 }

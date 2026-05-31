@@ -1,0 +1,84 @@
+---
+title: Ошибки и лимиты
+description: HTTP-коды, формат ошибки, заголовки rate limit и квоты по тарифам.
+---
+
+# Ошибки и лимиты
+
+Reqst API использует стандартные HTTP-коды и единый формат JSON-ошибки.
+
+## HTTP-коды
+
+| Код | Значение |
+|-----|----------|
+| `200` | OK. |
+| `201` | Создано (например, новый счет). |
+| `204` | Нет содержимого (успешное действие без тела). |
+| `400` | Bad request — отсутствует/некорректен параметр, неподдерживаемая сеть, счет нельзя отменить, или симуляция не-тестового счета. |
+| `401` | Unauthorized — отсутствует или неверный API-ключ. |
+| `403` | Forbidden — тариф не включает API, отсутствует scope, заблокированный workspace или симуляция live-ключом. |
+| `404` | Not found — ресурс не существует в вашем workspace. |
+| `409` | Conflict — `Idempotency-Key` повторно использован с другим телом или исходный запрос еще обрабатывается. |
+| `429` | Too many requests — превышен минутный лимит или месячная квота. |
+| `500` | Внутренняя ошибка сервера. |
+
+## Тело ошибки
+
+Каждая ошибка возвращает JSON-объект с единственным полем `error`:
+
+```json
+{ "error": "invalid API key" }
+```
+
+В целях безопасности ответы `5xx` возвращают обобщенное `{"error": "internal server error"}`, а детали логируются на сервере. Ответы `4xx` отдают конкретное сообщение (валидация, авторизация, конфликт), например:
+
+- `missing API key`
+- `invalid API key`
+- `API key scope invoices:write is required`
+- `current plan does not include Reqst Dev or Reqst Enterprise API access`
+- `invalid base_amount_usd`
+- `only workspace-created invoices can be canceled`
+- `payment simulator is only available for rqst_test_ API keys`
+- `minute rate limit exceeded` / `monthly API quota exceeded`
+
+## Заголовки rate limit
+
+Каждый авторизованный ответ `/v1` включает текущий минутный бюджет, а где у тарифа есть месячная квота — и месячный:
+
+| Заголовок | Описание |
+|-----------|----------|
+| `X-RateLimit-Limit-Minute` | Разрешено запросов в минуту на вашем тарифе. |
+| `X-RateLimit-Remaining-Minute` | Осталось запросов в текущем минутном окне. |
+| `X-RateLimit-Limit-Month` | Месячная квота запросов (если задана). |
+| `X-RateLimit-Remaining-Month` | Осталось запросов в текущем календарном месяце (UTC). |
+
+Превышение минутного лимита или месячной квоты возвращает `429`.
+
+## Квоты по тарифам
+
+Лимиты API и бюджеты ретраев вебхуков задаются активным тарифом workspace. Тарифы **Merchant** и **Trial** не включают доступ к API.
+
+| Тариф | Rate limit | Месячная квота | Активных API-ключей | Ретраи вебхуков |
+|-------|-----------|----------------|---------------------|-----------------|
+| **Developer** | 90 req/min | 50 000 | 3 | 3 |
+| **Business** | 300 req/min | 200 000 | 10 | 5 |
+| **Enterprise** | 1 200 req/min | 1 000 000 | 50 | 8 |
+
+## Обработка ошибок (Python)
+
+```python
+import requests
+
+resp = requests.get(
+    "https://reqst.xyz/v1/invoices/999999",
+    headers={"X-API-Key": "YOUR_KEY"},
+)
+
+if resp.status_code == 404:
+    print("Счет не найден.")
+elif resp.status_code == 429:
+    print("Превышен лимит/квота. Осталось в эту минуту:",
+          resp.headers.get("X-RateLimit-Remaining-Minute"))
+elif not resp.ok:
+    print("Ошибка:", resp.json().get("error"))
+```

@@ -126,6 +126,43 @@ type User struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+type AdminUser struct {
+	ID           int64      `json:"id"`
+	Email        string     `json:"email"`
+	DisplayName  string     `json:"display_name"`
+	PasswordHash string     `json:"-"`
+	TOTPSecret   string     `json:"-"`
+	TOTPEnabled  bool       `json:"totp_enabled"`
+	IsActive     bool       `json:"is_active"`
+	Roles        []string   `json:"roles"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+	LastLoginAt  *time.Time `json:"last_login_at"`
+}
+
+type AdminSession struct {
+	ID          int64      `json:"id"`
+	AdminUserID int64      `json:"admin_user_id"`
+	UserAgent   string     `json:"user_agent"`
+	IPAddress   string     `json:"ip_address"`
+	ExpiresAt   time.Time  `json:"expires_at"`
+	RevokedAt   *time.Time `json:"revoked_at,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+	LastUsedAt  time.Time  `json:"last_used_at"`
+}
+
+type AttributionInput struct {
+	AttributionID string `json:"attribution_id"`
+	TouchType     string `json:"touch_type"`
+	Source        string `json:"source"`
+	Medium        string `json:"medium"`
+	Campaign      string `json:"campaign"`
+	Term          string `json:"term"`
+	Content       string `json:"content"`
+	LandingPath   string `json:"landing_path"`
+	Referrer      string `json:"referrer"`
+}
+
 type Workspace struct {
 	ID                 int64      `json:"id"`
 	OwnerTelegramID    *int64     `json:"owner_telegram_id"`

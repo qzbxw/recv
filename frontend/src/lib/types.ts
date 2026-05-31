@@ -34,6 +34,33 @@ export type WorkspaceMember = {
   created_at: string;
 };
 
+export type MemberRole = "owner" | "admin" | "member";
+
+export type WorkspaceMemberDetail = {
+  user_id: number;
+  telegram_id: number;
+  username: string;
+  email: string;
+  role: MemberRole;
+  joined_at: string;
+};
+
+export type WorkspaceInvite = {
+  id: number;
+  workspace_id: number;
+  invited_username: string;
+  role: MemberRole;
+  status: string;
+  invited_by?: number | null;
+  created_at: string;
+};
+
+export type TeamResponse = {
+  members: WorkspaceMemberDetail[];
+  invites: WorkspaceInvite[];
+  my_role: MemberRole;
+};
+
 export type Wallet = {
   id: number;
   workspace_id: number;
@@ -166,6 +193,7 @@ export type WalletListResponse = {
 
 export type InvoiceListResponse = {
   items: Invoice[] | null;
+  total: number;
   page: number;
   page_size: number;
 };
@@ -354,6 +382,16 @@ export type AdminInternalComment = {
   target_id: string;
   body: string;
   author: string;
+  created_at: string;
+};
+
+export type AdminAuditEvent = {
+  id: number;
+  actor: string;
+  action: string;
+  target_type: string;
+  target_id: string;
+  metadata: Record<string, unknown>;
   created_at: string;
 };
 

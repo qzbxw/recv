@@ -1,0 +1,223 @@
+---
+title: Инвойсы
+description: Создание, получение, список и отмена счетов — полный справочник полей, статусы и жизненный цикл.
+---
+
+# Инвойсы
+
+Инвойс — это один запрос на оплату. Вы создаете его с суммой в долларах и сетью; Reqst пересчитывает цену в сумму к оплате on-chain `payable_amount`, назначает один из ваших кошельков как `destination_address` и отслеживает платеж до его завершения.
+
+Все endpoint'ы ниже находятся под `https://reqst.xyz/v1` и требуют [API-ключ](/ru/docs/authentication).
+
+## Создание счета
+
+```text
+POST /v1/invoices        (scope: invoices:write)
+```
+
+### Тело запроса
+
+| Поле | Тип | Обязательно | Описание |
+|------|-----|-------------|----------|
+| `title` | string | Да | Название на checkout (например, `"Order #9841"`). Не должно быть пустым. |
+| `base_amount_usd` | string | Да | Сумма в долларах как десятичная строка (например, `"149.00"`). Должна быть положительной. |
+| `payable_network` | string | Да | Одна из `TON`, `TRON`, `SOLANA`, `EVM`, `BASE`, `ARBITRUM`, `BSC`. У вас должен быть активный кошелек для соответствующего wallet bucket. |
+| `expires_in_minutes` | integer | Нет | Окно оплаты в минутах. По умолчанию **30**, если не указано или ≤ 0. |
+
+Окружение счета (`test`/`live`) наследуется от API-ключа — в теле нет поля `mode`.
+
+### Заголовки
+
+| Заголовок | Назначение |
+|-----------|------------|
+| `Content-Type: application/json` | Обязателен. |
+| `Idempotency-Key` | Необязателен. Делает создание безопасным для повторов — см. [Идемпотентность](#идемпотентность). |
+
+### Пример (curl)
+
+```bash
+curl -X POST https://reqst.xyz/v1/invoices \
+  -H "X-API-Key: $REQST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-9841" \
+  -d '{
+    "title": "Premium Subscription",
+    "base_amount_usd": "100.00",
+    "payable_network": "TON",
+    "expires_in_minutes": 60
+  }'
+```
+
+### Пример (Python)
+
+```python
+import requests
+
+resp = requests.post(
+    "https://reqst.xyz/v1/invoices",
+    headers={"X-API-Key": "YOUR_API_KEY", "Content-Type": "application/json"},
+    json={
+        "title": "Premium Subscription",
+        "base_amount_usd": "100.00",
+        "payable_network": "TON",
+        "expires_in_minutes": 60,
+    },
+)
+invoice = resp.json()
+print("Checkout:", "https://reqst.xyz" + invoice["checkout_url"])
+```
+
+## Объект инвойса
+
+Ответ `201`/`200` возвращает объект счета:
+
+```json
+{
+  "id": 482,
+  "public_id": "pub_abcdef123",
+  "title": "Premium Subscription",
+  "kind": "merchant",
+  "subscription_days": 0,
+  "plan_code": "developer",
+  "checkout_badge": "Merchant Checkout",
+  "base_amount_usd": "100.00",
+  "payable_amount": "100.000000",
+  "payable_network": "TON",
+  "destination_address": "EQC...",
+  "payment_comment": "",
+  "status": "awaiting_payment",
+  "environment": "live",
+  "mode": "live",
+  "expires_at": "2026-05-31T22:00:00Z",
+  "created_at": "2026-05-31T21:00:00Z",
+  "tx_hash": null,
+  "received_amount": "0.000000",
+  "review_reason": null,
+  "finalized_at": null,
+  "checkout_url": "/app/checkout/pub_abcdef123",
+  "payment_uri": "ton://transfer/EQC...?amount=100000000000&text="
+}
+```
+
+### Справочник полей
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | integer | Числовой ID счета. Используется в пути для get/cancel/simulate. |
+| `public_id` | string | Публичный идентификатор для URL checkout. |
+| `title` | string | Название, которое вы указали. |
+| `kind` | string | `merchant` для счетов через API; `subscription` для оплаты тарифа Reqst. |
+| `subscription_days` | integer | Дней по подписочному счету; `0` для merchant-счетов. |
+| `plan_code` | string | Тариф, связанный со счетом. |
+| `checkout_badge` | string | Текст бейджа на хостинговом checkout. |
+| `base_amount_usd` | string | Цена в долларах, 2 знака. |
+| `payable_amount` | string | Сумма к оплате on-chain, 6 знаков. |
+| `payable_network` | string | Сеть, в которой платит клиент. |
+| `destination_address` | string | Ваш кошелек, который должен получить платеж. |
+| `payment_comment` | string | Memo/комментарий, требуемый некоторыми сетями (пустая строка, если не нужен). |
+| `status` | string | Текущий статус — см. [Статусы](#статусы). |
+| `environment` / `mode` | string | `test` или `live`. Оба поля несут одно значение. |
+| `expires_at` | timestamp | Когда закрывается окно оплаты (RFC 3339). |
+| `created_at` | timestamp | Время создания. |
+| `tx_hash` | string \| null | Хеш соответствующей транзакции после обнаружения. |
+| `received_amount` | string | Всего получено на данный момент, 6 знаков. |
+| `review_reason` | string \| null | Причина статуса `manual_review`, если применимо. |
+| `finalized_at` | timestamp \| null | Когда счет достиг терминального состояния. |
+| `checkout_url` | string | Относительный путь хостингового checkout: `https://reqst.xyz{checkout_url}`. |
+| `payment_uri` | string | Deep-link / адрес для кошелька клиента. Для TON — URI `ton://transfer/...` с суммой в нанотонах; для остальных сетей — адрес назначения. |
+
+## Статусы
+
+| Статус | Значение |
+|--------|----------|
+| `draft` | Создан, но еще не активен. |
+| `awaiting_payment` | Открыт и ожидает оплаты. |
+| `paid` | Ожидаемая сумма получена и подтверждена. |
+| `expired` | Окно оплаты закрылось до оплаты (также устанавливается при отмене). |
+| `underpaid` | Перевод поступил, но меньше `payable_amount`. |
+| `overpaid` | Перевод превысил `payable_amount`. |
+| `manual_review` | Требует подтверждения мерчантом — например, платеж пришел после истечения срока или переплата. |
+
+Чтение счета, окно которого истекло, пока он еще `awaiting_payment`, возвращается как `expired`.
+
+## Получение счета
+
+```text
+GET /v1/invoices/:id     (scope: invoices:read)
+```
+
+```bash
+curl https://reqst.xyz/v1/invoices/482 -H "X-API-Key: $REQST_API_KEY"
+```
+
+Возвращает объект счета выше или `404`, если он не принадлежит вашему workspace.
+
+## Список счетов
+
+```text
+GET /v1/invoices         (scope: invoices:read)
+```
+
+| Query-параметр | По умолчанию | Примечания |
+|----------------|--------------|------------|
+| `page` | `1` | Номер страницы (с 1). |
+| `page_size` | `20` | Ограничен `1–100`; значения вне диапазона сбрасываются в 20. |
+
+```bash
+curl "https://reqst.xyz/v1/invoices?page=1&page_size=50" \
+  -H "X-API-Key: $REQST_API_KEY"
+```
+
+```json
+{ "items": [ /* счета */ ], "total": 134, "page": 1, "page_size": 50 }
+```
+
+## Отмена счета
+
+```text
+POST /v1/invoices/:id/cancel     (scope: invoices:write)
+```
+
+Отмена переводит счет в `expired`. Отменять можно только merchant-счета, созданные в workspace; подписочные/тарифные счета отменить нельзя (`400`).
+
+```bash
+curl -X POST https://reqst.xyz/v1/invoices/482/cancel \
+  -H "X-API-Key: $REQST_API_KEY"
+```
+
+## Симуляция платежей (test mode)
+
+```text
+POST /v1/test/invoices/:id/simulate-payment     (scope: invoices:write)
+```
+
+Помечает **тестовый** счет как `paid` и отправляет вебхуки без перевода on-chain. Требует ключ `rqst_test_` и тестовый счет; иначе возвращает `403`/`400`.
+
+```bash
+curl -X POST https://reqst.xyz/v1/test/invoices/482/simulate-payment \
+  -H "X-API-Key: $REQST_API_KEY"
+```
+
+## Идемпотентность
+
+`POST /v1/invoices` принимает заголовок `Idempotency-Key`. Reqst сохраняет результат по ключу + хешу тела запроса:
+
+- **Тот же ключ, то же тело** → возвращает исходный сохраненный ответ.
+- **Тот же ключ, другое тело** → `409 Conflict`.
+- **Тот же ключ, исходный запрос еще обрабатывается** → `409 Conflict`.
+
+Используйте стабильный ключ на логический заказ (например, ваш order ID), чтобы повторы сети не создавали дубликаты счетов.
+
+## Пример (Go)
+
+```go
+req, _ := http.NewRequest("GET", "https://reqst.xyz/v1/invoices/"+id, nil)
+req.Header.Set("X-API-Key", apiKey)
+
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+
+var invoice map[string]any
+json.NewDecoder(resp.Body).Decode(&invoice)
+fmt.Println("Status:", invoice["status"])
+```

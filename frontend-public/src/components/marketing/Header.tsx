@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ChevronDown, Menu, X, Zap, CreditCard, Code, Globe } from "lucide-react";
+import { ChevronDown, Menu, X, Zap, CreditCard, Code, Globe, Bot } from "lucide-react";
 import { getCopy } from "@/lib/copy";
 
 export function Header({ language }: { language: "ru" | "en" }) {
@@ -41,9 +41,9 @@ export function Header({ language }: { language: "ru" | "en" }) {
         <nav className="hidden lg:flex items-center gap-6">
           {/* Products Mega Menu */}
           <div className="group relative">
-            <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+            <Link href={`/${language}/products`} className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
               {nav.products.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
-            </button>
+            </Link>
             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
               <div className="mega-menu-card rounded-2xl p-3 w-[460px] grid grid-cols-2 gap-1">
                 <Link href={`/${language}/products/checkout`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
@@ -71,6 +71,15 @@ export function Header({ language }: { language: "ru" | "en" }) {
                   <div>
                     <div className="text-xs font-semibold text-white">{nav.products.invoicing.title}</div>
                     <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.invoicing.desc}</div>
+                  </div>
+                </Link>
+                <Link href={`/${language}/products/mcp`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 group-hover/item:bg-indigo-500 group-hover/item:text-white transition-colors flex-shrink-0">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-white">{nav.products.mcp.title}</div>
+                    <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.mcp.desc}</div>
                   </div>
                 </Link>
               </div>
@@ -176,6 +185,7 @@ export function Header({ language }: { language: "ru" | "en" }) {
                 <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/products/checkout`} className="text-2xl font-bold text-white tracking-tight">{nav.products.checkout.title}</Link>
                 <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/products/api`} className="text-2xl font-bold text-white tracking-tight">{nav.products.api.title}</Link>
                 <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/products/invoicing`} className="text-2xl font-bold text-white tracking-tight">{nav.products.invoicing.title}</Link>
+                <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/products/mcp`} className="text-2xl font-bold text-white tracking-tight">{nav.products.mcp.title}</Link>
               </div>
             </div>
 

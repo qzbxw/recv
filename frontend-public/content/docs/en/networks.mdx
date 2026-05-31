@@ -1,0 +1,49 @@
+---
+title: Supported Networks
+description: The blockchain networks Reqst settles payments on, and how to reference them in the API.
+---
+
+# Supported Networks
+
+Reqst is non-custodial: every invoice settles **directly to your own wallet** on the network you choose. You connect payout wallets per network in the Merchant Console, and the `payable_network` you pass when [creating an invoice](/en/docs/invoices) determines which wallet receives the funds.
+
+## Payable networks
+
+These are the values accepted for `payable_network`:
+
+| `payable_network` | Network | Wallet bucket |
+|-------------------|---------|---------------|
+| `TON` | The Open Network | TON |
+| `TRON` | TRON (e.g. USDT TRC-20) | TRON |
+| `SOLANA` | Solana | Solana |
+| `EVM` | Ethereum mainnet | EVM |
+| `BASE` | Base | EVM |
+| `ARBITRUM` | Arbitrum One | EVM |
+| `BSC` | BNB Smart Chain | EVM |
+
+Values are case-insensitive in the request and normalized to uppercase.
+
+### Wallet buckets
+
+The EVM-family networks (`EVM`, `BASE`, `ARBITRUM`, `BSC`) share a single **EVM wallet bucket** — one connected `0x…` address can serve as the destination for any of them. `TON`, `TRON`, and `SOLANA` each use their own bucket. To create an invoice on a given network you must have an active payout wallet in the matching bucket.
+
+## Wallet networks
+
+When connecting a payout wallet, the network is one of `TON`, `TRON`, `SOLANA`, or `EVM` (the EVM wallet covers Base, Arbitrum, and BSC via the shared bucket). Address validation per network:
+
+| Network | Address rule |
+|---------|--------------|
+| `TON` | At least 32 characters. |
+| `TRON` | Starts with `T`, at least 20 characters. |
+| `EVM` | Starts with `0x`, exactly 42 characters. |
+| `SOLANA` | 32–44 characters, base58 alphabet. |
+
+## Amounts and precision
+
+`base_amount_usd` is a USD decimal string with 2 decimals. Reqst converts it to the on-chain `payable_amount`, returned with **6 decimals** for all networks.
+
+## Payment comments / memos
+
+Some networks rely on a memo to match a transfer to an invoice. The invoice object's `payment_comment` field carries the required comment (empty when not needed). For **TON**, the `payment_uri` is a `ton://transfer/<address>?amount=<nanotons>&text=<comment>` deep link with the amount in nanotons; for the other networks `payment_uri` is the destination address. When a network requires a comment, the customer must include it or the transfer may not match automatically — surface it prominently in your checkout.
+
+> Reqst only supports the networks listed above. Do not assume any other chain is available.

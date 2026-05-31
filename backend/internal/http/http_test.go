@@ -78,7 +78,7 @@ func TestCORSMiddlewareHandlesPreflight(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	router := gin.New()
-	router.Use(corsMiddleware())
+	router.Use(corsMiddleware(config.Config{AppEnv: "development"}))
 	router.OPTIONS("/resource", func(c *gin.Context) {
 		t.Fatal("preflight request should not reach route handler")
 	})
@@ -112,11 +112,12 @@ func TestAdminLoginAndMiddleware(t *testing.T) {
 	if loginRecorder.Code != stdhttp.StatusOK {
 		t.Fatalf("expected login 200, got %d", loginRecorder.Code)
 	}
-	var body map[string]string
+	var body map[string]any
 	if err := json.Unmarshal(loginRecorder.Body.Bytes(), &body); err != nil {
 		t.Fatalf("json.Unmarshal returned error: %v", err)
 	}
-	if body["token"] == "" {
+	token, _ := body["token"].(string)
+	if token == "" {
 		t.Fatal("expected admin token in response")
 	}
 
@@ -128,7 +129,7 @@ func TestAdminLoginAndMiddleware(t *testing.T) {
 
 	protectedRecorder := httptest.NewRecorder()
 	protectedRequest := httptest.NewRequest(stdhttp.MethodGet, "/api/admin/overview", nil)
-	protectedRequest.Header.Set("Authorization", "Bearer "+body["token"])
+	protectedRequest.Header.Set("Authorization", "Bearer "+token)
 	protectedRouter.ServeHTTP(protectedRecorder, protectedRequest)
 
 	if protectedRecorder.Code != stdhttp.StatusNoContent {

@@ -32,13 +32,16 @@ type AuthService struct {
 	telegramBotToken   string
 	allowInsecureDev   bool
 	telegramInitMaxAge time.Duration
+	accessTTL          time.Duration
+	refreshTTL         time.Duration
 }
 
 type TelegramAuthInput struct {
-	InitData   string `json:"init_data"`
-	WidgetData string `json:"widget_data"`
-	TelegramID int64  `json:"telegram_id"`
-	Username   string `json:"username"`
+	InitData    string                  `json:"init_data"`
+	WidgetData  string                  `json:"widget_data"`
+	TelegramID  int64                   `json:"telegram_id"`
+	Username    string                  `json:"username"`
+	Attribution *store.AttributionInput `json:"attribution,omitempty"`
 }
 
 type TelegramCodeRequestInput struct {
@@ -46,14 +49,23 @@ type TelegramCodeRequestInput struct {
 }
 
 type TelegramCodeLoginInput struct {
-	Username string `json:"username"`
-	Code     string `json:"code"`
+	Username    string                  `json:"username"`
+	Code        string                  `json:"code"`
+	Attribution *store.AttributionInput `json:"attribution,omitempty"`
+}
+
+type AgentBootstrapInput struct {
+	WorkspaceName string                  `json:"workspace_name"`
+	ContactEmail  string                  `json:"contact_email"`
+	Attribution   *store.AttributionInput `json:"attribution,omitempty"`
 }
 
 type AuthResult struct {
-	Token     string          `json:"token"`
-	User      store.User      `json:"user"`
-	Workspace store.Workspace `json:"workspace"`
+	Token        string          `json:"token"`
+	AccessToken  string          `json:"access_token,omitempty"`
+	RefreshToken string          `json:"refresh_token,omitempty"`
+	User         store.User      `json:"user"`
+	Workspace    store.Workspace `json:"workspace"`
 }
 
 type Claims struct {
@@ -65,12 +77,24 @@ type Claims struct {
 }
 
 func NewAuthService(st *store.Store, jwtSecret string, telegramBotToken string, allowInsecureDev bool, telegramInitMaxAge time.Duration) *AuthService {
+	return NewAuthServiceWithTTL(st, jwtSecret, telegramBotToken, allowInsecureDev, telegramInitMaxAge, 30*24*time.Hour, 30*24*time.Hour)
+}
+
+func NewAuthServiceWithTTL(st *store.Store, jwtSecret string, telegramBotToken string, allowInsecureDev bool, telegramInitMaxAge time.Duration, accessTTL time.Duration, refreshTTL time.Duration) *AuthService {
+	if accessTTL <= 0 {
+		accessTTL = 15 * time.Minute
+	}
+	if refreshTTL <= 0 {
+		refreshTTL = 30 * 24 * time.Hour
+	}
 	return &AuthService{
 		store:              st,
 		jwtSecret:          []byte(jwtSecret),
 		telegramBotToken:   telegramBotToken,
 		allowInsecureDev:   allowInsecureDev,
 		telegramInitMaxAge: telegramInitMaxAge,
+		accessTTL:          accessTTL,
+		refreshTTL:         refreshTTL,
 	}
 }
 
@@ -92,7 +116,13 @@ func (s *AuthService) AuthenticateTelegram(ctx context.Context, input TelegramAu
 		return AuthResult{}, fmt.Errorf("load user: %w", err)
 	}
 
+	// Convert any pending team invitations addressed to this username into memberships.
+	_, _ = s.store.AcceptPendingInvitesForUser(ctx, user.ID, user.Username)
+
 	metrics.IncAuthAttempt("telegram_identity", "success", "resolved")
+	if input.Attribution != nil {
+		_ = s.store.RecordUTMAttribution(ctx, workspace.ID, *input.Attribution)
+	}
 	return s.issueAuthResult(user, workspace)
 }
 
@@ -177,8 +207,45 @@ func (s *AuthService) AuthenticateTelegramCode(ctx context.Context, input Telegr
 		return AuthResult{}, fmt.Errorf("load user: %w", err)
 	}
 
+	_, _ = s.store.AcceptPendingInvitesForUser(ctx, user.ID, user.Username)
+
 	metrics.IncAuthAttempt("telegram_code_login", "success", "verified")
+	if input.Attribution != nil {
+		_ = s.store.RecordUTMAttribution(ctx, workspace.ID, *input.Attribution)
+	}
 	return s.issueAuthResult(user, workspace)
+}
+
+func (s *AuthService) BootstrapAgentWorkspace(ctx context.Context, input AgentBootstrapInput) (AuthResult, error) {
+	workspaceName := normalizeAgentWorkspaceName(input.WorkspaceName)
+	email := strings.TrimSpace(strings.ToLower(input.ContactEmail))
+	var lastErr error
+
+	for attempts := 0; attempts < 5; attempts++ {
+		syntheticTelegramID, err := randomSyntheticTelegramID()
+		if err != nil {
+			return AuthResult{}, err
+		}
+		suffix := randomID()[:12]
+		username := fmt.Sprintf("agent_%s", suffix)
+		if workspaceName != "" {
+			username = fmt.Sprintf("%s_%s", workspaceName, suffix[:6])
+		}
+
+		user, workspace, err := s.store.CreateAgentWorkspace(ctx, syntheticTelegramID, username, email)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if input.Attribution != nil {
+			_ = s.store.RecordUTMAttribution(ctx, workspace.ID, *input.Attribution)
+		}
+		return s.issueAuthResult(user, workspace)
+	}
+	if lastErr != nil {
+		return AuthResult{}, fmt.Errorf("bootstrap agent workspace: %w", lastErr)
+	}
+	return AuthResult{}, errors.New("bootstrap agent workspace failed")
 }
 
 func (s *AuthService) ParseToken(tokenString string) (Claims, error) {
@@ -202,6 +269,30 @@ func (s *AuthService) ParseToken(tokenString string) (Claims, error) {
 	return *claims, nil
 }
 
+func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (AuthResult, error) {
+	if s.store == nil {
+		return AuthResult{}, errors.New("refresh sessions are not configured")
+	}
+	user, workspace, err := s.store.RefreshSession(ctx, tokenHash(refreshToken))
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return AuthResult{}, errors.New("invalid refresh token")
+		}
+		return AuthResult{}, err
+	}
+	return s.issueAuthResult(user, workspace)
+}
+
+func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
+	if s.store == nil {
+		return errors.New("refresh sessions are not configured")
+	}
+	if err := s.store.RevokeRefreshSession(ctx, tokenHash(refreshToken)); err != nil && !errors.Is(err, store.ErrNotFound) {
+		return err
+	}
+	return nil
+}
+
 func (s *AuthService) issueAuthResult(user store.User, workspace store.Workspace) (AuthResult, error) {
 	if workspace.IsBlocked {
 		return AuthResult{}, errors.New("workspace account is blocked")
@@ -214,11 +305,44 @@ func (s *AuthService) issueAuthResult(user store.User, workspace store.Workspace
 	}
 	metrics.IncAuthAttempt("issue_token", "success", "signed")
 
-	return AuthResult{
-		Token:     token,
-		User:      user,
-		Workspace: workspace,
-	}, nil
+	result := AuthResult{
+		Token:       token,
+		AccessToken: token,
+		User:        user,
+		Workspace:   workspace,
+	}
+	if s.store != nil {
+		refreshToken, err := randomToken(32)
+		if err != nil {
+			return AuthResult{}, err
+		}
+		if err := s.store.CreateRefreshSession(context.Background(), user.ID, workspace.ID, tokenHash(refreshToken), time.Now().UTC().Add(s.refreshTTL), "", ""); err != nil {
+			return AuthResult{}, err
+		}
+		result.RefreshToken = refreshToken
+	}
+	return result, nil
+}
+
+// SwitchWorkspace issues a fresh session for a different workspace the user
+// already belongs to. It verifies membership before issuing the token.
+func (s *AuthService) SwitchWorkspace(ctx context.Context, userID, workspaceID int64) (AuthResult, error) {
+	if _, err := s.store.GetWorkspaceMemberRole(ctx, workspaceID, userID); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return AuthResult{}, errors.New("you are not a member of this workspace")
+		}
+		return AuthResult{}, fmt.Errorf("verify membership: %w", err)
+	}
+
+	user, err := s.store.GetUserByID(ctx, userID)
+	if err != nil {
+		return AuthResult{}, fmt.Errorf("load user: %w", err)
+	}
+	workspace, err := s.store.GetWorkspaceByID(ctx, workspaceID)
+	if err != nil {
+		return AuthResult{}, fmt.Errorf("load workspace: %w", err)
+	}
+	return s.issueAuthResult(user, workspace)
 }
 
 func (s *AuthService) issueToken(user store.User, workspace store.Workspace) (string, error) {
@@ -231,7 +355,7 @@ func (s *AuthService) issueToken(user store.User, workspace store.Workspace) (st
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        randomID(),
 			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(30 * 24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(s.accessTTL)),
 			Subject:   strconv.FormatInt(user.ID, 10),
 		},
 	}
@@ -450,6 +574,45 @@ func randomID() string {
 		return strconv.FormatInt(time.Now().UnixNano(), 10)
 	}
 	return hex.EncodeToString(buf[:])
+}
+
+func randomSyntheticTelegramID() (int64, error) {
+	var buf [8]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return 0, err
+	}
+	var id int64
+	for _, part := range buf {
+		id = (id << 8) | int64(part)
+	}
+	id = id & 0x3fffffffffffffff
+	if id == 0 {
+		id = time.Now().UnixNano()
+	}
+	return -id, nil
+}
+
+func normalizeAgentWorkspaceName(raw string) string {
+	raw = strings.ToLower(strings.TrimSpace(raw))
+	if raw == "" {
+		return ""
+	}
+	var builder strings.Builder
+	builder.Grow(len(raw))
+	for _, ch := range raw {
+		if ch >= 'a' && ch <= 'z' || ch >= '0' && ch <= '9' {
+			builder.WriteRune(ch)
+			continue
+		}
+		if ch == '-' || ch == '_' || ch == ' ' {
+			builder.WriteByte('_')
+		}
+	}
+	name := strings.Trim(builder.String(), "_")
+	if len(name) > 24 {
+		name = name[:24]
+	}
+	return strings.Trim(name, "_")
 }
 
 func (s *AuthService) sendTelegramLoginCode(ctx context.Context, chatID int64, username string, code string, expiresAt time.Time) error {

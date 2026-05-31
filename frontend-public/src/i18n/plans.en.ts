@@ -10,7 +10,7 @@ export const planSEOEn = {
       description: "Designed for independent creators, Telegram channel administrators, and e-commerce entrepreneurs who demand full ownership of their revenue streams via a decentralized crypto checkout.",
       points: [
         "Telegram community managers monetizing premium groups via crypto subscriptions.",
-        "Freelancers invoicing international clients for direct USDT or USDC payouts.",
+        "Freelancers invoicing international clients for direct USDT payouts.",
         "Independent e-commerce merchants looking to bypass 2-5% traditional payment gateway fees.",
         "Digital goods sellers requiring instant, automated delivery upon blockchain confirmation."
       ]
@@ -42,7 +42,7 @@ export const planSEOEn = {
       { q: "What is a non-custodial crypto gateway and how does it benefit me?", a: "A non-custodial gateway means that the payment processor never holds, touches, or routes your funds through intermediary accounts. When a customer pays, the cryptocurrency goes straight from their wallet to yours. This eliminates the risk of frozen accounts, withdrawal delays, or platform bankruptcies." },
       { q: "How do I create a crypto invoice without programming knowledge?", a: "The Merchant plan provides an intuitive web dashboard and a Telegram bot. You simply enter the required amount (in fiat or crypto) and a description. The system instantly generates a secure checkout link with QR codes that you can share with your customer via chat, email, or social media." },
       { q: "Is it really true that there are no transaction fees?", a: "Yes. Reqst Merchant operates on a flat monthly subscription model ($39/mo). Whether you process $100 or $100,000 in a month, you pay exactly zero percentage-based turnover fees. Your customers only pay the standard network gas fee." },
-      { q: "Which cryptocurrencies and networks are currently supported?", a: "We focus on liquid, low-fee networks. We currently support stablecoins (USDT, USDC) and native assets on TON, TRON (TRC20), Solana, Base, Binance Smart Chain (BSC), Arbitrum, and Ethereum mainnet." },
+      { q: "Which cryptocurrencies and networks are currently supported?", a: "We focus on liquid, low-fee networks. We currently support USDT and native TON across TON, TRON (TRC20), Solana, Base, Binance Smart Chain (BSC), Arbitrum, and Ethereum mainnet." },
       { q: "What happens if a customer sends the wrong amount?", a: "Our Smart Checkout UI constantly monitors the mempool. If an underpayment is detected, the invoice remains in a 'Partial' state, and the customer is prompted to send the remaining balance. If they overpay, the invoice is marked as 'Overpaid', and you receive an alert to manually resolve the excess." },
       { q: "Do my customers need to pass KYC to pay me?", a: "No. Since the transaction is a direct peer-to-peer blockchain transfer, neither you nor your customers are subjected to Know Your Customer (KYC) checks by Reqst. However, you remain responsible for any local tax or compliance laws in your jurisdiction." },
       { q: "How does the Telegram crypto billing bot work?", a: "By linking your Telegram account to Reqst, the bot becomes your mobile command center. It instantly pushes notifications for new invoices, confirmed payments, and potential underpayments, allowing you to manage your revenue stream entirely from your phone." },

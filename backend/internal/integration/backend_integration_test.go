@@ -32,7 +32,7 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 	env := newIntegrationEnv(t, ctx)
 	client := env.server.Client()
 
-	assertMigrationCount(t, ctx, env.store, 15)
+	assertMigrationCount(t, ctx, env.store, 16)
 
 	auth := loginSeller(t, client, env.server.URL, 10001, "alice")
 	assertTelegramAuthCodeLifecycle(t, ctx, env.store, auth.Workspace.ID)
@@ -261,12 +261,15 @@ func newIntegrationEnv(t *testing.T, ctx context.Context) integrationEnv {
 		AdminUsername:        "admin",
 		AdminPassword:        "pass",
 		AdminJWTSecret:       "admin-secret",
-		AdminSessionTTL:      12 * time.Hour,
+		AccessTokenTTL:       30 * 24 * time.Hour,
+		RefreshTokenTTL:      30 * 24 * time.Hour,
+		AdminAccessTokenTTL:  12 * time.Hour,
+		AdminRefreshTokenTTL: 12 * time.Hour,
 		PublicAppURL:         "https://reqst.test",
 	}
 
 	authService := service.NewAuthService(st, cfg.JWTSecret, "", cfg.AllowInsecureDevAuth, cfg.TelegramInitMaxAge)
-	adminService := service.NewAdminService(cfg.AdminUsername, cfg.AdminPassword, cfg.AdminJWTSecret, cfg.AdminSessionTTL)
+	adminService := service.NewAdminService(cfg.AdminUsername, cfg.AdminPassword, cfg.AdminJWTSecret, cfg.AdminAccessTokenTTL)
 	invoiceService := service.NewInvoiceService(st, cfg.TonUSDOverride)
 	paymentService := service.NewPaymentService(st)
 
@@ -379,7 +382,7 @@ func pickFreePort(t *testing.T) uint32 {
 }
 
 type authResponse struct {
-	Token  string `json:"token"`
+	Token     string `json:"token"`
 	Workspace struct {
 		ID int64 `json:"id"`
 	} `json:"workspace"`

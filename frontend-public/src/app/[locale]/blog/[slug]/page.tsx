@@ -1,11 +1,35 @@
-/* eslint-disable @next/next/no-img-element, @typescript-eslint/no-unused-vars */
 import Link from "next/link";
 import { Metadata } from "next";
-import ReactMarkdown from "react-markdown";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { JsonLd } from "@/components/JsonLd";
+import { BlogPostClient } from "@/components/blog/BlogPostClient";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080";
+
+const FALLBACK_POSTS = {
+  en: {
+    "non-custodial-crypto-checkout": {
+      slug: "non-custodial-crypto-checkout",
+      title: "How non-custodial crypto checkout works",
+      excerpt: "A practical overview of direct-to-wallet invoices, payment detection, and webhook-based fulfillment.",
+      author: "Reqst Core Team",
+      published_at: "2026-03-13T00:00:00.000Z",
+      updated_at: "2026-03-13T00:00:00.000Z",
+      content_md: "## Direct settlement\n\nReqst creates payment instructions while funds settle directly to the merchant wallet.\n\n## Detection and fulfillment\n\nThe watcher observes supported networks, matches transfers to invoices, and emits signed webhooks for fulfillment.",
+    },
+  },
+  ru: {
+    "non-custodial-crypto-checkout": {
+      slug: "non-custodial-crypto-checkout",
+      title: "Как работает non-custodial crypto checkout",
+      excerpt: "Практичный обзор direct-to-wallet инвойсов, детекции платежей и webhook-выдачи.",
+      author: "Reqst Core Team",
+      published_at: "2026-03-13T00:00:00.000Z",
+      updated_at: "2026-03-13T00:00:00.000Z",
+      content_md: "## Прямое зачисление\n\nReqst создает платежные инструкции, а средства приходят напрямую на кошелек продавца.\n\n## Детекция и выдача\n\nWatcher наблюдает поддерживаемые сети, сопоставляет переводы с инвойсами и отправляет подписанные webhooks для выдачи.",
+    },
+  },
+} as const;
 
 async function getPost(slug: string) {
   try {
@@ -16,8 +40,7 @@ async function getPost(slug: string) {
       return null;
     }
     return await res.json();
-  } catch (error) {
-    console.error("Failed to fetch blog post", error);
+  } catch {
     return null;
   }
 }
@@ -30,10 +53,11 @@ export async function generateMetadata(
   props: Props
 ): Promise<Metadata> {
   const params = await props.params;
-  const post = await getPost(params.slug);
+  const language = params.locale === "ru" ? "ru" : "en";
+  const post = await getPost(params.slug) || FALLBACK_POSTS[language][params.slug as keyof typeof FALLBACK_POSTS[typeof language]];
 
   if (!post) {
-    return { title: "Post Not Found" };
+    return { title: params.locale === "ru" ? "Материал не найден" : "Post Not Found" };
   }
 
   return {
@@ -52,16 +76,20 @@ export async function generateMetadata(
 
 export default async function BlogPost(props: Props) {
   const params = await props.params;
-  const post = await getPost(params.slug);
   const language = params.locale as "ru" | "en";
+  const post = await getPost(params.slug) || FALLBACK_POSTS[language][params.slug as keyof typeof FALLBACK_POSTS[typeof language]];
 
   if (!post) {
     return (
       <MarketingLayout language={language}>
-        <div className="blog-empty" style={{ padding: "10rem 2rem" }}>
-          <h1 className="blog-card__title" style={{ fontSize: "2rem", marginBottom: "1rem" }}>Post Not Found</h1>
-          <Link href={`/${language}/blog`} style={{ color: "var(--accent)" }}>&larr; Back to Blog</Link>
-        </div>
+        <section className="container mx-auto px-6 max-w-2xl text-center py-32">
+          <span className="lend-section-kicker justify-center mx-auto">404</span>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-6">{language === "ru" ? "Материал не найден" : "Post not found"}</h1>
+          <p className="text-white/50 mb-10">{language === "ru" ? "Похоже, этой страницы больше нет." : "This article may have moved or been removed."}</p>
+          <Link href={`/${language}/blog`} className="lend-primary px-8 py-4 rounded-xl inline-flex items-center gap-2">
+            <span>←</span> {language === "ru" ? "В блог" : "Back to blog"}
+          </Link>
+        </section>
       </MarketingLayout>
     );
   }
@@ -82,44 +110,9 @@ export default async function BlogPost(props: Props) {
   };
 
   return (
-    <MarketingLayout language={language}>
-        <JsonLd schema={blogPostSchema} />
-        <article className="article-shell">
-          <header className="article-header">
-            <h1 className="article-title">
-              {post.title}
-            </h1>
-            <div className="article-meta">
-              <span>{post.author || "Reqst Core Team"}</span>
-              <span>&bull;</span>
-              <time dateTime={post.published_at}>{new Date(post.published_at).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}</time>
-            </div>
-          </header>
-
-          {post.cover_image_url && (
-            <img src={post.cover_image_url} alt={post.title} className="article-cover" />
-          )}
-
-          <div className="markdown-body">
-            <ReactMarkdown
-              components={{
-                h2: ({node: _node, ...props}) => <h2 {...props} />,
-                h3: ({node: _node, ...props}) => <h3 {...props} />,
-                p: ({node: _node, ...props}) => <p {...props} />,
-                a: ({node: _node, ...props}) => <a {...props} />,
-                code: ({inline, ...props}: { inline?: boolean; children?: React.ReactNode }) => 
-                  inline ? <code {...props} />
-                         : <pre {...props}><code {...props} /></pre>,
-                blockquote: ({node: _node, ...props}) => <blockquote {...props} />,
-                ul: ({node: _node, ...props}) => <ul {...props} />,
-                ol: ({node: _node, ...props}) => <ol {...props} />,
-                li: ({node: _node, ...props}) => <li {...props} />
-              }}
-            >
-              {post.content_md}
-            </ReactMarkdown>
-          </div>
-        </article>
-    </MarketingLayout>
+    <>
+      <JsonLd schema={blogPostSchema} />
+      <BlogPostClient language={language} post={post} />
+    </>
   );
 }

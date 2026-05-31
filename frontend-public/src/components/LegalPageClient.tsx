@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useUI } from "./UIProvider";
+import { MarketingLayout, useReveal } from "./marketing/MarketingLayout";
 import { PUBLIC_LEGAL_COPY as COPY } from "@/i18n";
 
 type LegalVariant = "privacy" | "terms";
@@ -31,13 +30,13 @@ type LegalCopy = {
 
 
 const LEGAL_PROFILE = {
-  operatorName: "[Укажи юрлицо / ИП / физлицо-оператора]",
-  contactEmail: "legal@your-domain.tld",
-  supportEmail: "support@your-domain.tld",
-  address: "[Укажи юридический адрес / адрес для уведомлений]",
-  jurisdiction: "[Укажи страну и применимое право]",
-  domain: "[Укажи основной домен сервиса]",
-  refundPolicy: "[Опиши правила возврата или явно укажи no refunds]",
+  operatorName: "Reqst",
+  contactEmail: "legal@reqst.xyz",
+  supportEmail: "support@reqst.xyz",
+  address: "Contact legal@reqst.xyz for formal notices.",
+  jurisdiction: "To be specified in the merchant agreement.",
+  domain: "reqst.xyz",
+  refundPolicy: "Reqst platform subscription refunds are handled case by case according to the active service agreement.",
   effectiveDate: {
     ru: "13 марта 2026",
     en: "March 13, 2026",
@@ -48,117 +47,94 @@ legalCopy.terms.en.sections = legalCopy.terms.ru.sections;
 
 export function LegalPage({ variant }: { variant: LegalVariant }) {
   const { language } = useUI();
-  const pathname = usePathname();
   const copy = legalCopy[variant][language];
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = "dark";
-  }, []);
+  const reveal = useReveal();
 
   return (
-    <main className="legal-page">
-      <div className="lend-backdrop lend-backdrop--grid" />
-      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--left" />
-      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--right" />
-
-      <div className="lend-shell lend-shell--legal">
-        <header className="legal-topbar">
-          <Link className="lend-brand" href={`/${language}`}>
-            <strong>reqst</strong>
-          </Link>
-
-          <div className="lend-topbar-actions">
-            <div className="lend-language" role="group" aria-label="language switcher">
-              <Link 
-                href={pathname.startsWith("/ru") ? pathname.replace("/ru", "/en") : pathname.replace("/en", "/ru")}
-                className="inactive"
-              >
-                {language === "ru" ? "EN" : "RU"}
-              </Link>
-            </div>
-            <Link className="lend-nav-link" href={`/${language}`}>
-              /home
-            </Link>
-            <Link className="lend-primary" href="/app/auth">
-              Auth
-            </Link>
-          </div>
-        </header>
-
-        <section className="legal-hero legal-fade legal-fade--1">
-          <span className="lend-section-kicker">{copy.kicker}</span>
-          <h1>{copy.title}</h1>
-          <p>{copy.summary}</p>
+    <MarketingLayout language={language}>
+      {/* HERO */}
+      <section className="relative overflow-hidden pb-12" ref={reveal}>
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-full bg-radial-gradient from-accent/12 via-transparent to-transparent blur-[120px] opacity-40 pointer-events-none" />
+        <div className="container mx-auto px-6 relative z-10 max-w-3xl">
+          <span className="lend-reveal--1 lend-section-kicker">{copy.kicker}</span>
+          <h1 className="lend-reveal--2 text-4xl md:text-6xl font-black tracking-tighter leading-[1.05] mb-6">{copy.title}</h1>
+          <p className="lend-reveal--3 text-lg md:text-xl text-white/55 leading-relaxed mb-8">{copy.summary}</p>
 
           {copy.leadTitle || copy.leadParagraphs ? (
-            <div className="legal-lead">
-              {copy.leadTitle ? <h2>{copy.leadTitle}</h2> : null}
-              {copy.leadParagraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+            <div className="lend-reveal--4 mb-8">
+              {copy.leadTitle ? <h2 className="text-xl font-bold mb-3 text-white/90">{copy.leadTitle}</h2> : null}
+              {copy.leadParagraphs?.map((paragraph) => (
+                <p key={paragraph} className="text-white/55 leading-relaxed mb-3">{paragraph}</p>
+              ))}
             </div>
           ) : null}
 
-          <div className="legal-meta">
-            {copy.metaItems ? (
-              copy.metaItems.map((item) => <span key={item}>{item}</span>)
-            ) : (
-              <>
-                <span>
-                  {copy.updatedLabel}: {LEGAL_PROFILE.effectiveDate[language]}
-                </span>
-                <span>
-                  {copy.operatorLabel}: {LEGAL_PROFILE.operatorName}
-                </span>
-              </>
-            )}
-          </div>
-        </section>
-
-        <section className="legal-note legal-fade legal-fade--2">
-          <div>
-            <h2>{copy.draftTitle}</h2>
-            <p>{copy.draftBody}</p>
-          </div>
-
-          <ul className="legal-token-list">
-            {copy.draftItems.map((item) => (
-              <li key={item}>{item}</li>
+          <div className="lend-reveal--4 flex flex-wrap gap-3">
+            {(copy.metaItems
+              ? copy.metaItems
+              : [`${copy.updatedLabel}: ${LEGAL_PROFILE.effectiveDate[language]}`, `${copy.operatorLabel}: ${LEGAL_PROFILE.operatorName}`]
+            ).map((item) => (
+              <span key={item} className="text-xs font-semibold text-white/45 px-4 py-2 rounded-full border border-white/10 bg-white/[0.02]">{item}</span>
             ))}
-          </ul>
-        </section>
+          </div>
+        </div>
+      </section>
 
-        <section className="legal-sections">
+      {/* NOTICE */}
+      <section className="pb-16" ref={reveal}>
+        <div className="container mx-auto px-6 max-w-3xl">
+          <div className="lend-reveal--1 rounded-3xl border border-accent/15 bg-accent/[0.03] p-8 md:p-10">
+            <h2 className="text-xl md:text-2xl font-bold mb-4 text-white">{copy.draftTitle}</h2>
+            <p className="text-white/55 leading-relaxed mb-6">{copy.draftBody}</p>
+            <ul className="flex flex-wrap gap-2">
+              {copy.draftItems.map((item) => (
+                <li key={item} className="text-xs font-mono text-accent/80 px-3 py-1.5 rounded-lg bg-accent/[0.06] border border-accent/15">{item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTIONS */}
+      <section className="pb-24" ref={reveal}>
+        <div className="container mx-auto px-6 max-w-3xl flex flex-col gap-5 lend-reveal--2">
           {copy.sections.map((section, index) => (
-            <article key={section.title} className={`legal-card legal-fade legal-fade--${(index % 4) + 1}`}>
-              <div className="legal-card-number">{String(index + 1).padStart(2, "0")}</div>
-              <div className="legal-card-copy">
-                <h2>{section.title}</h2>
+            <article key={section.title} className="lend-card relative p-8 md:p-10 group hover:border-accent/20 transition-colors duration-500">
+              <div className="flex items-baseline gap-4 mb-5">
+                <span className="text-sm font-black text-accent/40 font-['Montserrat'] tabular-nums">{String(index + 1).padStart(2, "0")}</span>
+                <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">{section.title}</h2>
+              </div>
+              <div className="pl-0 md:pl-9">
                 {section.paragraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
+                  <p key={paragraph} className="text-white/55 leading-[1.8] mb-4 last:mb-0">{paragraph}</p>
                 ))}
                 {section.bullets ? (
-                  <ul className="legal-bullet-list">
+                  <ul className="mt-4 space-y-2">
                     {section.bullets.map((item) => (
-                      <li key={item}>{item}</li>
+                      <li key={item} className="text-white/55 leading-relaxed relative pl-6 before:content-[''] before:absolute before:left-0 before:top-[0.65em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-accent/50">{item}</li>
                     ))}
                   </ul>
                 ) : null}
               </div>
             </article>
           ))}
-        </section>
+        </div>
+      </section>
 
-        <footer className="lend-footer lend-footer--legal">
-          <p>{copy.footerNote}</p>
-          <div className="lend-footer-links">
-            <Link href={`/${language}/privacy`}>Privacy</Link>
-            <Link href={`/${language}/terms`}>Terms</Link>
-            <Link href={`/${language}/docs/introduction`}>Docs</Link>
-            <Link href={`/${language}/dev`}>API</Link>
-            <Link href={`/${language}/enterprise`}>B2B</Link>
-            <Link href="/app/auth">Console</Link>
+      {/* FOOTER NOTE */}
+      <section className="pb-32" ref={reveal}>
+        <div className="container mx-auto px-6 max-w-3xl text-center">
+          <p className="text-sm text-white/40 mb-8">{copy.footerNote}</p>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm">
+            <Link href={`/${language}/privacy`} className="text-white/50 hover:text-accent transition-colors">Privacy</Link>
+            <Link href={`/${language}/terms`} className="text-white/50 hover:text-accent transition-colors">Terms</Link>
+            <Link href={`/${language}/docs/introduction`} className="text-white/50 hover:text-accent transition-colors">Docs</Link>
+            <Link href={`/${language}/dev`} className="text-white/50 hover:text-accent transition-colors">API</Link>
+            <Link href={`/${language}/enterprise`} className="text-white/50 hover:text-accent transition-colors">B2B</Link>
+            <Link href="/app/auth" className="text-accent hover:text-accent/80 transition-colors font-semibold">Console</Link>
           </div>
-        </footer>
-      </div>
-    </main>
+        </div>
+      </section>
+    </MarketingLayout>
   );
 }

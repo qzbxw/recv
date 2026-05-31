@@ -335,6 +335,7 @@ export function DeveloperPortalPage() {
               <span className="dev-portal__nav-label">Management</span>
               <a href="#keys" className={`dev-portal__nav-link ${activeSection === "keys" ? "is-active" : ""}`}>{t.nav.keys}</a>
               <a href="#webhooks" className={`dev-portal__nav-link ${activeSection === "webhooks" ? "is-active" : ""}`}>{t.nav.webhooks}</a>
+              <a href="#mcp" className={`dev-portal__nav-link ${activeSection === "mcp" ? "is-active" : ""}`}>{t.nav.mcp}</a>
               <a href="#billing" className={`dev-portal__nav-link ${activeSection === "billing" ? "is-active" : ""}`}>{t.nav.billing}</a>
             </div>
           </nav>
@@ -653,6 +654,46 @@ export function DeveloperPortalPage() {
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+            </section>
+
+            <section id="mcp" className="dev-portal__section portal-animate-in">
+              <div className="dev-portal__section-header">
+                <h2>{t.mcp.title}</h2>
+                <p>{t.mcp.subtitle}</p>
+              </div>
+
+              <div className="dev-card dev-card--margin-bottom">
+                <p className="dev-card__desc--small" style={{ marginBottom: "1.5rem" }}>
+                  {t.mcp.desc}
+                </p>
+                <div className="dev-api-grid">
+                  <div className="dev-form">
+                    <h3 className="dev-card__title--small">{t.mcp.runTitle}</h3>
+                    <pre className="dev-code-box__content dev-code-box__content--compact" style={{ marginTop: "0.5rem" }}>
+                      <code>{`npx -y reqst-mcp`}</code>
+                    </pre>
+                  </div>
+                  
+                  <div className="dev-form">
+                    <h3 className="dev-card__title--small">{t.mcp.configTitle}</h3>
+                    <p className="dev-card__desc--small" style={{ marginTop: "0.25rem", marginBottom: "0.5rem" }}>{t.mcp.configDesc}</p>
+                    <pre className="dev-code-box__content dev-code-box__content--compact">
+                      <code>{JSON.stringify({
+                        mcpServers: {
+                          reqst: {
+                            command: "npx",
+                            args: ["-y", "reqst-mcp"],
+                            env: {
+                              REQST_API_KEY: liveKey?.prefix ? `${liveKey.prefix}***` : "rqst_live_...",
+                              REQST_ACCESS_TOKEN: token ? `${token.substring(0, 10)}...` : "your_token"
+                            }
+                          }
+                        }
+                      }, null, 2)}</code>
+                    </pre>
+                  </div>
                 </div>
               </div>
             </section>

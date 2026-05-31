@@ -1,18 +1,40 @@
 ---
 title: Introduction to Reqst
-description: Learn how Reqst automates your crypto payments.
+description: What Reqst is, how the non-custodial architecture works, and where the developer API and AI tooling fit.
 ---
 
 # Introduction
 
-Welcome to the Reqst documentation. Reqst is a non-custodial crypto payment processor that allows you to accept payments directly to your wallet.
+Reqst is a **non-custodial crypto payment gateway**. Customers pay you on-chain, the funds land **directly in your own wallet**, and Reqst never touches the money. Instead of taking a percentage of every transaction, Reqst charges a **flat subscription** — there are no turnover fees.
 
-## Core Features
+## What Reqst does
 
-- **Direct-to-Wallet**: We never hold your funds.
-- **Multi-chain**: Support for TON, TRON, Solana, and EVM.
-- **Zero Fees**: No turnover commissions, just a flat subscription.
+- **Creates invoices.** You generate a payment request for a USD amount on a specific blockchain network. Reqst converts the USD price into the payable on-chain amount, picks one of your payout wallets as the destination address, and returns a hosted checkout link plus a payment URI.
+- **Watches the chain.** Reqst's watchers observe incoming transfers to your destination addresses and match them to open invoices.
+- **Confirms and notifies.** When a matching transfer is seen, the invoice transitions (`paid`, `underpaid`, `overpaid`, `manual_review`), and Reqst fires a signed webhook to your endpoint.
 
-## Getting Started
+```text
+ Customer            Reqst                         You
+    │   pays on-chain   │                            │
+    │ ─────────────────►│  destination = YOUR wallet │
+    │                   │  (funds never touch Reqst) │
+    │                   │  matches transfer→invoice  │
+    │                   │ ──── signed webhook ──────►│  update order
+```
 
-To get started, create an account in our [Merchant Console](/app/auth) and generate your first API key.
+## Non-custodial model
+
+You connect payout wallets per network in the Merchant Console. Every invoice is created against one of *your* addresses, so settlement is direct customer → merchant. Reqst's role is detection, accounting, and notification — not custody. There is no payout step, no Reqst-held balance, and no withdrawal flow.
+
+## Supported networks
+
+Reqst settles payments on **TON, TRON, Solana, and EVM chains (Ethereum, Base, Arbitrum, BSC)**. See [Supported Networks](/en/docs/networks) for the exact list and per-network notes.
+
+## Two ways to integrate
+
+1. **REST API (`/v1`).** API-key-authenticated endpoints for creating and managing invoices, plus signed webhooks for status changes. Start with the [Quickstart](/en/docs/quickstart).
+2. **MCP server (AI agents).** A Model Context Protocol server that lets AI agents (Claude Desktop, Cursor, etc.) create and check invoices, verify webhooks, and list networks as tools. See [MCP / AI Agents](/en/docs/mcp).
+
+## Getting started
+
+Create an account in the [Merchant Console](/app/auth), add a payout wallet, then issue an API key from the Developer Portal. The [Quickstart](/en/docs/quickstart) walks through it end to end with curl.

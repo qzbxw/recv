@@ -14,7 +14,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     "", 
     "/dev", 
+    "/merchant",
+    "/business",
     "/enterprise", 
+    "/security",
+    "/about",
+    "/contact",
+    "/integrations",
+    "/customers",
+    "/changelog",
+    "/help",
     "/privacy", 
     "/terms", 
     "/blog",
@@ -24,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/products/checkout",
     "/products/invoicing",
     "/products/api",
+    "/products/mcp",
     "/networks",
     "/networks/ton",
     "/networks/tron",
@@ -37,6 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/use-cases/digital-goods",
     "/use-cases/paid-communities",
     "/compare",
+    "/compare/nowpayments",
     "/compare/reqst-vs-manual",
     "/compare/reqst-vs-custodial",
   ];
@@ -78,8 +89,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         );
       }
     }
-  } catch (err) {
-    console.error("Failed to fetch blog posts for sitemap", err);
+  } catch {
+    blogRoutes = [];
   }
 
   return [...routes, ...docRoutes, ...blogRoutes];

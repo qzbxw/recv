@@ -1,5 +1,6 @@
 import type {
   AdminActionResponse,
+  AdminAuditEvent,
   AdminAnalyticsResponse,
   AdminBillingCheckoutResponse,
   AdminBlogPost,
@@ -16,9 +17,23 @@ import type {
 import { request } from "./core";
 
 export async function loginAdmin(payload: { username: string; password: string }) {
-  return request<{ token: string; username: string }>("/api/admin/login", {
+  return request<{ token?: string; username?: string; email?: string; roles?: string[]; mfa_required?: boolean; totp_setup_required?: boolean; totp_secret?: string; challenge_token?: string; recovery_codes?: string[] }>("/api/admin/login", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function verifyAdminTotp(payload: { challenge_token: string; code: string }) {
+  return request<{ token: string; username: string; email?: string; roles?: string[]; recovery_codes?: string[] }>("/api/admin/login/verify-totp", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function logoutAdmin() {
+  return request<{ ok: boolean }>("/api/admin/logout", {
+    method: "POST",
+    body: JSON.stringify({}),
   });
 }
 
@@ -105,6 +120,10 @@ export async function fetchAdminAnalytics(token: string, params: { from?: string
   return request<AdminAnalyticsResponse>(`/api/admin/analytics${suffix}`, {}, token);
 }
 
+export async function fetchAdminAuditEvents(token: string) {
+  return request<{ items: AdminAuditEvent[] }>("/api/admin/audit-events", {}, token);
+}
+
 export async function fetchAdminSEOTargets(token: string) {
   return request<{ items: SEOTarget[] }>("/api/admin/seo-targets", {}, token);
 }
@@ -126,4 +145,3 @@ export async function updateAdminBlogPost(token: string, id: number, payload: Pa
     body: JSON.stringify(payload),
   }, token);
 }
-

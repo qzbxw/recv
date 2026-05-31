@@ -7,20 +7,23 @@ import {
   createAdminBillingCheckout,
   createAdminInternalComment,
   fetchAdminAnalytics,
+  fetchAdminAuditEvents,
   fetchAdminInvoices,
   fetchAdminOpsOverview,
   fetchAdminSEOTargets,
   getStoredAdminToken,
   loginAdmin,
+  logoutAdmin,
   refreshAdminInvoiceStatus,
   resendAdminWebhookDelivery,
   reviewAdminInvoice,
   setStoredAdminToken,
+  verifyAdminTotp,
 } from "../lib/api";
 import { buildCheckoutUrl } from "../lib/routing";
-import type { AdminAnalyticsResponse, AdminInvoice, AdminInvoiceListResponse, AdminOpsOverviewResponse, SEOTarget } from "../lib/types";
+import type { AdminAnalyticsResponse, AdminAuditEvent, AdminInvoice, AdminInvoiceListResponse, AdminOpsOverviewResponse, SEOTarget } from "../lib/types";
 
-type Tab = "core" | "actions" | "analytics" | "content" | "seo";
+type Tab = "core" | "actions" | "analytics" | "audit" | "content" | "seo";
 
 type Filters = {
   status: string;
@@ -49,11 +52,13 @@ function statusClass(status: string) {
 
 export function AdminDashboardPage() {
   const [token, setToken] = useState(() => getStoredAdminToken() || "");
-  const [credentials, setCredentials] = useState({ username: "admin", password: "admin" });
+  const [credentials, setCredentials] = useState({ username: "", password: "" });
+  const [mfa, setMfa] = useState<{ challengeToken: string; code: string; setupSecret: string; recoveryCodes: string[] }>({ challengeToken: "", code: "", setupSecret: "", recoveryCodes: [] });
   const [activeTab, setActiveTab] = useState<Tab>("core");
   const [overview, setOverview] = useState<AdminOpsOverviewResponse | null>(null);
   const [invoiceList, setInvoiceList] = useState<AdminInvoiceListResponse | null>(null);
   const [analytics, setAnalytics] = useState<AdminAnalyticsResponse | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AdminAuditEvent[]>([]);
   const [seoTargets, setSeoTargets] = useState<SEOTarget[]>([]);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [selectedInvoice, setSelectedInvoice] = useState<AdminInvoice | null>(null);
@@ -85,15 +90,17 @@ export function AdminDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [nextOverview, nextInvoices, nextAnalytics, nextSEO] = await Promise.all([
+      const [nextOverview, nextInvoices, nextAnalytics, nextAuditEvents, nextSEO] = await Promise.all([
         fetchAdminOpsOverview(activeToken),
         fetchAdminInvoices(activeToken, { page: 1, page_size: 50, ...nextFilters }),
         fetchAdminAnalytics(activeToken, { group_by: "date" }),
+        fetchAdminAuditEvents(activeToken),
         fetchAdminSEOTargets(activeToken),
       ]);
       setOverview(nextOverview);
       setInvoiceList(nextInvoices);
       setAnalytics(nextAnalytics);
+      setAuditEvents(nextAuditEvents.items || []);
       setSeoTargets(nextSEO.items || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load admin dashboard");
@@ -112,6 +119,11 @@ export function AdminDashboardPage() {
     setError("");
     try {
       const response = await loginAdmin(credentials);
+      if (response.mfa_required && response.challenge_token) {
+        setMfa({ challengeToken: response.challenge_token, code: "", setupSecret: response.totp_secret || "", recoveryCodes: [] });
+        return;
+      }
+      if (!response.token) throw new Error("Admin token was not returned");
       setStoredAdminToken(response.token);
       setToken(response.token);
     } catch (err) {
@@ -121,7 +133,24 @@ export function AdminDashboardPage() {
     }
   }
 
+  async function handleVerifyMFA(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const response = await verifyAdminTotp({ challenge_token: mfa.challengeToken, code: mfa.code });
+      setStoredAdminToken(response.token);
+      setToken(response.token);
+      setMfa({ challengeToken: "", code: "", setupSecret: "", recoveryCodes: response.recovery_codes || [] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Admin MFA failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function handleLogout() {
+    void logoutAdmin().catch(() => undefined);
     clearStoredAdminToken();
     setToken("");
     setOverview(null);
@@ -223,12 +252,26 @@ export function AdminDashboardPage() {
               <h1>Ops Center</h1>
               <p>Sign in to operate merchants, invoices, billing, webhooks, content, and SEO status.</p>
             </div>
-            <form className="admin-login-form" onSubmit={handleLogin}>
-              <label><span>Username</span><input value={credentials.username} onChange={(event) => setCredentials({ ...credentials, username: event.target.value })} autoComplete="username" /></label>
-              <label><span>Password</span><input type="password" value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} autoComplete="current-password" /></label>
-              {error && <p className="admin-error">{error}</p>}
-              <button type="submit" className="admin-login-button" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</button>
-            </form>
+            {mfa.challengeToken ? (
+              <form className="admin-login-form" onSubmit={handleVerifyMFA}>
+                {mfa.setupSecret && (
+                  <label>
+                    <span>TOTP secret</span>
+                    <input value={mfa.setupSecret} readOnly />
+                  </label>
+                )}
+                <label><span>Authenticator code</span><input value={mfa.code} onChange={(event) => setMfa({ ...mfa, code: event.target.value })} autoComplete="one-time-code" /></label>
+                {error && <p className="admin-error">{error}</p>}
+                <button type="submit" className="admin-login-button" disabled={loading}>{loading ? "Verifying..." : "Verify"}</button>
+              </form>
+            ) : (
+              <form className="admin-login-form" onSubmit={handleLogin}>
+                <label><span>Email</span><input value={credentials.username} onChange={(event) => setCredentials({ ...credentials, username: event.target.value })} autoComplete="username" /></label>
+                <label><span>Password</span><input type="password" value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} autoComplete="current-password" /></label>
+                {error && <p className="admin-error">{error}</p>}
+                <button type="submit" className="admin-login-button" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</button>
+              </form>
+            )}
           </div>
         </section>
       </main>
@@ -261,6 +304,7 @@ export function AdminDashboardPage() {
             ["core", "Core Ops"],
             ["actions", "Actions"],
             ["analytics", "Analytics"],
+            ["audit", "Audit"],
             ["content", "Content"],
             ["seo", "SEO Ops"],
           ].map(([id, label]) => (
@@ -369,6 +413,7 @@ export function AdminDashboardPage() {
         )}
 
         {activeTab === "analytics" && <AnalyticsBoard analytics={analytics} />}
+        {activeTab === "audit" && <AuditBoard events={auditEvents} />}
         {activeTab === "content" && <ContentBoard />}
         {activeTab === "seo" && <SEOBoard targets={seoTargets} />}
         {selectedInvoice && <p className="admin-sales-summary">Selected invoice #{selectedInvoice.id} / {selectedInvoice.public_id}</p>}
@@ -474,6 +519,31 @@ function AnalyticsBoard({ analytics }: { analytics: AdminAnalyticsResponse | nul
             {(analytics?.breakdown || []).map((item) => (
               <tr key={item.bucket}><td>{item.bucket}</td><td>{item.created_invoices}</td><td>{item.paid_invoices}</td><td>{item.manual_review_invoices}</td><td>{item.underpaid_invoices}</td><td>{formatMoney(item.paid_volume_usd)}</td></tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function AuditBoard({ events }: { events: AdminAuditEvent[] }) {
+  return (
+    <section className="admin-sales-board">
+      <div className="admin-sales-head"><div><h2>Audit</h2><p className="admin-sales-summary">{events.length} latest admin events</p></div></div>
+      <div className="admin-table-wrap">
+        <table className="admin-sales-table">
+          <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Metadata</th></tr></thead>
+          <tbody>
+            {events.map((event) => (
+              <tr key={event.id}>
+                <td>{formatDateTime(event.created_at)}</td>
+                <td>{event.actor || "system"}</td>
+                <td>{event.action}</td>
+                <td>{event.target_type}:{event.target_id}</td>
+                <td>{JSON.stringify(event.metadata || {})}</td>
+              </tr>
+            ))}
+            {events.length === 0 && <tr><td colSpan={5} className="admin-table-empty">No audit events yet.</td></tr>}
           </tbody>
         </table>
       </div>

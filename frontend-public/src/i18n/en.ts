@@ -1,13 +1,13 @@
 const en = {
     hero: {
-      title: "The Protocol for Digital Revenue.",
+      title: "Accept Crypto Payments Direct to Your Wallets with 0% Fees.",
       body:
-        "Non-custodial infrastructure for scale. Direct-to-wallet payouts, 0% turnover fees, and native multi-chain support in one unified engine.",
+        "Non-custodial crypto payment gateway for USDT, TON, and TRON. Integrate our high-performance processing API or smart checkout into Telegram bots, SaaS platforms, and global e-commerce with zero turnover fees.",
       subcopy:
-        "Engineered for Telegram, SaaS, and Global Commerce.",
+        "Engineered for Telegram Shops, SaaS Billing, and Digital Commerce.",
       primary: "Launch Console",
       secondary: "View Docs",
-      badges: ["Direct-to-Wallet", "0% Fees", "Non-Custodial", "High-Throughput"],
+      badges: ["Direct-to-Wallet", "0% Turnover Fees", "Non-Custodial API", "No KYC Required"],
     },
     heroPanel: {
       eyebrow: "Infrastructure",
@@ -64,13 +64,27 @@ const en = {
     },
     useCases: {
       kicker: "USE CASES",
-      title: "Proven in the most demanding environments.",
+      title: "Built for the way crypto businesses actually get paid.",
       tabs: [
         { id: "tg-shops", title: "TG Shops", body: "Automate physical and digital goods sales inside Telegram with instant delivery.", cta: "Explore TG Commerce" },
         { id: "saas", title: "SaaS Billing", body: "Reliable infrastructure for software platforms. Flat fees mean higher margins for your business.", cta: "Optimize Margins" },
         { id: "digital", title: "Digital Goods", body: "Instant fulfillment for keys and accounts immediately after blockchain confirmation.", cta: "Scale Automation" },
         { id: "communities", title: "Communities", body: "Automated access management for private channels and groups with recurring logic.", cta: "Manage Members" },
       ]
+    },
+    mcp: {
+      kicker: "AI & MCP",
+      title: "Let AI agents accept crypto for you.",
+      body: "Reqst ships a Model Context Protocol server, so agents like Claude and Cursor can create invoices, check payment status, and verify webhooks autonomously — no glue code required.",
+      tools: [
+        { name: "create_invoice", body: "Issue payment requests on any supported network." },
+        { name: "get_invoice", body: "Check real-time status and confirmations." },
+        { name: "list_invoices", body: "Review recent payment activity." },
+        { name: "simulate_payment", body: "Test the full flow in Sandbox before going live." },
+        { name: "verify_webhook", body: "Validate incoming notifications securely." },
+        { name: "list_supported_networks", body: "Discover available chains and assets." },
+      ],
+      cta: "Read the MCP guide",
     },
     networks: {
       kicker: "NETWORKS",
@@ -219,6 +233,7 @@ const en = {
         checkout: { title: "Checkout", desc: "High-converting payment UI" },
         api: { title: "API", desc: "Infrastructure for developers" },
         invoicing: { title: "Invoicing", desc: "Professional billing tools" },
+        mcp: { title: "MCP Agent", desc: "Autonomous AI agent tools" },
       },
       useCases: {
         title: "Use Cases",
@@ -260,7 +275,7 @@ const en = {
     tryDemo: "Try Demo",
     common: {
       whyChoose: "Why choose",
-      engineered: "Engineered for maximum efficiency and security in the decentralized economy.",
+      engineered: "Direct-to-wallet settlement, signed webhooks, and zero turnover fees across TON, TRON, Solana, and EVM.",
       implementation: "IMPLEMENTATION",
       readyInMinutes: "Production-ready in minutes",
       integrateEase: "Integrate our high-performance API into your existing stack with ease.",
@@ -306,11 +321,11 @@ const en = {
       bento: {
         title: "Micro-Features, Macro Impact",
         items: [
-          { title: "TWA Optimized", body: "Seamless integration for Telegram Mini Apps with Haptic Feedback." },
-          { title: "Biometric Ready", body: "Works with FaceID/TouchID via supported mobile wallets." },
+          { title: "Telegram Ready", body: "Seamlessly runs inside Telegram Web Apps and mobile in-app browsers." },
+          { title: "Deep Link Ready", body: "Instantly opens payment screens in Tonkeeper, Phantom, and other wallets." },
           { title: "Real-Time Deltas", body: "Automatic calculation of exchange rates and network fees." },
-          { title: "Global Reach", body: "Localized interface for 20+ regions and counting." },
-          { title: "Custom Branding", body: "Inject your logo and brand colors for a native look." },
+          { title: "Dual Locale", body: "Fully localized payment interface in English and Russian." },
+          { title: "Focus on UI", body: "A clean, distraction-free payment page optimized for fast conversion." },
           { title: "Network Safety", body: "Built-in alerts for incorrect network selection." }
         ]
       },
@@ -321,7 +336,7 @@ const en = {
         },
         {
           title: "Native Telegram Integration",
-          body: "Our checkout UI is precision-engineered for the Telegram ecosystem. When running as a Telegram Web App (TWA), Reqst utilizes native haptics, theme-aware styling, and deep-link acceleration to provide a payment experience that feels like a core part of the app, not a third-party popup."
+          body: "Our checkout UI is built with a mobile-first philosophy, making it a perfect fit for Telegram-native commerce. It loads instantly inside Telegram Web Apps or mobile browsers, leveraging deep-link acceleration to guide buyers directly into their preferred wallet apps for swift confirmation."
         },
         {
           title: "Cross-Chain Unified UI",
@@ -335,7 +350,7 @@ const en = {
         { value: "<5ms", label: "UI Latency" }
       ],
       finalTitle: "Ready to optimize your checkout conversion?",
-      seo: "Reqst Checkout is a non-custodial payment gateway engineered for high-conversion cryptocurrency processing. Designed to eliminate friction in digital commerce, the UI supports direct-to-wallet transactions across TON, TRON (TRC-20), Solana, and EVM-compatible networks. Core functionality includes dynamic exchange rate calculation, native integration for Telegram Mini Apps (TWA), and intelligent underpayment resolution to recover partial transactions. By bypassing intermediary custodians, merchants retain full control of their liquidity while providing customers with a seamless, multi-chain payment experience without turnover fees."
+      seo: "Reqst Checkout is a non-custodial payment gateway engineered for high-conversion cryptocurrency processing. Designed to eliminate friction in digital commerce, the UI supports direct-to-wallet transactions across TON, TRON (TRC-20), Solana, and EVM-compatible networks. Core functionality includes dynamic exchange rate calculation, deep linking to major mobile wallets, and intelligent underpayment resolution to recover partial transactions. By bypassing intermediary custodians, merchants retain full control of their liquidity while providing customers with a seamless, multi-chain payment experience without turnover fees."
     },
     apiProduct: {
       metadata: {
@@ -475,6 +490,72 @@ const en = {
       networks: "Networks",
       products: "Products",
       invoicing: "Invoicing",
+      mcp: "MCP Agent",
+    },
+    mcpProduct: {
+      metadata: {
+        title: "MCP Agent Integration | AI-Native Crypto Payments via Model Context Protocol",
+        description: "Connect AI agents to Reqst via Model Context Protocol. Autonomous workspace setup, plan purchase, invoice creation, and webhook management — all from your LLM.",
+        keywords: "mcp crypto payments, model context protocol payments, ai agent payments, llm invoice creation, autonomous crypto billing, claude mcp reqst"
+      },
+      kicker: "AI-NATIVE",
+      title: "Payments for the Agentic Era",
+      description: "The first crypto payment infrastructure built for AI agents. Reqst MCP lets any Claude, GPT, or custom LLM agent bootstrap a workspace, buy a plan, and start accepting payments — zero human intervention required.",
+      hero: {
+        title: "Your AI Agent, Now a Crypto Merchant.",
+        body: "Reqst is the first payment platform with a native Model Context Protocol server. Any MCP-compatible agent can onboard, subscribe, create invoices, and verify webhooks without touching a dashboard.",
+        cta: "View MCP Docs"
+      },
+      comparison: {
+        title: "The Agentic Difference",
+        items: [
+          {
+            legacy: "Agents can't sign up, buy plans, or get API keys without a human.",
+            reqst: "bootstrap_agent_workspace creates a workspace and returns an access token in one call."
+          },
+          {
+            legacy: "LLMs have no way to generate or verify payment invoices natively.",
+            reqst: "create_invoice and get_invoice are first-class MCP tools your agent can call directly."
+          },
+          {
+            legacy: "Webhook signature verification requires manual backend code and secrets.",
+            reqst: "verify_webhook runs locally in the MCP server — no network call, no leaking secrets."
+          }
+        ]
+      },
+      bento: {
+        title: "Tools Your Agent Gets Out of the Box",
+        items: [
+          { title: "bootstrap_agent_workspace", body: "Create a trial workspace and receive an access token — the agent's starting point." },
+          { title: "create_invoice", body: "Generate a hosted payment invoice on any supported network." },
+          { title: "get_invoice / list_invoices", body: "Poll status and paginate your invoice history programmatically." },
+          { title: "create_api_key", body: "Issue scoped API keys after a plan is activated." },
+          { title: "create_webhook_endpoint", body: "Register HTTPS endpoints to receive signed event callbacks." },
+          { title: "verify_webhook", body: "Validate HMAC-SHA256 signatures locally without a network round-trip." }
+        ]
+      },
+      deepDive: [
+        {
+          title: "Zero-Touch Agent Onboarding",
+          body: "An AI agent can fully onboard itself to Reqst without any human action. It calls bootstrap_agent_workspace, receives an access token, purchases a Developer or Business subscription via create_subscription_checkout, polls get_checkout_invoice until paid, then issues its own API key. The entire flow is expressible as a sequence of MCP tool calls."
+        },
+        {
+          title: "Any MCP-Compatible Runtime",
+          body: "The Reqst MCP server runs over stdio and works with Claude Desktop, Claude Code, Cursor, Cline, Continue, and any other host that implements the Model Context Protocol spec. Add it to your mcp.json with REQST_API_KEY and REQST_ACCESS_TOKEN and your agent gains payment superpowers immediately."
+        },
+        {
+          title: "Secure by Design",
+          body: "Webhook verification happens inside the MCP process — your raw body and secret never leave the local runtime. API keys are scoped to invoices:read and invoices:write. The agent only sees what it needs, and every payment event is cryptographically signed before delivery."
+        }
+      ],
+      stats: [
+        { value: "12", label: "MCP Tools" },
+        { value: "stdio", label: "Transport" },
+        { value: "7+", label: "Networks" },
+        { value: "0", label: "Human Steps" }
+      ],
+      finalTitle: "Give your agent the power to earn.",
+      seo: "Reqst MCP (Model Context Protocol) integration enables AI agents and LLM-powered applications to autonomously manage the full lifecycle of crypto payments. Agents running in Claude Desktop, Claude Code, Cursor, or any MCP-compatible host can call bootstrap_agent_workspace to self-register, purchase a subscription plan, generate API keys, create and monitor payment invoices across TON, TRON, Solana, and EVM networks, and register webhook endpoints for event-driven payment flows. The verify_webhook tool performs local HMAC-SHA256 signature validation without exposing secrets to the network. This makes Reqst the first payment infrastructure platform natively designed for the agentic era of autonomous software."
     },
     productsHub: {
       title: "Solutions for Every Business Scale",
@@ -493,6 +574,11 @@ const en = {
       invoicing: {
         title: "Invoicing",
         desc: "Professional billing tools for B2B and freelancers. Issue invoices, track status, and manage your clients in one place.",
+        link: "Learn more",
+      },
+      mcp: {
+        title: "MCP Agent",
+        desc: "Let AI agents accept payments autonomously. Native Model Context Protocol integration — your AI sets up workspaces, buys plans, and creates invoices without human input.",
         link: "Learn more",
       }
     },
@@ -678,21 +764,19 @@ const en = {
         snapshot: {
           kicker: "API EVENT",
           title: "payment.network.solana",
-          amount: "49.00 USDC",
+          amount: "49.00 USDT",
           items: [
-            { label: "Assets", value: "SOL / SPL" },
+            { label: "Assets", value: "SPL USDT" },
             { label: "Flow", value: "API" },
             { label: "Status", value: "Detected" },
           ],
         },
         assets: {
           kicker: "SUPPORTED ASSETS",
-          title: "Native and SPL payments where enabled.",
-          body: "Solana support fits teams that need fast wallet-native payments for web3 audiences.",
+          title: "USDT SPL payments on Solana.",
+          body: "Solana support fits teams that need fast stablecoin payments on the Solana network.",
           items: [
-            { name: "SOL", body: "Native Solana transfers for wallet-native checkout and balances." },
-            { name: "SPL USDC", body: "Stablecoin payments for products that price in USD." },
-            { name: "SPL USDT", body: "Alternative SPL stablecoin support where configured for the merchant." },
+            { name: "SPL USDT", body: "The standard stablecoin on Solana for high-speed, low-fee USD-denominated payments." },
           ],
         },
         why: {
@@ -758,21 +842,19 @@ const en = {
         snapshot: {
           kicker: "L2 INVOICE",
           title: "payment.network.base",
-          amount: "99.00 USDC",
+          amount: "99.00 USDT",
           items: [
             { label: "Rail", value: "Base" },
-            { label: "Assets", value: "ETH / ERC-20" },
+            { label: "Assets", value: "ERC-20 USDT" },
             { label: "API", value: "Unified" },
           ],
         },
         assets: {
           kicker: "SUPPORTED ASSETS",
-          title: "Base-native EVM payments.",
+          title: "USDT on Base.",
           body: "Use Base for buyers who already operate on Coinbase-aligned or EVM-compatible L2 rails.",
           items: [
-            { name: "ETH on Base", body: "Native gas and payment asset for Base wallets." },
-            { name: "USDC on Base", body: "Common stablecoin option for USD-priced checkout." },
-            { name: "Configured ERC-20", body: "Additional Base tokens can be accepted where enabled for the workspace." },
+            { name: "USDT on Base", body: "USDT stablecoin transfer on Coinbase's L2 network for fast and cheap transactions." },
           ],
         },
         why: {
@@ -841,18 +923,16 @@ const en = {
           amount: "149.00 USDT",
           items: [
             { label: "Rail", value: "BSC" },
-            { label: "Assets", value: "BNB / BEP-20" },
+            { label: "Assets", value: "BEP-20 USDT" },
             { label: "Status", value: "Live" },
           ],
         },
         assets: {
           kicker: "SUPPORTED ASSETS",
-          title: "BNB and BEP-20 checkout options.",
-          body: "BSC gives customers a familiar low-fee payment network for native and token transfers.",
+          title: "BEP-20 USDT checkout options.",
+          body: "BSC gives customers a familiar low-fee payment network for token transfers.",
           items: [
-            { name: "BNB", body: "Native asset for BSC payments and wallet gas." },
             { name: "BEP-20 USDT", body: "Stablecoin checkout for buyers who hold USDT on BNB Smart Chain." },
-            { name: "BEP-20 USDC", body: "USD-priced payments where USDC on BSC is configured." },
           ],
         },
         why: {
@@ -873,7 +953,7 @@ const en = {
         limitations: {
           kicker: "LIMITATIONS AND NOTES",
           title: "BEP-20 only means BSC only.",
-          body: "Buyers must send the selected asset on BSC and keep enough BNB for gas. USDT or USDC sent on another chain is outside automatic BSC matching.",
+          body: "Buyers must send the selected asset on BSC. USDT sent on another chain is outside automatic BSC matching.",
         },
         useCases: {
           kicker: "RELEVANT USE CASES",
@@ -918,21 +998,19 @@ const en = {
         snapshot: {
           kicker: "L2 PAYMENT",
           title: "payment.network.arbitrum",
-          amount: "249.00 USDC",
+          amount: "249.00 USDT",
           items: [
             { label: "Rail", value: "Arbitrum One" },
-            { label: "Assets", value: "ETH / ERC-20" },
+            { label: "Assets", value: "ERC-20 USDT" },
             { label: "Settlement", value: "Direct" },
           ],
         },
         assets: {
           kicker: "SUPPORTED ASSETS",
-          title: "Arbitrum-native ETH and ERC-20 payments.",
+          title: "Arbitrum-native USDT payments.",
           body: "Use Arbitrum for customers who want Ethereum-compatible assets with lower transaction costs than mainnet.",
           items: [
-            { name: "ETH on Arbitrum", body: "Native Arbitrum ETH payments and wallet gas." },
-            { name: "USDC on Arbitrum", body: "Stablecoin checkout for USD-priced invoices and services." },
-            { name: "Configured ERC-20", body: "Additional Arbitrum One tokens can be accepted where enabled." },
+            { name: "USDT on Arbitrum", body: "USDT stablecoin transfer on Arbitrum One layer 2 for highly scalable USD-denominated payments." },
           ],
         },
         why: {
@@ -1353,8 +1431,84 @@ const en = {
     },
     compareHub: {
       title: "The Smarter Way to Process Crypto",
-      description: "See how Reqst compares to manual verification and traditional custodial gateways. Transparency and efficiency in every transaction.",
+      description: "Compare Reqst to manual verification and custodial gateways: direct-to-wallet settlement, zero turnover fees, signed webhooks, and seven supported networks.",
       kicker: "COMPARE",
+      items: [
+        { title: "Reqst vs Manual Verification", slug: "reqst-vs-manual", body: "Discover how automation eliminates human error and scales your operations." },
+        { title: "Reqst vs Custodial Gateways", slug: "reqst-vs-custodial", body: "Why non-custodial infrastructure is safer and more cost-effective for your business." },
+        { title: "Reqst vs NowPayments", slug: "nowpayments", body: "A direct comparison of fees, control, and integration flexibility." },
+      ]
+    },
+    comparePages: {
+      "reqst-vs-manual": {
+        name: "Manual Payments",
+        title: "Reqst vs Manual Wallet Payments: Why Automate?",
+        description: "Comparing automated non-custodial processing with manual wallet tracking. Learn how Reqst eliminates human error and scales your crypto operations.",
+        kicker: "AUTOMATION",
+        points: [
+          {
+            title: "Scalability",
+            competitor: "Impossible to scale. Every transaction requires manual verification and manual accounting.",
+            reqst: "Fully automated. Handle thousands of invoices simultaneously with real-time monitoring and webhooks."
+          },
+          {
+            title: "Accuracy",
+            competitor: "High risk of human error. Typos in wallet addresses, missed payments, or wrong network transfers.",
+            reqst: "Zero errors. Automated matching of exact amounts and unique payment identifiers."
+          },
+          {
+            title: "Customer UX",
+            competitor: "Slow and frustrating. Customers wait hours for manual confirmation and product delivery.",
+            reqst: "Instant gratification. Real-time detection leads to immediate order fulfillment."
+          }
+        ]
+      },
+      "reqst-vs-custodial": {
+        name: "Custodial Gateways",
+        title: "Reqst vs Custodial Gateways: Non-Custodial Advantage",
+        description: "Why pay 1-3% commission and risk your funds? Compare Reqst's non-custodial infrastructure with traditional payment processors.",
+        kicker: "SOVEREIGNTY",
+        points: [
+          {
+            title: "Control of Funds",
+            competitor: "Third-party custody. Risk of frozen accounts, withdrawal delays, and platform insolvency.",
+            reqst: "100% Non-custodial. Funds flow directly to your wallet. We never touch or hold your money."
+          },
+          {
+            title: "Fee Structure",
+            competitor: "Variable fees (1% to 3%). Your costs grow as your business scales, eating into margins.",
+            reqst: "Fixed subscription. Zero turnover fees. Predictable costs regardless of your volume."
+          },
+          {
+            title: "Compliance & Privacy",
+            competitor: "Strict KYC/KYB requirements and data sharing. Dependency on third-party policy changes.",
+            reqst: "Privacy-first infrastructure. You maintain your own relationships with your users."
+          }
+        ]
+      },
+      "nowpayments": {
+        name: "NowPayments",
+        title: "Reqst vs NowPayments: Control vs Convenience",
+        description: "A detailed comparison of two popular crypto payment solutions. Choose the one that fits your scaling needs.",
+        kicker: "COMPARISON",
+        points: [
+          {
+            title: "Payout Model",
+            competitor: "Internal balance system. You need to manually withdraw or wait for automated payout cycles.",
+            reqst: "Atomic payouts. Every transaction hits your wallet as soon as it is confirmed on-chain."
+          },
+          {
+            title: "Commission",
+            competitor: "Starts at 0.5% + network fees. High volume means high absolute costs.",
+            reqst: "0% commission. Only pay your fixed subscription and standard network gas fees."
+          },
+          {
+            title: "Integration",
+            competitor: "Proprietary API and standard plugins. Focus on generic e-commerce platforms.",
+            reqst: "Developer-first protocol. Optimized for high-throughput SaaS, Telegram Mini Apps, and custom builds."
+          }
+        ]
+      }
     },
     statusHub: {
       title: "System Status",
@@ -1508,7 +1662,7 @@ const inv = await res.json();`
       kicker: "PRIVACY POLICY",
       title: "PRIVACY POLICY AND DATA PROCESSING AGREEMENT",
       summary:
-        "READ THIS DOCUMENT CAREFULLY. BY ACCESSING THE REQST SOFTWARE, DASHBOARD, API, OR PUBLIC CHECKOUT PAGES, YOU EXPLICITLY CONSENT TO THE DATA PRACTICES HEREIN. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY CEASE ALL USE OF THE SERVICE.",
+        "READ THIS DOCUMENT CAREFULLY. BY ACCESSING THE REQST SOFTWARE, DASHBOARD, API, OR PUBLIC CHECKOUT PAGES, YOU EXPLICITLY CONSENT TO THE DATA PRACTICES DESCRIBED HEREIN. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY CEASE ALL USE OF THE SERVICE.",
       updatedLabel: "Last Updated",
       operatorLabel: "Effective Date",
       metaItems: ["Last Updated: March 13, 2026", "Effective Date: March 13, 2026"],
@@ -1522,7 +1676,104 @@ const inv = await res.json();`
         "Sharing: Telegram, RPC providers, cloud infrastructure, market oracles",
         "Retention: active account + disputes + technical logs",
       ],
-      sections: [],
+      sections: [
+        {
+          title: "1. PREAMBLE AND SCOPE",
+          paragraphs: [
+            'This Privacy Policy (the "Policy") governs how reqst ("Company", "we", "us", "our") collects, processes, utilizes, and safeguards information when you ("Merchant", "User", "you") or your end-users ("Customers") interact with our software-as-a-service infrastructure, Telegram bots, API endpoints, and public checkout interfaces (collectively, the "Service").',
+            "This Policy is designed to comply with global data protection principles while explicitly acknowledging the inherently public, immutable, and decentralized nature of cryptographic blockchain technology.",
+          ],
+        },
+        {
+          title: "2. THE FUNDAMENTAL REALITY OF BLOCKCHAIN DATA (CRITICAL NOTICE)",
+          paragraphs: [
+            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TRON, Solana, Ethereum, Base, Arbitrum, and BSC) are decentralized, public ledgers.",
+            '2.2. No Expectation of Privacy On-Chain: Wallet addresses, transaction hashes (TXIDs), timestamps, transfer amounts, and on-chain memos/comments are inherently public, permanently recorded, and accessible to anyone globally. The Company does not control these networks and cannot erase, obfuscate, or alter on-chain data. 2.3. Exemption from Deletion Requests: Requests to invoke the "Right to be Forgotten" or data erasure under the GDPR or CCPA cannot and will not apply to cryptographic data broadcasted to and confirmed on public blockchain networks.',
+          ],
+        },
+        {
+          title: "3. CATEGORIES OF DATA WE COLLECT",
+          paragraphs: [
+            'To operate the "Direct-to-Wallet" routing and notification architecture, we strictly minimize data collection to the following categories:',
+            "3.1. Merchant Account Data: When a Merchant authenticates via the Telegram Mini App or Bot, we automatically collect and store:",
+            "3.2. Operational Infrastructure Data (Merchant Provided): To facilitate the Service, the Merchant must configure and input:",
+            "3.3. Customer and Transactional Metadata: When a Customer accesses a publicly generated checkout URL, we process:",
+            "NOTE: We do NOT collect Customer names, Customer emails, Customer physical addresses, or any traditional KYC/AML documentation.",
+          ],
+          bullets: [
+            "Telegram User ID (Primary unique identifier).",
+            "Telegram Username.",
+            "Email address (if voluntarily provided or required for specific billing tiers).",
+            "Subscription plan status, activation dates, and suspension flags.",
+            "Public blockchain wallet addresses (Destination Wallets).",
+            "Preferred default networks.",
+            "Webhook URL endpoints and associated cryptographic secrets (for HMAC-SHA256 signatures).",
+            "Custom API key labels and generation metadata.",
+            "Invoice metadata (e.g., Title, Base Amount in USD, Expiration Time).",
+            "Ephemeral HTTP request data (IP addresses, User-Agent strings) strictly for DDoS mitigation, rate-limiting, and security routing.",
+            "The matching algorithm parameters (e.g., Decimal Suffixes, TON Payment Comments).",
+            "Captured on-chain events via our Watchers (TX Hash, Amount, Destination, Observed Timestamp).",
+          ],
+        },
+        {
+          title: "4. STRICT LIABILITY FOR INVOICE METADATA",
+          paragraphs: [
+            '4.1. Merchant Data Input: The Service allows Merchants to assign custom "Titles" to invoices. The Merchant expressly agrees NOT to input Personally Identifiable Information (PII) belonging to their Customers (e.g., "Invoice for John Doe\'s medical consultation") into the invoice title, payment comment, or webhook payloads.',
+            "4.2. Public Checkout Exposure: Merchant acknowledges that the checkout URL is accessible to anyone holding the link. The public invoice ID, invoice title, payable amount, and destination address are visible on this page. The Company assumes zero liability for PII exposed due to the Merchant's failure to anonymize invoice metadata.",
+          ],
+        },
+        {
+          title: "5. LOCAL STORAGE, TOKENS, AND TRACKING",
+          paragraphs: [
+            "5.1. Explicit Rejection of Marketing Cookies: The Company does not utilize third-party advertising cookies, cross-site tracking pixels, or invasive analytics trackers.",
+            "5.2. Functional Storage (localStorage): The frontend application utilizes browser localStorage strictly for technical and security necessities, including:",
+            "By using the Service, you consent to the use of strictly necessary localStorage mechanisms. Disabling these will render the authenticated Merchant dashboard inoperable.",
+          ],
+          bullets: [
+            "Storing JSON Web Tokens (JWT) for secure session persistence.",
+            "Managing API authentication states.",
+            "Storing minor UI/UX preferences.",
+          ],
+        },
+        {
+          title: "6. THIRD-PARTY SUB-PROCESSORS AND DATA SHARING",
+          paragraphs: [
+            "To monitor mempools and process transactions at scale, the Service inherently relies on third-party infrastructure. You consent to the transmission of necessary technical data (such as wallet addresses and block queries) to the following categories of Sub-processors:",
+            "The Company is not responsible for the independent privacy practices of these third-party operators.",
+          ],
+          bullets: [
+            "Telegram Messenger Inc.: For authentication, bot interactions, and Merchant notifications.",
+            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM/Solana node providers) used to read the blockchain.",
+            "Cloud Infrastructure: Secure database hosting (PostgreSQL) and server environments (e.g., AWS, DigitalOcean, or Cloudflare for edge routing).",
+            "Market Oracles: Third-party APIs (e.g., CoinGecko) to fetch real-time USD to Digital Asset exchange rates.",
+          ],
+        },
+        {
+          title: "7. DATA RETENTION AND SECURITY",
+          paragraphs: [
+            "7.1. Retention Period: We retain Merchant Account Data and Invoice Metadata for as long as the Merchant's account is active, or as required to resolve disputes, enforce our Terms of Service, and fulfill technical logging requirements (e.g., webhook delivery logs).",
+            '7.2. "As-Is" Security: While we implement industry-standard cryptographic hashing for API secrets and JWTs, no transmission over the internet or decentralized network is 100% secure. THE COMPANY DISCLAIMS ALL LIABILITY FOR UNAUTHORIZED ACCESS TO MERCHANT DASHBOARDS RESULTING FROM COMPROMISED TELEGRAM ACCOUNTS OR EXPOSED LOCAL STORAGE TOKENS ON THE MERCHANT\'S DEVICE.',
+          ],
+        },
+        {
+          title: "8. INTERNATIONAL AND CROSS-BORDER TRANSFERS",
+          paragraphs: [
+            "The Service operates on a globally distributed infrastructure. By utilizing the Service, you consent to the transfer, storage, and processing of your data in jurisdictions that may have different data protection regulations than your country of residence.",
+          ],
+        },
+        {
+          title: "9. EXEMPTION FROM REGULATORY REGIMES",
+          paragraphs: [
+            "Because the Company operates exclusively as non-custodial middleware and does not collect sensitive financial PII (such as bank account numbers, credit card details, or government-issued IDs), the Company operates outside the scope of traditional financial data privacy regulations like the Gramm-Leach-Bliley Act (GLBA) or the Payment Card Industry Data Security Standard (PCI-DSS).",
+          ],
+        },
+        {
+          title: "10. MODIFICATIONS TO THIS POLICY",
+          paragraphs: [
+            "We reserve the right to unilaterally update this Privacy Policy at any time to reflect changes in our technical infrastructure, API capabilities, or legal obligations. Your continued use of the Service following the posting of an updated Policy constitutes your irrevocable acceptance of the changes.",
+          ],
+        },
+      ],
       footerNote: "The privacy document is rendered in English as provided, without translation.",
     }, terms: {
       kicker: "TERMS OF SERVICE",
@@ -1542,7 +1793,130 @@ const inv = await res.json();`
         'Dispute flow: arbitration + class action waiver',
         'Liability cap: last three months of subscription fees',
       ],
-      sections: [],
+      sections: [
+        {
+          title: "1. PREAMBLE AND ACCEPTANCE OF TERMS",
+          paragraphs: [
+            '1.1. Parties to the Agreement: This Terms of Service Agreement (the "Agreement") constitutes a legally binding contract between you (acting individually or on behalf of a corporate entity, hereinafter "Merchant", "Licensee", "User", "you", or "your") and reqst (hereinafter "Company", "we", "us", "our", or "Service Provider").',
+            "1.2. Capacity to Contract: By utilizing the Service via Telegram authentication or our API, you represent and warrant that you are at least eighteen (18) years of age, possess the legal capacity to enter into this Agreement, and, if acting on behalf of a legal entity, possess the requisite authority to bind said entity.",
+            "1.3. Modifications: We reserve the absolute, unilateral right to amend, modify, or append to this Agreement at any time. Continued use of the Service following the publication of any modifications constitutes your irrevocable acceptance of the amended terms.",
+          ],
+        },
+        {
+          title: '2. STRICT DEFINITION OF THE SERVICE (THE "MERE CONDUIT" DOCTRINE)',
+          paragraphs: [
+            '2.1. Software as a Service (SaaS): The "Service" refers exclusively to the proprietary, non-custodial software middleware provided by the Company. This includes the dashboard, checkout page generators, smart-matching algorithms, API endpoints, webhook delivery systems, and blockchain monitoring logic (the "Watchers").',
+            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, Solana, EVM-compatible chains) and visualizes this data.",
+            "2.3. Zero Financial Intermediation: The Company is strictly not a payment processor, payment gateway, money transmitter, clearinghouse, custodian, fiduciary, or financial institution. At no point in the technical architecture does the Company receive, hold, control, or possess any fiat currency, digital assets, or cryptographic private keys belonging to the Merchant or the Merchant’s end-users (\"Customers\").",
+            "2.4. Direct-to-Wallet Execution: All transfers of Digital Assets occur exclusively and directly on the public blockchain from the Customer's unhosted or custodial wallet directly to the Merchant's designated destination address.",
+          ],
+        },
+        {
+          title: "3. REGULATORY COMPLIANCE, KYC/AML, AND SANCTIONS",
+          paragraphs: [
+            "3.1. Exemption from Identity Verification: Because the Company does not process, transmit, or custody funds, the Company performs no Know Your Customer (KYC), Anti-Money Laundering (AML), or Counter-Terrorism Financing (CTF) verification on Merchants or Customers.",
+            "3.2. Total Merchant Liability: The Merchant assumes 100% liability for conducting any required identity verification, regulatory compliance, and tax reporting concerning their Customers, as mandated by the Merchant's operating jurisdiction.",
+            "3.3. Sanctions and OFAC Representations: The Merchant represents and warrants that they are not located in, under the control of, or a national or resident of any country or territory subject to comprehensive economic sanctions by the United Nations, European Union, or the U.S. Office of Foreign Assets Control (OFAC). The Company assumes no duty to monitor the geopolitical status of Merchants but reserves the right to terminate access immediately if a violation is suspected.",
+            "3.4. Tax Indemnification: The Company shall not calculate, collect, remit, or report any sales, value-added (VAT), income, or other taxes arising from the Merchant's transactions. The Merchant bears sole responsibility for all tax liabilities.",
+          ],
+        },
+        {
+          title: "4. PROHIBITED CONDUCT AND ACCOUNT TERMINATION",
+          paragraphs: [
+            "4.1. Strictly Prohibited Uses: The Merchant explicitly agrees NOT to utilize the Service, checkout links, or API infrastructure to facilitate the sale, distribution, or promotion of:",
+            "4.2. Unilateral Termination: The Company reserves the unappealable right to suspend, restrict, or permanently terminate any Merchant account, revoke API keys, and disable webhook functionality immediately, without prior notice or liability, if we, in our sole discretion, suspect a violation of Section 4.1 or determine that the Merchant's activities expose the Company to legal, regulatory, or reputational peril.",
+          ],
+          bullets: [
+            "Illegal narcotics, controlled substances, or drug paraphernalia.",
+            "Firearms, weapons, munitions, or explosive materials.",
+            "Illicit or non-consensual adult content.",
+            "Unlicensed or illegal gambling, lotteries, or betting platforms.",
+            "Intellectual property infringement, counterfeit goods, or software piracy.",
+            "Ponzi schemes, HYIPs, or fraudulent investment structures.",
+          ],
+        },
+        {
+          title: "5. TECHNICAL MECHANICS, PROTOCOLS, AND USER ERROR",
+          paragraphs: [
+            "5.1. Smart-Tracking and Exactness: To facilitate automated invoice status resolution, the Service employs a Smart-Tracking matching protocol. For TRON, Solana, and EVM networks, a unique decimal suffix (e.g., 0.000123) is appended to the payable amount. For the TON network, a mandatory unique payment comment (memo) is generated.",
+            "5.2. Waiver of Liability for User Error: The Company bears absolutely ZERO liability for any financial loss, delayed access to digital goods, or unfulfilled invoices arising from:",
+            "5.3. Irrevocability of Transactions: The Merchant acknowledges that blockchain transactions are mathematically immutable. The Company cannot reverse, refund, or alter any on-chain transfer. All dispute resolutions, underpayment negotiations, and refund processing are solely the responsibility of the Merchant.",
+            "5.4. Third-Party RPC Reliance: The Service’s blockchain monitoring capabilities are wholly dependent on the stability, uptime, and accuracy of third-party Remote Procedure Call (RPC) node providers (e.g., TronGrid, TonCenter) and external oracle APIs (e.g., CoinGecko for fiat/crypto exchange rates). The Company is not liable for Service degradation, delayed webhooks, or failed mempool tracking caused by external RPC outages, rate-limiting, or public network congestion.",
+          ],
+          bullets: [
+            "The Customer's failure to remit the exact mathematically generated payable amount (including the matching suffix).",
+            "The Customer's failure to include the exact required payment comment/memo on the TON network.",
+            "The Customer utilizing an incorrect or unsupported blockchain network (e.g., transmitting USDT via ERC-20 to a TRC-20 address, resulting in the permanent loss of assets).",
+          ],
+        },
+        {
+          title: "6. API, WEBHOOKS, AND INTEGRATION SLAs",
+          paragraphs: [
+            "6.1. API License: Subject to these Terms and active subscription status, the Company grants the Merchant a limited, non-exclusive, non-transferable, and revocable license to access the Reqst API (v1).",
+            '6.2. Webhook Delivery and Idempotency: Webhook notifications are delivered on an "at-least-once" basis. Due to network conditions, duplicate webhooks may be transmitted. The Merchant is strictly required to implement Idempotency Safety on their servers to prevent duplicate order fulfillment.',
+            "6.3. Cryptographic Verification: The Merchant must cryptographically verify all incoming webhooks using the X-Reqst-Signature header via HMAC-SHA256 algorithm. The Company disclaims any liability for unauthorized actions resulting from the Merchant's failure to validate webhook authenticity.",
+          ],
+        },
+        {
+          title: "7. SUBSCRIPTIONS, FEES, AND INTERNAL BILLING",
+          paragraphs: [
+            "7.1. Flat Fee Model: The Service operates on a flat-fee subscription basis (PRO, DEV, ENTERPRISE tiers) with a 0% turnover commission (Direct-to-Wallet).",
+            "7.2. Internal Payment Processing: Subscription invoices issued by the Company to the Merchant are generated using the Service itself. Payments are routed directly to the Company's designated corporate wallets.",
+            "7.3. No Refunds: All subscription payments made in Digital Assets are final and strictly NON-REFUNDABLE, regardless of the Merchant's actual usage of the Service, network conditions, or early termination of the account.",
+          ],
+        },
+        {
+          title: "8. INTELLECTUAL PROPERTY",
+          paragraphs: [
+            "8.1. Company Ownership: All rights, title, and interest in and to the Service, the Software, the API, the design, the architecture, and the codebase remain the exclusive intellectual property of the Company.",
+            "8.2. No Transfer: This Agreement does not convey any ownership rights to the Merchant. You may not decompile, reverse engineer, disassemble, or attempt to derive the source code of the Service.",
+          ],
+        },
+        {
+          title: "9. DISCLAIMERS OF WARRANTY (ALL CAPS REQUIRED BY LAW)",
+          paragraphs: [
+            'THE SERVICE, API, AND ALL RELATED INFRASTRUCTURE ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. THE COMPANY EXPRESSLY DISCLAIMS ALL WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THE COMPANY DOES NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, TIMELY, SECURE, ERROR-FREE, OR IMMUNE TO CYBERATTACKS, NOR DOES IT GUARANTEE THE CONTINUED EXISTENCE OR STABILITY OF ANY SPECIFIC BLOCKCHAIN NETWORK OR DIGITAL ASSET.',
+          ],
+        },
+        {
+          title: "10. ABSOLUTE LIMITATION OF LIABILITY",
+          paragraphs: [
+            "TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE JURISPRUDENCE, IN NO EVENT SHALL THE COMPANY, ITS FOUNDERS, CORE DEVELOPERS, DIRECTORS, OR AFFILIATES BE LIABLE FOR ANY PUNITIVE, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF PROFITS, LOSS OF REVENUE, LOSS OF DIGITAL ASSETS, LOSS OF GOODWILL, CORRUPTION OF DATA, OR BUSINESS INTERRUPTION, ARISING OUT OF OR IN CONNECTION WITH THIS AGREEMENT OR THE USE OR INABILITY TO USE THE SERVICE.",
+            'UNDER NO CIRCUMSTANCES SHALL THE COMPANY\'S TOTAL CUMULATIVE LIABILITY TO YOU FOR ANY AND ALL CLAIMS EXCEED THE TOTAL AMOUNT OF SUBSCRIPTION FEES PAID BY YOU TO THE COMPANY IN THE THREE (3) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM. IF YOU ARE ON A FREE "TRIAL" PLAN, THE COMPANY\'S AGGREGATE LIABILITY SHALL BE STRICTLY LIMITED TO ZERO DOLLARS ($0.00).',
+          ],
+        },
+        {
+          title: "11. INDEMNIFICATION",
+          paragraphs: [
+            "You agree to unconditionally defend, indemnify, and hold harmless the Company, its team, and affiliates from and against any claims, actions, demands, regulatory proceedings, liabilities, damages, and expenses (including reasonable legal and attorney fees) arising directly or indirectly from:",
+          ],
+          bullets: [
+            "(a) Your breach of this Agreement.",
+            "(b) Your violation of any applicable law or the rights of any third party.",
+            "(c) The nature of the products, services, or content sold by you.",
+            "(d) Any dispute between you and your Customers.",
+          ],
+        },
+        {
+          title: "12. FORCE MAJEURE AND BLOCKCHAIN ANOMALIES",
+          paragraphs: [
+            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM or Solana).",
+          ],
+        },
+        {
+          title: "13. DISPUTE RESOLUTION, ARBITRATION, AND WAIVER OF CLASS ACTION",
+          paragraphs: [
+            "13.1. Binding Arbitration: Any dispute, controversy, or claim arising out of or relating to this Agreement, or the breach thereof, shall be settled by mandatory, binding, and confidential arbitration administered by [Insert Arbitration Association/Jurisdiction, e.g., the International Chamber of Commerce (ICC) or courts of Panama/BVI], rather than in court.",
+            "13.2. Class Action Waiver: YOU AND THE COMPANY AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS OR REPRESENTATIVE PROCEEDING.",
+          ],
+        },
+        {
+          title: "14. SEVERABILITY AND ENTIRE AGREEMENT",
+          paragraphs: [
+            "If any provision of this Agreement is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary so that this Agreement shall otherwise remain in full force, effect, and enforceability. This Agreement constitutes the entire agreement between the parties relating to the subject matter hereof.",
+          ],
+        },
+      ],
       footerNote: "The text above is rendered without translation and preserves the supplied wording structure for publication styling.",
     } },
 } as const;

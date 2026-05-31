@@ -66,7 +66,7 @@ func (s *Server) handleAdminCreateBlogPost(c *gin.Context) {
 
 	createdPost, err := s.store.CreateBlogPost(c.Request.Context(), post)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	adminCtx := adminFromContext(c)
@@ -121,7 +121,7 @@ func (s *Server) handleAdminUpdateBlogPost(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "blog post not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	adminCtx := adminFromContext(c)
@@ -143,7 +143,7 @@ func (s *Server) handleAdminDeleteBlogPost(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "blog post not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 	adminCtx := adminFromContext(c)
@@ -158,7 +158,7 @@ func (s *Server) handleAdminListBlogPosts(c *gin.Context) {
 
 	posts, total, err := s.store.ListBlogPosts(c.Request.Context(), page, pageSize, false)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 

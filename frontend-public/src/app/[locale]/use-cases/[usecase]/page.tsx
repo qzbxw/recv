@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCopy, normalizeLocale, type Locale } from "@/i18n";
+import { getCopy, normalizeLocale } from "@/i18n";
 import { UseCasePageClient } from "@/components/UseCasePageClient";
 
 type Props = {

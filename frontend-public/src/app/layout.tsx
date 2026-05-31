@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(publicSiteUrl),
   title: {
     default: "Reqst | Crypto Payments Infrastructure",
-    template: "%s | Reqst"
+    template: "%s"
   },
   description: "Professional crypto processing with instant payouts directly to your wallets. Non-custodial, fixed fees, and support for major networks like TON, Solana, and TRON.",
   openGraph: {
@@ -16,20 +16,11 @@ export const metadata: Metadata = {
     siteName: "Reqst",
     title: "Reqst | Crypto Payments Infrastructure",
     description: "Professional crypto processing with instant payouts directly to your wallets.",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Reqst - Crypto Payments Infrastructure",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Reqst | Crypto Payments Infrastructure",
     description: "Professional crypto processing with instant payouts directly to your wallets.",
-    images: ["/og-image.png"],
   },
   robots: {
     index: true,

@@ -40,8 +40,13 @@ func main() {
 	}
 	defer st.Close()
 
-	authService := service.NewAuthService(st, cfg.JWTSecret, cfg.TelegramBotToken, cfg.AllowInsecureDevAuth, cfg.TelegramInitMaxAge)
-	adminService := service.NewAdminService(cfg.AdminUsername, cfg.AdminPassword, cfg.AdminJWTSecret, cfg.AdminSessionTTL)
+	authService := service.NewAuthServiceWithTTL(st, cfg.JWTSecret, cfg.TelegramBotToken, cfg.AllowInsecureDevAuth, cfg.TelegramInitMaxAge, cfg.AccessTokenTTL, cfg.RefreshTokenTTL)
+	adminService := service.NewDBAdminService(st, cfg.AdminUsername, cfg.AdminPassword, cfg.AdminJWTSecret, cfg.AdminAccessTokenTTL, cfg.AdminRefreshTokenTTL, cfg.AdminBootstrapEmail, cfg.AdminBootstrapPassword, cfg.AppEnv)
+	if created, err := adminService.Bootstrap(ctx); err != nil {
+		log.Fatal(err)
+	} else if created {
+		log.Printf("bootstrapped initial super_admin from ADMIN_BOOTSTRAP_EMAIL")
+	}
 	invoiceService := service.NewInvoiceService(st, cfg.TonUSDOverride)
 	paymentService := service.NewPaymentService(st)
 

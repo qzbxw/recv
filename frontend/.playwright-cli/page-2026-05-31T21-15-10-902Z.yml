@@ -1,0 +1,31 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - link "reqst." [ref=e6] [cursor=pointer]:
+      - /url: /app
+      - strong [ref=e7]: reqst.
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - heading "Sign in via code" [level=1] [ref=e10]
+        - paragraph [ref=e11]: Secure Telegram-based authentication for browsers and desktop.
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: Your @username
+          - textbox "@username" [ref=e15]
+        - generic [ref=e16]:
+          - generic [ref=e17]: Verification code
+          - generic [ref=e18]:
+            - textbox "123456" [ref=e19]
+            - button "Get code" [disabled] [ref=e20]
+        - button "Login" [ref=e21] [cursor=pointer]
+      - generic [ref=e22]:
+        - link "Open Bot" [ref=e23] [cursor=pointer]:
+          - /url: https://t.me/reqstxyz_bot
+          - img [ref=e24]
+          - text: Open Bot
+        - paragraph [ref=e26]: Please start our bot first so we can send you the authentication code.
+    - generic [ref=e28]:
+      - textbox "designer" [ref=e29]
+      - textbox "10001" [ref=e30]
+      - button "Dev" [ref=e31] [cursor=pointer]
+    - link "Home" [ref=e33] [cursor=pointer]:
+      - /url: /app

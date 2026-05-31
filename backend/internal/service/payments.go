@@ -8,8 +8,6 @@ import (
 
 	"reqst/backend/internal/metrics"
 	"reqst/backend/internal/store"
-
-	"github.com/shopspring/decimal"
 )
 
 type PaymentService struct {
@@ -39,6 +37,11 @@ func (s *PaymentService) ProcessObservedTransfer(ctx context.Context, transfer s
 
 	invoice, classification, status, err := s.matchTransfer(ctx, transfer)
 	if err != nil {
+		if errors.Is(err, store.ErrAmbiguousPaymentMatch) {
+			_ = s.store.MarkPaymentEventUnmatched(ctx, event.ID, "ambiguous_match")
+			metrics.ObservePayment(source, string(transfer.Network), "ambiguous_match", "none", false, transfer.Amount.InexactFloat64())
+			return PaymentResult{Classification: "ambiguous_match"}, nil
+		}
 		metrics.ObservePayment(source, string(transfer.Network), "match_failed", "none", false, transfer.Amount.InexactFloat64())
 		return PaymentResult{}, err
 	}
@@ -72,13 +75,13 @@ func (s *PaymentService) matchTransfer(ctx context.Context, transfer store.Obser
 			}
 			return nil, "", store.InvoiceStatusDraft, err
 		}
-		matched, classification, status := classifyInvoiceTransfer(invoice, transfer.Amount, transfer.ObservedAt)
-		return matched, classification, status, nil
+		decision := store.DecideInvoicePaymentStatus(invoice, transfer.Amount, transfer.ObservedAt, "")
+		return &invoice, decision.Classification, decision.Status, nil
 	default:
 		invoice, err := s.store.FindInvoiceByExactAmount(ctx, transfer.DestinationAddress, transfer.Network, transfer.Amount)
 		if err == nil {
-			matched, classification, status := classifyInvoiceTransfer(invoice, transfer.Amount, transfer.ObservedAt)
-			return matched, classification, status, nil
+			decision := store.DecideInvoicePaymentStatus(invoice, transfer.Amount, transfer.ObservedAt, "")
+			return &invoice, decision.Classification, decision.Status, nil
 		}
 		if err != nil && !errors.Is(err, store.ErrNotFound) {
 			return nil, "", store.InvoiceStatusDraft, err
@@ -91,38 +94,9 @@ func (s *PaymentService) matchTransfer(ctx context.Context, transfer store.Obser
 			}
 			return nil, "", store.InvoiceStatusDraft, err
 		}
-		matched, classification, status := classifyInvoiceTransfer(invoice, transfer.Amount, transfer.ObservedAt)
-		return matched, classification, status, nil
+		decision := store.DecideInvoicePaymentStatus(invoice, transfer.Amount, transfer.ObservedAt, "")
+		return &invoice, decision.Classification, decision.Status, nil
 	}
-}
-
-func classifyInvoiceTransfer(invoice store.Invoice, amount decimal.Decimal, observedAt time.Time) (*store.Invoice, string, store.InvoiceStatus) {
-	if invoice.Status == store.InvoiceStatusExpired || observedAt.After(invoice.ExpiresAt) {
-		return &invoice, "late_payment", store.InvoiceStatusManualReview
-	}
-	if amount.LessThan(invoice.PayableAmount) {
-		if isLikelyExchangeFeeUnderpayment(invoice, amount) {
-			return &invoice, "underpaid_fee_window", store.InvoiceStatusUnderpaid
-		}
-		return &invoice, "underpaid", store.InvoiceStatusUnderpaid
-	}
-	if amount.GreaterThan(invoice.PayableAmount) {
-		return &invoice, "overpaid", store.InvoiceStatusOverpaid
-	}
-	return &invoice, "paid_exact", store.InvoiceStatusPaid
-}
-
-func isLikelyExchangeFeeUnderpayment(invoice store.Invoice, amount decimal.Decimal) bool {
-	if invoice.MatchingSuffix == nil {
-		return false
-	}
-	diff := invoice.PayableAmount.Sub(amount)
-	if diff.LessThanOrEqual(decimal.Zero) || diff.GreaterThan(decimal.RequireFromString("2.500000")) {
-		return false
-	}
-	expectedFraction := invoice.PayableAmount.Sub(invoice.PayableAmount.Truncate(0)).Round(6)
-	receivedFraction := amount.Sub(amount.Truncate(0)).Round(6)
-	return expectedFraction.Equal(receivedFraction)
 }
 
 func normalizeObservedTransfer(transfer *store.ObservedTransfer) error {

@@ -522,7 +522,7 @@ func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, c
 	if err != nil {
 		return err
 	}
-	invoices, err := b.store.ListInvoices(ctx, workspace.ID, 1, 0)
+	invoices, _, err := b.store.ListInvoices(ctx, workspace.ID, store.ListInvoicesFilter{Limit: 1})
 	if err != nil {
 		return err
 	}
@@ -711,7 +711,6 @@ func (b *BotWorker) resetSession(chatID int64) {
 func (b *BotWorker) ensureWorkspace(ctx context.Context, user tgUser) (store.Workspace, error) {
 	return b.store.UpsertWorkspaceByTelegram(ctx, user.ID, user.Username)
 }
-
 
 func (b *BotWorker) getUpdates(ctx context.Context) ([]tgUpdate, error) {
 	query := url.Values{}

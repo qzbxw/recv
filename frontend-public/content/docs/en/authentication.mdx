@@ -1,34 +1,83 @@
 ---
 title: Authentication
-description: How to authenticate with the Reqst API.
+description: API keys, test vs live environments, scopes, and the headers Reqst accepts.
 ---
 
 # Authentication
 
-Reqst uses API Keys to authenticate requests. You can obtain your API Key from the [Developer Portal](https://reqst.xyz/app/developer-portal).
+The Reqst developer API (`https://reqst.xyz/v1`) authenticates every request with an **API key**. Keys are created in the [Developer Portal](https://reqst.xyz/app/developer-portal) and belong to a single workspace.
 
-## Using the API Key
+API access requires a plan that includes the API. The **Developer**, **Business**, and **Enterprise** plans include it; **Trial** and **Merchant** do not. A key on a plan without API access receives `403 Forbidden`.
 
-All API requests must include the `X-API-Key` header with your API key.
+## Passing the key
+
+Send the key in **either** header — both are accepted:
 
 ```bash
-curl -X GET "https://reqst.xyz/v1/me" \
-     -H "X-API-Key: YOUR_API_KEY"
+# Preferred
+curl https://reqst.xyz/v1/me -H "X-API-Key: $REQST_API_KEY"
+
+# Also supported
+curl https://reqst.xyz/v1/me -H "Authorization: Bearer $REQST_API_KEY"
 ```
 
-## Security Best Practices
+If both are present, `X-API-Key` is used.
 
-- **Keep your API Key secret**: Never expose it in client-side code or public repositories.
-- **Rotate keys regularly**: If you suspect a key has been compromised, revoke it and generate a new one.
-- **Environment variables**: Store your keys in environment variables (e.g., `REQST_API_KEY`) rather than hardcoding them.
+## Environments: test vs live
+
+Each key is bound to one environment, encoded in its prefix:
+
+| Prefix | Environment | Behavior |
+|--------|-------------|----------|
+| `rqst_test_` | **test** | Creates test-mode invoices. Live blockchain watchers ignore them. You can mark them paid with the [payment simulator](/en/docs/invoices#simulating-payments-test-mode). |
+| `rqst_live_` | **live** | Creates real invoices settled by on-chain payments to your wallet. |
+
+The environment of a created invoice follows the key that created it — there is no `mode` field in the request body. Keep separate keys for test and live, and never use a live key in staging.
+
+## Scopes
+
+Keys carry one or both of these scopes:
+
+| Scope | Grants |
+|-------|--------|
+| `invoices:read` | `GET /v1/invoices`, `GET /v1/invoices/:id` |
+| `invoices:write` | `POST /v1/invoices`, `POST /v1/invoices/:id/cancel`, `POST /v1/test/invoices/:id/simulate-payment` |
+
+If you create a key without specifying scopes, it gets **both** by default. A call that requires a scope the key lacks returns `403` with an error such as `API key scope invoices:write is required`. (`GET /v1/me` requires no scope.)
+
+## Inspecting the current key
+
+`GET /v1/me` returns the workspace, plan, current usage, and the key's own metadata:
+
+```bash
+curl https://reqst.xyz/v1/me -H "X-API-Key: $REQST_API_KEY"
+```
+
+```json
+{
+  "key": {
+    "id": 7,
+    "label": "Server key",
+    "prefix": "rqst_live_b3c4",
+    "environment": "live",
+    "scopes": ["invoices:read", "invoices:write"]
+  },
+  "usage": { "monthly_requests": 128, "monthly_limit": 50000 }
+}
+```
+
+## Security best practices
+
+- **Server-side only.** Never ship a key in browser, mobile, or client code, or commit it to a repository.
+- **Use environment variables.** Store the secret in `REQST_API_KEY` or your platform's secret manager.
+- **Rotate on suspicion.** Revoke a compromised key in the Developer Portal and issue a new one. The full secret is shown only once at creation.
+- **Separate environments.** Use distinct `rqst_test_` and `rqst_live_` keys.
 
 ## Example (Node.js)
 
 ```javascript
-const response = await fetch('https://reqst.xyz/v1/me', {
-  headers: {
-    'X-API-Key': process.env.REQST_API_KEY
-  }
+const response = await fetch("https://reqst.xyz/v1/me", {
+  headers: { "X-API-Key": process.env.REQST_API_KEY }
 });
 const data = await response.json();
 ```

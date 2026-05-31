@@ -1,0 +1,618 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "reqst." [ref=e6] [cursor=pointer]:
+          - /url: /en
+        - navigation [ref=e7]:
+          - generic [ref=e8]:
+            - button "Products" [ref=e9] [cursor=pointer]:
+              - text: Products
+              - img [ref=e10]
+            - generic:
+              - generic:
+                - link "Checkout High-converting payment UI":
+                  - /url: /en/products/checkout
+                  - generic:
+                    - img
+                  - generic:
+                    - generic: Checkout
+                    - generic: High-converting payment UI
+                - link "API Infrastructure for developers":
+                  - /url: /en/products/api
+                  - generic:
+                    - img
+                  - generic:
+                    - generic: API
+                    - generic: Infrastructure for developers
+                - link "Invoicing Professional billing tools":
+                  - /url: /en/products/invoicing
+                  - generic:
+                    - img
+                  - generic:
+                    - generic: Invoicing
+                    - generic: Professional billing tools
+          - generic [ref=e12]:
+            - button "Use Cases" [ref=e13] [cursor=pointer]:
+              - text: Use Cases
+              - img [ref=e14]
+            - generic:
+              - generic:
+                - link "Telegram Shops":
+                  - /url: /en/use-cases/telegram-shops
+                - link "SaaS Billing":
+                  - /url: /en/use-cases/saas-billing
+                - link "Digital Goods":
+                  - /url: /en/use-cases/digital-goods
+                - link "Paid Communities":
+                  - /url: /en/use-cases/paid-communities
+          - generic [ref=e16]:
+            - button "Networks" [ref=e17] [cursor=pointer]:
+              - text: Networks
+              - img [ref=e18]
+            - generic:
+              - generic:
+                - link "TON":
+                  - /url: /en/networks/ton
+                  - img
+                  - text: TON
+                - link "TRON":
+                  - /url: /en/networks/tron
+                  - img
+                  - text: TRON
+                - link "Solana":
+                  - /url: /en/networks/solana
+                  - img
+                  - text: Solana
+                - link "Base":
+                  - /url: /en/networks/base
+                  - img
+                  - text: Base
+                - link "BSC":
+                  - /url: /en/networks/bsc
+                  - img
+                  - text: BSC
+                - link "Arbitrum":
+                  - /url: /en/networks/arbitrum
+                  - img
+                  - text: Arbitrum
+          - generic [ref=e20]:
+            - button "Pricing" [ref=e21] [cursor=pointer]:
+              - text: Pricing
+              - img [ref=e22]
+            - generic:
+              - generic:
+                - link "Merchant":
+                  - /url: /en/merchant
+                - link "Developer":
+                  - /url: /en/dev
+                - link "Business":
+                  - /url: /en/business
+                - link "Enterprise":
+                  - /url: /en/enterprise
+          - link "Docs" [ref=e24] [cursor=pointer]:
+            - /url: /en/docs/introduction
+          - link "Blog" [ref=e25] [cursor=pointer]:
+            - /url: /en/blog
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - link "RU" [ref=e28] [cursor=pointer]:
+              - /url: /ru
+            - link "EN" [ref=e29] [cursor=pointer]:
+              - /url: /en
+          - link "Console" [ref=e30] [cursor=pointer]:
+            - /url: /app/auth
+    - main [ref=e31]:
+      - generic [ref=e34]:
+        - heading "Accept Crypto Payments Direct to Your Wallets with 0% Fees." [level=1] [ref=e35]:
+          - generic [ref=e36]: Accept
+          - generic [ref=e37]: Crypto
+          - generic [ref=e38]: Payments
+          - generic [ref=e39]: Direct
+          - generic [ref=e40]: to
+          - generic [ref=e41]: Your
+          - generic [ref=e42]: Wallets
+          - generic [ref=e43]: with
+          - generic [ref=e44]: 0%
+          - generic [ref=e45]: Fees.
+        - paragraph [ref=e46]: Non-custodial crypto payment gateway for USDT, TON, and TRON. Integrate our high-performance processing API or smart checkout into Telegram bots, SaaS platforms, and global e-commerce with zero turnover fees.
+        - generic [ref=e47]:
+          - link "Launch Console →" [ref=e50] [cursor=pointer]:
+            - /url: /app/auth
+            - generic [ref=e51]:
+              - text: Launch Console
+              - generic [ref=e52]: →
+          - link "View Docs →" [ref=e53] [cursor=pointer]:
+            - /url: /en/docs
+            - generic [ref=e54]:
+              - text: View Docs
+              - generic [ref=e55]: →
+        - generic [ref=e60]:
+          - generic [ref=e63]: Infrastructure Model
+          - heading "Engineered for Telegram Shops, SaaS Billing, and Digital Commerce." [level=3] [ref=e64]
+          - generic [ref=e66]:
+            - generic [ref=e69]:
+              - img [ref=e71]
+              - generic [ref=e73]:
+                - heading "Direct-to-Wallet" [level=4] [ref=e74]
+                - paragraph [ref=e75]: Payments flow directly from the buyer to your own wallet. Reqst never touches or holds your revenue.
+            - generic [ref=e78]:
+              - img [ref=e80]
+              - generic [ref=e82]:
+                - heading "0% Turnover Fees" [level=4] [ref=e83]
+                - paragraph [ref=e84]: Keep 100% of what you earn. A flat subscription model with absolutely zero transaction fees.
+            - generic [ref=e87]:
+              - img [ref=e89]
+              - generic [ref=e91]:
+                - heading "Non-Custodial API" [level=4] [ref=e92]
+                - paragraph [ref=e93]: Connect with ease and automate processing using our low-latency developer API and webhooks.
+            - generic [ref=e96]:
+              - img [ref=e98]
+              - generic [ref=e100]:
+                - heading "No KYC Required" [level=4] [ref=e101]
+                - paragraph [ref=e102]: No bureaucratic hurdles or paperwork. Integrate and deploy without identity checks.
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]: INFRASTRUCTURE
+          - heading "Built for the next billion transactions." [level=2] [ref=e107]
+        - generic [ref=e108]:
+          - link "INTEGRATION Unified API v1 A high-performance gateway for all liquid networks. One integration, infinite reach. Explore Technology →" [ref=e109] [cursor=pointer]:
+            - /url: /en/products/api
+            - generic:
+              - img
+            - generic [ref=e110]:
+              - generic [ref=e111]: INTEGRATION
+              - heading "Unified API v1" [level=3] [ref=e112]
+              - paragraph [ref=e113]: A high-performance gateway for all liquid networks. One integration, infinite reach.
+            - generic [ref=e114]:
+              - text: Explore Technology
+              - generic [ref=e115]: →
+          - link "UX Smart Checkout A clean, high-conversion payment interface optimized for every device and platform. Explore Technology →" [ref=e116] [cursor=pointer]:
+            - /url: /en/products/checkout
+            - generic:
+              - img
+            - generic [ref=e117]:
+              - generic [ref=e118]: UX
+              - heading "Smart Checkout" [level=3] [ref=e119]
+              - paragraph [ref=e120]: A clean, high-conversion payment interface optimized for every device and platform.
+            - generic [ref=e121]:
+              - text: Explore Technology
+              - generic [ref=e122]: →
+          - link "TRUST Direct Payouts Revenue flows directly to your wallets. We never touch, hold, or middle-man your funds. Explore Technology →" [ref=e123] [cursor=pointer]:
+            - /url: /en/products/direct
+            - generic:
+              - img
+            - generic [ref=e124]:
+              - generic [ref=e125]: TRUST
+              - heading "Direct Payouts" [level=3] [ref=e126]
+              - paragraph [ref=e127]: Revenue flows directly to your wallets. We never touch, hold, or middle-man your funds.
+            - generic [ref=e128]:
+              - text: Explore Technology
+              - generic [ref=e129]: →
+          - link "STABILITY Real-time Watchers Low-latency blockchain monitoring with intelligent underpayment detection. Explore Technology →" [ref=e130] [cursor=pointer]:
+            - /url: /en/products/monitoring
+            - generic:
+              - img
+            - generic [ref=e131]:
+              - generic [ref=e132]: STABILITY
+              - heading "Real-time Watchers" [level=3] [ref=e133]
+              - paragraph [ref=e134]: Low-latency blockchain monitoring with intelligent underpayment detection.
+            - generic [ref=e135]:
+              - text: Explore Technology
+              - generic [ref=e136]: →
+          - link "NATIVE Telegram Native Manage your revenue flow and infrastructure via our official Telegram bot. Explore Technology →" [ref=e137] [cursor=pointer]:
+            - /url: /en/products/tg
+            - generic:
+              - img
+            - generic [ref=e138]:
+              - generic [ref=e139]: NATIVE
+              - heading "Telegram Native" [level=3] [ref=e140]
+              - paragraph [ref=e141]: Manage your revenue flow and infrastructure via our official Telegram bot.
+            - generic [ref=e142]:
+              - text: Explore Technology
+              - generic [ref=e143]: →
+      - generic [ref=e146]:
+        - generic [ref=e147]:
+          - link "TON" [ref=e148] [cursor=pointer]:
+            - /url: /en/networks/ton
+            - generic [ref=e149]: TON
+          - link "TRON" [ref=e150] [cursor=pointer]:
+            - /url: /en/networks/tron
+            - generic [ref=e151]: TRON
+          - link "SOLANA" [ref=e152] [cursor=pointer]:
+            - /url: /en/networks/solana
+            - generic [ref=e153]: SOLANA
+          - link "BASE" [ref=e154] [cursor=pointer]:
+            - /url: /en/networks/base
+            - generic [ref=e155]: BASE
+          - link "ARBITRUM" [ref=e156] [cursor=pointer]:
+            - /url: /en/networks/arbitrum
+            - generic [ref=e157]: ARBITRUM
+          - link "BSC" [ref=e158] [cursor=pointer]:
+            - /url: /en/networks/bsc
+            - generic [ref=e159]: BSC
+          - link "ETHEREUM" [ref=e160] [cursor=pointer]:
+            - /url: /en/networks/ethereum
+            - generic [ref=e161]: ETHEREUM
+        - generic [ref=e162]:
+          - link "TON" [ref=e163] [cursor=pointer]:
+            - /url: /en/networks/ton
+            - generic [ref=e164]: TON
+          - link "TRON" [ref=e165] [cursor=pointer]:
+            - /url: /en/networks/tron
+            - generic [ref=e166]: TRON
+          - link "SOLANA" [ref=e167] [cursor=pointer]:
+            - /url: /en/networks/solana
+            - generic [ref=e168]: SOLANA
+          - link "BASE" [ref=e169] [cursor=pointer]:
+            - /url: /en/networks/base
+            - generic [ref=e170]: BASE
+          - link "ARBITRUM" [ref=e171] [cursor=pointer]:
+            - /url: /en/networks/arbitrum
+            - generic [ref=e172]: ARBITRUM
+          - link "BSC" [ref=e173] [cursor=pointer]:
+            - /url: /en/networks/bsc
+            - generic [ref=e174]: BSC
+          - link "ETHEREUM" [ref=e175] [cursor=pointer]:
+            - /url: /en/networks/ethereum
+            - generic [ref=e176]: ETHEREUM
+        - generic [ref=e177]:
+          - link "TON" [ref=e178] [cursor=pointer]:
+            - /url: /en/networks/ton
+            - generic [ref=e179]: TON
+          - link "TRON" [ref=e180] [cursor=pointer]:
+            - /url: /en/networks/tron
+            - generic [ref=e181]: TRON
+          - link "SOLANA" [ref=e182] [cursor=pointer]:
+            - /url: /en/networks/solana
+            - generic [ref=e183]: SOLANA
+          - link "BASE" [ref=e184] [cursor=pointer]:
+            - /url: /en/networks/base
+            - generic [ref=e185]: BASE
+          - link "ARBITRUM" [ref=e186] [cursor=pointer]:
+            - /url: /en/networks/arbitrum
+            - generic [ref=e187]: ARBITRUM
+          - link "BSC" [ref=e188] [cursor=pointer]:
+            - /url: /en/networks/bsc
+            - generic [ref=e189]: BSC
+          - link "ETHEREUM" [ref=e190] [cursor=pointer]:
+            - /url: /en/networks/ethereum
+            - generic [ref=e191]: ETHEREUM
+        - generic [ref=e192]:
+          - link "TON" [ref=e193] [cursor=pointer]:
+            - /url: /en/networks/ton
+            - generic [ref=e194]: TON
+          - link "TRON" [ref=e195] [cursor=pointer]:
+            - /url: /en/networks/tron
+            - generic [ref=e196]: TRON
+          - link "SOLANA" [ref=e197] [cursor=pointer]:
+            - /url: /en/networks/solana
+            - generic [ref=e198]: SOLANA
+          - link "BASE" [ref=e199] [cursor=pointer]:
+            - /url: /en/networks/base
+            - generic [ref=e200]: BASE
+          - link "ARBITRUM" [ref=e201] [cursor=pointer]:
+            - /url: /en/networks/arbitrum
+            - generic [ref=e202]: ARBITRUM
+          - link "BSC" [ref=e203] [cursor=pointer]:
+            - /url: /en/networks/bsc
+            - generic [ref=e204]: BSC
+          - link "ETHEREUM" [ref=e205] [cursor=pointer]:
+            - /url: /en/networks/ethereum
+            - generic [ref=e206]: ETHEREUM
+      - generic [ref=e208]:
+        - generic [ref=e209]:
+          - generic [ref=e210]: USE CASES
+          - heading "Built for the way crypto businesses actually get paid." [level=2] [ref=e211]
+        - generic [ref=e212]:
+          - link "Scenario 01 TG Shops Automate physical and digital goods sales inside Telegram with instant delivery. Explore TG Commerce → 1" [ref=e213] [cursor=pointer]:
+            - /url: /en/use-cases/tg-shops
+            - generic [ref=e214]:
+              - img [ref=e216]
+              - generic [ref=e219]: Scenario 01
+              - heading "TG Shops" [level=3] [ref=e220]
+              - paragraph [ref=e221]: Automate physical and digital goods sales inside Telegram with instant delivery.
+              - generic [ref=e222]:
+                - text: Explore TG Commerce
+                - generic [ref=e223]: →
+            - generic:
+              - generic: "1"
+          - link "Scenario 02 SaaS Billing Reliable infrastructure for software platforms. Flat fees mean higher margins for your business. Optimize Margins → 2" [ref=e224] [cursor=pointer]:
+            - /url: /en/use-cases/saas
+            - generic [ref=e225]:
+              - img [ref=e227]
+              - generic [ref=e229]: Scenario 02
+              - heading "SaaS Billing" [level=3] [ref=e230]
+              - paragraph [ref=e231]: Reliable infrastructure for software platforms. Flat fees mean higher margins for your business.
+              - generic [ref=e232]:
+                - text: Optimize Margins
+                - generic [ref=e233]: →
+            - generic:
+              - generic: "2"
+          - link "Scenario 03 Digital Goods Instant fulfillment for keys and accounts immediately after blockchain confirmation. Scale Automation → 3" [ref=e234] [cursor=pointer]:
+            - /url: /en/use-cases/digital
+            - generic [ref=e235]:
+              - img [ref=e237]
+              - generic [ref=e240]: Scenario 03
+              - heading "Digital Goods" [level=3] [ref=e241]
+              - paragraph [ref=e242]: Instant fulfillment for keys and accounts immediately after blockchain confirmation.
+              - generic [ref=e243]:
+                - text: Scale Automation
+                - generic [ref=e244]: →
+            - generic:
+              - generic: "3"
+          - link "Scenario 04 Communities Automated access management for private channels and groups with recurring logic. Manage Members → 4" [ref=e245] [cursor=pointer]:
+            - /url: /en/use-cases/communities
+            - generic [ref=e246]:
+              - img [ref=e248]
+              - generic [ref=e253]: Scenario 04
+              - heading "Communities" [level=3] [ref=e254]
+              - paragraph [ref=e255]: Automated access management for private channels and groups with recurring logic.
+              - generic [ref=e256]:
+                - text: Manage Members
+                - generic [ref=e257]: →
+            - generic:
+              - generic: "4"
+      - generic [ref=e259]:
+        - generic [ref=e260]:
+          - generic [ref=e261]: EVOLUTION
+          - heading "The Reqst Advantage." [level=2] [ref=e262]
+        - generic [ref=e263]:
+          - generic [ref=e264]:
+            - generic:
+              - img
+            - generic [ref=e265]: Manual Workflow
+            - list [ref=e266]:
+              - listitem [ref=e267]:
+                - generic [ref=e268]: ✕
+                - paragraph [ref=e269]: Manual verification and screenshot chasing.
+              - listitem [ref=e270]:
+                - generic [ref=e271]: ✕
+                - paragraph [ref=e272]: Gateway fees (1-5%) eating your profit.
+              - listitem [ref=e273]:
+                - generic [ref=e274]: ✕
+                - paragraph [ref=e275]: Custodial risk & withdrawal delays.
+          - generic [ref=e279]:
+            - generic [ref=e280]:
+              - img [ref=e282]
+              - generic [ref=e284]: Reqst Protocol
+            - list [ref=e285]:
+              - listitem [ref=e286]:
+                - generic [ref=e287]: ✓
+                - paragraph [ref=e288]: Automated blockchain watchers & instant alerts.
+              - listitem [ref=e289]:
+                - generic [ref=e290]: ✓
+                - paragraph [ref=e291]: 0% turnover fees. Keep 100% of what you earn.
+              - listitem [ref=e292]:
+                - generic [ref=e293]: ✓
+                - paragraph [ref=e294]: Non-custodial. Direct-to-wallet. Instant liquidity.
+      - generic [ref=e296]:
+        - generic [ref=e297]:
+          - generic [ref=e298]: ACCESS
+          - heading "Transparent pricing. No fees." [level=2] [ref=e299]
+        - generic [ref=e300]:
+          - generic [ref=e302]:
+            - heading "Merchant" [level=3] [ref=e303]
+            - generic [ref=e305]:
+              - generic [ref=e306]: $
+              - generic [ref=e307]: "39"
+              - generic [ref=e308]: /mo
+            - list [ref=e310]:
+              - listitem [ref=e311]:
+                - img [ref=e312]
+                - generic [ref=e314]: Direct-to-Wallet Payouts
+              - listitem [ref=e315]:
+                - img [ref=e316]
+                - generic [ref=e318]: Manual Invoice Management
+              - listitem [ref=e319]:
+                - img [ref=e320]
+                - generic [ref=e322]: 0% Turnover Fees
+              - listitem [ref=e323]:
+                - img [ref=e324]
+                - generic [ref=e326]: Standard Analytics
+            - link "Activate Merchant" [ref=e327] [cursor=pointer]:
+              - /url: /en/merchant
+              - generic [ref=e328]: Activate Merchant
+              - img [ref=e329]
+          - generic [ref=e332]:
+            - heading "Developer" [level=3] [ref=e333]
+            - generic [ref=e335]:
+              - generic [ref=e336]: $
+              - generic [ref=e337]: "199"
+              - generic [ref=e338]: /mo
+            - list [ref=e340]:
+              - listitem [ref=e341]:
+                - img [ref=e342]
+                - generic [ref=e344]: Full API & Webhooks
+              - listitem [ref=e345]:
+                - img [ref=e346]
+                - generic [ref=e348]: 50k Monthly Requests
+              - listitem [ref=e349]:
+                - img [ref=e350]
+                - generic [ref=e352]: 3 Seats / Workspaces
+              - listitem [ref=e353]:
+                - img [ref=e354]
+                - generic [ref=e356]: Priority Support
+            - link "Activate Developer" [ref=e357] [cursor=pointer]:
+              - /url: /en/dev
+              - generic [ref=e358]: Activate Developer
+              - img [ref=e359]
+          - generic [ref=e361]:
+            - generic [ref=e362]: Popular
+            - generic [ref=e364]:
+              - heading "Business" [level=3] [ref=e365]
+              - generic [ref=e367]:
+                - generic [ref=e368]: $
+                - generic [ref=e369]: "499"
+                - generic [ref=e370]: /mo
+              - list [ref=e372]:
+                - listitem [ref=e373]:
+                  - img [ref=e374]
+                  - generic [ref=e376]: 200k Monthly Requests
+                - listitem [ref=e377]:
+                  - img [ref=e378]
+                  - generic [ref=e380]: 10 Seats / Workspaces
+                - listitem [ref=e381]:
+                  - img [ref=e382]
+                  - generic [ref=e384]: Advanced Reporting
+                - listitem [ref=e385]:
+                  - img [ref=e386]
+                  - generic [ref=e388]: Dedicated Support
+              - link "Activate Business" [ref=e389] [cursor=pointer]:
+                - /url: /en/business
+                - generic [ref=e390]: Activate Business
+                - img [ref=e391]
+          - generic [ref=e394]:
+            - heading "Enterprise" [level=3] [ref=e395]
+            - generic [ref=e398]: Custom
+            - list [ref=e400]:
+              - listitem [ref=e401]:
+                - img [ref=e402]
+                - generic [ref=e404]: Unlimited Requests
+              - listitem [ref=e405]:
+                - img [ref=e406]
+                - generic [ref=e408]: Unlimited Seats
+              - listitem [ref=e409]:
+                - img [ref=e410]
+                - generic [ref=e412]: Custom SLA / B2B
+              - listitem [ref=e413]:
+                - img [ref=e414]
+                - generic [ref=e416]: Direct Dev Channel
+            - link "Contact Sales" [ref=e417] [cursor=pointer]:
+              - /url: /en/enterprise
+              - generic [ref=e418]: Contact Sales
+              - img [ref=e419]
+      - generic [ref=e422]:
+        - generic [ref=e423]:
+          - generic [ref=e424]: FAQ
+          - heading "Protocol Details." [level=2] [ref=e425]
+        - generic [ref=e427]:
+          - generic [ref=e428]:
+            - button "Protocol Detail 01 How does Reqst ensure the security of my funds?" [ref=e430] [cursor=pointer]:
+              - generic [ref=e431]:
+                - generic [ref=e432]: Protocol Detail 01
+                - generic [ref=e433]: How does Reqst ensure the security of my funds?
+            - paragraph [ref=e440]: We utilize a non-custodial architecture. This means your private keys never leave your device, and funds are sent directly from the client to your address. Reqst only monitors the blockchain and provides transaction notifications.
+          - generic [ref=e441]:
+            - button "Protocol Detail 02 Which networks and assets are currently supported?" [ref=e443] [cursor=pointer]:
+              - generic [ref=e444]:
+                - generic [ref=e445]: Protocol Detail 02
+                - generic [ref=e446]: Which networks and assets are currently supported?
+            - paragraph [ref=e452]: We currently support TON, TRON (USDT), Solana, and major EVM chains (Base, BSC, Arbitrum). We are continuously adding new liquid protocols based on enterprise-tier demands.
+          - generic [ref=e453]:
+            - button "Protocol Detail 03 Can I automate the delivery of digital goods?" [ref=e455] [cursor=pointer]:
+              - generic [ref=e456]:
+                - generic [ref=e457]: Protocol Detail 03
+                - generic [ref=e458]: Can I automate the delivery of digital goods?
+            - paragraph [ref=e464]: Absolutely. Our Webhook system provides instantaneous notifications to your server upon payment confirmation, enabling full automation of access, subscriptions, or digital delivery.
+          - generic [ref=e465]:
+            - button "Protocol Detail 04 How are underpayments or incorrect amounts handled?" [ref=e467] [cursor=pointer]:
+              - generic [ref=e468]:
+                - generic [ref=e469]: Protocol Detail 04
+                - generic [ref=e470]: How are underpayments or incorrect amounts handled?
+            - paragraph [ref=e476]: Reqst intelligently detects any deviations from the expected amount. If an underpayment occurs, the transaction is flagged as 'Underpaid,' allowing you to either request the balance or manually approve the order.
+          - generic [ref=e477]:
+            - button "Protocol Detail 05 Do I need to pass KYC to start using Reqst?" [ref=e479] [cursor=pointer]:
+              - generic [ref=e480]:
+                - generic [ref=e481]: Protocol Detail 05
+                - generic [ref=e482]: Do I need to pass KYC to start using Reqst?
+            - paragraph [ref=e488]: No. Since we operate strictly as non-custodial middleware and do not hold or process fiat currency, we do not require KYC verification from merchants. You can start accepting crypto immediately.
+          - generic [ref=e489]:
+            - button "Protocol Detail 06 Is there a limit on how many invoices I can create?" [ref=e491] [cursor=pointer]:
+              - generic [ref=e492]:
+                - generic [ref=e493]: Protocol Detail 06
+                - generic [ref=e494]: Is there a limit on how many invoices I can create?
+            - paragraph [ref=e500]: There are absolutely no limits on invoice creation. You can generate millions of payment links. Our subscription tiers only restrict the number of API requests to our monitoring nodes.
+          - generic [ref=e501]:
+            - button "Protocol Detail 07 What happens if a network (e.g., Solana) goes down?" [ref=e503] [cursor=pointer]:
+              - generic [ref=e504]:
+                - generic [ref=e505]: Protocol Detail 07
+                - generic [ref=e506]: What happens if a network (e.g., Solana) goes down?
+            - paragraph [ref=e512]: Our watchers are distributed across multiple global RPC providers. If a network halts, Reqst queues the monitoring tasks. Once the blockchain resumes block production, all pending transactions will be automatically verified and webhooks fired.
+      - generic [ref=e513]:
+        - generic: REQST PROTOCOL
+        - generic [ref=e514]:
+          - generic [ref=e515]:
+            - generic [ref=e516]: GET STARTED
+            - heading "Scale Your Business with Reqst." [level=2] [ref=e517]
+          - generic [ref=e518]:
+            - link "Get Started Now" [ref=e519] [cursor=pointer]:
+              - /url: /app/auth
+            - link "Documentation" [ref=e520] [cursor=pointer]:
+              - /url: /en/docs
+    - contentinfo [ref=e521]:
+      - generic [ref=e522]:
+        - generic [ref=e523]:
+          - generic [ref=e524]:
+            - link "reqst." [ref=e525] [cursor=pointer]:
+              - /url: /en
+            - paragraph [ref=e526]: Automated crypto payments with direct-to-wallet payouts. Fair, fast, professional.
+          - generic [ref=e527]:
+            - heading "Product" [level=4] [ref=e528]
+            - list [ref=e529]:
+              - listitem [ref=e530]:
+                - link "Checkout" [ref=e531] [cursor=pointer]:
+                  - /url: /en/products/checkout
+              - listitem [ref=e532]:
+                - link "API" [ref=e533] [cursor=pointer]:
+                  - /url: /en/products/api
+              - listitem [ref=e534]:
+                - link "Invoicing" [ref=e535] [cursor=pointer]:
+                  - /url: /en/products/invoicing
+              - listitem [ref=e536]:
+                - link "Compare" [ref=e537] [cursor=pointer]:
+                  - /url: /en/compare
+          - generic [ref=e538]:
+            - heading "Solutions" [level=4] [ref=e539]
+            - list [ref=e540]:
+              - listitem [ref=e541]:
+                - link "Telegram Shops" [ref=e542] [cursor=pointer]:
+                  - /url: /en/use-cases/telegram-shops
+              - listitem [ref=e543]:
+                - link "SaaS Billing" [ref=e544] [cursor=pointer]:
+                  - /url: /en/use-cases/saas-billing
+              - listitem [ref=e545]:
+                - link "Digital Goods" [ref=e546] [cursor=pointer]:
+                  - /url: /en/use-cases/digital-goods
+              - listitem [ref=e547]:
+                - link "Paid Communities" [ref=e548] [cursor=pointer]:
+                  - /url: /en/use-cases/paid-communities
+          - generic [ref=e549]:
+            - heading "Company" [level=4] [ref=e550]
+            - list [ref=e551]:
+              - listitem [ref=e552]:
+                - link "Merchant" [ref=e553] [cursor=pointer]:
+                  - /url: /en/merchant
+              - listitem [ref=e554]:
+                - link "Developer" [ref=e555] [cursor=pointer]:
+                  - /url: /en/dev
+              - listitem [ref=e556]:
+                - link "Business" [ref=e557] [cursor=pointer]:
+                  - /url: /en/business
+              - listitem [ref=e558]:
+                - link "Enterprise" [ref=e559] [cursor=pointer]:
+                  - /url: /en/enterprise
+          - generic [ref=e560]:
+            - heading "Resources" [level=4] [ref=e561]
+            - list [ref=e562]:
+              - listitem [ref=e563]:
+                - link "Docs" [ref=e564] [cursor=pointer]:
+                  - /url: /en/docs/introduction
+              - listitem [ref=e565]:
+                - link "Blog" [ref=e566] [cursor=pointer]:
+                  - /url: /en/blog
+              - listitem [ref=e567]:
+                - link "Privacy" [ref=e568] [cursor=pointer]:
+                  - /url: /en/privacy
+              - listitem [ref=e569]:
+                - link "Terms" [ref=e570] [cursor=pointer]:
+                  - /url: /en/terms
+        - generic [ref=e571]:
+          - generic [ref=e572]: © 2026 reqst. All rights reserved.
+          - generic [ref=e573]:
+            - link "Console" [ref=e574] [cursor=pointer]:
+              - /url: /app/auth
+            - link "Status" [ref=e575] [cursor=pointer]:
+              - /url: /en/status
+  - button "Open Next.js Dev Tools" [ref=e581] [cursor=pointer]:
+    - img [ref=e582]

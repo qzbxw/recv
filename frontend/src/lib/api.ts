@@ -4,5 +4,7 @@ export * from "./api/wallets";
 export * from "./api/invoices";
 export * from "./api/billing";
 export * from "./api/developer";
+export * from "./api/team";
 export * from "./api/admin";
+export * from "./api/events";
 export { ApiError, formatApiError, mapApiError } from "./errors";

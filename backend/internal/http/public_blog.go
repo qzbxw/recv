@@ -15,7 +15,7 @@ func (s *Server) handlePublicListBlogPosts(c *gin.Context) {
 
 	posts, total, err := s.store.ListBlogPosts(c.Request.Context(), page, pageSize, true)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -40,7 +40,7 @@ func (s *Server) handlePublicGetBlogPost(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "blog post not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
 

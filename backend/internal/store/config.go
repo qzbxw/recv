@@ -123,6 +123,42 @@ func (s *Store) RecordAdminAuditEvent(ctx context.Context, actor string, action 
 	return nil
 }
 
+type AdminAuditEvent struct {
+	ID         int64           `json:"id"`
+	Actor      string          `json:"actor"`
+	Action     string          `json:"action"`
+	TargetType string          `json:"target_type"`
+	TargetID   string          `json:"target_id"`
+	Metadata   json.RawMessage `json:"metadata"`
+	CreatedAt  time.Time       `json:"created_at"`
+}
+
+func (s *Store) ListAdminAuditEvents(ctx context.Context, limit int) ([]AdminAuditEvent, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, COALESCE(actor, ''), COALESCE(action, ''), COALESCE(target_type, ''), COALESCE(target_id, ''), metadata, created_at
+		FROM admin_audit_events
+		ORDER BY created_at DESC
+		LIMIT $1
+	`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list admin audit events: %w", err)
+	}
+	defer rows.Close()
+
+	items := make([]AdminAuditEvent, 0, limit)
+	for rows.Next() {
+		var item AdminAuditEvent
+		if err := rows.Scan(&item.ID, &item.Actor, &item.Action, &item.TargetType, &item.TargetID, &item.Metadata, &item.CreatedAt); err != nil {
+			return nil, fmt.Errorf("scan admin audit event: %w", err)
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
+}
+
 func scanConfigError(err error) error {
 	if err == nil {
 		return nil

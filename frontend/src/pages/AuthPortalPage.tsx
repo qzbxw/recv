@@ -6,8 +6,10 @@ import {
   loginWithTelegramCode,
   requestTelegramLoginCode,
   setStoredToken,
+  trackEvent,
 } from "../lib/api";
 import { sanitizeNextPath } from "../lib/routing";
+import { readAttribution } from "../lib/attribution";
 import { useUI } from "../lib/ui";
 import { AUTH_COPY as COPY } from "../i18n";
 
@@ -86,8 +88,9 @@ export function AuthPortalPage() {
       if (!sessionInitData) {
         throw new Error("No Telegram session found");
       }
-      const result = await authenticateTelegram({ init_data: sessionInitData });
+      const result = await authenticateTelegram({ init_data: sessionInitData, attribution: readAttribution() });
       setStoredToken(result.token);
+      void trackEvent(result.token, { event_name: "signup_completed", source: "auth", properties: { method: "telegram_init_data" } }).catch(() => undefined);
       navigate(nextPath, { replace: true });
     } catch (err) {
       setError((err as Error).message);
@@ -118,8 +121,10 @@ export function AuthPortalPage() {
       const result = await loginWithTelegramCode({
         username: form.username.trim(),
         code: form.code.trim(),
+        attribution: readAttribution(),
       });
       setStoredToken(result.token);
+      void trackEvent(result.token, { event_name: "signup_completed", source: "auth", properties: { method: "telegram_code" } }).catch(() => undefined);
       navigate(nextPath, { replace: true });
     } catch (err) {
       setError((err as Error).message);
@@ -146,8 +151,10 @@ export function AuthPortalPage() {
       const result = await authenticateTelegram({
         username,
         telegram_id: telegramId,
+        attribution: readAttribution(),
       });
       setStoredToken(result.token);
+      void trackEvent(result.token, { event_name: "signup_completed", source: "auth", properties: { method: "dev" } }).catch(() => undefined);
       navigate(nextPath, { replace: true });
     } catch (err) {
       setError((err as Error).message);
@@ -163,8 +170,8 @@ export function AuthPortalPage() {
 
       <div className="auth-portal__shell portal-animate-in">
         <header className="auth-portal__header">
-          <Link to="/" className="auth-portal__brand-link">
-             <strong className="dev-portal__brand auth-portal__brand">reqst</strong>
+          <Link to="/" className="auth-portal__brand-link" style={{ textDecoration: 'none' }}>
+            <strong className="dev-portal__brand auth-portal__brand">reqst<span className="brand-dot">.</span></strong>
           </Link>
         </header>
 
@@ -176,7 +183,7 @@ export function AuthPortalPage() {
 
           <form className="dev-form" onSubmit={handleSubmit}>
             <div className="dev-input-group">
-              <label>{text.username}</label>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 500 }}>{text.username}</label>
               <input
                 className="dev-input"
                 type="text"
@@ -187,9 +194,9 @@ export function AuthPortalPage() {
               />
             </div>
 
-            <div className="dev-input-group">
-              <label>{text.code}</label>
-              <div className="auth-portal__input-grid">
+            <div className="dev-input-group" style={{ marginTop: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 500 }}>{text.code}</label>
+              <div className="auth-portal__input-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
                 <input
                   className="dev-input"
                   type="text"
@@ -209,41 +216,42 @@ export function AuthPortalPage() {
               </div>
             </div>
 
-            <button type="submit" className="dev-btn dev-btn--primary auth-portal__submit-btn" disabled={loading}>
+            <button type="submit" className="dev-btn dev-btn--primary auth-portal__submit-btn" disabled={loading} style={{ width: '100%', marginTop: '1.5rem', padding: '14px 20px' }}>
               {loading ? text.signingIn : text.loginAction}
             </button>
           </form>
 
           {message ? (
-            <div className="alert alert--success auth-portal__alert">{message}</div>
+            <div className="alert alert--success auth-portal__alert" style={{ marginTop: '1.25rem' }}>{message}</div>
           ) : null}
           {error ? (
-            <div className="alert auth-portal__alert">{error}</div>
+            <div className="alert auth-portal__alert" style={{ marginTop: '1.25rem' }}>{error}</div>
           ) : null}
 
-          <div className="auth-portal__footer-actions">
+          <div className="auth-portal__footer-actions" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
              {initData ? (
                 <button
                   type="button"
                   className="dev-btn dev-btn--secondary auth-portal__action-btn"
                   disabled={loading}
                   onClick={() => void performTelegramAuth()}
+                  style={{ width: '100%' }}
                 >
                   {loading ? text.signingIn : text.continueTelegram}
                 </button>
              ) : (
-                <a href={BOT_URL} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary auth-portal__action-btn auth-portal__bot-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.52-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.88.03-.24.38-.49 1.05-.75 4.12-1.79 6.87-2.97 8.25-3.54 3.92-1.63 4.73-1.91 5.26-1.92.12 0 .38.03.55.17.14.11.18.27.2.42-.01.06 0 .13-.01.2z"/></svg>
+                <a href={BOT_URL} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary auth-portal__action-btn auth-portal__bot-btn" style={{ width: '100%', textDecoration: 'none' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.52-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.88.03-.24.38-.49 1.05-.75 4.12-1.79 6.87-2.97 8.25-3.54 3.92-1.63 4.73-1.91 5.26-1.92.12 0 .38.03.55.17.14.11.18.27.2.42-.01.06 0 .13-.01.2z"/></svg>
                   {text.openBot}
                 </a>
              )}
-             <p className="auth-portal__hint">{text.browserHint}</p>
+             <p className="auth-portal__hint" style={{ fontSize: '0.8rem', color: '#718096', textAlign: 'center', margin: 0 }}>{text.browserHint}</p>
           </div>
         </div>
 
         {DEV_AUTH_ENABLED ? (
           <div className="dev-portal__locked-state auth-portal__dev-panel">
-            <form className="dev-form auth-portal__dev-form" onSubmit={handleDevSubmit}>
+            <form className="dev-form auth-portal__dev-form" onSubmit={handleDevSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px' }}>
               <input
                 className="dev-input auth-portal__dev-input"
                 type="text"
@@ -259,15 +267,15 @@ export function AuthPortalPage() {
                 value={devForm.telegramId}
                 onChange={(event) => setDevForm((current) => ({ ...current, telegramId: event.target.value }))}
               />
-              <button type="submit" className="dev-btn dev-btn--secondary auth-portal__dev-submit" disabled={loading}>
+              <button type="submit" className="dev-btn dev-btn--secondary auth-portal__dev-submit" disabled={loading} style={{ padding: '10px 16px' }}>
                 {loading ? '...' : 'Dev'}
               </button>
             </form>
           </div>
         ) : null}
 
-        <footer className="auth-portal__footer">
-           <Link to="/" className="auth-portal__landing-link">{text.landing}</Link>
+        <footer className="auth-portal__footer" style={{ marginTop: '2rem', textAlign: 'center' }}>
+           <Link to="/" className="auth-portal__landing-link" style={{ color: '#a0aec0', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}>{text.landing}</Link>
         </footer>
       </div>
     </main>
