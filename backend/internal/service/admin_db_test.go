@@ -1,0 +1,199 @@
+package service
+
+import (
+	"context"
+	"io"
+	"net"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"reqst/backend/internal/store"
+
+	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
+)
+
+func TestDBAdminServiceMFAAndSessionBusinessFlow(t *testing.T) {
+	ctx := context.Background()
+	st := newAdminServiceTestStore(t, ctx)
+
+	admin := NewDBAdminService(st, "", "", "admin-secret", time.Minute, time.Hour, "admin@example.test", "correct-password", "test")
+	created, err := admin.Bootstrap(ctx)
+	if err != nil {
+		t.Fatalf("Bootstrap returned error: %v", err)
+	}
+	if !created {
+		t.Fatal("expected first bootstrap to create admin user")
+	}
+	created, err = admin.Bootstrap(ctx)
+	if err != nil {
+		t.Fatalf("second Bootstrap returned error: %v", err)
+	}
+	if created {
+		t.Fatal("expected second bootstrap to leave existing admin unchanged")
+	}
+
+	if _, err := admin.StartLogin(ctx, "admin@example.test", "wrong-password"); err == nil {
+		t.Fatal("expected wrong admin password to be rejected")
+	}
+
+	login, err := admin.StartLogin(ctx, "admin@example.test", "correct-password")
+	if err != nil {
+		t.Fatalf("StartLogin returned error: %v", err)
+	}
+	if !login.MFARequired || !login.TOTPSetupRequired || login.TOTPSecret == "" || login.ChallengeToken == "" {
+		t.Fatalf("expected first login to require TOTP setup, got %+v", login)
+	}
+
+	if _, err := admin.VerifyTOTP(ctx, login.ChallengeToken, "000000", AdminSessionInput{UserAgent: "test", IPAddress: "127.0.0.1"}); err == nil {
+		t.Fatal("expected invalid TOTP code to be rejected")
+	}
+
+	code, err := totpCode(login.TOTPSecret, time.Now().UTC())
+	if err != nil {
+		t.Fatalf("totpCode returned error: %v", err)
+	}
+	verified, err := admin.VerifyTOTP(ctx, login.ChallengeToken, code, AdminSessionInput{UserAgent: "test", IPAddress: "127.0.0.1"})
+	if err != nil {
+		t.Fatalf("VerifyTOTP returned error: %v", err)
+	}
+	if verified.Token == "" || verified.RefreshToken == "" || len(verified.RecoveryCodes) != 10 {
+		t.Fatalf("expected token, refresh token and recovery codes, got %+v", verified)
+	}
+	claims, err := admin.ParseToken(verified.Token)
+	if err != nil {
+		t.Fatalf("ParseToken returned error: %v", err)
+	}
+	if claims.Role != "super_admin" || claims.SessionID == 0 {
+		t.Fatalf("expected super_admin session claims, got %+v", claims)
+	}
+
+	refreshed, err := admin.Refresh(ctx, verified.RefreshToken)
+	if err != nil {
+		t.Fatalf("Refresh returned error: %v", err)
+	}
+	if refreshed.Token == "" {
+		t.Fatal("expected admin refresh to issue a new access token")
+	}
+
+	nextLogin, err := admin.StartLogin(ctx, "admin@example.test", "correct-password")
+	if err != nil {
+		t.Fatalf("second StartLogin returned error: %v", err)
+	}
+	if !nextLogin.MFARequired || nextLogin.TOTPSetupRequired {
+		t.Fatalf("expected existing admin to require MFA without setup, got %+v", nextLogin)
+	}
+	recovered, err := admin.VerifyTOTP(ctx, nextLogin.ChallengeToken, verified.RecoveryCodes[0], AdminSessionInput{UserAgent: "test", IPAddress: "127.0.0.1"})
+	if err != nil {
+		t.Fatalf("VerifyTOTP with recovery code returned error: %v", err)
+	}
+	if recovered.Token == "" || recovered.RefreshToken == "" {
+		t.Fatalf("expected recovery code login to issue tokens, got %+v", recovered)
+	}
+
+	reusedLogin, err := admin.StartLogin(ctx, "admin@example.test", "correct-password")
+	if err != nil {
+		t.Fatalf("third StartLogin returned error: %v", err)
+	}
+	if _, err := admin.VerifyTOTP(ctx, reusedLogin.ChallengeToken, verified.RecoveryCodes[0], AdminSessionInput{}); err == nil {
+		t.Fatal("expected consumed recovery code reuse to be rejected")
+	}
+
+	if err := admin.RevokeRefreshToken(ctx, recovered.RefreshToken); err != nil {
+		t.Fatalf("RevokeRefreshToken returned error: %v", err)
+	}
+	if _, err := admin.Refresh(ctx, recovered.RefreshToken); err == nil {
+		t.Fatal("expected revoked refresh token to be rejected")
+	}
+	if err := admin.RevokeSession(ctx, claims.SessionID); err != nil {
+		t.Fatalf("RevokeSession returned error: %v", err)
+	}
+	if _, err := admin.ParseToken(verified.Token); err == nil || !strings.Contains(err.Error(), "revoked") {
+		t.Fatalf("expected revoked admin session token to be rejected, got %v", err)
+	}
+}
+
+// TestDBAdminServiceNonExistentUser verifies error paths for non-existent admin users.
+func TestDBAdminServiceNonExistentUser(t *testing.T) {
+	ctx := context.Background()
+	st := newAdminServiceTestStore(t, ctx)
+
+	admin := NewDBAdminService(st, "", "", "admin-secret", time.Minute, time.Hour, "admin@example.test", "correct-password", "test")
+	if _, err := admin.Bootstrap(ctx); err != nil {
+		t.Fatalf("Bootstrap: %v", err)
+	}
+
+	t.Run("StartLogin with non-existent email returns error", func(t *testing.T) {
+		_, err := admin.StartLogin(ctx, "notexist@example.test", "password")
+		if err == nil {
+			t.Fatal("expected error for non-existent admin user")
+		}
+	})
+
+	t.Run("Refresh with non-existent refresh token returns error", func(t *testing.T) {
+		_, err := admin.Refresh(ctx, "nonexistent-refresh-token")
+		if err == nil {
+			t.Fatal("expected error for non-existent refresh token")
+		}
+	})
+
+	t.Run("RevokeRefreshToken with non-existent token is a no-op", func(t *testing.T) {
+		err := admin.RevokeRefreshToken(ctx, "nonexistent-token")
+		if err != nil {
+			t.Fatalf("expected no error for non-existent refresh token revocation, got %v", err)
+		}
+	})
+}
+
+func newAdminServiceTestStore(t *testing.T, ctx context.Context) *store.Store {
+	t.Helper()
+
+	port := pickAdminServiceTestPort(t)
+	baseDir := t.TempDir()
+	pgConfig := embeddedpostgres.DefaultConfig().
+		Version(embeddedpostgres.V16).
+		Port(port).
+		Database("reqst").
+		Username("reqst").
+		Password("reqst").
+		RuntimePath(filepath.Join(baseDir, "runtime")).
+		DataPath(filepath.Join(baseDir, "data")).
+		CachePath(filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")).
+		Locale("C").
+		Encoding("UTF8").
+		StartTimeout(45 * time.Second).
+		StartParameters(map[string]string{
+			"fsync":              "off",
+			"synchronous_commit": "off",
+			"full_page_writes":   "off",
+		}).
+		Logger(io.Discard)
+
+	database := embeddedpostgres.NewDatabase(pgConfig)
+	if err := database.Start(); err != nil {
+		t.Fatalf("embedded postgres start failed: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = database.Stop()
+	})
+
+	st, err := store.New(ctx, pgConfig.GetConnectionURL()+"?sslmode=disable")
+	if err != nil {
+		t.Fatalf("store.New returned error: %v", err)
+	}
+	t.Cleanup(st.Close)
+	return st
+}
+
+func pickAdminServiceTestPort(t *testing.T) uint32 {
+	t.Helper()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to pick free port: %v", err)
+	}
+	defer listener.Close()
+	return uint32(listener.Addr().(*net.TCPAddr).Port)
+}

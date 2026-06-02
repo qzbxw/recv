@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"reqst/backend/internal/store"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -105,5 +107,124 @@ func rewriteHTTPClient(t *testing.T, server *httptest.Server) *http.Client {
 			base:   server.Client().Transport,
 			target: target,
 		},
+	}
+}
+
+func TestNormalizedMode(t *testing.T) {
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{"test", "test"},
+		{"TEST", "test"},
+		{" Test ", "test"},
+		{"live", "live"},
+		{"", "live"},
+		{"other", "live"},
+		{"production", "live"},
+	}
+	for _, tc := range cases {
+		if got := normalizedMode(tc.input); got != tc.want {
+			t.Errorf("normalizedMode(%q) = %q; want %q", tc.input, got, tc.want)
+		}
+	}
+}
+
+func TestCreateInvoiceRejectsBlockedWorkspace(t *testing.T) {
+	svc := NewInvoiceService(nil, "4.00")
+	workspace := store.Workspace{ID: 1, IsBlocked: true}
+	input := CreateInvoiceInput{
+		Title:          "Order",
+		BaseAmountUSD:  decimal.RequireFromString("10"),
+		PayableNetwork: store.NetworkTRON,
+	}
+	_, err := svc.CreateInvoice(context.Background(), workspace, input)
+	if err == nil || !strings.Contains(err.Error(), "blocked") {
+		t.Fatalf("expected blocked workspace error, got %v", err)
+	}
+}
+
+func TestCreateInvoiceRequiresTitle(t *testing.T) {
+	svc := NewInvoiceService(nil, "4.00")
+	workspace := store.Workspace{ID: 1}
+	input := CreateInvoiceInput{
+		BaseAmountUSD:  decimal.RequireFromString("10"),
+		PayableNetwork: store.NetworkTRON,
+	}
+	_, err := svc.CreateInvoice(context.Background(), workspace, input)
+	if err == nil || !strings.Contains(err.Error(), "title is required") {
+		t.Fatalf("expected title required error, got %v", err)
+	}
+}
+
+func TestCreateInvoiceRequiresPositiveAmount(t *testing.T) {
+	svc := NewInvoiceService(nil, "4.00")
+	workspace := store.Workspace{ID: 1}
+	input := CreateInvoiceInput{
+		Title:          "Order",
+		BaseAmountUSD:  decimal.Zero,
+		PayableNetwork: store.NetworkTRON,
+	}
+	_, err := svc.CreateInvoice(context.Background(), workspace, input)
+	if err == nil || !strings.Contains(err.Error(), "must be positive") {
+		t.Fatalf("expected positive amount error, got %v", err)
+	}
+}
+
+func TestCreateInvoiceRejectsUnsupportedNetwork(t *testing.T) {
+	svc := NewInvoiceService(nil, "4.00")
+	workspace := store.Workspace{ID: 1}
+	input := CreateInvoiceInput{
+		Title:          "Order",
+		BaseAmountUSD:  decimal.RequireFromString("10"),
+		PayableNetwork: store.Network("DOGE"),
+	}
+	_, err := svc.CreateInvoice(context.Background(), workspace, input)
+	if err == nil || !strings.Contains(err.Error(), "unsupported network") {
+		t.Fatalf("expected unsupported network error, got %v", err)
+	}
+}
+
+func TestCreateInvoiceEnforcesTrialLimit(t *testing.T) {
+	svc := NewInvoiceService(nil, "4.00")
+	workspace := store.Workspace{
+		ID:               1,
+		FreeInvoicesUsed: TrialInvoiceLimit,
+	}
+	input := CreateInvoiceInput{
+		Title:          "Order",
+		BaseAmountUSD:  decimal.RequireFromString("10"),
+		PayableNetwork: store.NetworkTRON,
+	}
+	_, err := svc.CreateInvoice(context.Background(), workspace, input)
+	if err == nil || !strings.Contains(err.Error(), "trial limit reached") {
+		t.Fatalf("expected trial limit error, got %v", err)
+	}
+}
+
+func TestCreatePlanInvoiceRejectsBlockedWorkspace(t *testing.T) {
+	svc := NewInvoiceService(nil, "4.00")
+	workspace := store.Workspace{ID: 1, IsBlocked: true}
+	_, err := svc.CreatePlanInvoice(context.Background(), workspace, store.PlanCodeMerchant, store.NetworkTRON)
+	if err == nil || !strings.Contains(err.Error(), "blocked") {
+		t.Fatalf("expected blocked workspace error, got %v", err)
+	}
+}
+
+func TestCreatePlanInvoiceRejectsTrialPlan(t *testing.T) {
+	svc := NewInvoiceService(nil, "4.00")
+	workspace := store.Workspace{ID: 1}
+	_, err := svc.CreatePlanInvoice(context.Background(), workspace, store.PlanCodeTrial, store.NetworkTRON)
+	if err == nil || !strings.Contains(err.Error(), "trial") {
+		t.Fatalf("expected trial plan rejected, got %v", err)
+	}
+}
+
+func TestCreatePlanInvoiceRejectsUnsupportedNetwork(t *testing.T) {
+	svc := NewInvoiceService(nil, "4.00")
+	workspace := store.Workspace{ID: 1}
+	_, err := svc.CreatePlanInvoice(context.Background(), workspace, store.PlanCodeMerchant, store.Network("DOGE"))
+	if err == nil || !strings.Contains(err.Error(), "unsupported network") {
+		t.Fatalf("expected unsupported network error, got %v", err)
 	}
 }

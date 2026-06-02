@@ -2,7 +2,7 @@
 set -eu
 
 profile="${1:-coverage.out}"
-minimum="${COVERAGE_MIN:-45}"
+minimum="${COVERAGE_MIN:-90}"
 export GOCACHE="${GOCACHE:-/tmp/reqst-go-build}"
 
 total="$(go tool cover -func="$profile" | awk '/^total:/ { gsub("%", "", $3); print $3 }')"

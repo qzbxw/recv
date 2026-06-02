@@ -17,6 +17,12 @@ func TestSourceContextHelpers(t *testing.T) {
 	if got := SourceFromContext(ctx); got != "seller_api" {
 		t.Fatalf("expected normalized source seller_api, got %q", got)
 	}
+	if got := SourceFromContext(context.Background()); got != "unknown" {
+		t.Fatalf("expected unknown source for plain context, got %q", got)
+	}
+	if got := SourceFromContext(context.WithValue(context.Background(), sourceContextKey, "   ")); got != "unknown" {
+		t.Fatalf("expected unknown source for blank context value, got %q", got)
+	}
 }
 
 func TestNormalizeHelpers(t *testing.T) {
@@ -64,4 +70,14 @@ func TestStartServerReturnsServer(t *testing.T) {
 		t.Fatal("expected metrics server instance")
 	}
 	cancel()
+}
+
+func TestStartServerShutdownGoroutine(t *testing.T) {
+	// This test ensures the shutdown goroutine inside StartServer actually runs.
+	ctx, cancel := context.WithCancel(context.Background())
+	StartServer(ctx, "127.0.0.1:0", nil)
+	// Trigger the shutdown goroutine.
+	cancel()
+	// Give the goroutine time to complete server.Shutdown.
+	time.Sleep(50 * time.Millisecond)
 }

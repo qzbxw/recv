@@ -3,6 +3,7 @@ package watcher
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -31,6 +32,40 @@ func TestStablecoinForNetwork(t *testing.T) {
 		if spec.Symbol != symbol {
 			t.Fatalf("network %s expected %s, got %s", network, symbol, spec.Symbol)
 		}
+	}
+
+	// Default case: unknown network returns empty spec
+	spec := stablecoinForNetwork(store.Network("DOGE"))
+	if spec.Symbol != "" || spec.EVMContract != "" || spec.SolanaMint != "" {
+		t.Fatalf("expected empty spec for unknown network, got %+v", spec)
+	}
+}
+
+func TestPollSolanaStablecoinNoMint(t *testing.T) {
+	// Passing a network that has no SolanaMint should return an error immediately
+	w := &Watcher{
+		httpClient: &http.Client{Timeout: time.Second},
+	}
+	_, err := w.pollSolanaStablecoin(context.Background(), store.WatchedWallet{
+		PayableNetwork: store.NetworkBASE, // BASE has no SolanaMint
+	})
+	if err == nil || !strings.Contains(err.Error(), "solana stablecoin mint is not configured") {
+		t.Fatalf("expected mint not configured error, got %v", err)
+	}
+}
+
+func TestPollEVMStablecoinNoContract(t *testing.T) {
+	// Passing a network that has no EVMContract should error
+	w := &Watcher{
+		cfg:        config.Config{SolanaRPCURL: "http://localhost"},
+		httpClient: &http.Client{Timeout: time.Second},
+		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	_, err := w.pollEVMStablecoin(context.Background(), store.WatchedWallet{
+		PayableNetwork: store.NetworkSOLANA, // SOLANA has no EVMContract
+	})
+	if err == nil || !strings.Contains(err.Error(), "not configured") {
+		t.Fatalf("expected not configured error, got %v", err)
 	}
 }
 
@@ -71,6 +106,36 @@ func TestHexHelpers(t *testing.T) {
 	}
 	if !amount.Equal(decimal.RequireFromString("1")) {
 		t.Fatalf("unexpected amount: %s", amount)
+	}
+	if _, err := parseHexInt("not-hex"); err == nil {
+		t.Fatal("expected invalid hex integer to be rejected")
+	}
+	if _, err := hexAmountToDecimal("0xzz", 6); err == nil {
+		t.Fatal("expected invalid hex amount to be rejected")
+	}
+	if amount, err := hexAmountToDecimal("", 6); err != nil || !amount.IsZero() {
+		t.Fatalf("expected blank hex amount to be zero, got %s err=%v", amount, err)
+	}
+}
+
+func TestNetworkFromRPCURLMapsConfiguredNetworks(t *testing.T) {
+	cfg := config.Config{
+		EthereumRPCURL: "https://eth.test",
+		BaseRPCURL:     "https://base.test",
+		ArbitrumRPCURL: "https://arb.test",
+		BSCRPCURL:      "https://bsc.test",
+	}
+	tests := map[string]store.Network{
+		"https://eth.test":     store.NetworkEVM,
+		"https://base.test":    store.NetworkBASE,
+		"https://arb.test":     store.NetworkARBITRUM,
+		"https://bsc.test":     store.NetworkBSC,
+		"https://unknown.test": store.NetworkEVM,
+	}
+	for rpcURL, expected := range tests {
+		if got := networkFromRPCURL(rpcURL, cfg); got != expected {
+			t.Fatalf("networkFromRPCURL(%q) = %s; want %s", rpcURL, got, expected)
+		}
 	}
 }
 
@@ -137,6 +202,123 @@ func TestPollEVMStablecoin(t *testing.T) {
 	if !transfers[0].Amount.Equal(decimal.RequireFromString("1.000000")) {
 		t.Fatalf("unexpected amount: %s", transfers[0].Amount)
 	}
+}
+
+func TestPollEVMStablecoinBoundaries(t *testing.T) {
+	t.Run("missing rpc url", func(t *testing.T) {
+		w := &Watcher{httpClient: &http.Client{Timeout: time.Second}}
+		_, err := w.pollEVMStablecoin(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkBASE,
+			Address:        "0x1111111111111111111111111111111111111111",
+		})
+		if err == nil || !strings.Contains(err.Error(), "rpc url is not configured") {
+			t.Fatalf("expected missing rpc url error, got %v", err)
+		}
+	})
+
+	t.Run("invalid latest block", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": "not-hex"})
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg:        config.Config{BaseRPCURL: server.URL},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		_, err := w.pollEVMStablecoin(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkBASE,
+			Address:        "0x1111111111111111111111111111111111111111",
+		})
+		if err == nil || !strings.Contains(err.Error(), "parse latest evm block") {
+			t.Fatalf("expected invalid latest block error, got %v", err)
+		}
+	})
+
+	t.Run("confirmation depth keeps latest block unsafe", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": "0x2"})
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg: config.Config{
+				BaseRPCURL:           server.URL,
+				EVMConfirmationDepth: 5,
+			},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		transfers, err := w.pollEVMStablecoin(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkBASE,
+			Address:        "0x1111111111111111111111111111111111111111",
+		})
+		if err != nil {
+			t.Fatalf("expected unsafe block range to return nil without error, got %v", err)
+		}
+		if transfers != nil {
+			t.Fatalf("expected nil transfers for unsafe block range, got %+v", transfers)
+		}
+	})
+
+	t.Run("skips removed invalid zero and bad timestamp logs", func(t *testing.T) {
+		calls := map[string]int{}
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var payload struct {
+				Method string `json:"method"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&payload)
+			calls[payload.Method]++
+			switch payload.Method {
+			case "eth_blockNumber":
+				_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": "0x64"})
+			case "eth_getLogs":
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"jsonrpc": "2.0",
+					"id":      1,
+					"result": []map[string]any{
+						{"data": "0xf4240", "blockNumber": "0x60", "transactionHash": "0xremoved", "logIndex": "0x1", "removed": true},
+						{"data": "0x0", "blockNumber": "0x60", "transactionHash": "0xzero", "logIndex": "0x2"},
+						{"data": "0xzz", "blockNumber": "0x60", "transactionHash": "0xbadamount", "logIndex": "0x3"},
+						{"data": "0xf4240", "blockNumber": "0x60", "transactionHash": "0xbadts", "logIndex": "0x4"},
+					},
+				})
+			case "eth_getBlockByNumber":
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"jsonrpc": "2.0",
+					"id":      1,
+					"result":  map[string]any{"timestamp": "0xzz"},
+				})
+			default:
+				t.Fatalf("unexpected method %s", payload.Method)
+			}
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg: config.Config{
+				BaseRPCURL:            server.URL,
+				EVMConfirmationDepth:  1,
+				WatcherBackfillBlocks: 4,
+			},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		transfers, err := w.pollEVMStablecoin(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkBASE,
+			Address:        "0x1111111111111111111111111111111111111111",
+		})
+		if err != nil {
+			t.Fatalf("pollEVMStablecoin returned error: %v", err)
+		}
+		if len(transfers) != 0 {
+			t.Fatalf("expected all boundary logs to be skipped, got %+v", transfers)
+		}
+		if calls["eth_getBlockByNumber"] != 1 {
+			t.Fatalf("expected only timestamp-worthy log to request block timestamp once, calls=%+v", calls)
+		}
+	})
 }
 
 func TestPollSolanaStablecoin(t *testing.T) {
@@ -228,6 +410,108 @@ func TestPollSolanaStablecoin(t *testing.T) {
 	}
 }
 
+func TestPollSolanaStablecoinBoundaries(t *testing.T) {
+	t.Run("token accounts rpc error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"jsonrpc": "2.0",
+				"id":      1,
+				"error":   map[string]any{"message": "owner lookup failed"},
+			})
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg:        config.Config{SolanaRPCURL: server.URL},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		_, err := w.pollSolanaStablecoin(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkSOLANA,
+			Address:        "owner-sol",
+		})
+		if err == nil || !strings.Contains(err.Error(), "owner lookup failed") {
+			t.Fatalf("expected token account rpc error, got %v", err)
+		}
+	})
+
+	t.Run("signature and transaction failures are skipped", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var payload struct {
+				Method string `json:"method"`
+				Params []any  `json:"params"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&payload)
+			switch payload.Method {
+			case "getTokenAccountsByOwner":
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"jsonrpc": "2.0",
+					"id":      1,
+					"result":  map[string]any{"value": []map[string]any{{"pubkey": "bad-signatures"}, {"pubkey": "has-signatures"}}},
+				})
+			case "getSignaturesForAddress":
+				if payload.Params[0] == "bad-signatures" {
+					_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "error": map[string]any{"message": "signature lookup failed"}})
+					return
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"jsonrpc": "2.0",
+					"id":      1,
+					"result":  []map[string]any{{"signature": "bad-tx", "blockTime": 1710000001}, {"signature": "no-positive-diff", "blockTime": 1710000002}},
+				})
+			case "getTransaction":
+				if payload.Params[0] == "bad-tx" {
+					_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "error": map[string]any{"message": "tx fetch failed"}})
+					return
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"jsonrpc": "2.0",
+					"id":      1,
+					"result": map[string]any{
+						"meta": map[string]any{
+							"preTokenBalances": []map[string]any{{
+								"accountIndex": 1,
+								"mint":         stablecoinForNetwork(store.NetworkSOLANA).SolanaMint,
+								"owner":        "owner-sol",
+								"uiTokenAmount": map[string]any{
+									"amount": "5000000",
+								},
+							}},
+							"postTokenBalances": []map[string]any{{
+								"accountIndex": 1,
+								"mint":         stablecoinForNetwork(store.NetworkSOLANA).SolanaMint,
+								"owner":        "owner-sol",
+								"uiTokenAmount": map[string]any{
+									"amount": "4000000",
+								},
+							}},
+						},
+					},
+				})
+			default:
+				t.Fatalf("unexpected method %s", payload.Method)
+			}
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg:        config.Config{SolanaRPCURL: server.URL},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		transfers, err := w.pollSolanaStablecoin(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkSOLANA,
+			Address:        "owner-sol",
+		})
+		if err != nil {
+			t.Fatalf("pollSolanaStablecoin returned error: %v", err)
+		}
+		if len(transfers) != 0 {
+			t.Fatalf("expected failed/non-positive Solana candidates to be skipped, got %+v", transfers)
+		}
+	})
+}
+
 func TestEVMRPCURL(t *testing.T) {
 	w := &Watcher{
 		cfg: config.Config{
@@ -254,6 +538,39 @@ func TestEVMRPCURL(t *testing.T) {
 	}
 }
 
+func TestTernaryWatcherResult(t *testing.T) {
+	if got := ternaryWatcherResult(nil); got != "success" {
+		t.Fatalf("expected success for nil error, got %q", got)
+	}
+	if got := ternaryWatcherResult(errors.New("some error")); got != "failure" {
+		t.Fatalf("expected failure for non-nil error, got %q", got)
+	}
+}
+
+func TestNetworkFromRPCURL(t *testing.T) {
+	cfg := config.Config{
+		EthereumRPCURL: "https://eth.rpc",
+		BaseRPCURL:     "https://base.rpc",
+		ArbitrumRPCURL: "https://arb.rpc",
+		BSCRPCURL:      "https://bsc.rpc",
+	}
+	if got := networkFromRPCURL("https://eth.rpc", cfg); got != store.NetworkEVM {
+		t.Fatalf("expected EVM for ethereum rpc, got %s", got)
+	}
+	if got := networkFromRPCURL("https://base.rpc", cfg); got != store.NetworkBASE {
+		t.Fatalf("expected BASE for base rpc, got %s", got)
+	}
+	if got := networkFromRPCURL("https://arb.rpc", cfg); got != store.NetworkARBITRUM {
+		t.Fatalf("expected ARBITRUM for arb rpc, got %s", got)
+	}
+	if got := networkFromRPCURL("https://bsc.rpc", cfg); got != store.NetworkBSC {
+		t.Fatalf("expected BSC for bsc rpc, got %s", got)
+	}
+	if got := networkFromRPCURL("https://unknown.rpc", cfg); got != store.NetworkEVM {
+		t.Fatalf("expected default EVM for unknown rpc, got %s", got)
+	}
+}
+
 func TestCallJSONRPCReportsError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]any{
@@ -273,5 +590,116 @@ func TestCallJSONRPCReportsError(t *testing.T) {
 	err := w.callJSONRPC(context.Background(), server.URL, "test_method", nil, &result)
 	if err == nil || !strings.Contains(err.Error(), "upstream failed") {
 		t.Fatalf("expected upstream error, got %v", err)
+	}
+}
+
+func TestCallJSONRPCHTTPErrorStatus(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	w := &Watcher{httpClient: &http.Client{Timeout: time.Second}}
+	err := w.callJSONRPC(context.Background(), server.URL, "test_method", nil, nil)
+	if err == nil || !strings.Contains(err.Error(), "json rpc error") {
+		t.Fatalf("expected json rpc error from HTTP 500, got %v", err)
+	}
+}
+
+func TestCallJSONRPCNilTarget(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"somevalue"}`))
+	}))
+	defer server.Close()
+
+	w := &Watcher{httpClient: &http.Client{Timeout: time.Second}}
+	// nil target: should decode but not unmarshal → no error
+	err := w.callJSONRPC(context.Background(), server.URL, "test_method", nil, nil)
+	if err != nil {
+		t.Fatalf("expected nil error for nil target, got %v", err)
+	}
+}
+
+func TestCallJSONRPCDecodeFails(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("not-json"))
+	}))
+	defer server.Close()
+
+	w := &Watcher{httpClient: &http.Client{Timeout: time.Second}}
+	var result any
+	err := w.callJSONRPC(context.Background(), server.URL, "test_method", nil, &result)
+	if err == nil || !strings.Contains(err.Error(), "decode json rpc response") {
+		t.Fatalf("expected decode error, got %v", err)
+	}
+}
+
+func TestPollEVMStablecoinRPCErrors(t *testing.T) {
+	// Test: eth_blockNumber call fails (connection error)
+	closedServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {}))
+	closedURL := closedServer.URL
+	closedServer.Close()
+
+	w := &Watcher{
+		cfg:        config.Config{BaseRPCURL: closedURL},
+		httpClient: &http.Client{Timeout: 500 * time.Millisecond},
+		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+
+	_, err := w.pollEVMStablecoin(context.Background(), store.WatchedWallet{
+		PayableNetwork: store.NetworkBASE,
+		Address:        "0x1111111111111111111111111111111111111111",
+	})
+	if err == nil {
+		t.Fatal("expected error when RPC server is unavailable")
+	}
+}
+
+func TestEVMBlockTimestampBadTimestamp(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		// Return invalid hex timestamp
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"jsonrpc": "2.0", "id": 1,
+			"result": map[string]any{"timestamp": "not-hex"},
+		})
+	}))
+	defer server.Close()
+
+	w := &Watcher{
+		cfg:        config.Config{BaseRPCURL: server.URL},
+		httpClient: &http.Client{Timeout: time.Second},
+	}
+	_, err := w.evmBlockTimestamp(context.Background(), server.URL, "0x64")
+	if err == nil {
+		t.Fatal("expected error for invalid hex timestamp")
+	}
+}
+
+func TestCallEVMRPCStringError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"jsonrpc": "2.0", "id": 1,
+			"error": map[string]any{"message": "method not found"},
+		})
+	}))
+	defer server.Close()
+
+	w := &Watcher{httpClient: &http.Client{Timeout: time.Second}}
+	_, err := w.callEVMRPCString(context.Background(), server.URL, store.NetworkBASE, "eth_unknown", nil)
+	if err == nil || !strings.Contains(err.Error(), "method not found") {
+		t.Fatalf("expected RPC error, got %v", err)
+	}
+}
+
+func TestCallJSONRPCConnectionError(t *testing.T) {
+	// Use a closed server to trigger connection error
+	closedServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {}))
+	closedURL := closedServer.URL
+	closedServer.Close()
+
+	w := &Watcher{httpClient: &http.Client{Timeout: time.Second}}
+	err := w.callJSONRPC(context.Background(), closedURL, "test_method", nil, nil)
+	if err == nil {
+		t.Fatal("expected connection error for closed server")
 	}
 }

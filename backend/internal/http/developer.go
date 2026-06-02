@@ -711,7 +711,7 @@ func hashRequestBody(raw []byte) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func recordIdempotentJSON(c *gin.Context, st *store.Store, record *store.IdempotencyRecord, statusCode int, body gin.H) {
+func recordIdempotentJSON(c *gin.Context, st httpStore, record *store.IdempotencyRecord, statusCode int, body gin.H) {
 	if record == nil {
 		return
 	}

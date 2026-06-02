@@ -22,7 +22,7 @@ jobs:
       - name: Coverage
         run: |
           go test ./... -coverpkg=./internal/... -coverprofile=coverage.out
-          COVERAGE_MIN=45 sh scripts/check-coverage.sh coverage.out
+          COVERAGE_MIN=90 sh scripts/check-coverage.sh coverage.out
 
   frontend:
     runs-on: ubuntu-latest

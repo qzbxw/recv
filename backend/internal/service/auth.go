@@ -34,6 +34,7 @@ type AuthService struct {
 	telegramInitMaxAge time.Duration
 	accessTTL          time.Duration
 	refreshTTL         time.Duration
+	httpClient         *http.Client
 }
 
 type TelegramAuthInput struct {
@@ -638,7 +639,11 @@ func (s *AuthService) sendTelegramLoginCode(ctx context.Context, chatID int64, u
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	httpClient := s.httpClient
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: 10 * time.Second}
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		metrics.ObserveUpstream("telegram_bot_api", "send_login_code", "failure", 0)
 		return fmt.Errorf("telegram sendMessage: %w", err)

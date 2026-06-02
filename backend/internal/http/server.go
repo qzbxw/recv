@@ -25,7 +25,7 @@ import (
 
 type Server struct {
 	cfg            config.Config
-	store          *store.Store
+	store          httpStore
 	authService    *service.AuthService
 	adminService   *service.AdminService
 	invoiceService *service.InvoiceService
@@ -143,6 +143,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api.POST("/team/invites", server.handleInviteMember)
 	api.DELETE("/team/invites/:id", server.handleRevokeInvite)
 	api.POST("/team/members/:userId/role", server.handleUpdateMemberRole)
+	api.PUT("/team/members/:userId", server.handleUpdateMemberRole)
 	api.DELETE("/team/members/:userId", server.handleRemoveMember)
 	api.POST("/workspaces/:id/switch", server.handleSwitchWorkspace)
 

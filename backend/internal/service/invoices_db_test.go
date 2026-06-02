@@ -1,0 +1,295 @@
+package service
+
+import (
+	"context"
+	"strings"
+	"testing"
+
+	"reqst/backend/internal/store"
+
+	"github.com/shopspring/decimal"
+)
+
+// TestInvoiceServiceCreateInvoiceDBFlows tests createInvoiceWithDestination and all
+// functions called by it: generateUniquePublicID, generateUniqueSuffix, calculateTONAmount.
+func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
+	ctx := context.Background()
+	st := newPaymentServiceTestStore(t, ctx)
+
+	workspace, err := st.UpsertWorkspaceByTelegram(ctx, 88100, "invdbuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+
+	evmWallet, err := st.CreateWallet(ctx, workspace.ID, store.NetworkEVM, "0x1111111111111111111111111111111111111111")
+	if err != nil {
+		t.Fatalf("CreateWallet EVM: %v", err)
+	}
+
+	tonWallet, err := st.CreateWallet(ctx, workspace.ID, store.NetworkTON, "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn")
+	if err != nil {
+		t.Fatalf("CreateWallet TON: %v", err)
+	}
+
+	// Use fixed TON rate so no external HTTP call is needed
+	svc := NewInvoiceService(st, "5.0")
+
+	t.Run("CreateInvoice on EVM exercises generateUniqueSuffix", func(t *testing.T) {
+		inv, err := svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
+			Title:          "EVM Test",
+			BaseAmountUSD:  decimal.RequireFromString("10"),
+			PayableNetwork: store.NetworkEVM,
+			WalletID:       evmWallet.ID,
+		})
+		if err != nil {
+			t.Fatalf("CreateInvoice EVM: %v", err)
+		}
+		if inv.PublicID == "" {
+			t.Fatal("expected PublicID to be set")
+		}
+		if inv.PayableAmount.IsZero() {
+			t.Fatal("expected PayableAmount to be set")
+		}
+	})
+
+	t.Run("CreateInvoice on TON exercises calculateTONAmount", func(t *testing.T) {
+		inv, err := svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
+			Title:          "TON Test",
+			BaseAmountUSD:  decimal.RequireFromString("5"),
+			PayableNetwork: store.NetworkTON,
+			WalletID:       tonWallet.ID,
+		})
+		if err != nil {
+			t.Fatalf("CreateInvoice TON: %v", err)
+		}
+		if inv.PaymentComment == nil || !strings.HasPrefix(*inv.PaymentComment, "REQST-") {
+			t.Fatalf("expected REQST- payment comment for TON, got %v", inv.PaymentComment)
+		}
+	})
+
+	t.Run("CreateInvoice on BASE exercises generateUniqueSuffix", func(t *testing.T) {
+		// BASE uses EVM wallet bucket, so we need an EVM wallet
+		baseWallet, err := st.CreateWallet(ctx, workspace.ID, store.NetworkEVM, "0x2222222222222222222222222222222222222222")
+		if err != nil {
+			t.Fatalf("CreateWallet EVM for BASE: %v", err)
+		}
+		inv, err := svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
+			Title:          "BASE Test",
+			BaseAmountUSD:  decimal.RequireFromString("20"),
+			PayableNetwork: store.NetworkBASE,
+			WalletID:       baseWallet.ID,
+		})
+		if err != nil {
+			t.Fatalf("CreateInvoice BASE: %v", err)
+		}
+		if inv.MatchingSuffix == nil {
+			t.Fatal("expected MatchingSuffix to be set for BASE invoice")
+		}
+	})
+
+	t.Run("CreateInvoice rejects blocked workspace", func(t *testing.T) {
+		blockedWs, err := st.UpsertWorkspaceByTelegram(ctx, 88101, "blockedinvuser")
+		if err != nil {
+			t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+		}
+		if _, err := st.SetWorkspaceBlocked(ctx, blockedWs.ID, true); err != nil {
+			t.Fatalf("SetWorkspaceBlocked: %v", err)
+		}
+		blockedWs.IsBlocked = true
+
+		_, err = svc.CreateInvoice(ctx, blockedWs, CreateInvoiceInput{
+			Title:          "Blocked",
+			BaseAmountUSD:  decimal.RequireFromString("10"),
+			PayableNetwork: store.NetworkEVM,
+		})
+		if err == nil || !strings.Contains(err.Error(), "blocked") {
+			t.Fatalf("expected blocked error, got %v", err)
+		}
+	})
+
+	t.Run("CreateInvoice rejects missing title", func(t *testing.T) {
+		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
+			BaseAmountUSD:  decimal.RequireFromString("10"),
+			PayableNetwork: store.NetworkEVM,
+		})
+		if err == nil || !strings.Contains(err.Error(), "required") {
+			t.Fatalf("expected title required error, got %v", err)
+		}
+	})
+
+	t.Run("CreateInvoice rejects negative amount", func(t *testing.T) {
+		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
+			Title:          "Neg",
+			BaseAmountUSD:  decimal.RequireFromString("-1"),
+			PayableNetwork: store.NetworkEVM,
+		})
+		if err == nil || !strings.Contains(err.Error(), "positive") {
+			t.Fatalf("expected positive amount error, got %v", err)
+		}
+	})
+
+	t.Run("CreateInvoice trial limit reached", func(t *testing.T) {
+		trialWs, err := st.UpsertWorkspaceByTelegram(ctx, 88102, "trialinvuser")
+		if err != nil {
+			t.Fatalf("UpsertWorkspaceByTelegram trial: %v", err)
+		}
+		// Exhaust the trial limit
+		if _, err := st.RawPool().Exec(ctx,
+			`UPDATE workspaces SET free_invoices_used=$1 WHERE id=$2`,
+			TrialInvoiceLimit, trialWs.ID); err != nil {
+			t.Fatalf("set free_invoices_used: %v", err)
+		}
+		trialWs.FreeInvoicesUsed = TrialInvoiceLimit
+
+		_, err = svc.CreateInvoice(ctx, trialWs, CreateInvoiceInput{
+			Title:          "Trial",
+			BaseAmountUSD:  decimal.RequireFromString("10"),
+			PayableNetwork: store.NetworkEVM,
+		})
+		if err == nil || !strings.Contains(err.Error(), "trial") {
+			t.Fatalf("expected trial limit error, got %v", err)
+		}
+	})
+}
+
+// TestInvoiceServiceCreatePlanInvoiceWithDB tests CreateSubscriptionInvoice and CreatePlanInvoiceWithPrice.
+func TestInvoiceServiceCreatePlanInvoiceWithDB(t *testing.T) {
+	ctx := context.Background()
+	st := newPaymentServiceTestStore(t, ctx)
+
+	workspace, err := st.UpsertWorkspaceByTelegram(ctx, 88200, "planinvuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+
+	svc := NewInvoiceService(st, "5.0")
+
+	t.Run("CreatePlanInvoiceWithPrice requires billing wallet configured", func(t *testing.T) {
+		_, err := svc.CreatePlanInvoiceWithPrice(ctx, workspace, store.PlanCodeMerchant, store.NetworkTON, nil)
+		if err == nil || !strings.Contains(err.Error(), "billing wallet") {
+			t.Fatalf("expected billing wallet error, got %v", err)
+		}
+	})
+
+	t.Run("CreatePlanInvoiceWithPrice rejects blocked workspace", func(t *testing.T) {
+		blockedWs, err := st.UpsertWorkspaceByTelegram(ctx, 88201, "blockedplanuser")
+		if err != nil {
+			t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+		}
+		if _, err := st.SetWorkspaceBlocked(ctx, blockedWs.ID, true); err != nil {
+			t.Fatalf("SetWorkspaceBlocked: %v", err)
+		}
+		blockedWs.IsBlocked = true
+
+		_, err = svc.CreatePlanInvoiceWithPrice(ctx, blockedWs, store.PlanCodeMerchant, store.NetworkTON, nil)
+		if err == nil || !strings.Contains(err.Error(), "blocked") {
+			t.Fatalf("expected blocked error, got %v", err)
+		}
+	})
+
+	t.Run("CreatePlanInvoiceWithPrice rejects trial plan", func(t *testing.T) {
+		_, err := svc.CreatePlanInvoiceWithPrice(ctx, workspace, store.PlanCodeTrial, store.NetworkTON, nil)
+		if err == nil || !strings.Contains(err.Error(), "trial") {
+			t.Fatalf("expected trial plan error, got %v", err)
+		}
+	})
+
+	t.Run("CreatePlanInvoiceWithPrice rejects unsupported network", func(t *testing.T) {
+		_, err := svc.CreatePlanInvoiceWithPrice(ctx, workspace, store.PlanCodeMerchant, "DOGE", nil)
+		if err == nil || !strings.Contains(err.Error(), "unsupported") {
+			t.Fatalf("expected unsupported network error, got %v", err)
+		}
+	})
+
+	t.Run("CreatePlanInvoiceWithPrice with override price zero rejected", func(t *testing.T) {
+		zero := decimal.Zero
+		_, err := svc.CreatePlanInvoiceWithPrice(ctx, workspace, store.PlanCodeEnterprise, store.NetworkTON, &zero)
+		if err == nil {
+			t.Fatal("expected error for zero override price")
+		}
+	})
+
+	t.Run("CreateSubscriptionInvoice delegates to CreatePlanInvoice", func(t *testing.T) {
+		// This should hit the billing wallet missing error path via CreatePlanInvoiceWithPrice
+		_, err := svc.CreateSubscriptionInvoice(ctx, workspace, store.NetworkTON)
+		if err == nil || !strings.Contains(err.Error(), "billing wallet") {
+			t.Fatalf("expected billing wallet error from CreateSubscriptionInvoice, got %v", err)
+		}
+	})
+
+	t.Run("CreatePlanInvoice success when billing wallet configured", func(t *testing.T) {
+		// Configure billing wallet for TON — stored as a JSON map under "billing_wallets"
+		wallets := map[string]string{"TON": "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn"}
+		if err := st.UpsertSystemConfig(ctx, "billing_wallets", wallets, true, "test"); err != nil {
+			t.Fatalf("UpsertSystemConfig billing wallet: %v", err)
+		}
+		t.Cleanup(func() {
+			_ = st.UpsertSystemConfig(ctx, "billing_wallets", map[string]string{}, true, "test")
+		})
+
+		inv, err := svc.CreatePlanInvoice(ctx, workspace, store.PlanCodeMerchant, store.NetworkTON)
+		if err != nil {
+			t.Fatalf("CreatePlanInvoice: %v", err)
+		}
+		if inv.PublicID == "" {
+			t.Fatal("expected PublicID to be set")
+		}
+		if inv.Kind != store.InvoiceKindSubscription {
+			t.Fatalf("expected subscription kind, got %s", inv.Kind)
+		}
+	})
+}
+
+// TestInvoiceServiceCreateInvoiceWalletBranches tests wallet selection logic.
+func TestInvoiceServiceCreateInvoiceWalletBranches(t *testing.T) {
+	ctx := context.Background()
+	st := newPaymentServiceTestStore(t, ctx)
+
+	workspace, err := st.UpsertWorkspaceByTelegram(ctx, 88300, "walletbranchuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+
+	svc := NewInvoiceService(st, "5.0")
+
+	t.Run("CreateInvoice with specific wallet ID that mismatches network fails", func(t *testing.T) {
+		tonWallet, err := st.CreateWallet(ctx, workspace.ID, store.NetworkTON, "UQBS_test_ton_addr_000000000000000000000000000")
+		if err != nil {
+			t.Fatalf("CreateWallet TON: %v", err)
+		}
+
+		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
+			Title:          "Mismatch",
+			BaseAmountUSD:  decimal.RequireFromString("10"),
+			PayableNetwork: store.NetworkEVM, // EVM network but TON wallet
+			WalletID:       tonWallet.ID,
+		})
+		if err == nil || !strings.Contains(err.Error(), "network") {
+			t.Fatalf("expected network mismatch error, got %v", err)
+		}
+	})
+
+	t.Run("CreateInvoice without wallet and no active wallet fails", func(t *testing.T) {
+		// No wallet created for SOLANA → active wallet lookup fails
+		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
+			Title:          "No Wallet",
+			BaseAmountUSD:  decimal.RequireFromString("10"),
+			PayableNetwork: store.NetworkSOLANA,
+		})
+		if err == nil {
+			t.Fatal("expected error when no active wallet for network")
+		}
+	})
+
+	t.Run("CreateInvoice with non-existent wallet ID fails", func(t *testing.T) {
+		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
+			Title:          "BadWallet",
+			BaseAmountUSD:  decimal.RequireFromString("10"),
+			PayableNetwork: store.NetworkEVM,
+			WalletID:       99999999,
+		})
+		if err == nil {
+			t.Fatal("expected error for non-existent wallet ID")
+		}
+	})
+}
