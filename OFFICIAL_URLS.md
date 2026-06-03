@@ -2,12 +2,12 @@
 
 ## Domains
 
-* **Production:** `https://reqst.xyz`
+* **Production:** `https://recv.money`
 * **Local canonical entrypoint:** `http://localhost:3000` through `docker-compose.dev.yml` and the nginx gateway.
 
 ## Route Ownership
 
-* `/`, `/en`, `/ru`, `/en/dev`, `/ru/dev`, `/en/enterprise`, `/ru/enterprise`, `/en/privacy`, `/ru/privacy`, `/en/terms`, `/ru/terms`, `/en/blog`, `/ru/blog` -> `frontend-public` (Next.js).
+* `/`, `/en`, `/ru`, `/en/dev`, `/ru/dev`, `/en/business`, `/ru/business`, `/en/privacy`, `/ru/privacy`, `/en/terms`, `/ru/terms`, `/en/blog`, `/ru/blog` -> `frontend-public` (Next.js).
 * `/robots.txt`, `/sitemap.xml`, favicon and Next assets -> `frontend-public` (Next.js metadata/file conventions).
 * `/app/*` -> `frontend` (Vite SPA). This includes `/app/auth`, `/app/console`, `/app/admin`, `/app/admin/blog`, `/app/developers`, `/app/developer-portal`, and `/app/checkout/:id`.
 * `/api/*` and `/v1/*` -> `api` (Go/Gin).

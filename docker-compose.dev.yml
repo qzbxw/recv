@@ -3,21 +3,21 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: reqst
-      POSTGRES_USER: reqst
-      POSTGRES_PASSWORD: reqst
+      POSTGRES_DB: recv
+      POSTGRES_USER: recv
+      POSTGRES_PASSWORD: recv
     ports:
       - "5432:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U reqst -d reqst"]
+      test: ["CMD-SHELL", "pg_isready -U recv -d recv"]
       interval: 5s
       timeout: 3s
       retries: 20
 
   api:
-    image: reqst-api-dev
+    image: recv-api-dev
     build:
       context: .
       dockerfile: backend/Dockerfile.dev
@@ -35,7 +35,7 @@ services:
       APP_RUNTIME: api
       HTTP_PORT: "8080"
       METRICS_PORT: "9090"
-      DATABASE_URL: postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable
+      DATABASE_URL: postgres://recv:recv@postgres:5432/recv?sslmode=disable
       JWT_SECRET: dev-jwt-secret
       INTERNAL_TOKEN: dev-internal-token
       ALLOW_INSECURE_DEV_AUTH: "true"
@@ -50,7 +50,7 @@ services:
     # Ports are internal only, accessed via gateway
 
   frontend_public:
-    image: reqst-frontend-public-dev
+    image: recv-frontend-public-dev
     build:
       context: .
       dockerfile: frontend-public/Dockerfile.dev
@@ -68,7 +68,7 @@ services:
     # Ports are internal only
 
   frontend:
-    image: reqst-frontend-dev
+    image: recv-frontend-dev
     build:
       context: .
       dockerfile: frontend/Dockerfile.dev
@@ -86,7 +86,7 @@ services:
     # Ports are internal only
 
   gateway:
-    image: reqst-gateway-dev
+    image: recv-gateway-dev
     build:
       context: .
       dockerfile: frontend/Dockerfile.gateway.dev

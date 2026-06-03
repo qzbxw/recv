@@ -28,13 +28,13 @@ type LegalCopy = {
 
 
 const LEGAL_PROFILE = {
-  operatorName: "Reqst",
-  contactEmail: "legal@reqst.xyz",
-  supportEmail: "support@reqst.xyz",
-  address: "Contact legal@reqst.xyz for formal notices.",
+  operatorName: "recv",
+  contactEmail: "legal@recv.money",
+  supportEmail: "support@recv.money",
+  address: "Contact legal@recv.money for formal notices.",
   jurisdiction: "To be specified in the merchant agreement.",
-  domain: "reqst.xyz",
-  refundPolicy: "Reqst platform subscription refunds are handled case by case according to the active service agreement.",
+  domain: "recv.money",
+  refundPolicy: "recv platform subscription refunds are handled case by case according to the active service agreement.",
   effectiveDate: {
     ru: "13 марта 2026",
     en: "March 13, 2026",
@@ -60,7 +60,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
       <div className="lend-shell lend-shell--legal">
         <header className="legal-topbar">
           <Link className="lend-brand" to="/lend">
-            <strong>reqst</strong>
+            <strong>recv</strong>
           </Link>
 
           <div className="lend-topbar-actions">
@@ -150,7 +150,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
             <Link to="/terms">Terms</Link>
             <Link to="/developers">Docs</Link>
             <Link to="/dev">API</Link>
-            <Link to="/enterprise">B2B</Link>
+            <Link to="/auth">Business</Link>
             <Link to="/auth">Console</Link>
           </div>
         </footer>

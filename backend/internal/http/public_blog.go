@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"reqst/backend/internal/store"
+	"recv/backend/internal/store"
 
 	"github.com/gin-gonic/gin"
 )

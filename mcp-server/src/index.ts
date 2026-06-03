@@ -8,16 +8,16 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const API_BASE_URL = process.env.REQST_API_URL || "https://reqst.xyz/v1";
-const API_KEY = process.env.REQST_API_KEY || "";
-const ACCESS_TOKEN = process.env.REQST_ACCESS_TOKEN || "";
-const WEBHOOK_SECRET = process.env.REQST_WEBHOOK_SECRET || "";
-const DOCS_BASE_URL = process.env.REQST_DOCS_URL || "https://reqst.xyz/en/docs";
-const APP_BASE_URL = process.env.REQST_APP_URL || deriveAppBaseUrl(API_BASE_URL);
+const API_BASE_URL = process.env.RECV_API_URL || "https://recv.money/v1";
+const API_KEY = process.env.RECV_API_KEY || "";
+const ACCESS_TOKEN = process.env.RECV_ACCESS_TOKEN || "";
+const WEBHOOK_SECRET = process.env.RECV_WEBHOOK_SECRET || "";
+const DOCS_BASE_URL = process.env.RECV_DOCS_URL || "https://recv.money/en/docs";
+const APP_BASE_URL = process.env.RECV_APP_URL || deriveAppBaseUrl(API_BASE_URL);
 
 const server = new Server(
   {
-    name: "reqst-agent-mcp",
+    name: "recv-agent-mcp",
     version: "1.0.0",
   },
   {
@@ -35,34 +35,34 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
   return {
     resources: [
       {
-        uri: "reqst://docs/auth",
+        uri: "recv://docs/auth",
         name: "Authentication Guide",
         mimeType: "text/markdown",
-        description: "How to authenticate with the Reqst API.",
+        description: "How to authenticate with the recv API.",
       },
       {
-        uri: "reqst://docs/invoices",
+        uri: "recv://docs/invoices",
         name: "Invoices API Guide",
         mimeType: "text/markdown",
         description: "How to create and manage payment invoices.",
       },
       {
-        uri: "reqst://docs/webhooks",
+        uri: "recv://docs/webhooks",
         name: "Webhook Integration Guide",
         mimeType: "text/markdown",
-        description: "How to receive and verify webhooks from Reqst.",
+        description: "How to receive and verify webhooks from recv.",
       },
       {
-        uri: "reqst://docs/errors",
+        uri: "recv://docs/errors",
         name: "Error Handling and Rate Limits",
         mimeType: "text/markdown",
-        description: "Reqst API error codes and rate limit policies.",
+        description: "recv API error codes and rate limit policies.",
       },
       {
-        uri: "reqst://docs/mcp",
+        uri: "recv://docs/mcp",
         name: "MCP Agent Guide",
         mimeType: "text/markdown",
-        description: "How AI agents onboard, buy a plan, and use Reqst through MCP.",
+        description: "How AI agents onboard, buy a plan, and use recv through MCP.",
       },
     ],
   };
@@ -70,7 +70,7 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
 
 server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   const { uri } = request.params;
-  const slug = uri.replace("reqst://docs/", "");
+  const slug = uri.replace("recv://docs/", "");
   
   try {
     const response = await fetch(`${DOCS_BASE_URL}/raw/${slug}`);
@@ -102,7 +102,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "create_invoice",
-        description: "Create a new payment invoice in Reqst. The amount is always priced in USD and converted to the payable crypto network.",
+        description: "Create a new payment invoice in recv. The amount is always priced in USD and converted to the payable crypto network.",
         inputSchema: {
           type: "object",
           properties: {
@@ -110,8 +110,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             base_amount_usd: { type: "string", description: "Amount in USD as a decimal string (e.g. '10.50')" },
             payable_network: {
               type: "string",
-              description: "Network the customer pays on. One of: TON, TRON, SOLANA, EVM, BASE, ARBITRUM, BSC.",
-              enum: ["TON", "TRON", "SOLANA", "EVM", "BASE", "ARBITRUM", "BSC"],
+              description: "Network the customer pays on. One of: TON, TON_USDT, TRON, BASE, BSC.",
+              enum: ["TON", "TON_USDT", "TRON", "BASE", "BSC"],
             },
             expires_in_minutes: { type: "number", description: "Optional invoice lifetime in minutes (default 30)" },
           },
@@ -120,12 +120,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_account",
-        description: "Return the authenticated Reqst console account, workspace, active plan, and available paid plans. Requires REQST_ACCESS_TOKEN.",
+        description: "Return the authenticated recv console account, workspace, active plan, and available paid plans. Requires RECV_ACCESS_TOKEN.",
         inputSchema: { type: "object", properties: {} },
       },
       {
         name: "bootstrap_agent_workspace",
-        description: "Create a new Reqst trial workspace for an autonomous agent and return a console access token. Use the returned token as REQST_ACCESS_TOKEN, then buy a Developer or Business subscription.",
+        description: "Create a new recv trial workspace for an autonomous agent and return a console access token. Use the returned token as RECV_ACCESS_TOKEN, then buy a Developer or Business subscription.",
         inputSchema: {
           type: "object",
           properties: {
@@ -136,7 +136,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_subscription_checkout",
-        description: "Create a Reqst plan checkout for this workspace. Use this for self-service onboarding or upgrades before API keys exist. Requires REQST_ACCESS_TOKEN. For AI agents that need to accept payments, choose developer or business because merchant does not include API keys.",
+        description: "Create a recv plan checkout for this workspace. Use this for self-service onboarding or upgrades before API keys exist. Requires RECV_ACCESS_TOKEN. For AI agents that need to accept payments, choose developer or business because merchant does not include API keys.",
         inputSchema: {
           type: "object",
           properties: {
@@ -147,8 +147,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             payable_network: {
               type: "string",
-              description: "Network used to pay Reqst for the subscription. One of: TON, TRON, SOLANA, EVM, BASE, ARBITRUM, BSC.",
-              enum: ["TON", "TRON", "SOLANA", "EVM", "BASE", "ARBITRUM", "BSC"],
+              description: "Network used to pay recv for the subscription. One of: TON, TON_USDT, TRON, BASE, BSC.",
+              enum: ["TON", "TON_USDT", "TRON", "BASE", "BSC"],
             },
           },
           required: ["plan_code", "payable_network"],
@@ -156,7 +156,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_checkout_invoice",
-        description: "Read any public Reqst checkout invoice by public_id. Useful for polling a subscription checkout until it becomes paid.",
+        description: "Read any public recv checkout invoice by public_id. Useful for polling a subscription checkout until it becomes paid.",
         inputSchema: {
           type: "object",
           properties: {
@@ -167,7 +167,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_api_key",
-        description: "Create a developer API key for the authenticated workspace after a Developer/Business/Enterprise subscription is active. Requires REQST_ACCESS_TOKEN.",
+        description: "Create a developer API key for the authenticated workspace after a Developer or Business subscription is active. Requires RECV_ACCESS_TOKEN.",
         inputSchema: {
           type: "object",
           properties: {
@@ -183,11 +183,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_webhook_endpoint",
-        description: "Create a webhook endpoint for invoice and subscription events. Requires REQST_ACCESS_TOKEN and an active plan with webhooks.",
+        description: "Create a webhook endpoint for invoice and subscription events. Requires RECV_ACCESS_TOKEN and an active plan with webhooks.",
         inputSchema: {
           type: "object",
           properties: {
-            url: { type: "string", description: "HTTPS webhook URL that receives Reqst events" },
+            url: { type: "string", description: "HTTPS webhook URL that receives recv events" },
             label: { type: "string", description: "Human-readable endpoint label" },
             environment: { type: "string", description: "Endpoint environment", enum: ["live", "test"] },
           },
@@ -196,7 +196,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_invoice",
-        description: "Retrieve status and details of an existing Reqst invoice.",
+        description: "Retrieve status and details of an existing recv invoice.",
         inputSchema: {
           type: "object",
           properties: {
@@ -229,20 +229,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "verify_webhook",
-        description: "Verify a Reqst webhook signature. Pass the RAW request body string exactly as received (do not re-serialize), the X-Reqst-Timestamp header, and the X-Reqst-Signature header.",
+        description: "Verify a recv webhook signature. Pass the RAW request body string exactly as received (do not re-serialize), the X-recv-Timestamp header, and the X-recv-Signature header.",
         inputSchema: {
           type: "object",
           properties: {
             raw_body: { type: "string", description: "The raw, unparsed request body string exactly as received" },
-            timestamp: { type: "string", description: "The value of the X-Reqst-Timestamp header" },
-            signature: { type: "string", description: "The value of the X-Reqst-Signature header (e.g. 'v1=abc...')" },
+            timestamp: { type: "string", description: "The value of the X-recv-Timestamp header" },
+            signature: { type: "string", description: "The value of the X-recv-Signature header (e.g. 'v1=abc...')" },
           },
           required: ["raw_body", "timestamp", "signature"],
         },
       },
       {
         name: "list_supported_networks",
-        description: "List blockchain networks and assets currently supported by Reqst.",
+        description: "List blockchain networks and assets currently supported by recv.",
         inputSchema: { type: "object", properties: {} },
       },
     ],
@@ -267,19 +267,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{ 
             type: "text", 
-            text: "Reqst supports the following payable_network values:\n- TON — The Open Network (Mainnet)\n- TRON — USDT TRC-20\n- SOLANA — USDC/USDT\n- EVM — Ethereum Mainnet and EVM-compatible chains\n- BASE — Base (EVM)\n- ARBITRUM — Arbitrum One (EVM)\n- BSC — BNB Smart Chain (EVM)"
+            text: "recv supports the following payable_network values:\n- TON — native TON\n- TON_USDT — USDT on TON\n- TRON — USDT TRC-20\n- BASE — USDC/USDT on Base\n- BSC — USDT on BNB Smart Chain"
           }],
         };
       }
       case "verify_webhook": {
         if (!WEBHOOK_SECRET) {
           return {
-            content: [{ type: "text", text: "Error: REQST_WEBHOOK_SECRET is not set. Verification cannot be performed." }],
+            content: [{ type: "text", text: "Error: RECV_WEBHOOK_SECRET is not set. Verification cannot be performed." }],
             isError: true,
           };
         }
         const { raw_body, timestamp, signature } = args as { raw_body: string; timestamp: string; signature: string };
-        // Reqst signs: "v1=" + HMAC_SHA256(secret, `${timestamp}.${rawBody}`)
+        // recv signs: "v1=" + HMAC_SHA256(secret, `${timestamp}.${rawBody}`)
         const hmac = createHmac("sha256", WEBHOOK_SECRET.trim());
         hmac.update(timestamp);
         hmac.update(".");
@@ -316,7 +316,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
       case "get_account": {
-        if (!ACCESS_TOKEN) throw new Error("REQST_ACCESS_TOKEN not set");
+        if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
         const response = await fetch(appApiUrl("/api/me"), { headers: consoleHeaders });
         const data = await response.json();
         return jsonToolResult(data, response.ok);
@@ -332,7 +332,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return jsonToolResult(data, response.ok);
       }
       case "create_subscription_checkout": {
-        if (!ACCESS_TOKEN) throw new Error("REQST_ACCESS_TOKEN not set");
+        if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
         const { plan_code = "developer", payable_network = "TRON" } = (args as any) || {};
         const response = await fetch(appApiUrl("/api/billing/checkout"), {
           method: "POST",
@@ -358,8 +358,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return jsonToolResult(data, response.ok);
       }
       case "create_api_key": {
-        if (!ACCESS_TOKEN) throw new Error("REQST_ACCESS_TOKEN not set");
-        const { label = "Reqst MCP agent", environment = "live", scopes } = (args as any) || {};
+        if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
+        const { label = "recv MCP agent", environment = "live", scopes } = (args as any) || {};
         const response = await fetch(appApiUrl("/api/developer/api-keys"), {
           method: "POST",
           headers: consoleHeaders,
@@ -373,8 +373,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return jsonToolResult(data, response.ok);
       }
       case "create_webhook_endpoint": {
-        if (!ACCESS_TOKEN) throw new Error("REQST_ACCESS_TOKEN not set");
-        const { url, label = "Reqst MCP webhook", environment = "live" } = (args as any) || {};
+        if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
+        const { url, label = "recv MCP webhook", environment = "live" } = (args as any) || {};
         const response = await fetch(appApiUrl("/api/developer/webhooks"), {
           method: "POST",
           headers: consoleHeaders,
@@ -452,7 +452,7 @@ function jsonToolResult(data: unknown, ok: boolean) {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Reqst MCP Server running on stdio");
+  console.error("recv MCP Server running on stdio");
 }
 
 main().catch((error) => {

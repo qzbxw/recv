@@ -6,7 +6,7 @@ import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayo
 export type ComparePoint = {
   readonly title: string;
   readonly competitor: string;
-  readonly reqst: string;
+  readonly recv: string;
 };
 
 export type CompareFaqItem = {
@@ -83,7 +83,7 @@ export function CompareDetailClient({
           <div className="grid grid-cols-[1fr_1fr_1fr] gap-4 mb-6 lend-reveal--1 px-6 md:px-8">
             <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/25">{locale === "ru" ? "Критерий" : "Criterion"}</div>
             <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/25 text-center">{data.name}</div>
-            <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-accent/70 text-center">Reqst</div>
+            <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-accent/70 text-center">recv</div>
           </div>
 
           <div className="flex flex-col gap-4 lend-reveal--2">
@@ -107,10 +107,10 @@ export function CompareDetailClient({
                     <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-white/25 block mb-2 md:mb-3">{data.name}</span>
                     <p className="text-xs md:text-sm text-white/45 leading-relaxed">{point.competitor}</p>
                   </div>
-                  {/* Reqst */}
+                  {/* recv */}
                   <div className="px-5 pb-5 md:py-6 bg-accent/[0.02] rounded-b-2xl md:rounded-r-2xl md:rounded-bl-none">
-                    <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-accent/60 block mb-2 md:mb-3">Reqst</span>
-                    <p className="text-xs md:text-sm text-white/65 leading-relaxed font-medium">{point.reqst}</p>
+                    <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-accent/60 block mb-2 md:mb-3">recv</span>
+                    <p className="text-xs md:text-sm text-white/65 leading-relaxed font-medium">{point.recv}</p>
                   </div>
                 </div>
               </article>
@@ -158,8 +158,8 @@ export function CompareDetailClient({
           </h2>
           <p className="lend-reveal--2 text-base md:text-lg text-white/50 max-w-xl mx-auto leading-relaxed font-medium mb-12">
             {locale === "ru"
-              ? "Подключите Reqst для безопасного non-custodial процессинга без комиссий с оборота."
-              : "Join forward-thinking companies that choose Reqst for secure, non-custodial processing."}
+              ? "Подключите recv для безопасного non-custodial процессинга без комиссий с оборота."
+              : "Join forward-thinking companies that choose recv for secure, non-custodial processing."}
           </p>
           <div className="lend-reveal--3 flex flex-col sm:flex-row justify-center items-center gap-5">
             <Link className="lend-primary px-12 py-5 text-lg font-bold rounded-2xl min-w-[240px] flex items-center justify-center gap-3 group/btn shadow-[0_20px_50px_rgba(124,58,237,0.25)]" href="/app/auth">

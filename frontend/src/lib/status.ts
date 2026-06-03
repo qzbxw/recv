@@ -89,6 +89,24 @@ export function formatInvoiceStatus(status: Invoice["status"], language: Languag
   return (short ? meta.shortLabel : meta.label)[language] ?? status.replaceAll("_", " ");
 }
 
+export function getInvoiceStatusTooltip(status: Invoice["status"], language: Language) {
+  const tooltips: Partial<Record<InvoiceStatus, Record<Language, string>>> = {
+    underpaid: {
+      ru: "Клиент прислал меньше (возможно, биржа съела комиссию). Можно принять вручную",
+      en: "Customer sent less (possibly exchange withdrawal fee was deducted). You can accept it manually.",
+    },
+    expired: {
+      ru: "Оплата пришла после истечения таймера",
+      en: "Payment arrived after the timer expired.",
+    },
+    manual_review: {
+      ru: "Сумма не сошлась точно, требуется ваше решение",
+      en: "The amount did not match exactly and needs your decision.",
+    },
+  };
+  return tooltips[status]?.[language] ?? "";
+}
+
 export function isInvoiceExpiredByClock(invoice: Invoice, now = Date.now()) {
   return invoice.status === "expired" || new Date(invoice.expires_at).getTime() <= now;
 }
@@ -128,4 +146,3 @@ export function calculateRemainingAmount(invoice: Invoice) {
   const remaining = Math.max(0, expected - received);
   return remaining.toFixed(remaining >= 1 ? 6 : 9).replace(/0+$/, "").replace(/\.$/, "");
 }
-

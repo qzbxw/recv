@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"reqst/backend/internal/store"
+	"recv/backend/internal/store"
 
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 )
@@ -155,12 +155,12 @@ func newAdminServiceTestStore(t *testing.T, ctx context.Context) *store.Store {
 	pgConfig := embeddedpostgres.DefaultConfig().
 		Version(embeddedpostgres.V16).
 		Port(port).
-		Database("reqst").
-		Username("reqst").
-		Password("reqst").
+		Database("recv").
+		Username("recv").
+		Password("recv").
 		RuntimePath(filepath.Join(baseDir, "runtime")).
 		DataPath(filepath.Join(baseDir, "data")).
-		CachePath(filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")).
+		CachePath(filepath.Join(os.TempDir(), "recv-embedded-postgres-cache")).
 		Locale("C").
 		Encoding("UTF8").
 		StartTimeout(45 * time.Second).

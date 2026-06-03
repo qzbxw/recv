@@ -38,10 +38,10 @@ export async function generateMetadata(props: {
   const description =
     (doc.data.description as string) ||
     (locale === "ru"
-      ? "Документация Reqst: API, вебхуки, сети и интеграция криптоплатежей."
-      : "Reqst documentation: API, webhooks, supported networks, and crypto payment integration.");
+      ? "Документация recv: API, вебхуки, сети и интеграция криптоплатежей."
+      : "recv documentation: API, webhooks, supported networks, and crypto payment integration.");
   return {
-    title: `${title} | Reqst Docs`,
+    title: `${title} | recv Docs`,
     description,
     alternates: {
       canonical: `/${locale}${path}`,
@@ -92,9 +92,9 @@ export default async function DocPage(props: {
     headline: doc.data.title as string,
     description: (doc.data.description as string) || undefined,
     inLanguage: locale,
-    url: `https://reqst.xyz/${locale}/docs/${slug.join("/")}`,
-    author: { "@type": "Organization", name: "Reqst" },
-    publisher: { "@type": "Organization", name: "Reqst" },
+    url: `https://recv.money/${locale}/docs/${slug.join("/")}`,
+    author: { "@type": "Organization", name: "recv" },
+    publisher: { "@type": "Organization", name: "recv" },
   };
 
   return (

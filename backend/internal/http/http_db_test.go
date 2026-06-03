@@ -25,9 +25,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 
-	"reqst/backend/internal/config"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/config"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 )
 
 // sharedHTTPTestStore is a package-level store shared across all DB-backed HTTP tests.
@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 	port := uint32(listener.Addr().(*net.TCPAddr).Port)
 	listener.Close()
 
-	baseDir, err := os.MkdirTemp("", "reqst-http-test-*")
+	baseDir, err := os.MkdirTemp("", "recv-http-test-*")
 	if err != nil {
 		panic("mktemp: " + err.Error())
 	}
@@ -54,12 +54,12 @@ func TestMain(m *testing.M) {
 	pgConfig := embeddedpostgres.DefaultConfig().
 		Version(embeddedpostgres.V16).
 		Port(port).
-		Database("reqst").
-		Username("reqst").
-		Password("reqst").
+		Database("recv").
+		Username("recv").
+		Password("recv").
 		RuntimePath(filepath.Join(baseDir, "runtime")).
 		DataPath(filepath.Join(baseDir, "data")).
-		CachePath(filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")).
+		CachePath(filepath.Join(os.TempDir(), "recv-embedded-postgres-cache")).
 		Locale("C").
 		Encoding("UTF8").
 		StartTimeout(45 * time.Second).
@@ -688,8 +688,8 @@ func TestDeveloperAPIMiddlewareBranchesWithDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpsertWorkspaceByTelegram trial: %v", err)
 	}
-	trialSecret := "rqst_live_trial_direct"
-	if _, err := sharedHTTPTestStore.CreateAPIKey(ctx, trialWorkspace.ID, "trial direct", "rqst_live_", hashSecret(trialSecret), []string{"invoices:read"}, "live"); err != nil {
+	trialSecret := "live_trial_direct"
+	if _, err := sharedHTTPTestStore.CreateAPIKey(ctx, trialWorkspace.ID, "trial direct", "live_", hashSecret(trialSecret), []string{"invoices:read"}, "live"); err != nil {
 		t.Fatalf("CreateAPIKey trial: %v", err)
 	}
 
@@ -703,12 +703,12 @@ func TestDeveloperAPIMiddlewareBranchesWithDB(t *testing.T) {
 		subEnd, devWorkspace.ID); err != nil {
 		t.Fatalf("set developer plan: %v", err)
 	}
-	devSecret := "rqst_live_dev_direct"
-	if _, err := sharedHTTPTestStore.CreateAPIKey(ctx, devWorkspace.ID, "dev direct", "rqst_live_", hashSecret(devSecret), []string{"invoices:read", "invoices:write"}, "live"); err != nil {
+	devSecret := "live_dev_direct"
+	if _, err := sharedHTTPTestStore.CreateAPIKey(ctx, devWorkspace.ID, "dev direct", "live_", hashSecret(devSecret), []string{"invoices:read", "invoices:write"}, "live"); err != nil {
 		t.Fatalf("CreateAPIKey dev: %v", err)
 	}
-	rateSecret := "rqst_live_dev_rate_direct"
-	if _, err := sharedHTTPTestStore.CreateAPIKey(ctx, devWorkspace.ID, "rate direct", "rqst_live_", hashSecret(rateSecret), []string{"invoices:read"}, "live"); err != nil {
+	rateSecret := "live_dev_rate_direct"
+	if _, err := sharedHTTPTestStore.CreateAPIKey(ctx, devWorkspace.ID, "rate direct", "live_", hashSecret(rateSecret), []string{"invoices:read"}, "live"); err != nil {
 		t.Fatalf("CreateAPIKey rate: %v", err)
 	}
 
@@ -733,7 +733,7 @@ func TestDeveloperAPIMiddlewareBranchesWithDB(t *testing.T) {
 
 		rec = httptest.NewRecorder()
 		req := httptest.NewRequest(stdhttp.MethodGet, "/v1/ping", nil)
-		req.Header.Set("Authorization", "Bearer rqst_live_missing")
+		req.Header.Set("Authorization", "Bearer live_missing")
 		router.ServeHTTP(rec, req)
 		if rec.Code != stdhttp.StatusUnauthorized {
 			t.Fatalf("expected invalid key 401, got %d", rec.Code)
@@ -938,7 +938,7 @@ func TestServerHandlersWithDB(t *testing.T) {
 		router.Use(withWS)
 		router.POST("/api/invoices", server2.handleCreateInvoice)
 
-		body := `{"title":"Test Invoice","base_amount_usd":"10","payable_network":"EVM"}`
+		body := `{"title":"Test Invoice","base_amount_usd":"10","payable_network":"BASE"}`
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(stdhttp.MethodPost, "/api/invoices", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -1501,9 +1501,9 @@ func TestAPIKeyMiddlewareWithDB(t *testing.T) {
 	}
 
 	// Create a real API key
-	rawToken := "rqst_live_testkey12345"
+	rawToken := "live_testkey12345"
 	tokenHash := hashSecret(rawToken)
-	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "test-key", "rqst_", tokenHash, []string{"invoices:read", "invoices:write"}, "live")
+	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "test-key", "recv_", tokenHash, []string{"invoices:read", "invoices:write"}, "live")
 	if err != nil {
 		t.Fatalf("CreateAPIKey: %v", err)
 	}
@@ -1573,9 +1573,9 @@ func TestAPIKeyMiddlewareWithDB(t *testing.T) {
 		if err != nil {
 			t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
 		}
-		trialToken := "rqst_trial_key99"
+		trialToken := "recv_trial_key99"
 		trialHash := hashSecret(trialToken)
-		_, err = sharedHTTPTestStore.CreateAPIKey(ctx, trialWS.ID, "trial-key", "rqst_", trialHash, []string{"invoices:read"}, "live")
+		_, err = sharedHTTPTestStore.CreateAPIKey(ctx, trialWS.ID, "trial-key", "recv_", trialHash, []string{"invoices:read"}, "live")
 		if err != nil {
 			t.Fatalf("CreateAPIKey for trial workspace: %v", err)
 		}
@@ -1613,17 +1613,17 @@ func TestAPIKeyMiddlewareSequentialErrorsWithDB(t *testing.T) {
 		t.Fatalf("set dev plan: %v", err)
 	}
 
-	rawToken := "rqst_live_seqmock12345"
-	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "seq-key", "rqst_live_seq_", hashSecret(rawToken), []string{"invoices:read"}, "live")
+	rawToken := "live_seqmock12345"
+	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "seq-key", "live_seq_", hashSecret(rawToken), []string{"invoices:read"}, "live")
 	if err != nil {
 		t.Fatalf("CreateAPIKey: %v", err)
 	}
 	_ = apiKey
 
 	for _, tc := range []struct {
-		name   string
-		mock   *mockHTTPStore
-		want   int
+		name string
+		mock *mockHTTPStore
+		want int
 	}{
 		{
 			name: "GetWorkspaceByID error returns 401",
@@ -1680,7 +1680,7 @@ func TestDeveloperAPIHandlerBoundariesWithDB(t *testing.T) {
 	workspace.PlanCode = store.PlanCodeDeveloper
 	workspace.SubscriptionEndsAt = &subEnd
 
-	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "boundary-key", "rqst_test_", "boundary-hash", []string{"invoices:read", "invoices:write"}, "test")
+	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "boundary-key", "test_", "boundary-hash", []string{"invoices:read", "invoices:write"}, "test")
 	if err != nil {
 		t.Fatalf("CreateAPIKey: %v", err)
 	}
@@ -1912,7 +1912,7 @@ func TestAPIHandlersWithDB(t *testing.T) {
 
 	server := &Server{store: sharedHTTPTestStore}
 
-	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "api-test-key", "rqst_", "api-test-hash-xyz", []string{"invoices:read", "invoices:write"}, "live")
+	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "api-test-key", "recv_", "api-test-hash-xyz", []string{"invoices:read", "invoices:write"}, "live")
 	if err != nil {
 		t.Fatalf("CreateAPIKey: %v", err)
 	}
@@ -2505,40 +2505,6 @@ func TestAdminHandlersFullCoverageWithDB(t *testing.T) {
 		router.ServeHTTP(rec, req)
 		if rec.Code != stdhttp.StatusBadRequest {
 			t.Fatalf("expected 400 for unsupported network, got %d: %s", rec.Code, rec.Body.String())
-		}
-	})
-
-	t.Run("handleAdminCreateBillingCheckout enterprise with empty amount rejected", func(t *testing.T) {
-		router := gin.New()
-		router.Use(gin.HandlerFunc(withAdmin))
-		router.POST("/api/admin/workspaces/:id/billing-checkout", server.handleAdminCreateBillingCheckout)
-
-		body := `{"plan_code":"enterprise","payable_network":"TON","base_amount_usd":""}`
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(stdhttp.MethodPost,
-			"/api/admin/workspaces/"+itoa(workspace.ID)+"/billing-checkout",
-			strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		router.ServeHTTP(rec, req)
-		if rec.Code != stdhttp.StatusBadRequest {
-			t.Fatalf("expected 400 for enterprise with empty amount, got %d: %s", rec.Code, rec.Body.String())
-		}
-	})
-
-	t.Run("handleAdminCreateBillingCheckout enterprise with negative amount rejected", func(t *testing.T) {
-		router := gin.New()
-		router.Use(gin.HandlerFunc(withAdmin))
-		router.POST("/api/admin/workspaces/:id/billing-checkout", server.handleAdminCreateBillingCheckout)
-
-		body := `{"plan_code":"enterprise","payable_network":"TON","base_amount_usd":"-5"}`
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(stdhttp.MethodPost,
-			"/api/admin/workspaces/"+itoa(workspace.ID)+"/billing-checkout",
-			strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		router.ServeHTTP(rec, req)
-		if rec.Code != stdhttp.StatusBadRequest {
-			t.Fatalf("expected 400 for negative enterprise amount, got %d: %s", rec.Code, rec.Body.String())
 		}
 	})
 
@@ -4282,7 +4248,7 @@ func TestHandleObservedTransfersProcessingErrorWithDB(t *testing.T) {
 	router := gin.New()
 	router.POST("/internal/watchers/ton", server.handleObservedTransfers)
 
-	body := `{"events":[{"tx_hash":"test-tx-001","network":"TON","destination_address":"UQBtest","amount":"1.5","payment_comment":"REQST-TEST","observed_at":"2024-01-01T00:00:00Z","raw_payload":{}}]}`
+	body := `{"events":[{"tx_hash":"test-tx-001","network":"TON","destination_address":"UQBtest","amount":"1.5","payment_comment":"RECV-TEST","observed_at":"2024-01-01T00:00:00Z","raw_payload":{}}]}`
 	rec := httptest.NewRecorder()
 	req := withCanceledContext(httptest.NewRequest(stdhttp.MethodPost, "/internal/watchers/ton", strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
@@ -4549,7 +4515,7 @@ func TestHandleCreateAPIKeyAtLimitWithDB(t *testing.T) {
 	}
 
 	for i := 0; i < limit; i++ {
-		prefix := fmt.Sprintf("rqst_live_%d_", i)
+		prefix := fmt.Sprintf("live_%d_", i)
 		if _, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID,
 			fmt.Sprintf("key%d", i), prefix, "hash"+fmt.Sprint(i), []string{"invoices:read"}, "live"); err != nil {
 			t.Fatalf("CreateAPIKey %d: %v", i, err)
@@ -4872,7 +4838,7 @@ func TestAPICreateInvoiceCreateFailWithDB(t *testing.T) {
 	workspace.PlanCode = store.PlanCodeDeveloper
 	workspace.SubscriptionEndsAt = &subEnd
 
-	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "fail-key", "rqst_live_fail_", "hashfail", []string{"invoices:write"}, "live")
+	apiKey, err := sharedHTTPTestStore.CreateAPIKey(ctx, workspace.ID, "fail-key", "live_fail_", "hashfail", []string{"invoices:write"}, "live")
 	if err != nil {
 		t.Fatalf("CreateAPIKey: %v", err)
 	}

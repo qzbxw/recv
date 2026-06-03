@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/store"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"

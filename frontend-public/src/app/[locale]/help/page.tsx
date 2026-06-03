@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);
   const copy = STATIC_PAGE_COPY.help[locale];
-  return { title: `${copy.title} | Reqst`, description: copy.body, alternates: { canonical: `/${locale}/help`, languages: { en: "/en/help", ru: "/ru/help", "x-default": "/en/help" } } };
+  return { title: `${copy.title} | recv`, description: copy.body, alternates: { canonical: `/${locale}/help`, languages: { en: "/en/help", ru: "/ru/help", "x-default": "/en/help" } } };
 }
 
 export default async function Page({ params }: Props) {

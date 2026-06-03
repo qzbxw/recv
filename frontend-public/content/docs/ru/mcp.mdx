@@ -1,13 +1,13 @@
 ---
 title: MCP / AI-агенты
-description: Управляйте Reqst из AI-агентов (Claude Desktop, Cursor) через MCP-сервер Reqst.
+description: Управляйте recv из AI-агентов (Claude Desktop, Cursor) через MCP-сервер recv.
 ---
 
 # MCP / AI-агенты
 
-Reqst поставляет **сервер Model Context Protocol (MCP)**, который предоставляет платежный шлюз AI-агентам в виде инструментов и ресурсов. Любой MCP-совместимый клиент — **Claude Desktop**, **Cursor** и другие — может использовать его для создания счетов, проверки статуса платежей, верификации вебхуков и получения списка поддерживаемых сетей на естественном языке.
+recv поставляет **сервер Model Context Protocol (MCP)**, который предоставляет платежный шлюз AI-агентам в виде инструментов и ресурсов. Любой MCP-совместимый клиент — **Claude Desktop**, **Cursor** и другие — может использовать его для создания счетов, проверки статуса платежей, верификации вебхуков и получения списка поддерживаемых сетей на естественном языке.
 
-Сервер называется `reqst-agent-mcp` и работает локально через stdio. Под капотом он вызывает тот же API Reqst, что описан в остальной документации. Он также умеет создать новый workspace для агента, выписать checkout на подписку Reqst и после оплаты выпустить API credentials.
+Сервер называется `recv-agent-mcp` и работает локально через stdio. Под капотом он вызывает тот же API recv, что описан в остальной документации. Он также умеет создать новый workspace для агента, выписать checkout на подписку recv и после оплаты выпустить API credentials.
 
 ## Конфигурация
 
@@ -15,12 +15,12 @@ Reqst поставляет **сервер Model Context Protocol (MCP)**, кот
 
 | Переменная | Обязательна | По умолчанию | Назначение |
 |------------|-------------|--------------|------------|
-| `REQST_ACCESS_TOKEN` | Для self-service инструментов | — | Bearer token консоли Reqst. Если у агента его еще нет, вызовите `bootstrap_agent_workspace` и сохраните возвращенный `token`/`access_token`. |
-| `REQST_API_KEY` | Да (для инструментов счетов) | — | Ваш API-ключ Reqst. На этапе разработки рекомендуется ключ `rqst_test_`. |
-| `REQST_WEBHOOK_SECRET` | Для `verify_webhook` | — | Секрет подписи вебхуков для проверки подписей. |
-| `REQST_APP_URL` | Нет | выводится из `REQST_API_URL` | Базовый origin для console endpoints, например `https://reqst.xyz`. |
-| `REQST_API_URL` | Нет | `https://reqst.xyz/v1` | Базовый URL REST API. |
-| `REQST_DOCS_URL` | Нет | `https://reqst.xyz/en/docs` | Базовый URL для загрузки raw-документации для ресурсов. |
+| `RECV_ACCESS_TOKEN` | Для self-service инструментов | — | Bearer token консоли recv. Если у агента его еще нет, вызовите `bootstrap_agent_workspace` и сохраните возвращенный `token`/`access_token`. |
+| `RECV_API_KEY` | Да (для инструментов счетов) | — | Ваш API-ключ recv. На этапе разработки рекомендуется ключ `test_`. |
+| `RECV_WEBHOOK_SECRET` | Для `verify_webhook` | — | Секрет подписи вебхуков для проверки подписей. |
+| `RECV_APP_URL` | Нет | выводится из `RECV_API_URL` | Базовый origin для console endpoints, например `https://recv.money`. |
+| `RECV_API_URL` | Нет | `https://recv.money/v1` | Базовый URL REST API. |
+| `RECV_DOCS_URL` | Нет | `https://recv.money/en/docs` | Базовый URL для загрузки raw-документации для ресурсов. |
 
 ### Claude Desktop
 
@@ -29,13 +29,13 @@ Reqst поставляет **сервер Model Context Protocol (MCP)**, кот
 ```json
 {
   "mcpServers": {
-    "reqst": {
+    "recv": {
       "command": "npx",
-      "args": ["-y", "tsx", "/path/to/reqst/mcp-server/src/index.ts"],
+      "args": ["-y", "tsx", "/path/to/recv/mcp-server/src/index.ts"],
       "env": {
-        "REQST_ACCESS_TOKEN": "your_console_token_here",
-        "REQST_API_KEY": "rqst_test_your_key_here",
-        "REQST_WEBHOOK_SECRET": "whsec_your_secret_here"
+        "RECV_ACCESS_TOKEN": "your_console_token_here",
+        "RECV_API_KEY": "test_your_key_here",
+        "RECV_WEBHOOK_SECRET": "whsec_your_secret_here"
       }
     }
   }
@@ -44,7 +44,7 @@ Reqst поставляет **сервер Model Context Protocol (MCP)**, кот
 
 ### Cursor
 
-Добавьте тот же блок `mcpServers` в настройки MCP в Cursor (Settings → MCP) и перезагрузите. Инструменты Reqst появятся у агента автоматически.
+Добавьте тот же блок `mcpServers` в настройки MCP в Cursor (Settings → MCP) и перезагрузите. Инструменты recv появятся у агента автоматически.
 
 ### Локальная разработка
 
@@ -60,7 +60,7 @@ npm run dev
 
 ### `bootstrap_agent_workspace`
 
-Создать trial workspace для полностью автономного агента. Инструмент возвращает обычный результат авторизации Reqst; сохраните `token` или `access_token` как `REQST_ACCESS_TOKEN` перед вызовом self-service инструментов.
+Создать trial workspace для полностью автономного агента. Инструмент возвращает обычный результат авторизации recv; сохраните `token` или `access_token` как `RECV_ACCESS_TOKEN` перед вызовом self-service инструментов.
 
 | Параметр | Тип | Обязателен | Описание |
 |----------|-----|------------|----------|
@@ -69,16 +69,16 @@ npm run dev
 
 ### `get_account`
 
-Вернуть текущий workspace, активный тариф и доступные платные тарифы. Требует `REQST_ACCESS_TOKEN`.
+Вернуть текущий workspace, активный тариф и доступные платные тарифы. Требует `RECV_ACCESS_TOKEN`.
 
 ### `create_subscription_checkout`
 
-Создать billing checkout Reqst для текущего workspace. Требует `REQST_ACCESS_TOKEN`.
+Создать billing checkout recv для текущего workspace. Требует `RECV_ACCESS_TOKEN`.
 
 | Параметр | Тип | Обязателен | Описание |
 |----------|-----|------------|----------|
 | `plan_code` | string | Да | Одно из: `merchant`, `developer`, `business`. Для агента с API-ключами и вебхуками используйте `developer` или `business`. |
-| `payable_network` | string | Да | Сеть, в которой оплачивается подписка Reqst. Одно из: `TON`, `TRON`, `SOLANA`, `EVM`, `BASE`, `ARBITRUM`, `BSC`. |
+| `payable_network` | string | Да | Сеть, в которой оплачивается подписка recv. Одно из: `TON`, `TON_USDT`, `TRON`, `BASE`, `BSC`. |
 
 ### `get_checkout_invoice`
 
@@ -86,11 +86,11 @@ npm run dev
 
 ### `create_api_key`
 
-Создать developer API key после активации тарифа с API. Требует `REQST_ACCESS_TOKEN`.
+Создать developer API key после активации тарифа с API. Требует `RECV_ACCESS_TOKEN`.
 
 ### `create_webhook_endpoint`
 
-Зарегистрировать webhook endpoint после активации тарифа с вебхуками. Требует `REQST_ACCESS_TOKEN`.
+Зарегистрировать webhook endpoint после активации тарифа с вебхуками. Требует `RECV_ACCESS_TOKEN`.
 
 ### `create_invoice`
 
@@ -100,10 +100,10 @@ npm run dev
 |----------|-----|------------|----------|
 | `title` | string | Да | Человекочитаемое название, отображаемое плательщику (например, `"Order #1290"`). |
 | `base_amount_usd` | string | Да | Сумма в долларах США (USD) в виде десятичной строки (например, `"10.50"`). |
-| `payable_network` | string | Да | Сеть, в которой покупатель производит оплату. Одно из: `TON`, `TRON`, `SOLANA`, `EVM`, `BASE`, `ARBITRUM`, `BSC`. |
+| `payable_network` | string | Да | Сеть, в которой покупатель производит оплату. Одно из: `TON`, `TON_USDT`, `TRON`, `BASE`, `BSC`. |
 | `expires_in_minutes` | number | Нет | Опциональное время жизни счета в минутах (по умолчанию 30). |
 
-Инструмент отправляет аргументы напрямую методом `POST` на `/v1/invoices`. Окружение созданного счета зависит от переданного API-ключа (`rqst_test_` → test). См. [Инвойсы](/ru/docs/invoices).
+Инструмент отправляет аргументы напрямую методом `POST` на `/v1/invoices`. Окружение созданного счета зависит от переданного API-ключа (`test_` → test). См. [Инвойсы](/ru/docs/invoices).
 
 ### `get_invoice`
 
@@ -134,47 +134,47 @@ npm run dev
 |----------|-----|------------|----------|
 | `id` | string | Да | ID счета. |
 
-Вызывает `POST /v1/test/invoices/{id}/simulate-payment`. Требует ключ `rqst_test_`.
+Вызывает `POST /v1/test/invoices/{id}/simulate-payment`. Требует ключ `test_`.
 
 ### `verify_webhook`
 
-Проверить подпись вебхука локально, используя `REQST_WEBHOOK_SECRET`. Инструмент в точности воспроизводит продакшен-схему подписи: он вычисляет `v1=` + HMAC-SHA256 от `<timestamp>.<raw_body>` и сравнивает результат с переданной подписью за постоянное время.
+Проверить подпись вебхука локально, используя `RECV_WEBHOOK_SECRET`. Инструмент в точности воспроизводит продакшен-схему подписи: он вычисляет `v1=` + HMAC-SHA256 от `<timestamp>.<raw_body>` и сравнивает результат с переданной подписью за постоянное время.
 
 | Параметр | Тип | Обязателен | Описание |
 |----------|-----|------------|----------|
 | `raw_body` | string | Да | Сырое, неразобранное тело запроса ровно в том виде, в каком оно получено — не сериализуйте его повторно. |
-| `timestamp` | string | Да | Значение заголовка `X-Reqst-Timestamp`. |
-| `signature` | string | Да | Значение заголовка `X-Reqst-Signature` (например, `v1=abc...`). |
+| `timestamp` | string | Да | Значение заголовка `X-recv-Timestamp`. |
+| `signature` | string | Да | Значение заголовка `X-recv-Signature` (например, `v1=abc...`). |
 
-Передавайте байты тела дословно. Повторное кодирование JSON (которое может изменить порядок ключей или пробелы) меняет хеш, и проверка не пройдет. Если `REQST_WEBHOOK_SECRET` не задан, инструмент возвращает ошибку. См. [Webhooks](/ru/docs/webhooks) для полной схемы подписи.
+Передавайте байты тела дословно. Повторное кодирование JSON (которое может изменить порядок ключей или пробелы) меняет хеш, и проверка не пройдет. Если `RECV_WEBHOOK_SECRET` не задан, инструмент возвращает ошибку. См. [Webhooks](/ru/docs/webhooks) для полной схемы подписи.
 
 ### `list_supported_networks`
 
-Список поддерживаемых блокчейн-сетей. Не принимает параметров и возвращает статичную сводку значений `payable_network` (TON, TRON, SOLANA, EVM, BASE, ARBITRUM, BSC). См. [Поддерживаемые сети](/ru/docs/networks) для авторитетного списка.
+Список поддерживаемых блокчейн-сетей. Не принимает параметров и возвращает статичную сводку значений `payable_network` (TON, TON_USDT, TRON, BASE, BSC). См. [Поддерживаемые сети](/ru/docs/networks) для авторитетного списка.
 
 ## Ресурсы
 
-Сервер также предоставляет документацию как MCP-ресурсы, которые агент может читать для контекста. Каждый загружается из `${REQST_DOCS_URL}/raw/<slug>`:
+Сервер также предоставляет документацию как MCP-ресурсы, которые агент может читать для контекста. Каждый загружается из `${RECV_DOCS_URL}/raw/<slug>`:
 
 | URI | Описание |
 |-----|----------|
-| `reqst://docs/auth` | Руководство по аутентификации. |
-| `reqst://docs/invoices` | Руководство по API счетов. |
-| `reqst://docs/webhooks` | Руководство по интеграции вебхуков. |
-| `reqst://docs/errors` | Обработка ошибок и лимиты. |
-| `reqst://docs/mcp` | MCP и onboarding агентов. |
+| `recv://docs/auth` | Руководство по аутентификации. |
+| `recv://docs/invoices` | Руководство по API счетов. |
+| `recv://docs/webhooks` | Руководство по интеграции вебхуков. |
+| `recv://docs/errors` | Обработка ошибок и лимиты. |
+| `recv://docs/mcp` | MCP и onboarding агентов. |
 
 ## Сценарий: AI-агент принимает крипто-платеж
 
 Для нового автономного агента:
 
-1. Вызовите `bootstrap_agent_workspace` и сохраните возвращенный access token как `REQST_ACCESS_TOKEN`.
+1. Вызовите `bootstrap_agent_workspace` и сохраните возвращенный access token как `RECV_ACCESS_TOKEN`.
 2. Вызовите `create_subscription_checkout` с `plan_code: "developer"`.
 3. Откройте или верните checkout URL, затем опрашивайте `get_checkout_invoice`, пока subscription invoice не станет `paid`.
-4. Вызовите `create_api_key` и сохраните возвращенный `secret` как `REQST_API_KEY`.
-5. Опционально вызовите `create_webhook_endpoint` и сохраните webhook secret как `REQST_WEBHOOK_SECRET`.
+4. Вызовите `create_api_key` и сохраните возвращенный `secret` как `RECV_API_KEY`.
+5. Опционально вызовите `create_webhook_endpoint` и сохраните webhook secret как `RECV_WEBHOOK_SECRET`.
 
-С сервером, настроенным на ключ `rqst_test_` или `rqst_live_`, весь customer payment flow можно вести в диалоге:
+С сервером, настроенным на ключ `test_` или `live_`, весь customer payment flow можно вести в диалоге:
 
 1. **Вы:** «Создай счет на $25 USDT в TRON для заказа #5512.»
    Агент вызывает `create_invoice` и зачитывает `public_id`, `destination_address` и `checkout_url`.

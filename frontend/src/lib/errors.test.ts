@@ -25,6 +25,6 @@ describe("API error helpers", () => {
   it("uses server hint for unknown API statuses", () => {
     const mapped = mapApiError(new ApiError(418, ""));
     expect(mapped.status).toBe(418);
-    expect(mapped.message).toBe("Reqst could not complete the request.");
+    expect(mapped.message).toBe("recv could not complete the request.");
   });
 });

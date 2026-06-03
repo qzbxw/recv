@@ -76,7 +76,7 @@ export async function blockAdminWorkspace(token: string, workspaceId: number, pa
   }, token);
 }
 
-export async function changeAdminWorkspacePlan(token: string, workspaceId: number, payload: { plan_code: "trial" | "merchant" | "developer" | "business" | "enterprise"; days?: number; subscription_ends_at?: string | null; reason: string }) {
+export async function changeAdminWorkspacePlan(token: string, workspaceId: number, payload: { plan_code: "trial" | "merchant" | "developer" | "business"; days?: number; subscription_ends_at?: string | null; reason: string }) {
   return request<AdminActionResponse<{ workspace: Workspace }>>(`/api/admin/workspaces/${workspaceId}/plan`, {
     method: "POST",
     body: JSON.stringify(payload),

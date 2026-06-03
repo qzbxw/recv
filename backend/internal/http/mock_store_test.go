@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"reqst/backend/internal/store"
+	"recv/backend/internal/store"
 
 	"github.com/shopspring/decimal"
 )
@@ -25,20 +25,20 @@ const (
 	errAtListWorkspaceMembers = "ListWorkspaceMembers"
 	errAtListWorkspaceInvites = "ListWorkspaceInvites"
 
-	errAtGetWorkspaceByID          = "GetWorkspaceByID"
+	errAtGetWorkspaceByID           = "GetWorkspaceByID"
 	errAtCountAPIRequestsSinceMonth = "CountAPIRequestsSinceMonth"
 	errAtAllowRateLimit             = "AllowRateLimit"
 
-	errAtSetInvoiceStatus      = "SetInvoiceStatus"
-	errAtMarkInvoicePaidManual  = "MarkInvoicePaidManual"
-	errAtUpdateWorkspaceEmail   = "UpdateWorkspaceEmail"
-	errAtCreateWallet           = "CreateWallet"
-	errAtCreateWorkspaceInvite  = "CreateWorkspaceInvite"
-	errAtRevokeWorkspaceInvite  = "RevokeWorkspaceInvite"
-	errAtCountWorkspaceOwners   = "CountWorkspaceOwners"
+	errAtSetInvoiceStatus          = "SetInvoiceStatus"
+	errAtMarkInvoicePaidManual     = "MarkInvoicePaidManual"
+	errAtUpdateWorkspaceEmail      = "UpdateWorkspaceEmail"
+	errAtCreateWallet              = "CreateWallet"
+	errAtCreateWorkspaceInvite     = "CreateWorkspaceInvite"
+	errAtRevokeWorkspaceInvite     = "RevokeWorkspaceInvite"
+	errAtCountWorkspaceOwners      = "CountWorkspaceOwners"
 	errAtUpdateWorkspaceMemberRole = "UpdateWorkspaceMemberRole"
-	errAtRemoveWorkspaceMember  = "RemoveWorkspaceMember"
-	errAtSetWorkspaceBlocked    = "SetWorkspaceBlocked"
+	errAtRemoveWorkspaceMember     = "RemoveWorkspaceMember"
+	errAtSetWorkspaceBlocked       = "SetWorkspaceBlocked"
 )
 
 // mockHTTPStore wraps a real *store.Store and injects errors at specific named points.

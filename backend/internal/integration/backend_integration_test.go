@@ -19,10 +19,10 @@ import (
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 	"github.com/gin-gonic/gin"
 
-	"reqst/backend/internal/config"
-	httpapi "reqst/backend/internal/http"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/config"
+	httpapi "recv/backend/internal/http"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 )
 
 func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
@@ -32,7 +32,7 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 	env := newIntegrationEnv(t, ctx)
 	client := env.server.Client()
 
-	assertMigrationCount(t, ctx, env.store, 17)
+	assertMigrationCount(t, ctx, env.store, 18)
 
 	auth := loginSeller(t, client, env.server.URL, 10001, "alice")
 	assertAuthSessionLifecycle(t, client, env.server.URL, auth.RefreshToken)
@@ -41,7 +41,7 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 
 	createWallet(t, client, env.server.URL, auth.Token, "EVM", "0x1111111111111111111111111111111111111111")
 	createWallet(t, client, env.server.URL, auth.Token, "TON", "UQBuzCySn6dYEHzKoGzUPmclj9Dg_m1dA-mzeDEvuF3F9x6P")
-	tempWallet := createWallet(t, client, env.server.URL, auth.Token, "SOLANA", "11111111111111111111111111111111")
+	tempWallet := createWallet(t, client, env.server.URL, auth.Token, "TRON", "TIntegrationTempWallet111111")
 
 	wallets := listWallets(t, client, env.server.URL, auth.Token)
 	if len(wallets.Items) != 3 {
@@ -251,7 +251,7 @@ func TestBackendBoundaryFlowsWithEmbeddedPostgres(t *testing.T) {
 	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/auth/telegram/request-code", nil, map[string]any{"username": "edgecase"}, http.StatusBadRequest)
 	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/auth/telegram/login", nil, map[string]any{"username": "edgecase"}, http.StatusUnauthorized)
 	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/developer/api-keys", trialHeaders, map[string]any{"label": "trial key"}, http.StatusForbidden)
-	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/developer/webhooks", trialHeaders, map[string]any{"url": "https://example.test/webhook"}, http.StatusForbidden)
+	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/developer/webhooks", trialHeaders, map[string]any{"url": "https://example.test/webhook"}, http.StatusCreated)
 	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/billing/checkout", trialHeaders, map[string]any{"plan_code": "trial", "payable_network": "TON"}, http.StatusBadRequest)
 	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/me/contact-email", trialHeaders, map[string]any{"email": "not-an-email"}, http.StatusBadRequest)
 	// Successful email update and clear
@@ -350,13 +350,13 @@ func newIntegrationEnv(t *testing.T, ctx context.Context) integrationEnv {
 
 	port := pickFreePort(t)
 	baseDir := t.TempDir()
-	cacheDir := filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")
+	cacheDir := filepath.Join(os.TempDir(), "recv-embedded-postgres-cache")
 	pgConfig := embeddedpostgres.DefaultConfig().
 		Version(embeddedpostgres.V16).
 		Port(port).
-		Database("reqst").
-		Username("reqst").
-		Password("reqst").
+		Database("recv").
+		Username("recv").
+		Password("recv").
 		RuntimePath(filepath.Join(baseDir, "runtime")).
 		DataPath(filepath.Join(baseDir, "data")).
 		CachePath(cacheDir).
@@ -385,10 +385,9 @@ func newIntegrationEnv(t *testing.T, ctx context.Context) integrationEnv {
 	}
 	t.Cleanup(st.Close)
 	if err := st.UpsertSystemConfig(ctx, "billing_wallets", map[string]string{
-		"TON":    "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-		"TRON":   "TIntegrationBillingWallet111111",
-		"SOLANA": "11111111111111111111111111111111",
-		"EVM":    "0x1111111111111111111111111111111111111111",
+		"TON":  "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"TRON": "TIntegrationBillingWallet111111",
+		"EVM":  "0x1111111111111111111111111111111111111111",
 	}, false, "integration-test"); err != nil {
 		t.Fatalf("seed billing wallets config: %v", err)
 	}
@@ -408,7 +407,7 @@ func newIntegrationEnv(t *testing.T, ctx context.Context) integrationEnv {
 		RefreshTokenTTL:      30 * 24 * time.Hour,
 		AdminAccessTokenTTL:  12 * time.Hour,
 		AdminRefreshTokenTTL: 12 * time.Hour,
-		PublicAppURL:         "https://reqst.test",
+		PublicAppURL:         "https://recv.test",
 	}
 
 	authService := service.NewAuthService(st, cfg.JWTSecret, "", cfg.AllowInsecureDevAuth, cfg.TelegramInitMaxAge)
@@ -708,9 +707,8 @@ func assertAdminOpsFlow(t *testing.T, client *http.Client, baseURL string, admin
 	}, http.StatusOK)
 
 	assertJSONStatus(t, client, http.MethodPost, fmt.Sprintf("%s/api/admin/workspaces/%d/billing-checkout", baseURL, workspaceID), headers, map[string]any{
-		"plan_code":       "enterprise",
+		"plan_code":       "business",
 		"payable_network": "TON",
-		"base_amount_usd": "250",
 	}, http.StatusCreated)
 
 	assertJSONStatus(t, client, http.MethodPost, baseURL+"/api/admin/internal-comments", headers, map[string]any{

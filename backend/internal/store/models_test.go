@@ -22,8 +22,8 @@ func TestNetworkHelpers(t *testing.T) {
 	if !NetworkBASE.IsSupportedPayableNetwork() {
 		t.Fatal("expected BASE to be a supported payable network")
 	}
-	if NetworkTON_USDT.IsSupportedPayableNetwork() {
-		t.Fatal("expected TON_USDT to stay disabled until end-to-end support is ready")
+	if !NetworkTON_USDT.IsSupportedPayableNetwork() {
+		t.Fatal("expected TON_USDT to be a supported payable network")
 	}
 }
 
@@ -71,11 +71,11 @@ func TestPlanHelpers(t *testing.T) {
 	if got := NormalizePlanCode("unknown"); got != PlanCodeTrial {
 		t.Fatalf("expected fallback trial plan, got %s", got)
 	}
-	if got := ResolvePlan(PlanCodeEnterprise).PriceUSDString; got != "Custom" {
-		t.Fatalf("unexpected enterprise price string: %s", got)
+	if got := ResolvePlan(PlanCodeMerchant).PriceUSDString; got != "9" {
+		t.Fatalf("unexpected merchant price string: %s", got)
 	}
-	if plans := ListPaidPlans(); len(plans) != 4 {
-		t.Fatalf("expected four paid plans, got %d", len(plans))
+	if plans := ListPaidPlans(); len(plans) != 3 {
+		t.Fatalf("expected three paid plans, got %d", len(plans))
 	}
 }
 
@@ -100,7 +100,7 @@ func TestWorkspaceEffectivePlan(t *testing.T) {
 	}
 
 	expiredWorkspace := Workspace{
-		PlanCode:           PlanCodeEnterprise,
+		PlanCode:           PlanCodeBusiness,
 		SubscriptionEndsAt: ptrTime(now.Add(-time.Hour)),
 	}
 	if got := expiredWorkspace.EffectivePlanCode(now); got != PlanCodeTrial {
@@ -144,7 +144,7 @@ func TestResolvePlan(t *testing.T) {
 		{name: "valid trial", input: PlanCodeTrial, expected: PlanCodeTrial},
 		{name: "valid merchant", input: PlanCodeMerchant, expected: PlanCodeMerchant},
 		{name: "valid developer", input: PlanCodeDeveloper, expected: PlanCodeDeveloper},
-		{name: "valid enterprise", input: PlanCodeEnterprise, expected: PlanCodeEnterprise},
+		{name: "enterprise maps to business", input: "enterprise", expected: PlanCodeBusiness},
 		{name: "uppercase valid pro->merchant", input: "PRO", expected: PlanCodeMerchant},
 		{name: "padded valid dev->developer", input: "  developer  ", expected: PlanCodeDeveloper},
 		{name: "unknown fallback to trial", input: "unknown", expected: PlanCodeTrial},
@@ -233,8 +233,8 @@ func TestPlanDefinitionFields(t *testing.T) {
 	}
 
 	trial := ResolvePlan(PlanCodeTrial)
-	if trial.HasAPI || trial.HasWebhooks {
-		t.Fatal("expected trial plan to have no API or webhooks")
+	if trial.HasAPI || !trial.HasWebhooks {
+		t.Fatal("expected trial plan to have webhooks but no API")
 	}
 
 	business := ResolvePlan(PlanCodeBusiness)
@@ -641,7 +641,7 @@ func TestPayableScaleNetworks(t *testing.T) {
 }
 
 func TestResolvePlanAllCodes(t *testing.T) {
-	cases := []PlanCode{PlanCodeTrial, PlanCodeMerchant, PlanCodeDeveloper, PlanCodeBusiness, PlanCodeEnterprise}
+	cases := []PlanCode{PlanCodeTrial, PlanCodeMerchant, PlanCodeDeveloper, PlanCodeBusiness}
 	for _, code := range cases {
 		plan := ResolvePlan(code)
 		if plan.Code == "" {
@@ -657,15 +657,15 @@ func TestResolvePlanAllCodes(t *testing.T) {
 
 func TestNormalizePlanCodeAllCases(t *testing.T) {
 	cases := map[string]PlanCode{
-		"trial":      PlanCodeTrial,
-		"merchant":   PlanCodeMerchant,
-		"developer":  PlanCodeDeveloper,
-		"business":   PlanCodeBusiness,
-		"enterprise": PlanCodeEnterprise,
-		"pro":        PlanCodeMerchant,  // alias
-		"dev":        PlanCodeDeveloper, // alias
-		"unknown":    PlanCodeTrial,     // default
-		"MERCHANT":   PlanCodeMerchant,  // case-insensitive
+		"trial":         PlanCodeTrial,
+		"merchant":      PlanCodeMerchant,
+		"developer":     PlanCodeDeveloper,
+		"business":      PlanCodeBusiness,
+		"enterprise":    PlanCodeBusiness,
+		"pro":           PlanCodeMerchant,  // alias
+		"dev":           PlanCodeDeveloper, // alias
+		"unknown":       PlanCodeTrial,     // default
+		"MERCHANT":      PlanCodeMerchant,  // case-insensitive
 		"  developer  ": PlanCodeDeveloper, // whitespace
 	}
 	for input, want := range cases {
@@ -688,7 +688,7 @@ func TestStoreNewWithInvalidDSN(t *testing.T) {
 func TestStoreNewWithUnreachableHost(t *testing.T) {
 	ctx := context.Background()
 	// Valid connection string format but unreachable host (port 1 is generally closed)
-	_, err := New(ctx, "postgres://reqst:reqst@127.0.0.1:1/reqst?sslmode=disable&connect_timeout=1")
+	_, err := New(ctx, "postgres://recv:recv@127.0.0.1:1/recv?sslmode=disable&connect_timeout=1")
 	if err == nil {
 		t.Fatal("expected error for unreachable host, got nil")
 	}

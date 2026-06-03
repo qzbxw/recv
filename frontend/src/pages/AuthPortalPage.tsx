@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   authenticateTelegram,
@@ -13,7 +13,7 @@ import { readAttribution } from "../lib/attribution";
 import { useUI } from "../lib/ui";
 import { AUTH_COPY as COPY } from "../i18n";
 
-const BOT_URL = "https://t.me/reqstxyz_bot";
+const BOT_URL = "https://t.me/recvxyz_bot";
 const DEV_AUTH_ENABLED = import.meta.env.VITE_ENABLE_DEV_AUTH === "true";
 
 declare global {
@@ -162,6 +162,72 @@ export function AuthPortalPage() {
     }
   }
 
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    let currentX = 0;
+    let currentY = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let isHovered = false;
+    let frameId: number;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = card.getBoundingClientRect();
+      targetX = e.clientX - rect.left;
+      targetY = e.clientY - rect.top;
+    };
+
+    const onMouseEnter = () => {
+      isHovered = true;
+      card.style.setProperty("--spotlight-opacity", "1");
+    };
+
+    const onMouseLeave = () => {
+      isHovered = false;
+      card.style.setProperty("--spotlight-opacity", "0");
+      
+      // Settle back to center slowly when mouse leaves
+      const rect = card.getBoundingClientRect();
+      targetX = rect.width / 2;
+      targetY = rect.height / 2;
+    };
+
+    const update = () => {
+      // Interpolate with a factor of 0.08 (liquid lag)
+      currentX += (targetX - currentX) * 0.08;
+      currentY += (targetY - currentY) * 0.08;
+
+      card.style.setProperty("--mouse-x", `${currentX}px`);
+      card.style.setProperty("--mouse-y", `${currentY}px`);
+
+      frameId = requestAnimationFrame(update);
+    };
+
+    card.addEventListener("mousemove", onMouseMove);
+    card.addEventListener("mouseenter", onMouseEnter);
+    card.addEventListener("mouseleave", onMouseLeave);
+
+    // Set initial position to center
+    const rect = card.getBoundingClientRect();
+    targetX = rect.width / 2;
+    targetY = rect.height / 2;
+    currentX = targetX;
+    currentY = targetY;
+
+    frameId = requestAnimationFrame(update);
+
+    return () => {
+      card.removeEventListener("mousemove", onMouseMove);
+      card.removeEventListener("mouseenter", onMouseEnter);
+      card.removeEventListener("mouseleave", onMouseLeave);
+      cancelAnimationFrame(frameId);
+    };
+  }, []);
+
   return (
     <main className="auth-portal">
       <div className="dev-portal__backdrop dev-portal__backdrop--grid" />
@@ -171,11 +237,12 @@ export function AuthPortalPage() {
       <div className="auth-portal__shell portal-animate-in">
         <header className="auth-portal__header">
           <Link to="/" className="auth-portal__brand-link" style={{ textDecoration: 'none' }}>
-            <strong className="dev-portal__brand auth-portal__brand">reqst<span className="brand-dot">.</span></strong>
+            <strong className="dev-portal__brand auth-portal__brand">recv<span className="brand-dot">.</span></strong>
           </Link>
         </header>
 
-        <div className="dev-card auth-portal__card">
+        <div ref={cardRef} className="dev-card auth-portal__card lend-spotlight-card">
+          <div className="lend-card-spotlight" />
           <div className="auth-portal__form-header">
             <h1 className="auth-portal__title">{text.browserTitle}</h1>
             <p className="auth-portal__subtitle">{text.browserBody}</p>
@@ -183,7 +250,7 @@ export function AuthPortalPage() {
 
           <form className="dev-form" onSubmit={handleSubmit}>
             <div className="dev-input-group">
-              <label style={{ display: 'block', marginBottom: '8px', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 500 }}>{text.username}</label>
+              <label style={{ display: 'block', marginBottom: '8px' }}>{text.username}</label>
               <input
                 className="dev-input"
                 type="text"
@@ -195,7 +262,7 @@ export function AuthPortalPage() {
             </div>
 
             <div className="dev-input-group" style={{ marginTop: '1.25rem' }}>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 500 }}>{text.code}</label>
+              <label style={{ display: 'block', marginBottom: '8px' }}>{text.code}</label>
               <div className="auth-portal__input-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
                 <input
                   className="dev-input"
@@ -216,7 +283,7 @@ export function AuthPortalPage() {
               </div>
             </div>
 
-            <button type="submit" className="dev-btn dev-btn--primary auth-portal__submit-btn" disabled={loading} style={{ width: '100%', marginTop: '1.5rem', padding: '14px 20px' }}>
+            <button type="submit" className="dev-btn dev-btn--primary auth-portal__submit-btn" disabled={loading} style={{ width: '100%', marginTop: '1.5rem' }}>
               {loading ? text.signingIn : text.loginAction}
             </button>
           </form>
@@ -275,7 +342,7 @@ export function AuthPortalPage() {
         ) : null}
 
         <footer className="auth-portal__footer" style={{ marginTop: '2rem', textAlign: 'center' }}>
-           <Link to="/" className="auth-portal__landing-link" style={{ color: '#a0aec0', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}>{text.landing}</Link>
+           <Link to="/" className="auth-portal__landing-link" style={{ textDecoration: 'none' }}>{text.landing}</Link>
         </footer>
       </div>
     </main>

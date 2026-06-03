@@ -3,16 +3,16 @@ import { Link } from "react-router-dom";
 const sections = [
   {
     title: "Quickstart",
-    body: "Add a payout wallet, create an rqst_test_ key, create a test invoice, simulate a payment, then reuse the same integration with an rqst_live_ key once webhook verification passes. Base URL: https://reqst.xyz/v1.",
-    code: `curl -X POST https://reqst.xyz/v1/invoices \\
-  -H "X-API-Key: rqst_test_..." \\
+    body: "Add a payout wallet, create a test_ key, create a test invoice, simulate a payment, then reuse the same integration with a live_ key once webhook verification passes. Base URL: https://recv.money/v1.",
+    code: `curl -X POST https://recv.money/v1/invoices \\
+  -H "X-API-Key: test_..." \\
   -H "Idempotency-Key: order-1001" \\
   -H "Content-Type: application/json" \\
   -d '{"title":"Order #1001","base_amount_usd":"49.00","payable_network":"TRON"}'`,
   },
   {
     title: "API Auth",
-    body: "Send X-API-Key: <API_KEY> (or Authorization: Bearer <API_KEY>). Live keys start with rqst_live_; test keys start with rqst_test_ and create test-mode invoices that live blockchain watchers ignore. The API requires the Developer, Business, or Enterprise plan — Merchant and Trial have no API access. Keys carry invoices:read and/or invoices:write scopes (both by default).",
+    body: "Send X-API-Key: <API_KEY> (or Authorization: Bearer <API_KEY>). Live keys start with live_; test keys start with test_ and create test-mode invoices that live blockchain watchers ignore. The API requires the Developer or Business plan. Merchant has payment links and Trial has limited live invoices. Keys carry invoices:read and/or invoices:write scopes (both by default).",
   },
   {
     title: "Invoices",
@@ -24,7 +24,7 @@ const sections = [
   },
   {
     title: "Webhook Verification",
-    body: "Reqst signs each delivery with headers X-Reqst-Event, X-Reqst-Timestamp, and X-Reqst-Signature. The signature is v1= + HMAC-SHA256(secret, timestamp + '.' + rawBody). Verify over the exact raw bytes before mutating order state; dedupe on transition_id.",
+    body: "recv signs each delivery with headers X-recv-Event, X-recv-Timestamp, and X-recv-Signature. The signature is v1= + HMAC-SHA256(secret, timestamp + '.' + rawBody). Verify over the exact raw bytes before mutating order state; dedupe on transition_id.",
     code: `const expected = "v1=" + crypto
   .createHmac("sha256", webhookSecret.trim())
   .update(timestamp + "." + rawBody)
@@ -32,15 +32,15 @@ const sections = [
   },
   {
     title: "Test Mode",
-    body: "POST /v1/test/invoices/{id}/simulate-payment with an rqst_test_ key marks a test invoice as paid and fires webhooks without sending funds. Returns 403 for live keys or non-test invoices.",
+    body: "POST /v1/test/invoices/{id}/simulate-payment with a test_ key marks a test invoice as paid and fires webhooks without sending funds. Returns 403 for live keys or non-test invoices.",
   },
   {
     title: "Supported Networks",
-    body: "payable_network accepts TON, TRON, SOLANA, EVM, BASE, ARBITRUM, BSC. EVM/BASE/ARBITRUM/BSC share one EVM payout-wallet bucket; TON, TRON, and SOLANA each use their own. You must have an active payout wallet in the matching bucket to invoice on a network.",
+    body: "payable_network accepts TON, TON_USDT, TRON, BASE, and BSC. BASE/BSC share one EVM payout-wallet bucket; TON and TON_USDT share a TON wallet; TRON uses its own wallet. You must have an active payout wallet in the matching bucket to invoice on a network.",
   },
   {
     title: "MCP / AI Agents",
-    body: "The reqst-agent-mcp server exposes Reqst to AI agents (Claude Desktop, Cursor) over stdio. Tools: create_invoice, get_invoice, list_invoices, simulate_payment, verify_webhook, list_supported_networks. Env: REQST_API_KEY, REQST_WEBHOOK_SECRET, REQST_API_URL (default https://reqst.xyz/v1), REQST_DOCS_URL. Every tool calls the same /v1 API, so the same scopes and limits apply.",
+    body: "The recv-agent-mcp server exposes recv to AI agents (Claude Desktop, Cursor) over stdio. Tools: create_invoice, get_invoice, list_invoices, simulate_payment, verify_webhook, list_supported_networks. Env: RECV_API_KEY, RECV_WEBHOOK_SECRET, RECV_API_URL (default https://recv.money/v1), RECV_DOCS_URL. Every tool calls the same /v1 API, so the same scopes and limits apply.",
   },
   {
     title: "Blockchain Edge Cases",
@@ -58,11 +58,11 @@ export function DeveloperDocsPage() {
       <div className="lend-shell">
         <header className="lend-topbar">
           <Link to="/" className="topbar-brand topbar-brand--minimal">
-            <strong>reqst</strong>
+            <strong>recv</strong>
           </Link>
           <nav className="lend-nav">
             <Link to="/dev">Dev</Link>
-            <Link to="/enterprise">Enterprise</Link>
+            <Link to="/auth">Console</Link>
             <Link to="/console">Console</Link>
           </nav>
         </header>

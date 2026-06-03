@@ -11,7 +11,6 @@ const tierLinks = {
   merchant: "merchant",
   developer: "dev",
   business: "business",
-  enterprise: "enterprise",
 } as const;
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -20,11 +19,11 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     title: locale === "ru"
-      ? "Тарифы крипто-платёжного шлюза — 0% с оборота | Reqst"
-      : "Crypto Payment Gateway Pricing — 0% Turnover Fees | Reqst",
+      ? "Тарифы крипто-платёжного шлюза — 0% с оборота | recv"
+      : "Crypto Payment Gateway Pricing — 0% Turnover Fees | recv",
     description: locale === "ru"
-      ? "Тарифы Reqst для non-custodial криптоплатежей: Merchant, Developer, Business и Enterprise без комиссии с оборота."
-      : "Reqst pricing for non-custodial crypto payments: Merchant, Developer, Business and Enterprise plans with no turnover fees.",
+      ? "Тарифы recv для non-custodial криптоплатежей: Trial, Merchant, Developer и Business. 0% комиссии на всех планах."
+      : "recv pricing for non-custodial crypto payments: Trial, Merchant, Developer, and Business. 0% commission on all plans.",
     keywords: locale === "ru"
       ? "тарифы крипто-шлюз, non-custodial, 0% комиссия, криптоплатежи цены"
       : "crypto payment gateway pricing, non-custodial, zero fees, crypto payment plans",
@@ -37,7 +36,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       },
     },
     openGraph: {
-      title: locale === "ru" ? "Тарифы | Reqst" : "Pricing | Reqst",
+      title: locale === "ru" ? "Тарифы | recv" : "Pricing | recv",
       description: locale === "ru"
         ? "Non-custodial крипто-платежи. 0% комиссии с оборота."
         : "Non-custodial crypto payments. 0% turnover fees.",
@@ -49,19 +48,19 @@ export default async function PricingPage(props: Props) {
   const { locale: rawLocale } = await props.params;
   const locale = normalizeLocale(rawLocale);
   const copy = getCopy(locale);
-  const tiers = ["merchant", "developer", "business", "enterprise"] as const;
+  const tiers = ["merchant", "developer", "business"] as const;
 
   const offers = tiers
     .map((tier) => {
       const item = copy.pricing[tier];
       const numeric = Number(item.price);
-      if (item.price === "Custom" || Number.isNaN(numeric)) return null;
+      if (Number.isNaN(numeric)) return null;
       return {
         "@type": "Offer",
         name: item.name,
         price: numeric,
         priceCurrency: "USD",
-        url: `https://reqst.xyz/${locale}/${tierLinks[tier]}`,
+        url: `https://recv.money/${locale}/${tierLinks[tier]}`,
         availability: "https://schema.org/InStock",
       };
     })
@@ -70,11 +69,11 @@ export default async function PricingPage(props: Props) {
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "Reqst Crypto Payment Gateway",
+    name: "recv Crypto Payment Gateway",
     description: locale === "ru"
       ? "Non-custodial крипто-платёжный шлюз с прямым зачислением на кошельки и без комиссии с оборота."
       : "Non-custodial crypto payment gateway with direct-to-wallet settlement and no turnover fees.",
-    brand: { "@type": "Brand", name: "Reqst" },
+    brand: { "@type": "Brand", name: "recv" },
     offers,
   };
 

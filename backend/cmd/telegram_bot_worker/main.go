@@ -8,11 +8,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"reqst/backend/internal/config"
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
-	"reqst/backend/internal/telegram"
+	"recv/backend/internal/config"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
+	"recv/backend/internal/telegram"
 )
 
 func main() {

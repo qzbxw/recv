@@ -76,7 +76,7 @@ export function AdminBlogPage() {
         <section className="admin-dashboard">
           <header className="admin-topbar">
             <div>
-              <span className="admin-eyebrow">Reqst Admin</span>
+              <span className="admin-eyebrow">recv Admin</span>
               <h1>{editingPost.id ? "Edit Post" : "New Post"}</h1>
             </div>
             <div className="admin-topbar-actions">
@@ -252,7 +252,7 @@ export function AdminBlogPage() {
       <section className="admin-dashboard">
         <header className="admin-topbar">
           <div>
-            <span className="admin-eyebrow">Reqst Admin</span>
+            <span className="admin-eyebrow">recv Admin</span>
             <h1>Blog Management</h1>
           </div>
           <div className="admin-topbar-actions">
@@ -273,7 +273,7 @@ export function AdminBlogPage() {
                 excerpt: "",
                 content_md: "",
                 cover_image_url: "",
-                author: "Reqst Team",
+                author: "recv Team",
                 is_published: false,
                 status: "draft",
                 tags: [],

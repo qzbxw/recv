@@ -22,127 +22,127 @@ var (
 	appEnv      = "unknown"
 
 	appInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "app_info",
-		Help:      "Static information about the running reqst service.",
+		Help:      "Static information about the running recv service.",
 	}, []string{"service", "env"})
 
 	httpRequests = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "http_requests_total",
 		Help:      "HTTP requests handled by the service.",
 	}, []string{"service", "method", "route", "status"})
 
 	httpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "http_request_duration_seconds",
 		Help:      "Latency of HTTP requests handled by the service.",
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"service", "method", "route", "status"})
 
 	authAttempts = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "auth_attempts_total",
 		Help:      "Authentication and authorization decisions.",
 	}, []string{"service", "method", "result", "reason"})
 
 	invoiceOperations = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "invoice_operations_total",
 		Help:      "Invoice operations across seller, billing, and automation flows.",
 	}, []string{"service", "operation", "source", "kind", "network", "plan", "result", "reason"})
 
 	invoiceTransitions = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "invoice_status_transitions_total",
 		Help:      "Invoice status transitions.",
 	}, []string{"service", "source", "kind", "from_status", "to_status", "classification"})
 
 	paymentClassifications = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "payment_classifications_total",
 		Help:      "Observed transfer classifications.",
 	}, []string{"service", "source", "network", "classification", "invoice_status", "matched"})
 
 	paymentAmounts = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "payment_amount_observed",
 		Help:      "Observed payment amounts in network units.",
 		Buckets:   []float64{0.5, 1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 5000},
 	}, []string{"service", "source", "network", "classification"})
 
 	limitDecisions = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "limit_decisions_total",
 		Help:      "Business limit checks such as trial caps and API quotas.",
 	}, []string{"service", "kind", "result", "reason"})
 
 	resourceOperations = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "resource_operations_total",
 		Help:      "CRUD-style resource operations for wallets, API keys, webhooks, and sellers.",
 	}, []string{"service", "resource", "action", "result"})
 
 	adminOperations = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "admin_operations_total",
 		Help:      "Administrative actions performed through internal endpoints.",
 	}, []string{"service", "action", "result"})
 
 	deliveryEvents = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "delivery_events_total",
 		Help:      "Notification and webhook delivery pipeline events.",
 	}, []string{"service", "channel", "stage", "result"})
 
 	batchSizes = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "batch_size",
 		Help:      "Sizes of batched backend operations such as watcher ingests and delivery claims.",
 		Buckets:   []float64{0, 1, 2, 5, 10, 20, 50, 100},
 	}, []string{"service", "kind", "source"})
 
 	watcherPolls = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "watcher_polls_total",
 		Help:      "Wallet polling attempts performed by watcher workers.",
 	}, []string{"service", "network", "result"})
 
 	watcherPollDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "watcher_poll_duration_seconds",
 		Help:      "Latency of watcher wallet polls.",
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"service", "network", "result"})
 
 	watcherTransfers = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "watcher_transfers_per_poll",
 		Help:      "Number of transfers returned by a watcher poll.",
 		Buckets:   []float64{0, 1, 2, 5, 10, 20, 50},
 	}, []string{"service", "network"})
 
 	rpcRequests = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "rpc_requests_total",
 		Help:      "JSON-RPC requests issued by watcher workers.",
 	}, []string{"service", "family", "network", "method", "result"})
 
 	rpcDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "rpc_request_duration_seconds",
 		Help:      "Latency of JSON-RPC requests issued by watcher workers.",
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"service", "family", "network", "method", "result"})
 
 	upstreamRequests = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "upstream_requests_total",
 		Help:      "HTTP requests sent to external upstream systems.",
 	}, []string{"service", "upstream", "operation", "result"})
 
 	upstreamDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "reqst",
+		Namespace: "recv",
 		Name:      "upstream_request_duration_seconds",
 		Help:      "Latency of HTTP requests sent to external upstream systems.",
 		Buckets:   prometheus.DefBuckets,

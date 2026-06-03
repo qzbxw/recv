@@ -1,8 +1,8 @@
 import { ApiError } from "../errors";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
-const TOKEN_KEY = "reqst_token";
-const ADMIN_TOKEN_KEY = "reqst_admin_token";
+const TOKEN_KEY = "recv_token";
+const ADMIN_TOKEN_KEY = "recv_admin_token";
 
 export function getApiBase() {
   return API_BASE;

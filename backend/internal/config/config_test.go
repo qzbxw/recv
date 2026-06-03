@@ -16,7 +16,7 @@ func TestLoadRequiresDatabaseURL(t *testing.T) {
 }
 
 func TestLoadRequiresJWTSecret(t *testing.T) {
-	t.Setenv("DATABASE_URL", "postgres://localhost/reqst")
+	t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 	t.Setenv("JWT_SECRET", "")
 
 	_, err := Load()
@@ -27,7 +27,7 @@ func TestLoadRequiresJWTSecret(t *testing.T) {
 
 func TestLoadAppliesDefaultsAndParsesDurations(t *testing.T) {
 	t.Setenv("APP_RUNTIME", "watcher")
-	t.Setenv("DATABASE_URL", "postgres://localhost/reqst")
+	t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 	t.Setenv("JWT_SECRET", "secret")
 	t.Setenv("ALLOW_INSECURE_DEV_AUTH", "true")
 	t.Setenv("TELEGRAM_INIT_MAX_AGE_SECONDS", "120")
@@ -68,7 +68,7 @@ func TestLoadAppliesDefaultsAndParsesDurations(t *testing.T) {
 func TestLoadRejectsUnsafeProductionAdminConfig(t *testing.T) {
 	t.Run("dev admin credentials are production-only error", func(t *testing.T) {
 		t.Setenv("APP_ENV", "production")
-		t.Setenv("DATABASE_URL", "postgres://localhost/reqst")
+		t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 		t.Setenv("JWT_SECRET", "jwt-secret")
 		t.Setenv("ADMIN_USERNAME", "admin")
 		t.Setenv("ADMIN_PASSWORD", "pass")
@@ -82,7 +82,7 @@ func TestLoadRejectsUnsafeProductionAdminConfig(t *testing.T) {
 
 	t.Run("admin jwt secret must be distinct in production", func(t *testing.T) {
 		t.Setenv("APP_ENV", "production")
-		t.Setenv("DATABASE_URL", "postgres://localhost/reqst")
+		t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 		t.Setenv("JWT_SECRET", "same-secret")
 		t.Setenv("ADMIN_JWT_SECRET", "same-secret")
 
@@ -94,7 +94,7 @@ func TestLoadRejectsUnsafeProductionAdminConfig(t *testing.T) {
 
 	t.Run("insecure dev auth is rejected outside development", func(t *testing.T) {
 		t.Setenv("APP_ENV", "staging")
-		t.Setenv("DATABASE_URL", "postgres://localhost/reqst")
+		t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 		t.Setenv("JWT_SECRET", "jwt-secret")
 		t.Setenv("ALLOW_INSECURE_DEV_AUTH", "true")
 
@@ -108,7 +108,7 @@ func TestLoadRejectsUnsafeProductionAdminConfig(t *testing.T) {
 func TestLoadRejectsInvalidDurations(t *testing.T) {
 	baseEnv := func(t *testing.T) {
 		t.Helper()
-		t.Setenv("DATABASE_URL", "postgres://localhost/reqst")
+		t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 		t.Setenv("JWT_SECRET", "jwt-secret")
 	}
 

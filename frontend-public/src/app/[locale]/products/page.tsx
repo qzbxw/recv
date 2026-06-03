@@ -13,7 +13,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const copy = getCopy(locale);
 
   return {
-    title: `${copy.marketing.productsHub.title} | Reqst`,
+    title: `${copy.marketing.productsHub.title} | recv`,
     description: copy.marketing.productsHub.description,
     keywords: locale === "ru"
       ? "крипто-чекаут, API платежей, выставление счётов, крипто-инвойсинг"
@@ -75,7 +75,7 @@ export default async function ProductsHubPage(props: Props) {
       "@type": "ListItem",
       position: idx + 1,
       name: card.title,
-      url: `https://reqst.xyz/${locale}/products/${card.slug}`,
+      url: `https://recv.money/${locale}/products/${card.slug}`,
     })),
   };
 

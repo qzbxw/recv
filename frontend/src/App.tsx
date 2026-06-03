@@ -17,22 +17,22 @@ const SellerConsolePage = lazy(() => import("./pages/SellerConsolePage").then((m
 
 const PAGE_TITLES = {
   ru: {
-    auth: "Reqst | Вход",
-    admin: "Reqst | Админ",
-    console: "Reqst | Консоль",
-    developers: "Reqst | Портал разработчика",
-    docs: "Reqst | Документация API",
-    checkout: "Reqst | Оплата",
-    fallback: "Reqst",
+    auth: "recv | Вход",
+    admin: "recv | Админ",
+    console: "recv | Консоль",
+    developers: "recv | Портал разработчика",
+    docs: "recv | Документация API",
+    checkout: "recv | Оплата",
+    fallback: "recv",
   },
   en: {
-    auth: "Reqst | Sign In",
-    admin: "Reqst | Admin",
-    console: "Reqst | Console",
-    developers: "Reqst | Developer Portal",
-    docs: "Reqst | API Documentation",
-    checkout: "Reqst | Checkout",
-    fallback: "Reqst",
+    auth: "recv | Sign In",
+    admin: "recv | Admin",
+    console: "recv | Console",
+    developers: "recv | Developer Portal",
+    docs: "recv | API Documentation",
+    checkout: "recv | Checkout",
+    fallback: "recv",
   },
 } as const;
 

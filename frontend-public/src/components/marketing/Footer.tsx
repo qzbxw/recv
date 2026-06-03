@@ -19,7 +19,7 @@ export function Footer({ language }: { language: "ru" | "en" }) {
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-1">
             <Link href={`/${language}`} className="text-2xl font-black tracking-tighter text-white hover:opacity-90 transition-opacity">
-              reqst<span className="text-purple-500 animate-pulse inline-block">.</span>
+              recv<span className="text-purple-500 animate-pulse inline-block">.</span>
             </Link>
             <p className="mt-4 text-sm text-white/40 leading-relaxed max-w-[240px] font-medium">
               {f.body}
@@ -56,7 +56,6 @@ export function Footer({ language }: { language: "ru" | "en" }) {
               <li><Link href={`/${language}/merchant`} className="lend-footer-link">{nav.pricing.merchant}</Link></li>
               <li><Link href={`/${language}/dev`} className="lend-footer-link">{nav.pricing.developer}</Link></li>
               <li><Link href={`/${language}/business`} className="lend-footer-link">{nav.pricing.business}</Link></li>
-              <li><Link href={`/${language}/enterprise`} className="lend-footer-link">{nav.pricing.enterprise}</Link></li>
             </ul>
           </div>
 
@@ -74,7 +73,7 @@ export function Footer({ language }: { language: "ru" | "en" }) {
 
         <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-xs text-white/30 font-medium">
-            © {new Date().getFullYear()} reqst. All rights reserved.
+            © {new Date().getFullYear()} recv. All rights reserved.
           </div>
           <div className="flex items-center gap-8">
             <Link href="/app/auth" className="lend-footer-meta-link">

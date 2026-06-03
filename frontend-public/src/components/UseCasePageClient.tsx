@@ -111,7 +111,7 @@ const GRADIENT_WORDS = new Set([
   "crypto",
   "checkout",
   "webhooks",
-  "reqst",
+  "recv",
 ]);
 
 function isGradientWord(raw: string) {
@@ -146,7 +146,7 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
   const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: `Reqst ${copy.name}`,
+    name: `recv ${copy.name}`,
     applicationCategory: "PaymentApplication",
     operatingSystem: "Web",
     description: copy.metadata.description,

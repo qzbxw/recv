@@ -2,7 +2,7 @@ import en from "./en";
 import ru from "./ru";
 
 export type Language = "ru" | "en";
-export const BOT_URL = "https://t.me/reqstxyz_bot";
+export const BOT_URL = "https://t.me/recvxyz_bot";
 export const APP_COPY = { en, ru } as const;
 
 export const LANDING_COPY = { en: en.landing, ru: ru.landing } as const;

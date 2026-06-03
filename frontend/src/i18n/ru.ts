@@ -15,7 +15,7 @@ const ru = {
       title: "Протестируйте оплату",
       body: "Почувствуйте, насколько легко вашим клиентам будет совершать платежи. Без задержек, ошибок и лишних действий.",
       amount: "149 USDT",
-      invoice: "REQST-DEMO-149",
+      invoice: "RECV-DEMO-149",
       status: "Ожидает оплату",
       primary: "Попробовать демо",
       secondary: "Личный кабинет",
@@ -26,7 +26,7 @@ const ru = {
       kicker: "АВТОМАТИЗАЦИЯ",
       title: "Ваше время стоит дороже.",
       body:
-        "Перестаньте вручную проверять транзакции и ждать скриншоты в чатах. Reqst полностью берет на себя мониторинг блокчейна 24/7, подтверждая платежи за секунды.",
+        "Перестаньте вручную проверять транзакции и ждать скриншоты в чатах. recv полностью берет на себя мониторинг блокчейна 24/7, подтверждая платежи за секунды.",
       cards: [
         {
           title: "Командный центр",
@@ -55,7 +55,7 @@ const ru = {
         {
           kicker: "02",
           title: "Все ликвидные сети",
-          body: "Полная поддержка TON, TRON (USDT), Solana и популярных L2-решений (Base, Arbitrum, BSC) в едином интерфейсе.",
+          body: "Полная поддержка TON, TRON (USDT), TON_USDT и популярных L2-решений (Base, Base, BSC) в едином интерфейсе.",
         },
         {
           kicker: "03",
@@ -74,7 +74,7 @@ const ru = {
         },
         {
           kicker: "06",
-          title: "Enterprise Ready",
+          title: "Business Ready",
           body: "Инструменты для командной работы, гибкое управление API-ключами и расширенные лимиты для масштабных задач.",
         },
       ],
@@ -82,19 +82,19 @@ const ru = {
     compare: {
       kicker: "ЭВОЛЮЦИЯ",
       title: "Эффективность по умолчанию.",
-      body: "Как Reqst оптимизирует процессы и сохраняет ваше время.",
+      body: "Как recv оптимизирует процессы и сохраняет ваше время.",
       rows: [
         {
           legacy: "Ручная проверка транзакций и скриншотов.",
-          reqst: "Мгновенное подтверждение и авто-уведомления.",
+          recv: "Мгновенное подтверждение и авто-уведомления.",
         },
         {
           legacy: "Ошибки в сетях и суммах платежей.",
-          reqst: "QR-коды и автоматическая обработка ошибок.",
+          recv: "QR-коды и автоматическая обработка ошибок.",
         },
         {
           legacy: "Комиссии шлюзов, съедающие прибыль.",
-          reqst: "0% комиссии с оборота. 100% прибыли — ваши.",
+          recv: "0% комиссии с оборота. 100% прибыли — ваши.",
         },
       ],
     },
@@ -115,13 +115,13 @@ const ru = {
         },
         {
           name: "SOL",
-          title: "Solana",
+          title: "TON_USDT",
           body: "Максимальная скорость и технологичность для тех, кто ценит каждую секунду.",
         },
         {
           name: "EVM",
           title: "EVM & L2",
-          body: "Base, Arbitrum, BSC — принимайте ликвидность в любой популярной сети.",
+          body: "Base, Base, BSC — принимайте ликвидность в любой популярной сети.",
         },
       ],
       soon: {
@@ -137,7 +137,7 @@ const ru = {
       cards: [
         {
           title: "Рабочая нагрузка",
-          body: "Reqst обрабатывает собственные платежи через тот же движок, который доступен мерчантам."
+          body: "recv обрабатывает собственные платежи через тот же движок, который доступен мерчантам."
         },
         {
           title: "Главный мерчант",
@@ -151,25 +151,25 @@ const ru = {
     },
     pricing: {
       kicker: "ТАРИФЫ",
-      title: "Гибкая подписка под любой масштаб.",
+      title: "0% комиссии на всех планах.",
       pro: {
-        name: "Reqst PRO",
-        price: "39",
-        trial: "Первые 15 чекаутов — бесплатно",
-        features: ["Безлимитные продажи", "Ручное подтверждение недоплат", "0% комиссия (Direct-to-Wallet)", "Мгновенные уведомления"],
+        name: "Merchant",
+        price: "9",
+        trial: "Trial: 15 live-инвойсов бесплатно",
+        features: ["Payment links", "Telegram-flow", "Manual review", "Лимит API"],
         cta: "Начать работу"
       },
       api: {
-        name: "Reqst API Beta",
-        price: "199",
-        features: ["Полный REST API доступ", "Webhook уведомления", "Автоматизация оплат", "Интеграция в ваш бэкэнд"],
+        name: "Developer",
+        price: "29",
+        features: ["Полный API", "Webhooks", "Идемпотентность", "MCP-инструменты"],
         cta: "Подробнее об API"
       },
-      enterprise: {
-        name: "Enterprise",
-        price: "Custom",
-        features: ["Индивидуальные RPM лимиты", "Персональная поддержка", "B2B контракты", "SLA гарантии"],
-        cta: "Связаться с нами"
+      business: {
+        name: "Business",
+        price: "79",
+        features: ["Команды", "Audit logs", "Кастом-брендинг", "0% комиссия"],
+        cta: "Обновить"
       }
     },
     faq: {
@@ -178,12 +178,12 @@ const ru = {
       body: "Кратко о самом важном: безопасность активов, механика выплат и интеграция.",
       items: [
         {
-          question: "Как Reqst обеспечивает безопасность моих средств?",
-          answer: "Мы используем non-custodial архитектуру. Это значит, что ваши приватные ключи никогда не покидают ваше устройство, а средства поступают от клиента напрямую на ваш адрес. Reqst лишь мониторит блокчейн и уведомляет о транзакциях.",
+          question: "Как recv обеспечивает безопасность моих средств?",
+          answer: "Мы используем non-custodial архитектуру. Это значит, что ваши приватные ключи никогда не покидают ваше устройство, а средства поступают от клиента напрямую на ваш адрес. recv лишь мониторит блокчейн и уведомляет о транзакциях.",
         },
         {
           question: "Какие именно сети и активы поддерживаются?",
-          answer: "В данный момент мы поддерживаем TON, TRON (USDT), Solana и основные EVM-сети (Base, BSC, Arbitrum). Мы постоянно добавляем новые ликвидные протоколы по запросам наших Enterprise-клиентов.",
+          answer: "В данный момент мы поддерживаем TON, TON_USDT, TRON, Base и BSC. Мы постоянно добавляем новые ликвидные протоколы по запросам наших Business-клиентов.",
         },
         {
           question: "Могу ли я автоматизировать выдачу цифровых товаров?",
@@ -191,19 +191,19 @@ const ru = {
         },
         {
           question: "Как обрабатываются недоплаты или ошибки в сумме?",
-          answer: "Reqst интеллектуально распознает любые отклонения от ожидаемой суммы. В случае недоплаты система пометит транзакцию как Underpaid, и вы сможете решить: запросить доплату или подтвердить заказ вручную.",
+          answer: "recv интеллектуально распознает любые отклонения от ожидаемой суммы. В случае недоплаты система пометит транзакцию как Underpaid, и вы сможете решить: запросить доплату или подтвердить заказ вручную.",
         },
       ],
     },
     final: {
       kicker: "СТАРТ",
-      title: "Масштабируйте ваш бизнес с Reqst.",
+      title: "Масштабируйте ваш бизнес с recv.",
       body: "Присоединяйтесь к лидерам рынка, которые уже автоматизировали прием крипто-платежей и забыли о ручных проверках транзакций.",
       primary: "Начать работу сейчас",
       secondary: "Документация",
     },
     footer: {
-      title: "reqst",
+      title: "recv",
       body: "Автоматизация крипто-платежей с прямыми выплатами на ваш кошелек. Честно, быстро, профессионально.",
       product: "Продукт",
       privacy: "Приватность",
@@ -220,7 +220,7 @@ const ru = {
     billing: "Связаться",
     discuss: "Обсудить условия",
     activate: "Активировать",
-    activateDev: "Активировать Reqst Dev",
+    activateDev: "Активировать recv Dev",
     integrationFlow: "Бесшовный сценарий интеграции",
     footerPrivacy: "Приватность",
     footerTerms: "Условия",
@@ -236,12 +236,12 @@ const ru = {
     codeBody: "Бесшовная интеграция нашего протокола в ваш существующий рабочий процесс с помощью высокопроизводительного API Beta.",
     processingNote: "We use a proprietary non-custodial architecture. All transactions go through your nodes or our high-performance clusters directly to the blockchain.",
     compareSectionTitle: "Архитектура прямого доступа",
-    compareSectionBody: "Reqst работает как прозрачный программный слой (middleware). Транзакции идут напрямую от клиента к вам, минуя промежуточные счета. Мы лишь автоматизируем мониторинг через сеть высокопроизводительных нод, исключая любые риски блокировки средств.",
+    compareSectionBody: "recv работает как прозрачный программный слой (middleware). Транзакции идут напрямую от клиента к вам, минуя промежуточные счета. Мы лишь автоматизируем мониторинг через сеть высокопроизводительных нод, исключая любые риски блокировки средств.",
     dev: {
-      badge: "Reqst Developer",
+      badge: "recv Developer",
       title: "Инфраструктура криптоплатежей. Контроль в ваших руках.",
       body: "Профессиональный API v1 Beta и Webhook-уведомления для high-load систем. Прямые выплаты Direct-to-Wallet и полная свобода от комиссий с оборота в non-custodial среде.",
-      priceLabel: "199$",
+      priceLabel: "29$",
       period: "в месяц",
       stats: [
         { value: "Confirmed", label: "Финальность" },
@@ -260,7 +260,7 @@ const ru = {
         },
         {
           title: "Unified API v1 Beta",
-          body: "Единый интерфейс для работы с поддерживаемыми сетями: TON, TRON, SOL, Base, Arbitrum, BSC и Ethereum (EVM).",
+          body: "Единый интерфейс для работы с поддерживаемыми сетями: TON, TRON, SOL, Base, Base, BSC и Base (EVM).",
         },
         {
           title: "Idempotency Safety",
@@ -268,15 +268,15 @@ const ru = {
         },
       ],
       flow: [
-        { title: "API Key Provisioning", body: "Мгновенная генерация ключей rqst_live_. Гибкое управление правами (Scopes) для безопасной интеграции в ваш бэкенд." },
+        { title: "API Key Provisioning", body: "Мгновенная генерация ключей live_. Гибкое управление правами (Scopes) для безопасной интеграции в ваш бэкенд." },
         { title: "Webhook Configuration", body: "Настройка коллбэков с подписью HMAC-SHA256. Получайте уведомления в реальном времени с автоматическими ретраями." },
         { title: "Blockchain Monitoring", body: "Запуск автоматического процессинга. Наши вотчеры отслеживают транзакции и подтверждают платежи 24/7 без вашего участия." },
       ],
-      code: `// Create Invoice via Reqst API v1 Beta
-const response = await fetch("https://api.reqst.xyz/v1/invoices", {
+      code: `// Create Invoice via recv API v1 Beta
+const response = await fetch("https://api.recv.money/v1/invoices", {
   method: "POST",
   headers: {
-    "X-API-Key": "rqst_live_...",
+    "X-API-Key": "live_...",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
@@ -290,42 +290,42 @@ const response = await fetch("https://api.reqst.xyz/v1/invoices", {
 const invoice = await response.json();
 console.log("Checkout URL:", invoice.checkout_url);`
     },
-    enterprise: {
-      badge: "Reqst Enterprise",
-      title: "Корпоративный стандарт. Инфраструктура без границ.",
-      body: "Высокая пропускная способность, расширенные лимиты API и приоритетная поддержка для масштабных систем с оборотом от 1M$.",
-      priceLabel: "Custom",
-      period: "индивидуальный расчет",
+    business: {
+      badge: "recv Business",
+      title: "Business-платежи. Контроль для команды.",
+      body: "Команды, audit logs, кастом-брендинг и повышенные лимиты API для растущих платежных операций.",
+      priceLabel: "79$",
+      period: "в месяц",
       stats: [
-        { value: "Confirmed", label: "Финальность" },
-        { value: "Full", label: "Real-time Access" },
-        { value: "∞", label: "Webhook Endpoints" },
-        { value: "24/7", label: "Support" },
+        { value: "200k", label: "Requests/mo" },
+        { value: "10", label: "API Keys" },
+        { value: "10", label: "Webhook Endpoints" },
+        { value: "10", label: "Team Seats" },
       ],
       features: [
         {
-          title: "High-Performance Quota",
-          body: "Расширенные лимиты для крупных систем: до 600 запросов в минуту и 500,000 запросов к API ежемесячно.",
+          title: "Team Controls",
+          body: "Приглашайте участников команды и управляйте платежными операциями с понятной ответственностью.",
         },
         {
-          title: "Mission-Critical Webhooks",
-          body: "Повышенная надежность доставки уведомлений: до 8 автоматических попыток отправки (Retries) при сбоях вашего сервера.",
+          title: "Audit Logs",
+          body: "Отслеживайте важные операционные действия для контроля и разбора.",
         },
         {
-          title: "Enhanced Key Management",
-          body: "Возможность выпуска до 20 активных API-ключей для разных отделов, сервисов или инфраструктурных задач.",
+          title: "Custom Branding",
+          body: "Показывайте checkout и payment links с айдентикой вашего бизнеса.",
         },
         {
-          title: "Priority Engineering",
-          body: "Прямой канал связи с командой разработки Reqst. Приоритетное решение технических вопросов и консультации 24/7.",
+          title: "Extended Limits",
+          body: "Используйте 300 RPM, 200,000 запросов в месяц, 10 активных API-ключей и 10 webhook endpoints.",
         },
       ],
       flow: [
-        { title: "Infrastructure Audit", body: "Анализ текущих потоков платежей и проектирование топологии узлов под ваши пиковые нагрузки." },
-        { title: "Dedicated Provisioning", body: "Развертывание изолированных инстансов мониторинга и настройка высокоприоритетных очередей уведомлений." },
-        { title: "Hyper-scale Launch", body: "Запуск процессинга с лимитами 600+ RPM и прямой поддержкой от команды Core-разработчиков." },
+        { title: "Team Setup", body: "Добавьте операторов и разработчиков, которым нужен доступ к платежным процессам." },
+        { title: "Brand Setup", body: "Настройте checkout и payment links под презентацию вашего бизнеса." },
+        { title: "Scale Usage", body: "Работайте с повышенными лимитами API и webhook endpoints." },
       ],
-      code: `// Enterprise Webhook Verification (HMAC-SHA256)
+      code: `// Business Webhook Verification (HMAC-SHA256)
 const crypto = require('crypto');
 
 function verify(payload, signature, secret) {
@@ -365,7 +365,7 @@ function verify(payload, signature, secret) {
     devHint: "Работает только когда backend запущен с ALLOW_INSECURE_DEV_AUTH=true.",
   },
   checkout: {
-    pageTitle: "Reqst | Оплата",
+    pageTitle: "recv | Оплата",
     loading: "Загрузка...",
     waitingPayment: "Ожидаем транзакцию",
     expiresSoon: "Время почти вышло",
@@ -379,23 +379,24 @@ function verify(payload, signature, secret) {
     expiresAt: "До",
     copyAddress: "Копировать",
     copyComment: "Копировать",
-    copyAmount: "Копировать",
+    copyAmount: "Скопировать точную сумму",
     copied: "Скопировано",
     retry: "Повторить",
     openWallet: "Открыть кошелек",
-    warning: "Отправьте точную сумму в выбранной сети. Платёж зачислится автоматически.",
+    warning: "Отправьте ТОЧНУЮ сумму. Если переводите с биржи (Binance/Bybit), не забудьте прибавить комиссию биржи за вывод, иначе платеж уйдет в ручную проверку.",
+    exactAmountWarning: "Отправьте ТОЧНУЮ сумму. Если переводите с биржи (Binance/Bybit), не забудьте прибавить комиссию биржи за вывод, иначе платеж уйдет в ручную проверку.",
     payloadTitle: "Важное примечание",
     payloadHint: "Без этого комментария мы не сможем распознать ваш перевод.",
     qrLoading: "QR-код...",
     paymentRequest: "Оплата",
     ru: "РУ",
     en: "EN",
-    receiptLabel: "Reqst",
+    receiptLabel: "recv",
     service: "Услуга",
     status: "Статус",
     receiptOutroPaid: "Платёж успешно зачислен.",
     receiptOutroExpired: "Срок оплаты данного счета истек.",
-    footerLink: "Reqst",
+    footerLink: "recv",
     networkOnly: "Только эта сеть",
     paidTitle: "Оплачено",
     paidBody: "Ваш платеж успешно подтвержден.",
@@ -413,7 +414,7 @@ function verify(payload, signature, secret) {
     docHintPaid: "Транзакция успешно завершена.",
     docHintExpired: "Пожалуйста, запросите новую ссылку для оплаты у продавца.",
     footerPoweredBy: "Работает на",
-    footerCTA: "Принимайте платежи так же с Reqst",
+    footerCTA: "Принимайте платежи так же с recv",
   },
   sellerConsole: {
     nav: {
@@ -428,7 +429,7 @@ function verify(payload, signature, secret) {
       logout: "Выйти",
     },
     promo: {
-      title: "Разблокируйте Reqst Developer",
+      title: "Разблокируйте recv Developer",
       subtitle: "Получите доступ к API, вебхукам и расширенным лимитам для вашего бизнеса.",
       action: "Перейти на Developer",
     },
@@ -448,7 +449,7 @@ function verify(payload, signature, secret) {
       setupTitle: "Быстрый старт",
       setupWallet: "Добавьте кошелек для выплат, чтобы начать принимать платежи.",
       setupWalletAction: "Добавить кошелек",
-      setupKey: "Создайте API-ключ, чтобы интегрировать Reqst в свой бэкенд.",
+      setupKey: "Создайте API-ключ, чтобы интегрировать recv в свой бэкенд.",
       setupKeyAction: "Создать ключ",
       setupInvoice: "Выставьте первый инвойс и поделитесь ссылкой на оплату.",
       setupInvoiceAction: "Создать инвойс",
@@ -717,20 +718,20 @@ function verify(payload, signature, secret) {
       url: "URL эндпоинта",
       secret: "Секрет подписи",
       verification: "Проверка подписи",
-      verificationDesc: "Каждый вебхук содержит заголовок X-Reqst-Signature. Используйте HMAC SHA-256 для проверки подлинности.",
+      verificationDesc: "Каждый вебхук содержит заголовок X-recv-Signature. Используйте HMAC SHA-256 для проверки подлинности.",
     },
     billing: {
       title: "Тарифные планы",
       subtitle: "Выберите план, соответствующий вашим масштабам.",
       upgrade: "Обновить план",
       current: "Ваш текущий тариф",
-      enterpriseNote: "Нужны индивидуальные условия? Enterprise план настраивается под ваши задачи.",
-      contactSupport: "Узнать про Enterprise",
+      businessNote: "Нужны команды, audit logs и кастом-брендинг? Переходите на Business.",
+      contactSupport: "Открыть биллинг",
     },
     mcp: {
       title: "Model Context Protocol (MCP) Сервер",
-      subtitle: "Подключите AI-агентов к Reqst. Управляйте платежным шлюзом на естественном языке.",
-      desc: "Reqst предоставляет MCP-сервер, который позволяет AI-ассистентам (таким как Claude Desktop, Claude Code, Cline, Cursor или любой другой LLM-клиент) создавать инвойсы, локально проверять подписи вебхуков, симулировать платежи и просматривать аккаунт в качестве инструментов.",
+      subtitle: "Подключите AI-агентов к recv. Управляйте платежным шлюзом на естественном языке.",
+      desc: "recv предоставляет MCP-сервер, который позволяет AI-ассистентам (таким как Claude Desktop, Claude Code, Cline, Cursor или любой другой LLM-клиент) создавать инвойсы, локально проверять подписи вебхуков, симулировать платежи и просматривать аккаунт в качестве инструментов.",
       runTitle: "Быстрый запуск через npx",
       configTitle: "Настройка Claude Desktop",
       configDesc: "Добавьте этот блок конфигурации в ваш файл claude_desktop_config.json:",
@@ -785,7 +786,7 @@ function verify(payload, signature, secret) {
       done: "готово",
       next: "далее",
       simulatorTitle: "Симулятор тестового инвойса",
-      simulatorDesc: "Использует секрет rqst_test_, показанный при создании ключа. Секрет не сохраняется сервером в открытом виде.",
+      simulatorDesc: "Использует секрет test_, показанный при создании ключа. Секрет не сохраняется сервером в открытом виде.",
       createInvoice: "Создать test invoice",
       simulatePayment: "Симулировать оплату",
       openCheckout: "Открыть checkout",
@@ -823,7 +824,7 @@ function verify(payload, signature, secret) {
       kicker: "PRIVACY POLICY",
       title: "PRIVACY POLICY AND DATA PROCESSING AGREEMENT",
       summary:
-        "READ THIS DOCUMENT CAREFULLY. BY ACCESSING THE REQST SOFTWARE, DASHBOARD, API, OR PUBLIC CHECKOUT PAGES, YOU EXPLICITLY CONSENT TO THE DATA PRACTICES DESCRIBED HEREIN. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY CEASE ALL USE OF THE SERVICE.",
+        "READ THIS DOCUMENT CAREFULLY. BY ACCESSING THE RECV SOFTWARE, DASHBOARD, API, OR PUBLIC CHECKOUT PAGES, YOU EXPLICITLY CONSENT TO THE DATA PRACTICES DESCRIBED HEREIN. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY CEASE ALL USE OF THE SERVICE.",
       updatedLabel: "Last Updated",
       operatorLabel: "Effective Date",
       metaItems: ["Last Updated: March 13, 2026", "Effective Date: March 13, 2026"],
@@ -841,14 +842,14 @@ function verify(payload, signature, secret) {
         {
           title: "1. PREAMBLE AND SCOPE",
           paragraphs: [
-            'This Privacy Policy (the "Policy") governs how reqst ("Company", "we", "us", "our") collects, processes, utilizes, and safeguards information when you ("Merchant", "User", "you") or your end-users ("Customers") interact with our software-as-a-service infrastructure, Telegram bots, API endpoints, and public checkout interfaces (collectively, the "Service").',
+            'This Privacy Policy (the "Policy") governs how recv ("Company", "we", "us", "our") collects, processes, utilizes, and safeguards information when you ("Merchant", "User", "you") or your end-users ("Customers") interact with our software-as-a-service infrastructure, Telegram bots, API endpoints, and public checkout interfaces (collectively, the "Service").',
             "This Policy is designed to comply with global data protection principles while explicitly acknowledging the inherently public, immutable, and decentralized nature of cryptographic blockchain technology.",
           ],
         },
         {
           title: "2. THE FUNDAMENTAL REALITY OF BLOCKCHAIN DATA (CRITICAL NOTICE)",
           paragraphs: [
-            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TRON, Solana, Ethereum, Base, Arbitrum, and BSC) are decentralized, public ledgers.",
+            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TON_USDT, TRON, Base, and BSC) are decentralized, public ledgers.",
             '2.2. No Expectation of Privacy On-Chain: Wallet addresses, transaction hashes (TXIDs), timestamps, transfer amounts, and on-chain memos/comments are inherently public, permanently recorded, and accessible to anyone globally. The Company does not control these networks and cannot erase, obfuscate, or alter on-chain data. 2.3. Exemption from Deletion Requests: Requests to invoke the "Right to be Forgotten" or data erasure under the GDPR or CCPA cannot and will not apply to cryptographic data broadcasted to and confirmed on public blockchain networks.',
           ],
         },
@@ -904,7 +905,7 @@ function verify(payload, signature, secret) {
           ],
           bullets: [
             "Telegram Messenger Inc.: For authentication, bot interactions, and Merchant notifications.",
-            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM/Solana node providers) used to read the blockchain.",
+            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM/TON_USDT node providers) used to read the blockchain.",
             "Cloud Infrastructure: Secure database hosting (PostgreSQL) and server environments (e.g., AWS, DigitalOcean, or Cloudflare for edge routing).",
             "Market Oracles: Third-party APIs (e.g., CoinGecko) to fetch real-time USD to Digital Asset exchange rates.",
           ],
@@ -940,7 +941,7 @@ function verify(payload, signature, secret) {
       kicker: "TERMS OF SERVICE",
       title: "TERMS OF SERVICE: COMPREHENSIVE END-USER LICENSE AND USAGE AGREEMENT",
       summary:
-        "PLEASE READ THIS COMPREHENSIVE AGREEMENT CAREFULLY. IT CONTAINS A MANDATORY BINDING ARBITRATION CLAUSE, A CLASS ACTION WAIVER, AND EXTENSIVE DISCLAIMERS OF LIABILITY THAT MATERIALLY AFFECT YOUR LEGAL RIGHTS. BY ACCESSING, INTEGRATING, OR UTILIZING THE REQST SOFTWARE, API, OR WEBHOOKS, YOU EXPLICITLY AGREE TO BE BOUND BY THESE TERMS IN THEIR ENTIRETY.",
+        "PLEASE READ THIS COMPREHENSIVE AGREEMENT CAREFULLY. IT CONTAINS A MANDATORY BINDING ARBITRATION CLAUSE, A CLASS ACTION WAIVER, AND EXTENSIVE DISCLAIMERS OF LIABILITY THAT MATERIALLY AFFECT YOUR LEGAL RIGHTS. BY ACCESSING, INTEGRATING, OR UTILIZING THE RECV SOFTWARE, API, OR WEBHOOKS, YOU EXPLICITLY AGREE TO BE BOUND BY THESE TERMS IN THEIR ENTIRETY.",
       updatedLabel: "Last Updated",
       operatorLabel: "Effective Date",
       metaItems: ["Last Updated: March 13, 2026", "Effective Date: March 13, 2026"],
@@ -948,7 +949,7 @@ function verify(payload, signature, secret) {
       draftBody:
         "This page preserves the provided Terms text in its original language mix and legal wording.",
       draftItems: [
-        'Company: reqst',
+        'Company: recv',
         'Scope: software, API, webhooks, blockchain monitoring',
         'Model: non-custodial, direct-to-wallet',
         'Dispute flow: arbitration + class action waiver',
@@ -958,7 +959,7 @@ function verify(payload, signature, secret) {
         {
           title: "1. PREAMBLE AND ACCEPTANCE OF TERMS",
           paragraphs: [
-            '1.1. Parties to the Agreement: This Terms of Service Agreement (the "Agreement") constitutes a legally binding contract between you (acting individually or on behalf of a corporate entity, hereinafter "Merchant", "Licensee", "User", "you", or "your") and reqst (hereinafter "Company", "we", "us", "our", or "Service Provider").',
+            '1.1. Parties to the Agreement: This Terms of Service Agreement (the "Agreement") constitutes a legally binding contract between you (acting individually or on behalf of a corporate entity, hereinafter "Merchant", "Licensee", "User", "you", or "your") and recv (hereinafter "Company", "we", "us", "our", or "Service Provider").',
             "1.2. Capacity to Contract: By utilizing the Service via Telegram authentication or our API, you represent and warrant that you are at least eighteen (18) years of age, possess the legal capacity to enter into this Agreement, and, if acting on behalf of a legal entity, possess the requisite authority to bind said entity.",
             "1.3. Modifications: We reserve the absolute, unilateral right to amend, modify, or append to this Agreement at any time. Continued use of the Service following the publication of any modifications constitutes your irrevocable acceptance of the amended terms.",
           ],
@@ -967,7 +968,7 @@ function verify(payload, signature, secret) {
           title: '2. STRICT DEFINITION OF THE SERVICE (THE "MERE CONDUIT" DOCTRINE)',
           paragraphs: [
             '2.1. Software as a Service (SaaS): The "Service" refers exclusively to the proprietary, non-custodial software middleware provided by the Company. This includes the dashboard, checkout page generators, smart-matching algorithms, API endpoints, webhook delivery systems, and blockchain monitoring logic (the "Watchers").',
-            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, Solana, EVM-compatible chains) and visualizes this data.",
+            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, TON_USDT, Base, BSC-compatible chains) and visualizes this data.",
             "2.3. Zero Financial Intermediation: The Company is strictly not a payment processor, payment gateway, money transmitter, clearinghouse, custodian, fiduciary, or financial institution. At no point in the technical architecture does the Company receive, hold, control, or possess any fiat currency, digital assets, or cryptographic private keys belonging to the Merchant or the Merchant’s end-users (\"Customers\").",
             "2.4. Direct-to-Wallet Execution: All transfers of Digital Assets occur exclusively and directly on the public blockchain from the Customer's unhosted or custodial wallet directly to the Merchant's designated destination address.",
           ],
@@ -999,7 +1000,7 @@ function verify(payload, signature, secret) {
         {
           title: "5. TECHNICAL MECHANICS, PROTOCOLS, AND USER ERROR",
           paragraphs: [
-            "5.1. Smart-Tracking and Exactness: To facilitate automated invoice status resolution, the Service employs a Smart-Tracking matching protocol. For TRON, Solana, and EVM networks, a unique decimal suffix (e.g., 0.000123) is appended to the payable amount. For the TON network, a mandatory unique payment comment (memo) is generated.",
+            "5.1. Smart-Tracking and Exactness: To facilitate automated invoice status resolution, the Service employs a Smart-Tracking matching protocol. For TRON, Base, and BSC networks, a unique decimal suffix (e.g., 0.000123) is appended to the payable amount. For the TON network, a mandatory unique payment comment (memo) is generated.",
             "5.2. Waiver of Liability for User Error: The Company bears absolutely ZERO liability for any financial loss, delayed access to digital goods, or unfulfilled invoices arising from:",
             "5.3. Irrevocability of Transactions: The Merchant acknowledges that blockchain transactions are mathematically immutable. The Company cannot reverse, refund, or alter any on-chain transfer. All dispute resolutions, underpayment negotiations, and refund processing are solely the responsibility of the Merchant.",
             "5.4. Third-Party RPC Reliance: The Service’s blockchain monitoring capabilities are wholly dependent on the stability, uptime, and accuracy of third-party Remote Procedure Call (RPC) node providers (e.g., TronGrid, TonCenter) and external oracle APIs (e.g., CoinGecko for fiat/crypto exchange rates). The Company is not liable for Service degradation, delayed webhooks, or failed mempool tracking caused by external RPC outages, rate-limiting, or public network congestion.",
@@ -1013,9 +1014,9 @@ function verify(payload, signature, secret) {
         {
           title: "6. API, WEBHOOKS, AND INTEGRATION SLAs",
           paragraphs: [
-            "6.1. API License: Subject to these Terms and active subscription status, the Company grants the Merchant a limited, non-exclusive, non-transferable, and revocable license to access the Reqst API (v1).",
+            "6.1. API License: Subject to these Terms and active subscription status, the Company grants the Merchant a limited, non-exclusive, non-transferable, and revocable license to access the recv API (v1).",
             '6.2. Webhook Delivery and Idempotency: Webhook notifications are delivered on an "at-least-once" basis. Due to network conditions, duplicate webhooks may be transmitted. The Merchant is strictly required to implement Idempotency Safety on their servers to prevent duplicate order fulfillment.',
-            "6.3. Cryptographic Verification: The Merchant must cryptographically verify all incoming webhooks using the X-Reqst-Signature header via HMAC-SHA256 algorithm. The Company disclaims any liability for unauthorized actions resulting from the Merchant's failure to validate webhook authenticity.",
+            "6.3. Cryptographic Verification: The Merchant must cryptographically verify all incoming webhooks using the X-recv-Signature header via HMAC-SHA256 algorithm. The Company disclaims any liability for unauthorized actions resulting from the Merchant's failure to validate webhook authenticity.",
           ],
         },
         {
@@ -1061,7 +1062,7 @@ function verify(payload, signature, secret) {
         {
           title: "12. FORCE MAJEURE AND BLOCKCHAIN ANOMALIES",
           paragraphs: [
-            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM or Solana).",
+            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM or TON_USDT).",
           ],
         },
         {

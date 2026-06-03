@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"reqst/backend/internal/config"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/config"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -187,14 +187,14 @@ func TestValidateWebhookURL(t *testing.T) {
 }
 
 func TestPublicInvoiceResponse(t *testing.T) {
-	comment := "REQST-ABC123"
+	comment := "RECV-ABC123"
 	txHash := "tx-1"
 	invoice := store.Invoice{
 		ID:                 1,
 		PublicID:           "INV123",
 		Kind:               store.InvoiceKindSubscription,
 		PlanCode:           store.PlanCodeTrial,
-		Title:              "Reqst Merchant · 30 days",
+		Title:              "recv Merchant · 30 days",
 		BaseAmountUSD:      decimal.RequireFromString("39"),
 		PayableAmount:      decimal.RequireFromString("11.250000"),
 		PayableNetwork:     store.NetworkTON,
@@ -253,11 +253,11 @@ func TestHelperUtilities(t *testing.T) {
 	if got := hashSecret(" secret "); got == "" {
 		t.Fatal("expected secret hash")
 	}
-	token, prefix, err := generateTokenWithPrefix("rqst_live_", 8)
+	token, prefix, err := generateTokenWithPrefix("live_", 8)
 	if err != nil {
 		t.Fatalf("generateTokenWithPrefix returned error: %v", err)
 	}
-	if !strings.HasPrefix(token, "rqst_live_") || prefix == "" {
+	if !strings.HasPrefix(token, "live_") || prefix == "" {
 		t.Fatalf("unexpected token or prefix: %q / %q", token, prefix)
 	}
 	if got := ternary(true, "a", "b"); got != "a" {
@@ -545,7 +545,7 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 		}
 	})
 
-	t.Run("create webhook endpoint rejects unsupported plan", func(t *testing.T) {
+	t.Run("create webhook endpoint validates trial request body", func(t *testing.T) {
 		router := gin.New()
 		router.Use(withWorkspaceContext(trialWorkspace))
 		router.POST("/api/developer/webhooks", server.handleCreateWebhookEndpoint)
@@ -555,8 +555,8 @@ func TestDeveloperHandlersValidationBranches(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(recorder, request)
 
-		if recorder.Code != stdhttp.StatusForbidden {
-			t.Fatalf("expected 403, got %d", recorder.Code)
+		if recorder.Code != stdhttp.StatusBadRequest {
+			t.Fatalf("expected 400, got %d", recorder.Code)
 		}
 	})
 
@@ -831,7 +831,7 @@ func TestAdminRefreshErrorPaths(t *testing.T) {
 		// Act
 		recorder := httptest.NewRecorder()
 		request := httptest.NewRequest(stdhttp.MethodPost, "/api/admin/refresh", nil)
-		request.AddCookie(&stdhttp.Cookie{Name: "reqst_admin_refresh", Value: "totally-invalid-token"})
+		request.AddCookie(&stdhttp.Cookie{Name: "recv_admin_refresh", Value: "totally-invalid-token"})
 		router.ServeHTTP(recorder, request)
 
 		// Assert
@@ -953,8 +953,8 @@ func TestParseAdminDateValidAndInvalid(t *testing.T) {
 }
 
 func TestValidAdminPlanCode(t *testing.T) {
-	validCodes := []string{"trial", "merchant", "developer", "business", "enterprise",
-		"TRIAL", "MERCHANT", "DEVELOPER", "BUSINESS", "ENTERPRISE",
+	validCodes := []string{"trial", "merchant", "developer", "business",
+		"TRIAL", "MERCHANT", "DEVELOPER", "BUSINESS",
 		" merchant ", "  TRIAL  "}
 
 	for _, raw := range validCodes {
@@ -1367,7 +1367,7 @@ func TestCookieAndRefreshTokenHelpers(t *testing.T) {
 	t.Run("setRefreshCookie skips blank values", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		context, _ := gin.CreateTestContext(recorder)
-		setRefreshCookie(context, "reqst_refresh", "   ", "production")
+		setRefreshCookie(context, "recv_refresh", "   ", "production")
 		if got := recorder.Header().Values("Set-Cookie"); len(got) != 0 {
 			t.Fatalf("expected no cookie for blank refresh token, got %#v", got)
 		}
@@ -1376,7 +1376,7 @@ func TestCookieAndRefreshTokenHelpers(t *testing.T) {
 	t.Run("setRefreshCookie uses secure flag outside development", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		context, _ := gin.CreateTestContext(recorder)
-		setRefreshCookie(context, "reqst_refresh", "token", "production")
+		setRefreshCookie(context, "recv_refresh", "token", "production")
 		cookie := recorder.Result().Cookies()[0]
 		if !cookie.HttpOnly || !cookie.Secure || cookie.MaxAge <= 0 || cookie.Path != "/" {
 			t.Fatalf("unexpected production cookie attributes: %#v", cookie)
@@ -1386,7 +1386,7 @@ func TestCookieAndRefreshTokenHelpers(t *testing.T) {
 	t.Run("clearRefreshCookie expires cookie", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		context, _ := gin.CreateTestContext(recorder)
-		clearRefreshCookie(context, "reqst_refresh", "development")
+		clearRefreshCookie(context, "recv_refresh", "development")
 		cookie := recorder.Result().Cookies()[0]
 		if cookie.Value != "" || cookie.MaxAge != -1 || cookie.Secure {
 			t.Fatalf("unexpected clear cookie attributes: %#v", cookie)
@@ -1396,9 +1396,9 @@ func TestCookieAndRefreshTokenHelpers(t *testing.T) {
 	t.Run("refreshTokenFromRequest prefers trimmed cookie", func(t *testing.T) {
 		context, _ := gin.CreateTestContext(httptest.NewRecorder())
 		request := httptest.NewRequest(stdhttp.MethodPost, "/refresh", strings.NewReader(`{"refresh_token":"from-body"}`))
-		request.AddCookie(&stdhttp.Cookie{Name: "reqst_refresh", Value: " cookie-token "})
+		request.AddCookie(&stdhttp.Cookie{Name: "recv_refresh", Value: " cookie-token "})
 		context.Request = request
-		if got := refreshTokenFromRequest(context, "reqst_refresh"); got != "cookie-token" {
+		if got := refreshTokenFromRequest(context, "recv_refresh"); got != "cookie-token" {
 			t.Fatalf("expected cookie token, got %q", got)
 		}
 	})
@@ -1407,7 +1407,7 @@ func TestCookieAndRefreshTokenHelpers(t *testing.T) {
 		context, _ := gin.CreateTestContext(httptest.NewRecorder())
 		context.Request = httptest.NewRequest(stdhttp.MethodPost, "/refresh", strings.NewReader(`{"refresh_token":" body-token "}`))
 		context.Request.Header.Set("Content-Type", "application/json")
-		if got := refreshTokenFromRequest(context, "reqst_refresh"); got != "body-token" {
+		if got := refreshTokenFromRequest(context, "recv_refresh"); got != "body-token" {
 			t.Fatalf("expected body token, got %q", got)
 		}
 	})
@@ -1416,7 +1416,7 @@ func TestCookieAndRefreshTokenHelpers(t *testing.T) {
 		context, _ := gin.CreateTestContext(httptest.NewRecorder())
 		context.Request = httptest.NewRequest(stdhttp.MethodPost, "/refresh", strings.NewReader(`{`))
 		context.Request.Header.Set("Content-Type", "application/json")
-		if got := refreshTokenFromRequest(context, "reqst_refresh"); got != "" {
+		if got := refreshTokenFromRequest(context, "recv_refresh"); got != "" {
 			t.Fatalf("expected empty token, got %q", got)
 		}
 	})
@@ -1952,7 +1952,7 @@ func TestCreateWebhookEndpointValidation(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	server := &Server{}
 
-	t.Run("rejects plan without webhook access (trial)", func(t *testing.T) {
+	t.Run("validates malformed json for trial webhook access", func(t *testing.T) {
 		trialWorkspace := store.Workspace{ID: 1, PlanCode: store.PlanCodeTrial}
 		router := gin.New()
 		router.Use(withWorkspaceContext(trialWorkspace))
@@ -1960,11 +1960,11 @@ func TestCreateWebhookEndpointValidation(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(stdhttp.MethodPost, "/api/developer/webhooks",
-			strings.NewReader(`{"url":"https://example.com/hook"}`))
+			strings.NewReader(`{bad`))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(rec, req)
-		if rec.Code != stdhttp.StatusForbidden {
-			t.Fatalf("expected 403 for trial plan (no webhooks), got %d", rec.Code)
+		if rec.Code != stdhttp.StatusBadRequest {
+			t.Fatalf("expected 400 for malformed json on trial plan, got %d", rec.Code)
 		}
 	})
 
@@ -2272,7 +2272,7 @@ func TestHandleAdminLogoutWithRefreshToken(t *testing.T) {
 	t.Run("logout with cookie triggers revoke and clears cookie", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(stdhttp.MethodPost, "/api/admin/logout", nil)
-		req.AddCookie(&stdhttp.Cookie{Name: "reqst_admin_refresh", Value: "some-refresh-token"})
+		req.AddCookie(&stdhttp.Cookie{Name: "recv_admin_refresh", Value: "some-refresh-token"})
 		router.ServeHTTP(rec, req)
 
 		if rec.Code != stdhttp.StatusOK {
@@ -2427,7 +2427,7 @@ func TestHandleAuthLogout(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(stdhttp.MethodPost, "/api/auth/logout", nil)
-		req.AddCookie(&stdhttp.Cookie{Name: "reqst_refresh", Value: "cookie-token"})
+		req.AddCookie(&stdhttp.Cookie{Name: "recv_refresh", Value: "cookie-token"})
 		router.ServeHTTP(rec, req)
 		if rec.Code != stdhttp.StatusOK {
 			t.Fatalf("expected 200 with cookie token, got %d", rec.Code)
@@ -2487,7 +2487,6 @@ func TestHandleAdminBlockWorkspaceValidation(t *testing.T) {
 	})
 }
 
-
 func TestHandleAdminReviewInvoiceIDValidation(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	server := &Server{}
@@ -2545,7 +2544,6 @@ func TestHandleCancelAndMarkPaidWithAPIInvoice(t *testing.T) {
 	})
 }
 
-
 func TestHandleAdminVerifyTOTPMalformedJSON(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	adminService := service.NewAdminService("admin", "pass", "secret", time.Hour)
@@ -2583,7 +2581,7 @@ func TestHandleAdminLogout(t *testing.T) {
 		router.POST("/api/admin/logout", server.handleAdminLogout)
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(stdhttp.MethodPost, "/api/admin/logout", nil)
-		req.AddCookie(&stdhttp.Cookie{Name: "reqst_admin_refresh", Value: "fake-refresh-token"})
+		req.AddCookie(&stdhttp.Cookie{Name: "recv_admin_refresh", Value: "fake-refresh-token"})
 		router.ServeHTTP(rec, req)
 		if rec.Code != stdhttp.StatusOK {
 			t.Fatalf("expected 200 with token, got %d", rec.Code)
@@ -2643,15 +2641,15 @@ func TestHandleNormalizeScopesAndTokenHelpers(t *testing.T) {
 	})
 
 	t.Run("generateTokenWithPrefix produces token with prefix", func(t *testing.T) {
-		token, prefix, err := generateTokenWithPrefix("rqst_live_", 16)
+		token, prefix, err := generateTokenWithPrefix("live_", 16)
 		if err != nil {
 			t.Fatalf("generateTokenWithPrefix: %v", err)
 		}
-		if !strings.HasPrefix(token, "rqst_live_") {
-			t.Fatalf("expected token to start with rqst_live_, got %q", token)
+		if !strings.HasPrefix(token, "live_") {
+			t.Fatalf("expected token to start with live_, got %q", token)
 		}
-		if !strings.HasPrefix(prefix, "rqst_live_") {
-			t.Fatalf("expected prefix to start with rqst_live_, got %q", prefix)
+		if !strings.HasPrefix(prefix, "live_") {
+			t.Fatalf("expected prefix to start with live_, got %q", prefix)
 		}
 	})
 }

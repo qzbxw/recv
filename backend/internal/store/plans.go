@@ -9,11 +9,10 @@ import (
 type PlanCode string
 
 const (
-	PlanCodeTrial      PlanCode = "trial"
-	PlanCodeMerchant   PlanCode = "merchant"
-	PlanCodeDeveloper  PlanCode = "developer"
-	PlanCodeBusiness   PlanCode = "business"
-	PlanCodeEnterprise PlanCode = "enterprise"
+	PlanCodeTrial     PlanCode = "trial"
+	PlanCodeMerchant  PlanCode = "merchant"
+	PlanCodeDeveloper PlanCode = "developer"
+	PlanCodeBusiness  PlanCode = "business"
 )
 
 type PlanDefinition struct {
@@ -44,15 +43,19 @@ var planCatalog = map[PlanCode]PlanDefinition{
 	PlanCodeTrial: {
 		Code:              PlanCodeTrial,
 		Name:              "Trial",
-		CheckoutTitle:     "Reqst Trial",
+		CheckoutTitle:     "recv Trial",
 		CheckoutBadge:     "Test-only",
-		MarketingLabel:    "Reqst Trial",
+		MarketingLabel:    "recv Trial",
 		PriceUSD:          decimal.Zero,
 		PriceUSDString:    "0",
 		BillingDays:       0,
 		HasUnlimitedSales: false,
 		HasAPI:            false,
-		HasWebhooks:       false,
+		HasWebhooks:       true,
+		MonthlyRequestCap: 0,
+		RequestsPerMinute: 0,
+		WebhookRetries:    3,
+		WebhookLimit:      1,
 		MaxWorkspaces:     1,
 		MaxSeats:          1,
 		AnalyticsLevel:    "none",
@@ -61,15 +64,17 @@ var planCatalog = map[PlanCode]PlanDefinition{
 	PlanCodeMerchant: {
 		Code:              PlanCodeMerchant,
 		Name:              "Merchant",
-		CheckoutTitle:     "Reqst Merchant · 30 days",
+		CheckoutTitle:     "recv Merchant · 30 days",
 		CheckoutBadge:     "Merchant",
 		MarketingLabel:    "Merchant",
-		PriceUSD:          decimal.RequireFromString("39"),
-		PriceUSDString:    "39",
+		PriceUSD:          decimal.RequireFromString("9"),
+		PriceUSDString:    "9",
 		BillingDays:       30,
 		HasUnlimitedSales: true,
 		HasAPI:            false,
 		HasWebhooks:       false,
+		MonthlyRequestCap: 1000,
+		RequestsPerMinute: 30,
 		MaxWorkspaces:     1,
 		MaxSeats:          1,
 		AnalyticsLevel:    "basic",
@@ -78,11 +83,11 @@ var planCatalog = map[PlanCode]PlanDefinition{
 	PlanCodeDeveloper: {
 		Code:              PlanCodeDeveloper,
 		Name:              "Developer",
-		CheckoutTitle:     "Reqst Developer · 30 days",
+		CheckoutTitle:     "recv Developer · 30 days",
 		CheckoutBadge:     "Developer",
 		MarketingLabel:    "Developer",
-		PriceUSD:          decimal.RequireFromString("199"),
-		PriceUSDString:    "199",
+		PriceUSD:          decimal.RequireFromString("29"),
+		PriceUSDString:    "29",
 		BillingDays:       30,
 		HasUnlimitedSales: true,
 		HasAPI:            true,
@@ -100,11 +105,11 @@ var planCatalog = map[PlanCode]PlanDefinition{
 	PlanCodeBusiness: {
 		Code:              PlanCodeBusiness,
 		Name:              "Business",
-		CheckoutTitle:     "Reqst Business · 30 days",
+		CheckoutTitle:     "recv Business · 30 days",
 		CheckoutBadge:     "Business",
 		MarketingLabel:    "Business",
-		PriceUSD:          decimal.RequireFromString("499"),
-		PriceUSDString:    "499",
+		PriceUSD:          decimal.RequireFromString("79"),
+		PriceUSDString:    "79",
 		BillingDays:       30,
 		HasUnlimitedSales: true,
 		HasAPI:            true,
@@ -120,36 +125,15 @@ var planCatalog = map[PlanCode]PlanDefinition{
 		SupportLevel:      "priority",
 		PrioritySupport:   true,
 	},
-	PlanCodeEnterprise: {
-		Code:              PlanCodeEnterprise,
-		Name:              "Enterprise",
-		CheckoutTitle:     "Reqst Enterprise · 30 days",
-		CheckoutBadge:     "Enterprise",
-		MarketingLabel:    "Enterprise",
-		PriceUSD:          decimal.RequireFromString("0"),
-		PriceUSDString:    "Custom",
-		BillingDays:       30,
-		HasUnlimitedSales: true,
-		HasAPI:            true,
-		HasWebhooks:       true,
-		APIKeyLimit:       50,
-		MonthlyRequestCap: 1000000,
-		RequestsPerMinute: 1200,
-		WebhookRetries:    8,
-		WebhookLimit:      50,
-		MaxWorkspaces:     100,
-		MaxSeats:          100,
-		AnalyticsLevel:    "custom",
-		SupportLevel:      "dedicated",
-		PrioritySupport:   true,
-	},
 }
 
 func NormalizePlanCode(raw string) PlanCode {
 	code := PlanCode(strings.ToLower(strings.TrimSpace(raw)))
 	switch code {
-	case PlanCodeTrial, PlanCodeMerchant, PlanCodeDeveloper, PlanCodeBusiness, PlanCodeEnterprise:
+	case PlanCodeTrial, PlanCodeMerchant, PlanCodeDeveloper, PlanCodeBusiness:
 		return code
+	case "enterprise":
+		return PlanCodeBusiness
 	case "pro":
 		return PlanCodeMerchant
 	case "dev":
@@ -172,6 +156,5 @@ func ListPaidPlans() []PlanDefinition {
 		ResolvePlan(PlanCodeMerchant),
 		ResolvePlan(PlanCodeDeveloper),
 		ResolvePlan(PlanCodeBusiness),
-		ResolvePlan(PlanCodeEnterprise),
 	}
 }

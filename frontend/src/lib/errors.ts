@@ -43,7 +43,7 @@ const STATUS_HINTS: Record<number, { message: string; action: string }> = {
     action: "Wait for the limit window to reset or upgrade the API plan.",
   },
   500: {
-    message: "Reqst could not complete the request.",
+    message: "recv could not complete the request.",
     action: "Retry shortly. If it keeps failing, contact support with the time and operation.",
   },
 };

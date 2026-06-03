@@ -5921,11 +5921,11 @@ html {
   color: #c4b5fd;
 }
 
-.lend-compare-reqst {
+.lend-compare-recv {
   position: relative;
 }
 
-.lend-compare-reqst::before {
+.lend-compare-recv::before {
   content: "✨";
   position: absolute;
   top: -10px;
@@ -5935,7 +5935,7 @@ html {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.lend-compare-row:hover .lend-compare-reqst::before {
+.lend-compare-row:hover .lend-compare-recv::before {
   opacity: 1;
   transform: scale(1.2) rotate(10deg);
 }
@@ -6153,7 +6153,7 @@ html {
 }
 
 .lend-compare-legacy,
-.lend-compare-reqst {
+.lend-compare-recv {
   padding: 1.25rem 1.5rem;
   border-radius: var(--radius-md);
   position: relative;
@@ -6173,13 +6173,13 @@ html {
   filter: blur(0.5px);
 }
 
-.lend-compare-reqst {
+.lend-compare-recv {
   background: rgba(139, 92, 246, 0.03);
   border: 1px solid rgba(139, 92, 246, 0.08);
   box-shadow: 0 4px 24px -12px rgba(139, 92, 246, 0);
 }
 
-.lend-compare-row:hover .lend-compare-reqst {
+.lend-compare-row:hover .lend-compare-recv {
   background: rgba(139, 92, 246, 0.06);
   border-color: rgba(139, 92, 246, 0.18);
   transform: scale(1.015);
@@ -6240,7 +6240,7 @@ html {
   color: #9da3ab;
 }
 
-.lend-compare-reqst span {
+.lend-compare-recv span {
   color: var(--accent);
 }
 
@@ -6251,7 +6251,7 @@ html {
   font-weight: 500;
 }
 
-.lend-compare-reqst p {
+.lend-compare-recv p {
   color: #fff;
 }
 
@@ -7108,7 +7108,7 @@ html {
   }
 
   .lend-compare-legacy,
-  .lend-compare-reqst {
+  .lend-compare-recv {
     padding: 0.9rem;
     border-radius: var(--radius-md);
   }
@@ -8822,15 +8822,15 @@ html {
   border-color: rgba(51, 181, 255, 0.3);
 }
 
-.checkout-badge--enterprise,
-.checkout-card--enterprise .receipt-brandline span,
-.checkout-card--enterprise .completion-brandline span {
+.checkout-badge--business,
+.checkout-card--business .receipt-brandline span,
+.checkout-card--business .completion-brandline span {
   background: rgba(255, 178, 76, 0.18);
   border-color: rgba(255, 214, 148, 0.34);
 }
 
 .checkout-card--dev,
-.checkout-card--enterprise {
+.checkout-card--business {
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.4);
 }
 
@@ -9651,7 +9651,7 @@ html {
   font-size: 0.78rem;
 }
 
-/* Plan Page (Dev/Enterprise) Responsive Styles */
+/* Plan Page (Dev/Business) Responsive Styles */
 .lend-hero-copy p {
   color: #f7f0e7;
   opacity: 0.8;

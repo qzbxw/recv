@@ -1,8 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Reqst Payment API",
-        "title": "Reqst API",
+        "description": "recv Payment API",
+        "title": "recv API",
         "contact": {},
         "version": "1.0"
     },

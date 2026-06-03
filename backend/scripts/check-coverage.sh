@@ -3,7 +3,7 @@ set -eu
 
 profile="${1:-coverage.out}"
 minimum="${COVERAGE_MIN:-90}"
-export GOCACHE="${GOCACHE:-/tmp/reqst-go-build}"
+export GOCACHE="${GOCACHE:-/tmp/recv-go-build}"
 
 total="$(go tool cover -func="$profile" | awk '/^total:/ { gsub("%", "", $3); print $3 }')"
 if [ -z "$total" ]; then

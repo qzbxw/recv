@@ -8,13 +8,13 @@ type Props = {
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { locale } = await props.params;
   return {
-    title: "Reqst Merchant | Direct-to-Wallet Crypto Payments",
+    title: "recv Merchant | Direct-to-Wallet Crypto Payments",
     description: "Accept crypto payments with 0% turnover fees. Professional dashboard and instant notifications.",
     alternates: {
       canonical: `/${locale}/merchant`,
     },
     openGraph: {
-      title: "Reqst Merchant",
+      title: "recv Merchant",
       description: "Non-custodial crypto processing for everyone.",
     },
   };

@@ -5,9 +5,9 @@ description: Create, fetch, list and cancel invoices — full field reference, s
 
 # Invoices
 
-An invoice is a single payment request. You create it with a USD amount and a network; Reqst converts the price to the on-chain `payable_amount`, assigns one of your payout wallets as the `destination_address`, and tracks the payment until it settles.
+An invoice is a single payment request. You create it with a USD amount and a network; recv converts the price to the on-chain `payable_amount`, assigns one of your payout wallets as the `destination_address`, and tracks the payment until it settles.
 
-All endpoints below live under `https://reqst.xyz/v1` and require an [API key](/en/docs/authentication).
+All endpoints below live under `https://recv.money/v1` and require an [API key](/en/docs/authentication).
 
 ## Create an invoice
 
@@ -21,7 +21,7 @@ POST /v1/invoices        (scope: invoices:write)
 |-------|------|----------|-------------|
 | `title` | string | Yes | Label shown on checkout (e.g. `"Order #9841"`). Must be non-empty. |
 | `base_amount_usd` | string | Yes | Amount in USD as a decimal string (e.g. `"149.00"`). Must be positive. |
-| `payable_network` | string | Yes | One of `TON`, `TRON`, `SOLANA`, `EVM`, `BASE`, `ARBITRUM`, `BSC`. You must have an active payout wallet for the matching wallet bucket. |
+| `payable_network` | string | Yes | One of `TON`, `TON_USDT`, `TRON`, `BASE`, `BSC`. You must have an active payout wallet for the matching wallet bucket. |
 | `expires_in_minutes` | integer | No | Payment window in minutes. Defaults to **30** when omitted or ≤ 0. |
 
 The invoice environment (`test`/`live`) is inherited from the API key — there is no `mode` field in the body.
@@ -36,8 +36,8 @@ The invoice environment (`test`/`live`) is inherited from the API key — there 
 ### Example (curl)
 
 ```bash
-curl -X POST https://reqst.xyz/v1/invoices \
-  -H "X-API-Key: $REQST_API_KEY" \
+curl -X POST https://recv.money/v1/invoices \
+  -H "X-API-Key: $RECV_API_KEY" \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: order-9841" \
   -d '{
@@ -54,7 +54,7 @@ curl -X POST https://reqst.xyz/v1/invoices \
 import requests
 
 resp = requests.post(
-    "https://reqst.xyz/v1/invoices",
+    "https://recv.money/v1/invoices",
     headers={"X-API-Key": "YOUR_API_KEY", "Content-Type": "application/json"},
     json={
         "title": "Premium Subscription",
@@ -64,7 +64,7 @@ resp = requests.post(
     },
 )
 invoice = resp.json()
-print("Checkout:", "https://reqst.xyz" + invoice["checkout_url"])
+print("Checkout:", "https://recv.money" + invoice["checkout_url"])
 ```
 
 ## Invoice object
@@ -106,7 +106,7 @@ A `201`/`200` response returns the invoice object:
 | `id` | integer | Numeric invoice ID. Use this in the path of get/cancel/simulate calls. |
 | `public_id` | string | Public identifier used in the checkout URL. |
 | `title` | string | The title you supplied. |
-| `kind` | string | `merchant` for API-created invoices; `subscription` for Reqst plan billing. |
+| `kind` | string | `merchant` for API-created invoices; `subscription` for recv plan billing. |
 | `subscription_days` | integer | Days granted by a subscription invoice; `0` for merchant invoices. |
 | `plan_code` | string | Plan associated with the invoice. |
 | `checkout_badge` | string | Badge text shown on the hosted checkout. |
@@ -123,7 +123,7 @@ A `201`/`200` response returns the invoice object:
 | `received_amount` | string | Total received so far, 6 decimals. |
 | `review_reason` | string \| null | Why the invoice is in `manual_review`, when applicable. |
 | `finalized_at` | timestamp \| null | When the invoice reached a terminal state. |
-| `checkout_url` | string | Relative hosted-checkout path: `https://reqst.xyz{checkout_url}`. |
+| `checkout_url` | string | Relative hosted-checkout path: `https://recv.money{checkout_url}`. |
 | `payment_uri` | string | Deep-link / address for the customer's wallet. For TON, a `ton://transfer/...` URI with amount in nanotons; for other networks, the destination address. |
 
 ## Statuses
@@ -147,7 +147,7 @@ GET /v1/invoices/:id     (scope: invoices:read)
 ```
 
 ```bash
-curl https://reqst.xyz/v1/invoices/482 -H "X-API-Key: $REQST_API_KEY"
+curl https://recv.money/v1/invoices/482 -H "X-API-Key: $RECV_API_KEY"
 ```
 
 Returns the invoice object above, or `404` if it does not belong to your workspace.
@@ -164,8 +164,8 @@ GET /v1/invoices         (scope: invoices:read)
 | `page_size` | `20` | Clamped to `1–100`; out-of-range values reset to 20. |
 
 ```bash
-curl "https://reqst.xyz/v1/invoices?page=1&page_size=50" \
-  -H "X-API-Key: $REQST_API_KEY"
+curl "https://recv.money/v1/invoices?page=1&page_size=50" \
+  -H "X-API-Key: $RECV_API_KEY"
 ```
 
 ```json
@@ -181,8 +181,8 @@ POST /v1/invoices/:id/cancel     (scope: invoices:write)
 Cancelling sets the invoice to `expired`. Only workspace-created merchant invoices can be cancelled; subscription/plan invoices cannot (`400`).
 
 ```bash
-curl -X POST https://reqst.xyz/v1/invoices/482/cancel \
-  -H "X-API-Key: $REQST_API_KEY"
+curl -X POST https://recv.money/v1/invoices/482/cancel \
+  -H "X-API-Key: $RECV_API_KEY"
 ```
 
 ## Simulating payments (test mode)
@@ -191,16 +191,16 @@ curl -X POST https://reqst.xyz/v1/invoices/482/cancel \
 POST /v1/test/invoices/:id/simulate-payment     (scope: invoices:write)
 ```
 
-Marks a **test** invoice as `paid` and fires webhooks, without any on-chain transfer. Requires an `rqst_test_` key and a test invoice; otherwise returns `403`/`400`.
+Marks a **test** invoice as `paid` and fires webhooks, without any on-chain transfer. Requires an `test_` key and a test invoice; otherwise returns `403`/`400`.
 
 ```bash
-curl -X POST https://reqst.xyz/v1/test/invoices/482/simulate-payment \
-  -H "X-API-Key: $REQST_API_KEY"
+curl -X POST https://recv.money/v1/test/invoices/482/simulate-payment \
+  -H "X-API-Key: $RECV_API_KEY"
 ```
 
 ## Idempotency
 
-`POST /v1/invoices` accepts an `Idempotency-Key` header. Reqst stores the result against the key + request body hash:
+`POST /v1/invoices` accepts an `Idempotency-Key` header. recv stores the result against the key + request body hash:
 
 - **Same key, same body** → returns the original stored response.
 - **Same key, different body** → `409 Conflict`.
@@ -211,7 +211,7 @@ Use a stable key per logical order (e.g. your order ID) so network retries never
 ## Example (Go)
 
 ```go
-req, _ := http.NewRequest("GET", "https://reqst.xyz/v1/invoices/"+id, nil)
+req, _ := http.NewRequest("GET", "https://recv.money/v1/invoices/"+id, nil)
 req.Header.Set("X-API-Key", apiKey)
 
 resp, _ := http.DefaultClient.Do(req)

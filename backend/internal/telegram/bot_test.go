@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 	"github.com/shopspring/decimal"
@@ -35,7 +35,7 @@ func TestBotWorkerRunWithEmptyTokenExitsOnContextCancel(t *testing.T) {
 		st,
 		service.NewInvoiceService(st, "2.50"),
 		"", // empty token → delivery worker mode
-		"https://reqst.test/app",
+		"https://recv.test/app",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 
@@ -84,7 +84,7 @@ func TestBotWorkerRunWithTokenExitsOnContextCancel(t *testing.T) {
 		st,
 		service.NewInvoiceService(st, "2.50"),
 		"bot-token",
-		"https://reqst.test/app",
+		"https://recv.test/app",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	worker.httpClient = rewriteTelegramHTTPClient(t, server)
@@ -111,7 +111,7 @@ func TestBotWorkerRunWithTokenExitsOnContextCancel(t *testing.T) {
 func TestBotWorkerHelpers(t *testing.T) {
 	telegramID := int64(42)
 	worker := &BotWorker{
-		publicAppURL: "https://reqst.test/app/",
+		publicAppURL: "https://recv.test/app/",
 		sessions:     map[int64]*botSession{},
 	}
 
@@ -122,12 +122,12 @@ func TestBotWorkerHelpers(t *testing.T) {
 		t.Fatalf("expected telegram label 42, got %q", got)
 	}
 
-	keyboard := worker.reqstKeyboard([][]tgInlineKeyboardButton{{{Text: "Home", CallbackData: "nav:home"}}})
+	keyboard := worker.recvKeyboard([][]tgInlineKeyboardButton{{{Text: "Home", CallbackData: "nav:home"}}})
 	if len(keyboard.InlineKeyboard) != 2 {
-		t.Fatalf("expected reqst row to be appended, got %#v", keyboard.InlineKeyboard)
+		t.Fatalf("expected recv row to be appended, got %#v", keyboard.InlineKeyboard)
 	}
-	if keyboard.InlineKeyboard[1][0].URL != "https://reqst.test/app" {
-		t.Fatalf("unexpected reqst button URL: %q", keyboard.InlineKeyboard[1][0].URL)
+	if keyboard.InlineKeyboard[1][0].URL != "https://recv.test/app" {
+		t.Fatalf("unexpected recv button URL: %q", keyboard.InlineKeyboard[1][0].URL)
 	}
 
 	payload := notificationPayload{
@@ -166,7 +166,7 @@ func TestBotWorkerHelpers(t *testing.T) {
 		t.Fatal("expected session to be reset")
 	}
 
-	if got := worker.appURL("/checkout/INV123"); got != "https://reqst.test/app/checkout/INV123" {
+	if got := worker.appURL("/checkout/INV123"); got != "https://recv.test/app/checkout/INV123" {
 		t.Fatalf("unexpected app URL: %q", got)
 	}
 	if got := shortAddress("0x1111111111111111111111111111111111111111"); got != "0x1111...111111" {
@@ -395,7 +395,7 @@ func TestBotWorkerCallbackFlowsWithStore(t *testing.T) {
 		st,
 		service.NewInvoiceService(st, "2.50"),
 		"bot-token",
-		"https://reqst.test/app",
+		"https://recv.test/app",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	worker.httpClient = rewriteTelegramHTTPClient(t, server)
@@ -460,19 +460,19 @@ func TestWebhookDeliveryHTTPContract(t *testing.T) {
 		if r.Header.Get("Content-Type") != "application/json" {
 			t.Fatalf("unexpected content type: %q", r.Header.Get("Content-Type"))
 		}
-		if r.Header.Get("User-Agent") != "reqst-webhooks/1.0" {
+		if r.Header.Get("User-Agent") != "recv-webhooks/1.0" {
 			t.Fatalf("unexpected user agent: %q", r.Header.Get("User-Agent"))
 		}
-		if r.Header.Get("X-Reqst-Event") != "invoice.paid" {
-			t.Fatalf("unexpected event header: %q", r.Header.Get("X-Reqst-Event"))
+		if r.Header.Get("X-recv-Event") != "invoice.paid" {
+			t.Fatalf("unexpected event header: %q", r.Header.Get("X-recv-Event"))
 		}
-		timestamp := r.Header.Get("X-Reqst-Timestamp")
+		timestamp := r.Header.Get("X-recv-Timestamp")
 		if timestamp == "" {
 			t.Fatal("expected timestamp header")
 		}
 		expectedSignature := expectedWebhookSignature("whsec_test", timestamp, payload)
-		if r.Header.Get("X-Reqst-Signature") != expectedSignature {
-			t.Fatalf("unexpected signature: %q", r.Header.Get("X-Reqst-Signature"))
+		if r.Header.Get("X-recv-Signature") != expectedSignature {
+			t.Fatalf("unexpected signature: %q", r.Header.Get("X-recv-Signature"))
 		}
 		w.WriteHeader(http.StatusNoContent)
 	}))
@@ -605,9 +605,9 @@ func TestShortAddressWithShortInput(t *testing.T) {
 }
 
 func TestAppURLWithoutLeadingSlash(t *testing.T) {
-	worker := &BotWorker{publicAppURL: "https://reqst.test/app/"}
+	worker := &BotWorker{publicAppURL: "https://recv.test/app/"}
 	// Path without leading slash should get one added
-	if got := worker.appURL("checkout/INV123"); got != "https://reqst.test/app/checkout/INV123" {
+	if got := worker.appURL("checkout/INV123"); got != "https://recv.test/app/checkout/INV123" {
 		t.Fatalf("unexpected app URL: %q", got)
 	}
 }
@@ -661,7 +661,7 @@ func TestFinishInvoiceWizardInvalidAmount(t *testing.T) {
 		st,
 		service.NewInvoiceService(st, "2.50"),
 		"bot-token",
-		"https://reqst.test/app",
+		"https://recv.test/app",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	worker.httpClient = rewriteTelegramHTTPClient(t, server)
@@ -785,7 +785,7 @@ func TestFlushProcessesNotificationJob(t *testing.T) {
 		st,
 		service.NewInvoiceService(st, "2.50"),
 		"bot-token",
-		"https://reqst.test/app",
+		"https://recv.test/app",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	worker.httpClient = rewriteTelegramHTTPClient(t, server)
@@ -827,7 +827,7 @@ func TestFlushMarksNotificationFailedWhenTelegramRejectsMessage(t *testing.T) {
 		st,
 		service.NewInvoiceService(st, "2.50"),
 		"bot-token",
-		"https://reqst.test/app",
+		"https://recv.test/app",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	worker.httpClient = rewriteTelegramHTTPClient(t, server)
@@ -1110,7 +1110,7 @@ func newTestBotWorker(t *testing.T, st *store.Store) (*BotWorker, *telegramReque
 		st,
 		service.NewInvoiceService(st, "2.50"),
 		"bot-token",
-		"https://reqst.test/app",
+		"https://recv.test/app",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	worker.httpClient = rewriteTelegramHTTPClient(t, server)
@@ -1135,12 +1135,12 @@ func newTelegramBotTestStore(t *testing.T, ctx context.Context) *store.Store {
 	pgConfig := embeddedpostgres.DefaultConfig().
 		Version(embeddedpostgres.V16).
 		Port(port).
-		Database("reqst").
-		Username("reqst").
-		Password("reqst").
+		Database("recv").
+		Username("recv").
+		Password("recv").
 		RuntimePath(filepath.Join(baseDir, "runtime")).
 		DataPath(filepath.Join(baseDir, "data")).
-		CachePath(filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")).
+		CachePath(filepath.Join(os.TempDir(), "recv-embedded-postgres-cache")).
 		Locale("C").
 		Encoding("UTF8").
 		StartTimeout(45 * time.Second).
@@ -1273,7 +1273,7 @@ func TestFinishInvoiceWizardCreateInvoiceErrors(t *testing.T) {
 		st,
 		service.NewInvoiceService(st, "2.50"),
 		"bot-token",
-		"https://reqst.test/app",
+		"https://recv.test/app",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	worker.httpClient = rewriteTelegramHTTPClient(t, server)

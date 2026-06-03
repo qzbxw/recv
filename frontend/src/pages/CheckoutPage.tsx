@@ -7,7 +7,7 @@ import type { Invoice } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { CHECKOUT_COPY as COPY } from "../i18n";
 
-const BOT_URL = "https://t.me/reqstxyz_bot";
+const BOT_URL = "https://t.me/recvxyz_bot";
 const DEMO_PUBLIC_ID = "demo";
 
 function fallbackPaymentURI(invoice: Invoice) {
@@ -35,16 +35,16 @@ function createDemoInvoice(): Invoice {
   const expiresAt = new Date(now.getTime() + 17 * 60 * 1000).toISOString();
   return {
     id: 0,
-    public_id: "REQST-DEMO-149",
+    public_id: "RECV-DEMO-149",
     kind: "merchant",
     plan_code: "merchant",
     checkout_badge: "Demo Checkout",
-    title: "Reqst Product Demo",
+    title: "recv Product Demo",
     base_amount_usd: "149.00",
     payable_amount: "149 USDT",
     payable_network: "TON",
     destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
-    payment_comment: "REQST-DEMO-149",
+    payment_comment: "RECV-DEMO-149",
     status: "awaiting_payment",
     environment: "test",
     expires_at: expiresAt,
@@ -54,7 +54,7 @@ function createDemoInvoice(): Invoice {
     review_reason: null,
     finalized_at: null,
     checkout_url: "/app/checkout/demo",
-    payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=149000000000&text=REQST-DEMO-149",
+    payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=149000000000&text=RECV-DEMO-149",
   };
 }
 
@@ -216,12 +216,12 @@ export function CheckoutPage() {
 
   useEffect(() => {
     document.title = invoice?.title?.trim()
-      ? `Reqst | ${invoice.title.trim()}`
+      ? `recv | ${invoice.title.trim()}`
       : text.pageTitle;
   }, [invoice?.title, text.pageTitle]);
 
   const title = invoice?.title?.trim() || text.paymentRequest;
-  const checkoutBadge = invoice?.checkout_badge || (invoice?.kind === "subscription" ? "Reqst Billing" : text.paymentRequest);
+  const checkoutBadge = invoice?.checkout_badge || (invoice?.kind === "subscription" ? "recv Billing" : text.paymentRequest);
   const checkoutVariant = invoice?.plan_code && invoice.plan_code !== "trial" ? invoice.plan_code : "merchant";
   const statusLabel = invoice ? formatInvoiceStatus(invoice.status, language) : "";
   const expiresDiff = invoice ? new Date(invoice.expires_at).getTime() - now : 0;
@@ -269,7 +269,7 @@ export function CheckoutPage() {
 
       <header className="topbar topbar--checkout">
         <div className="topbar-brand topbar-brand--minimal">
-          <strong>reqst</strong>
+          <strong>recv</strong>
         </div>
         <div className="lend-language topbar-language" role="group" aria-label="language">
           <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>
@@ -396,6 +396,12 @@ export function CheckoutPage() {
                     <small>{text.networkOnly}</small>
                   </div>
                   {canCopyDetails && (
+                    <div className="exact-amount-warning">
+                      <Icons.Alert />
+                      <p>{text.exactAmountWarning}</p>
+                    </div>
+                  )}
+                  {canCopyDetails && (
                     <button type="button" className={`ghost-button compact-button payment-rail-action ${copiedField === "amount" ? "is-copied" : ""}`} onClick={() => void copyValue("amount", invoice.payable_amount)}>
                       <Icons.Copy />
                       {copiedField === "amount" ? text.copied : text.copyAmount}
@@ -423,7 +429,7 @@ export function CheckoutPage() {
               <a className="checkout-footer-promo" href="/">
                 <div className="promo-brand">
                   <span>{text.footerPoweredBy}</span>
-                  <strong>reqst</strong>
+                  <strong>recv</strong>
                 </div>
                 <span className="promo-cta">{text.footerCTA}</span>
               </a>

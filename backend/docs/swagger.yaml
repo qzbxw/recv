@@ -2,8 +2,8 @@ basePath: /v1
 host: localhost:8080
 info:
   contact: {}
-  description: Reqst Payment API
-  title: Reqst API
+  description: recv Payment API
+  title: recv API
   version: "1.0"
 paths:
   /invoices:

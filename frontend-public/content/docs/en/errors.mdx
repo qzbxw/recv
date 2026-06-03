@@ -5,7 +5,7 @@ description: HTTP status codes, error shape, rate-limit headers, and per-plan qu
 
 # Errors & Rate Limits
 
-The Reqst API uses standard HTTP status codes and a single, consistent JSON error shape.
+The recv API uses standard HTTP status codes and a single, consistent JSON error shape.
 
 ## HTTP status codes
 
@@ -35,10 +35,10 @@ For security, `5xx` responses return a generic `{"error": "internal server error
 - `missing API key`
 - `invalid API key`
 - `API key scope invoices:write is required`
-- `current plan does not include Reqst Dev or Reqst Enterprise API access`
+- `current plan does not include recv Developer or recv Business API access`
 - `invalid base_amount_usd`
 - `only workspace-created invoices can be canceled`
-- `payment simulator is only available for rqst_test_ API keys`
+- `payment simulator is only available for test_ API keys`
 - `minute rate limit exceeded` / `monthly API quota exceeded`
 
 ## Rate-limit headers
@@ -62,7 +62,6 @@ API limits and webhook retry budgets are set by your workspace's active plan. Th
 |------|-----------|---------------------|-----------------|-----------------|
 | **Developer** | 90 req/min | 50,000 | 3 | 3 |
 | **Business** | 300 req/min | 200,000 | 10 | 5 |
-| **Enterprise** | 1,200 req/min | 1,000,000 | 50 | 8 |
 
 ## Handling errors (Python)
 
@@ -70,7 +69,7 @@ API limits and webhook retry budgets are set by your workspace's active plan. Th
 import requests
 
 resp = requests.get(
-    "https://reqst.xyz/v1/invoices/999999",
+    "https://recv.money/v1/invoices/999999",
     headers={"X-API-Key": "YOUR_KEY"},
 )
 

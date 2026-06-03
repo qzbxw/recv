@@ -13,14 +13,15 @@ type NetworkSlug = keyof ReturnType<typeof getCopy>["marketing"]["networkPages"]
 const NETWORK_SLUGS = [
   "ton",
   "tron",
-  "solana",
+  "ton_usdt",
   "base",
   "bsc",
-  "arbitrum",
 ] as const satisfies readonly NetworkSlug[];
 
-function isNetworkSlug(value: string): value is NetworkSlug {
-  return NETWORK_SLUGS.includes(value as NetworkSlug);
+type SupportedNetworkSlug = (typeof NETWORK_SLUGS)[number];
+
+function isNetworkSlug(value: string): value is SupportedNetworkSlug {
+  return NETWORK_SLUGS.includes(value as SupportedNetworkSlug);
 }
 
 export async function generateStaticParams() {
@@ -39,7 +40,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const page = getCopy(locale).marketing.networkPages[network];
 
   return {
-    title: `${page.metadata.title} | Reqst`,
+    title: `${page.metadata.title} | recv`,
     description: page.metadata.description,
     alternates: {
       canonical: `/${locale}/networks/${network}`,
@@ -68,7 +69,7 @@ export default async function NetworkPage(props: Props) {
   const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: `Reqst ${page.name} Payment Gateway`,
+    name: `recv ${page.name} Payment Gateway`,
     operatingSystem: "Web",
     applicationCategory: "PaymentApplication",
     description: page.metadata.description,

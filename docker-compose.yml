@@ -3,19 +3,19 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-reqst}
-      POSTGRES_USER: ${POSTGRES_USER:-reqst}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-reqst}
+      POSTGRES_DB: ${POSTGRES_DB:-recv}
+      POSTGRES_USER: ${POSTGRES_USER:-recv}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-recv}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-reqst} -d ${POSTGRES_DB:-reqst}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-recv} -d ${POSTGRES_DB:-recv}"]
       interval: 5s
       timeout: 3s
       retries: 20
 
   api:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/reqst}/api:${GHCR_IMAGE_TAG:-latest}
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/api:${GHCR_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -27,9 +27,9 @@ services:
       - .env
     environment:
       APP_RUNTIME: api
-      DATABASE_URL: ${DATABASE_URL:-postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable}
+      DATABASE_URL: ${DATABASE_URL:-postgres://recv:recv@postgres:5432/recv?sslmode=disable}
       METRICS_PORT: ${API_METRICS_PORT:-9090}
-      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://reqst.xyz}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://recv.money}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
       interval: 10s
@@ -37,7 +37,7 @@ services:
       retries: 12
 
   blockchain_watcher:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/reqst}/api:${GHCR_IMAGE_TAG:-latest}
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/api:${GHCR_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -49,11 +49,11 @@ services:
       - .env
     environment:
       APP_RUNTIME: watcher
-      DATABASE_URL: ${DATABASE_URL:-postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable}
+      DATABASE_URL: ${DATABASE_URL:-postgres://recv:recv@postgres:5432/recv?sslmode=disable}
       METRICS_PORT: ${WATCHER_METRICS_PORT:-9091}
 
   telegram_bot_worker:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/reqst}/api:${GHCR_IMAGE_TAG:-latest}
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/api:${GHCR_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -65,29 +65,29 @@ services:
       - .env
     environment:
       APP_RUNTIME: bot
-      DATABASE_URL: ${DATABASE_URL:-postgres://reqst:reqst@postgres:5432/reqst?sslmode=disable}
+      DATABASE_URL: ${DATABASE_URL:-postgres://recv:recv@postgres:5432/recv?sslmode=disable}
       METRICS_PORT: ${BOT_METRICS_PORT:-9092}
 
   frontend_public:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/reqst}/frontend-public:${GHCR_IMAGE_TAG:-latest}
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/frontend-public:${GHCR_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: frontend-public/Dockerfile
       args:
-        PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://reqst.xyz}
-        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://reqst.xyz}
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://reqst.xyz}
+        PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://recv.money}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://recv.money}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://recv.money}
     restart: unless-stopped
     depends_on:
       - api
 
   frontend:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/reqst}/frontend:${GHCR_IMAGE_TAG:-latest}
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/frontend:${GHCR_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://reqst.xyz}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://recv.money}
     restart: unless-stopped
     depends_on:
       - api

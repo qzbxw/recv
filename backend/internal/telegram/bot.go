@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 
 	"github.com/shopspring/decimal"
 )
@@ -241,11 +241,11 @@ func (b *BotWorker) handleCommand(ctx context.Context, workspace store.Workspace
 		return b.renderHome(ctx, workspace, message.Chat.ID, 0)
 	case "/login":
 		msg := "🔑 Browser authentication works via Telegram verification code.\n\n" +
-			"1. Open the reqst auth page in your browser.\n" +
+			"1. Open the recv auth page in your browser.\n" +
 			"2. Enter your @username.\n" +
 			"3. Request the verification code.\n" +
 			"4. Paste the code from this chat to sign in."
-		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.reqstKeyboard(nil))
+		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.recvKeyboard(nil))
 		return err
 	case "/invoice":
 		return b.renderInvoiceWalletPicker(ctx, workspace, message.Chat.ID, 0)
@@ -255,7 +255,7 @@ func (b *BotWorker) handleCommand(ctx context.Context, workspace store.Workspace
 		return b.renderUpgrade(ctx, workspace, message.Chat.ID, 0, "")
 	default:
 		msg := "Unknown command. Use /invoice to create a payment link, /wallets to manage your payout addresses, or /upgrade to unlock PRO features."
-		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.reqstKeyboard(nil))
+		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.recvKeyboard(nil))
 		return err
 	}
 }
@@ -289,7 +289,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		network := store.Network(strings.TrimPrefix(data, "wallet:set:"))
 		session.Flow = flowWalletAddress
 		session.WalletNetwork = network
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.walletAddressPrompt(network), b.reqstKeyboard([][]tgInlineKeyboardButton{
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.walletAddressPrompt(network), b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: "Back", CallbackData: "screen:wallets"}},
 		}))
 	case strings.HasPrefix(data, "wallet:disable:"):
@@ -327,7 +327,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			}})
 		}
 		rows = append(rows, []tgInlineKeyboardButton{{Text: "Cancel", CallbackData: "invoice:cancel"}})
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceNetworkPrompt(session.DraftInvoice), b.reqstKeyboard(rows))
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceNetworkPrompt(session.DraftInvoice), b.recvKeyboard(rows))
 	case strings.HasPrefix(data, "invoice:network:"):
 		parts := strings.Split(data, ":")
 		if len(parts) != 4 {
@@ -356,7 +356,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			PayableNetwork: network,
 			WalletLabel:    fmt.Sprintf("%s • %s", networkButtonLabel(network), shortAddress(wallet.Address)),
 		}
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceTitlePrompt(session.DraftInvoice), b.reqstKeyboard([][]tgInlineKeyboardButton{
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceTitlePrompt(session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: "Cancel", CallbackData: "invoice:cancel"}},
 		}))
 	case strings.HasPrefix(data, "invoice:lifetime:"):
@@ -374,7 +374,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			break
 		}
 		callbackText = "Upgrade checkout created"
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Reqst PRO checkout created.\n\n%s\n%s %s\n30 days of unlimited invoices.", invoice.PublicID, invoice.PayableAmount.StringFixed(6), invoice.PayableNetwork), b.reqstKeyboard([][]tgInlineKeyboardButton{
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("recv PRO checkout created.\n\n%s\n%s %s\n30 days of unlimited invoices.", invoice.PublicID, invoice.PayableAmount.StringFixed(6), invoice.PayableNetwork), b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: "Open checkout", URL: b.appURL("/checkout/" + invoice.PublicID)}},
 			{{Text: "Home", CallbackData: "nav:home"}},
 		}))
@@ -393,7 +393,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			break
 		}
 		callbackText = "Marked as paid"
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s marked as paid manually.", invoice.PublicID), b.reqstKeyboard(nil))
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s marked as paid manually.", invoice.PublicID), b.recvKeyboard(nil))
 	case strings.HasPrefix(data, "invoice:keep_underpaid:"):
 		invoiceID, parseErr := strconv.ParseInt(strings.TrimPrefix(data, "invoice:keep_underpaid:"), 10, 64)
 		if parseErr != nil {
@@ -406,7 +406,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			break
 		}
 		callbackText = "Waiting for top-up"
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s kept in underpaid state. Wait for a top-up or review it later in reqst.", invoice.PublicID), b.reqstKeyboard(nil))
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s kept in underpaid state. Wait for a top-up or review it later in recv.", invoice.PublicID), b.recvKeyboard(nil))
 	case strings.HasPrefix(data, "invoice:keep_review:"):
 		invoiceID, parseErr := strconv.ParseInt(strings.TrimPrefix(data, "invoice:keep_review:"), 10, 64)
 		if parseErr != nil {
@@ -419,7 +419,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			break
 		}
 		callbackText = "Left on review"
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s stays on manual review.", invoice.PublicID), b.reqstKeyboard(nil))
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s stays on manual review.", invoice.PublicID), b.recvKeyboard(nil))
 	default:
 		callbackText = "Unknown action"
 	}
@@ -437,7 +437,7 @@ func (b *BotWorker) handleWalletAddressInput(ctx context.Context, workspace stor
 	session := b.session(message.Chat.ID)
 	address := strings.TrimSpace(text)
 	if err := validateWallet(session.WalletNetwork, address); err != nil {
-		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.walletAddressPrompt(session.WalletNetwork)+"\n\n"+err.Error(), b.reqstKeyboard([][]tgInlineKeyboardButton{
+		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.walletAddressPrompt(session.WalletNetwork)+"\n\n"+err.Error(), b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: "Back", CallbackData: "screen:wallets"}},
 		}))
 	}
@@ -454,13 +454,13 @@ func (b *BotWorker) handleInvoiceTitleInput(ctx context.Context, workspace store
 	session := b.session(message.Chat.ID)
 	title := strings.TrimSpace(text)
 	if title == "" {
-		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceTitlePrompt(session.DraftInvoice)+"\n\nTitle cannot be empty.", b.reqstKeyboard([][]tgInlineKeyboardButton{
+		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceTitlePrompt(session.DraftInvoice)+"\n\nTitle cannot be empty.", b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: "Cancel", CallbackData: "invoice:cancel"}},
 		}))
 	}
 	session.DraftInvoice.Title = title
 	session.Flow = flowInvoiceAmount
-	return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceAmountPrompt(session.DraftInvoice), b.reqstKeyboard([][]tgInlineKeyboardButton{
+	return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceAmountPrompt(session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
 		{{Text: "Cancel", CallbackData: "invoice:cancel"}},
 	}))
 }
@@ -470,13 +470,13 @@ func (b *BotWorker) handleInvoiceAmountInput(ctx context.Context, workspace stor
 	amountText := strings.TrimSpace(strings.ReplaceAll(text, ",", "."))
 	amount, err := decimal.NewFromString(amountText)
 	if err != nil || !amount.IsPositive() {
-		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceAmountPrompt(session.DraftInvoice)+"\n\nSend a valid positive USD amount.", b.reqstKeyboard([][]tgInlineKeyboardButton{
+		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceAmountPrompt(session.DraftInvoice)+"\n\nSend a valid positive USD amount.", b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: "Cancel", CallbackData: "invoice:cancel"}},
 		}))
 	}
 	session.DraftInvoice.Amount = amount.StringFixed(2)
 	session.Flow = flowIdle
-	return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceLifetimePrompt(session.DraftInvoice), b.reqstKeyboard([][]tgInlineKeyboardButton{
+	return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceLifetimePrompt(session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
 		{
 			{Text: "15 min", CallbackData: "invoice:lifetime:15"},
 			{Text: "30 min", CallbackData: "invoice:lifetime:30"},
@@ -511,7 +511,7 @@ func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Wor
 
 	b.resetSession(chatID)
 	checkoutURL := b.appURL("/checkout/" + invoice.PublicID)
-	return b.editMessage(ctx, chatID, messageID, fmt.Sprintf("Invoice %s created.\n\n%s\n%s %s\nExpires in %d min", invoice.PublicID, invoice.Title, invoice.PayableAmount.StringFixed(6), invoice.PayableNetwork, minutes), b.reqstKeyboard([][]tgInlineKeyboardButton{
+	return b.editMessage(ctx, chatID, messageID, fmt.Sprintf("Invoice %s created.\n\n%s\n%s %s\nExpires in %d min", invoice.PublicID, invoice.Title, invoice.PayableAmount.StringFixed(6), invoice.PayableNetwork, minutes), b.recvKeyboard([][]tgInlineKeyboardButton{
 		{{Text: "Open checkout", URL: checkoutURL}},
 		{{Text: "New invoice", CallbackData: "screen:invoice"}},
 	}))
@@ -532,12 +532,12 @@ func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, c
 	}
 
 	text := fmt.Sprintf(
-		"reqst workspace bot\n\nWorkspace: @%s\nWallets: %d\nLatest: %s\n\nUse the buttons below, open reqst, or run /login to get browser sign-in instructions.",
+		"recv workspace bot\n\nWorkspace: @%s\nWallets: %d\nLatest: %s\n\nUse the buttons below, open recv, or run /login to get browser sign-in instructions.",
 		valueOrFallback(workspace.Username, workspaceTelegramLabel(workspace.OwnerTelegramID)),
 		len(wallets),
 		latest,
 	)
-	return b.sendOrEdit(ctx, chatID, messageID, text, b.reqstKeyboard([][]tgInlineKeyboardButton{
+	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard([][]tgInlineKeyboardButton{
 		{
 			{Text: "New invoice", CallbackData: "screen:invoice"},
 			{Text: "Wallets", CallbackData: "screen:wallets"},
@@ -589,7 +589,7 @@ func (b *BotWorker) renderWallets(ctx context.Context, workspace store.Workspace
 		})
 	}
 	rows = append(rows, []tgInlineKeyboardButton{{Text: "Home", CallbackData: "nav:home"}})
-	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.reqstKeyboard(rows))
+	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard(rows))
 }
 
 func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
@@ -609,12 +609,12 @@ func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, workspace sto
 	}
 	rows = append(rows, []tgInlineKeyboardButton{{Text: "Home", CallbackData: "nav:home"}})
 	text := "New invoice\n\nChoose which wallet should receive the payment."
-	return b.sendOrEdit(ctx, chatID, messageID, text, b.reqstKeyboard(rows))
+	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard(rows))
 }
 
 func (b *BotWorker) renderUpgrade(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, note string) error {
 	lines := []string{
-		"Unlock Reqst PRO",
+		"Unlock recv PRO",
 		"",
 		"Unlimited invoices for 30 days.",
 		"Price: 39 USDT.",
@@ -634,17 +634,17 @@ func (b *BotWorker) renderUpgrade(ctx context.Context, workspace store.Workspace
 		}})
 	}
 	rows = append(rows, []tgInlineKeyboardButton{{Text: "Home", CallbackData: "nav:home"}})
-	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.reqstKeyboard(rows))
+	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard(rows))
 }
 
 func (b *BotWorker) notificationKeyboard(raw json.RawMessage) *tgInlineKeyboardMarkup {
 	if len(raw) == 0 {
-		return b.reqstKeyboard(nil)
+		return b.recvKeyboard(nil)
 	}
 
 	var payload notificationPayload
 	if err := json.Unmarshal(raw, &payload); err != nil {
-		return b.reqstKeyboard(nil)
+		return b.recvKeyboard(nil)
 	}
 
 	rows := make([][]tgInlineKeyboardButton, 0, len(payload.InvoiceActions)+1)
@@ -659,12 +659,12 @@ func (b *BotWorker) notificationKeyboard(raw json.RawMessage) *tgInlineKeyboardM
 	if payload.PublicID != "" {
 		rows = append(rows, []tgInlineKeyboardButton{{Text: "Open checkout", URL: b.appURL("/checkout/" + payload.PublicID)}})
 	}
-	return b.reqstKeyboard(rows)
+	return b.recvKeyboard(rows)
 }
 
-func (b *BotWorker) reqstKeyboard(rows [][]tgInlineKeyboardButton) *tgInlineKeyboardMarkup {
-	reqstRow := []tgInlineKeyboardButton{{Text: "reqst", URL: b.appURL("")}}
-	rows = append(rows, reqstRow)
+func (b *BotWorker) recvKeyboard(rows [][]tgInlineKeyboardButton) *tgInlineKeyboardMarkup {
+	recvRow := []tgInlineKeyboardButton{{Text: "recv", URL: b.appURL("")}}
+	rows = append(rows, recvRow)
 	return &tgInlineKeyboardMarkup{InlineKeyboard: rows}
 }
 

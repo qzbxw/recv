@@ -16,7 +16,7 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
             Something failed
           </h1>
           <p className="mt-6 text-base md:text-lg text-white/55 leading-relaxed">
-            Retry the page or return to Reqst documentation.
+            Retry the page or return to recv documentation.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
             <button type="button" className="lend-primary px-9 py-4 rounded-2xl font-bold" onClick={reset}>Retry</button>

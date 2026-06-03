@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useUI } from "../lib/ui";
 import { PLAN_COPY as COPY } from "../i18n";
 
-type Variant = "dev" | "enterprise";
+type Variant = "dev" | "business";
 
 
 function useReveal() {
@@ -48,7 +48,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
         <header className="lend-topbar">
           <div className="lend-topbar-main">
             <Link className="lend-brand" to="/">
-              <strong>reqst</strong>
+              <strong>recv</strong>
             </Link>
 
             <div className="lend-topbar-actions">
@@ -61,7 +61,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
           </div>
         </header>
 
-        <section className={`lend-hero ${variant === "dev" || variant === "enterprise" ? "lend-hero--centered" : ""}`} ref={reveal}>
+        <section className={`lend-hero ${variant === "dev" || variant === "business" ? "lend-hero--centered" : ""}`} ref={reveal}>
           <div className="lend-hero-copy">
             <span className="lend-section-kicker lend-reveal--1">{product.badge}</span>
             <h1 className="lend-reveal--2">{product.title}</h1>
@@ -77,7 +77,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
                     {text.auth}
                   </Link>
                 </>
-              ) : variant === "enterprise" ? (
+              ) : variant === "business" ? (
                 <>
                   <a className="lend-primary" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
                     {text.discuss}
@@ -99,7 +99,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
             </div>
           </div>
 
-          {variant !== "dev" && variant !== "enterprise" && (
+          {variant !== "dev" && variant !== "business" && (
             <aside className="lend-hero-side lend-reveal--3">
               <div className="lend-stats-grid">
                 {product.stats.map((stat, i) => (
@@ -213,7 +213,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
             <Link to="/terms">{text.footerTerms}</Link>
             <Link to="/developers">{text.footerDocs}</Link>
             <Link to="/dev">{text.footerApi}</Link>
-            <Link to="/enterprise">{text.footerB2B}</Link>
+            <Link to="/business">{text.footerB2B}</Link>
             <Link to="/auth">{text.auth}</Link>
           </div>
         </footer>

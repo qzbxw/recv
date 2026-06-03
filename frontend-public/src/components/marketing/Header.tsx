@@ -29,151 +29,151 @@ export function Header({ language }: { language: "ru" | "en" }) {
   const nav = copy.nav;
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-      isScrolled ? "bg-black/80 backdrop-blur-xl border-b border-white/5 py-3" : "bg-transparent py-5"
-    }`}>
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <Link href={`/${language}`} className="text-2xl font-black tracking-tighter text-white hover:opacity-80 transition-opacity">
-          reqst<span className="text-purple-500">.</span>
-        </Link>
+    <>
+      <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+        isScrolled ? "bg-black/80 backdrop-blur-xl border-b border-white/5 py-3" : "bg-transparent py-5"
+      }`}>
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          <Link href={`/${language}`} className="text-2xl font-black tracking-tighter text-white hover:opacity-80 transition-opacity">
+            recv<span className="text-purple-500">.</span>
+          </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-6">
-          {/* Products Mega Menu */}
-          <div className="group relative">
-            <Link href={`/${language}/products`} className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-              {nav.products.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-6">
+            {/* Products Mega Menu */}
+            <div className="group relative">
+              <Link href={`/${language}/products`} className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+                {nav.products.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
+              </Link>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
+                <div className="mega-menu-card rounded-2xl p-3 w-[460px] grid grid-cols-2 gap-1">
+                  <Link href={`/${language}/products/checkout`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
+                    <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 group-hover/item:bg-purple-500 group-hover/item:text-white transition-colors flex-shrink-0">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">{nav.products.checkout.title}</div>
+                      <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.checkout.desc}</div>
+                    </div>
+                  </Link>
+                  <Link href={`/${language}/products/api`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
+                    <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/item:bg-blue-500 group-hover/item:text-white transition-colors flex-shrink-0">
+                      <Code className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">{nav.products.api.title}</div>
+                      <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.api.desc}</div>
+                    </div>
+                  </Link>
+                  <Link href={`/${language}/products/invoicing`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover/item:bg-emerald-500 group-hover/item:text-white transition-colors flex-shrink-0">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">{nav.products.invoicing.title}</div>
+                      <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.invoicing.desc}</div>
+                    </div>
+                  </Link>
+                  <Link href={`/${language}/products/mcp`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
+                    <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 group-hover/item:bg-indigo-500 group-hover/item:text-white transition-colors flex-shrink-0">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">{nav.products.mcp.title}</div>
+                      <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.mcp.desc}</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Use Cases Menu */}
+            <div className="group relative">
+              <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+                {nav.useCases.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
+              </button>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
+                <div className="mega-menu-card rounded-2xl p-2 w-[220px] flex flex-col gap-0.5">
+                  {[
+                    { title: nav.useCases.tgShops, href: "telegram-shops" },
+                    { title: nav.useCases.saas, href: "saas-billing" },
+                    { title: nav.useCases.digital, href: "digital-goods" },
+                    { title: nav.useCases.communities, href: "paid-communities" },
+                  ].map((item) => (
+                    <Link key={item.href} href={`/${language}/use-cases/${item.href}`} className="p-2.5 rounded-xl hover:bg-white/5 text-xs font-semibold text-white/80 hover:text-white transition-colors">
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Networks Menu */}
+            <div className="group relative">
+              <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+                {nav.networks.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
+              </button>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
+                <div className="mega-menu-card rounded-2xl p-3 w-[360px] grid grid-cols-2 gap-1">
+                  {[
+                    { name: nav.networks.ton, slug: "ton" },
+                    { name: nav.networks.ton_usdt, slug: "ton_usdt" },
+                    { name: nav.networks.tron, slug: "tron" },
+                    { name: nav.networks.base, slug: "base" },
+                    { name: nav.networks.bsc, slug: "bsc" },
+                  ].map((net) => (
+                    <Link key={net.slug} href={`/${language}/networks/${net.slug}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 text-[11px] font-semibold text-white/60 hover:text-white transition-colors">
+                      <Globe className="w-3.5 h-3.5 opacity-40" /> {net.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing Menu */}
+            <div className="group relative">
+              <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+                {nav.pricing.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
+              </button>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
+                <div className="mega-menu-card rounded-2xl p-2 w-[180px] flex flex-col gap-0.5">
+                  {[
+                    { title: nav.pricing.merchant, href: "merchant" },
+                    { title: nav.pricing.developer, href: "dev" },
+                    { title: nav.pricing.business, href: "business" },
+                  ].map((item) => (
+                    <Link key={item.href} href={`/${language}/${item.href}`} className="p-2.5 rounded-xl hover:bg-white/5 text-xs font-semibold text-white/80 hover:text-white transition-colors">
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Link href={`/${language}/docs/introduction`} className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+              {nav.docs}
             </Link>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
-              <div className="mega-menu-card rounded-2xl p-3 w-[460px] grid grid-cols-2 gap-1">
-                <Link href={`/${language}/products/checkout`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
-                  <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 group-hover/item:bg-purple-500 group-hover/item:text-white transition-colors flex-shrink-0">
-                    <Zap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-white">{nav.products.checkout.title}</div>
-                    <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.checkout.desc}</div>
-                  </div>
-                </Link>
-                <Link href={`/${language}/products/api`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
-                  <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/item:bg-blue-500 group-hover/item:text-white transition-colors flex-shrink-0">
-                    <Code className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-white">{nav.products.api.title}</div>
-                    <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.api.desc}</div>
-                  </div>
-                </Link>
-                <Link href={`/${language}/products/invoicing`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover/item:bg-emerald-500 group-hover/item:text-white transition-colors flex-shrink-0">
-                    <CreditCard className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-white">{nav.products.invoicing.title}</div>
-                    <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.invoicing.desc}</div>
-                  </div>
-                </Link>
-                <Link href={`/${language}/products/mcp`} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group/item">
-                  <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 group-hover/item:bg-indigo-500 group-hover/item:text-white transition-colors flex-shrink-0">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-white">{nav.products.mcp.title}</div>
-                    <div className="text-[10px] leading-tight text-white/40 mt-0.5">{nav.products.mcp.desc}</div>
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </div>
+            <Link href={`/${language}/blog`} className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+              {nav.blog}
+            </Link>
+          </nav>
 
-          {/* Use Cases Menu */}
-          <div className="group relative">
-            <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-              {nav.useCases.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
+              <Link href="/ru" className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "ru" ? "lang-btn-active" : "lang-btn-inactive"}`}>RU</Link>
+              <Link href="/en" className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "en" ? "lang-btn-active" : "lang-btn-inactive"}`}>EN</Link>
+            </div>
+            
+            <Link href="/app/auth" className="hidden sm:flex header-console-btn transition-all">
+              {nav.console}
+            </Link>
+
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden p-2 text-white/70 hover:text-white transition-colors">
+              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
-              <div className="mega-menu-card rounded-2xl p-2 w-[220px] flex flex-col gap-0.5">
-                {[
-                  { title: nav.useCases.tgShops, href: "telegram-shops" },
-                  { title: nav.useCases.saas, href: "saas-billing" },
-                  { title: nav.useCases.digital, href: "digital-goods" },
-                  { title: nav.useCases.communities, href: "paid-communities" },
-                ].map((item) => (
-                  <Link key={item.href} href={`/${language}/use-cases/${item.href}`} className="p-2.5 rounded-xl hover:bg-white/5 text-xs font-semibold text-white/80 hover:text-white transition-colors">
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            </div>
           </div>
-
-          {/* Networks Menu */}
-          <div className="group relative">
-            <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-              {nav.networks.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
-            </button>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
-              <div className="mega-menu-card rounded-2xl p-3 w-[360px] grid grid-cols-2 gap-1">
-                {[
-                  { name: nav.networks.ton, slug: "ton" },
-                  { name: nav.networks.tron, slug: "tron" },
-                  { name: nav.networks.solana, slug: "solana" },
-                  { name: nav.networks.base, slug: "base" },
-                  { name: nav.networks.bsc, slug: "bsc" },
-                  { name: nav.networks.arbitrum, slug: "arbitrum" },
-                ].map((net) => (
-                  <Link key={net.slug} href={`/${language}/networks/${net.slug}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 text-[11px] font-semibold text-white/60 hover:text-white transition-colors">
-                    <Globe className="w-3.5 h-3.5 opacity-40" /> {net.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Pricing Menu */}
-          <div className="group relative">
-            <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-              {nav.pricing.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
-            </button>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
-              <div className="mega-menu-card rounded-2xl p-2 w-[180px] flex flex-col gap-0.5">
-                {[
-                  { title: nav.pricing.merchant, href: "merchant" },
-                  { title: nav.pricing.developer, href: "dev" },
-                  { title: nav.pricing.business, href: "business" },
-                  { title: nav.pricing.enterprise, href: "enterprise" },
-                ].map((item) => (
-                  <Link key={item.href} href={`/${language}/${item.href}`} className="p-2.5 rounded-xl hover:bg-white/5 text-xs font-semibold text-white/80 hover:text-white transition-colors">
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <Link href={`/${language}/docs/introduction`} className="text-sm font-medium text-white/70 hover:text-white transition-colors">
-            {nav.docs}
-          </Link>
-          <Link href={`/${language}/blog`} className="text-sm font-medium text-white/70 hover:text-white transition-colors">
-            {nav.blog}
-          </Link>
-        </nav>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
-            <Link href="/ru" className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "ru" ? "lang-btn-active" : "lang-btn-inactive"}`}>RU</Link>
-            <Link href="/en" className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "en" ? "lang-btn-active" : "lang-btn-inactive"}`}>EN</Link>
-          </div>
-          
-          <Link href="/app/auth" className="hidden sm:flex header-console-btn transition-all">
-            {nav.console}
-          </Link>
-
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden p-2 text-white/70 hover:text-white transition-colors">
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
-      </div>
+      </header>
 
       {/* Mobile Menu */}
       {isMenuOpen && (
@@ -209,6 +209,6 @@ export function Header({ language }: { language: "ru" | "en" }) {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }

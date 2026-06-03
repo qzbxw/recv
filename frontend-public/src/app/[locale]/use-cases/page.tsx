@@ -13,7 +13,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const copy = getCopy(locale);
 
   return {
-    title: `${copy.marketing.useCasesHub.title} | Reqst`,
+    title: `${copy.marketing.useCasesHub.title} | recv`,
     description: copy.marketing.useCasesHub.description,
     keywords: locale === "ru"
       ? "кейсы использования, Telegram крипто-шоп, SaaS биллинг криптовалюты, цифровые товары"
@@ -83,7 +83,7 @@ export default async function UseCasesHubPage(props: Props) {
       "@type": "ListItem",
       position: idx + 1,
       name: uc.title,
-      url: `https://reqst.xyz/${locale}/use-cases/${uc.slug}`,
+      url: `https://recv.money/${locale}/use-cases/${uc.slug}`,
     })),
   };
 
@@ -99,8 +99,8 @@ export default async function UseCasesHubPage(props: Props) {
         finalTitle={hub.customUseCase.title}
         finalBody={hub.customUseCase.body}
         finalPrimary={copy.final.primary}
-        finalSecondaryLabel={copy.nav.pricing.enterprise}
-        finalSecondaryHref={`/${locale}/enterprise`}
+        finalSecondaryLabel={copy.nav.pricing.business}
+        finalSecondaryHref={`/${locale}/business`}
       />
     </>
   );

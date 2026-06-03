@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/store"
 
 	"github.com/shopspring/decimal"
 )
@@ -81,7 +81,7 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, workspace store.Work
 	if workspace.EffectivePlanCode(time.Now()) == store.PlanCodeTrial && workspace.FreeInvoicesUsed >= TrialInvoiceLimit {
 		metrics.IncLimitDecision("trial_invoice_cap", "denied", "reached")
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "trial_limit_reached")
-		return store.Invoice{}, fmt.Errorf("trial limit reached: %d invoices. Unlock a paid Reqst plan to keep generating links.", TrialInvoiceLimit)
+		return store.Invoice{}, fmt.Errorf("trial limit reached: %d invoices. Unlock a paid recv plan to keep generating links.", TrialInvoiceLimit)
 	}
 
 	var (
@@ -211,9 +211,9 @@ func (s *InvoiceService) createInvoiceWithDestination(ctx context.Context, param
 		if err != nil {
 			return store.Invoice{}, err
 		}
-		comment := "REQST-" + publicID
+		comment := "RECV-" + publicID
 		paymentComment = &comment
-	case store.NetworkTRON, store.NetworkSOLANA, store.NetworkEVM, store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC:
+	case store.NetworkTON_USDT, store.NetworkTRON, store.NetworkBASE, store.NetworkBSC:
 		suffix, err := s.generateUniqueSuffix(ctx, params.DestinationAddress, params.PayableNetwork)
 		if err != nil {
 			return store.Invoice{}, err

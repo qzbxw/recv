@@ -23,7 +23,7 @@ func TestRunMigrations(t *testing.T) {
 	port := uint32(listener.Addr().(*net.TCPAddr).Port)
 	listener.Close()
 
-	baseDir, err := os.MkdirTemp("", "reqst-db-test-*")
+	baseDir, err := os.MkdirTemp("", "recv-db-test-*")
 	if err != nil {
 		t.Fatalf("mktemp: %v", err)
 	}
@@ -32,12 +32,12 @@ func TestRunMigrations(t *testing.T) {
 	pgConfig := embeddedpostgres.DefaultConfig().
 		Version(embeddedpostgres.V16).
 		Port(port).
-		Database("reqst").
-		Username("reqst").
-		Password("reqst").
+		Database("recv").
+		Username("recv").
+		Password("recv").
 		RuntimePath(filepath.Join(baseDir, "runtime")).
 		DataPath(filepath.Join(baseDir, "data")).
-		CachePath(filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")).
+		CachePath(filepath.Join(os.TempDir(), "recv-embedded-postgres-cache")).
 		Locale("C").
 		Encoding("UTF8").
 		StartTimeout(45 * time.Second).

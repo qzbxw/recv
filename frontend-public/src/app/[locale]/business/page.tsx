@@ -8,13 +8,13 @@ type Props = {
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { locale } = await props.params;
   return {
-    title: "Reqst Business | Scalable Crypto Processing",
+    title: "recv Business | Scalable Crypto Processing",
     description: "Extended API limits, team access, and priority support for businesses with high payment volume.",
     alternates: {
       canonical: `/${locale}/business`,
     },
     openGraph: {
-      title: "Reqst Business",
+      title: "recv Business",
       description: "Scale your crypto processing with advanced analytics and team support.",
     },
   };

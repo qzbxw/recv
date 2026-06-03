@@ -7,9 +7,9 @@ import Link from "next/link";
 import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 const AUTHORS = {
-  "reqst-core": {
-    name: "Reqst Core Team",
-    bio: "The engineering team behind Reqst protocol. Focused on building high-performance, non-custodial crypto infrastructure.",
+  "recv-core": {
+    name: "recv Core Team",
+    bio: "The engineering team behind recv protocol. Focused on building high-performance, non-custodial crypto infrastructure.",
     role: "Engineering & Product",
     avatar: "/logo.jpg"
   }
@@ -26,7 +26,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   if (!data) return { title: "Author Not Found" };
 
   return {
-    title: `${data.name} | Reqst Blog`,
+    title: `${data.name} | recv Blog`,
     description: data.bio,
     alternates: {
       canonical: `/${locale}/blog/author/${slug}`,
@@ -42,7 +42,7 @@ export default async function AuthorPage(props: Props) {
 
   const lang = locale === "ru" ? "ru" : "en";
   const copy = PUBLIC_MARKETING_COPY[lang];
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://reqst.xyz").replace(/\/+$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://recv.money").replace(/\/+$/, "");
 
   const personSchema = {
     "@context": "https://schema.org",
@@ -51,7 +51,7 @@ export default async function AuthorPage(props: Props) {
     jobTitle: data.role,
     description: data.bio,
     url: `${baseUrl}/${locale}/blog/author/${slug}`,
-    worksFor: { "@type": "Organization", name: "Reqst" },
+    worksFor: { "@type": "Organization", name: "recv" },
   };
 
   return (

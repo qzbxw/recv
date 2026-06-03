@@ -27,7 +27,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   if (!isUseCaseSlug(usecase)) return { title: "Use Case Not Found" };
 
   const page = getCopy(locale).marketing.useCasePages[usecase];
-  const title = `${page.metadata.title} | Reqst`;
+  const title = `${page.metadata.title} | recv`;
   const description = page.metadata.description;
 
   return {

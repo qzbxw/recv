@@ -1,5 +1,5 @@
 function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://reqst.xyz").replace(/\/+$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://recv.money").replace(/\/+$/, "");
 }
 
 export async function GET() {
@@ -8,16 +8,16 @@ export async function GET() {
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Reqst Updates</title>
+    <title>recv Updates</title>
     <link>${baseUrl}/en/blog</link>
-    <description>Reqst product, API, and crypto payments infrastructure updates.</description>
+    <description>recv product, API, and crypto payments infrastructure updates.</description>
     <lastBuildDate>${updated}</lastBuildDate>
     <item>
-      <title>Reqst documentation</title>
+      <title>recv documentation</title>
       <link>${baseUrl}/en/docs</link>
       <guid>${baseUrl}/en/docs</guid>
       <pubDate>${updated}</pubDate>
-      <description>API documentation and integration guidance for Reqst.</description>
+      <description>API documentation and integration guidance for recv.</description>
     </item>
   </channel>
 </rss>`;

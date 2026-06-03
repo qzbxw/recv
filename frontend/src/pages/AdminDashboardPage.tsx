@@ -62,8 +62,8 @@ export function AdminDashboardPage() {
   const [seoTargets, setSeoTargets] = useState<SEOTarget[]>([]);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [selectedInvoice, setSelectedInvoice] = useState<AdminInvoice | null>(null);
-  const [workspaceAction, setWorkspaceAction] = useState({ workspaceId: "", blocked: true, planCode: "developer" as "trial" | "merchant" | "developer" | "business" | "enterprise", days: "30", reason: "" });
-  const [billingAction, setBillingAction] = useState({ workspaceId: "", planCode: "merchant" as "merchant" | "developer" | "business" | "enterprise", payableNetwork: "TON", baseAmountUSD: "" });
+  const [workspaceAction, setWorkspaceAction] = useState({ workspaceId: "", blocked: true, planCode: "developer" as "trial" | "merchant" | "developer" | "business", days: "30", reason: "" });
+  const [billingAction, setBillingAction] = useState({ workspaceId: "", planCode: "merchant" as "merchant" | "developer" | "business", payableNetwork: "TON" });
   const [invoiceAction, setInvoiceAction] = useState({ invoiceId: "", result: "keep_manual_review" as "mark_paid" | "keep_manual_review" | "expire", comment: "" });
   const [webhookAction, setWebhookAction] = useState({ deliveryId: "" });
   const [commentAction, setCommentAction] = useState({ targetType: "invoice", targetId: "", body: "" });
@@ -204,7 +204,6 @@ export function AdminDashboardPage() {
       const response = await createAdminBillingCheckout(token, workspaceId, {
         plan_code: billingAction.planCode,
         payable_network: billingAction.payableNetwork,
-        base_amount_usd: billingAction.planCode === "enterprise" ? billingAction.baseAmountUSD : undefined,
       });
       setGeneratedCheckoutUrl(buildCheckoutUrl(response.invoice.public_id));
       return { result: `Billing checkout created for ${response.plan.name}.` };
@@ -248,7 +247,7 @@ export function AdminDashboardPage() {
         <section className="admin-login-wrap">
           <div className="admin-login-panel">
             <div className="admin-login-copy">
-              <span className="admin-eyebrow">Reqst Admin</span>
+              <span className="admin-eyebrow">recv Admin</span>
               <h1>Ops Center</h1>
               <p>Sign in to operate merchants, invoices, billing, webhooks, content, and SEO status.</p>
             </div>
@@ -284,7 +283,7 @@ export function AdminDashboardPage() {
       <section className="admin-dashboard">
         <header className="admin-topbar">
           <div>
-            <span className="admin-eyebrow">Reqst Admin</span>
+            <span className="admin-eyebrow">recv Admin</span>
             <h1>Ops Center</h1>
             <p>Guarded operational controls over live merchants, invoices, webhooks, content, and SEO work.</p>
           </div>
@@ -362,7 +361,7 @@ export function AdminDashboardPage() {
                   <button className="admin-login-button" type="submit" disabled={loading}>Apply block state</button>
                 </form>
                 <form className="admin-action-grid" onSubmit={handlePlanChange}>
-                  <label><span>Plan</span><select value={workspaceAction.planCode} onChange={(event) => setWorkspaceAction({ ...workspaceAction, planCode: event.target.value as typeof workspaceAction.planCode })}><option value="trial">Trial</option><option value="merchant">Merchant</option><option value="developer">Developer</option><option value="business">Business</option><option value="enterprise">Enterprise</option></select></label>
+                  <label><span>Plan</span><select value={workspaceAction.planCode} onChange={(event) => setWorkspaceAction({ ...workspaceAction, planCode: event.target.value as typeof workspaceAction.planCode })}><option value="trial">Trial</option><option value="merchant">Merchant</option><option value="developer">Developer</option><option value="business">Business</option></select></label>
                   <label><span>Days</span><input inputMode="numeric" value={workspaceAction.days} onChange={(event) => setWorkspaceAction({ ...workspaceAction, days: event.target.value })} /></label>
                   <button className="admin-login-button" type="submit" disabled={loading}>Change plan</button>
                 </form>
@@ -387,9 +386,8 @@ export function AdminDashboardPage() {
                 <div className="admin-card-head"><h3>Create Billing Checkout</h3></div>
                 <form className="admin-login-form" onSubmit={handleCreateBillingCheckout}>
                   <label><span>Workspace ID</span><input inputMode="numeric" value={billingAction.workspaceId} onChange={(event) => setBillingAction({ ...billingAction, workspaceId: event.target.value })} /></label>
-                  <label><span>Plan</span><select value={billingAction.planCode} onChange={(event) => setBillingAction({ ...billingAction, planCode: event.target.value as typeof billingAction.planCode })}><option value="merchant">Merchant</option><option value="developer">Developer</option><option value="business">Business</option><option value="enterprise">Enterprise</option></select></label>
-                  <label><span>Network</span><select value={billingAction.payableNetwork} onChange={(event) => setBillingAction({ ...billingAction, payableNetwork: event.target.value })}><option value="TON">TON</option><option value="TRON">TRON</option><option value="BASE">Base</option><option value="ARBITRUM">Arbitrum</option><option value="BSC">BSC</option></select></label>
-                  {billingAction.planCode === "enterprise" && <label><span>Enterprise USD</span><input value={billingAction.baseAmountUSD} onChange={(event) => setBillingAction({ ...billingAction, baseAmountUSD: event.target.value })} /></label>}
+                  <label><span>Plan</span><select value={billingAction.planCode} onChange={(event) => setBillingAction({ ...billingAction, planCode: event.target.value as typeof billingAction.planCode })}><option value="merchant">Merchant</option><option value="developer">Developer</option><option value="business">Business</option></select></label>
+                  <label><span>Network</span><select value={billingAction.payableNetwork} onChange={(event) => setBillingAction({ ...billingAction, payableNetwork: event.target.value })}><option value="TON">TON</option><option value="TON_USDT">TON USDT</option><option value="TRON">TRON</option><option value="BASE">Base</option><option value="BSC">BSC</option></select></label>
                   <button type="submit" className="admin-login-button" disabled={loading}>Create checkout</button>
                 </form>
                 {generatedCheckoutUrl && <p className="admin-sales-summary"><a href={generatedCheckoutUrl} target="_blank" rel="noreferrer">{generatedCheckoutUrl}</a></p>}

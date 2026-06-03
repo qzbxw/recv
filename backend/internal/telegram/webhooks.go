@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/store"
 )
 
 func (b *BotWorker) flushWebhookDeliveries(ctx context.Context) error {
@@ -53,10 +53,10 @@ func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, s
 		return store.WebhookAttemptResult{Status: "failure", Error: err.Error(), Duration: time.Since(startedAt)}
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "reqst-webhooks/1.0")
-	req.Header.Set("X-Reqst-Event", eventType)
-	req.Header.Set("X-Reqst-Timestamp", timestamp)
-	req.Header.Set("X-Reqst-Signature", signature)
+	req.Header.Set("User-Agent", "recv-webhooks/1.0")
+	req.Header.Set("X-recv-Event", eventType)
+	req.Header.Set("X-recv-Timestamp", timestamp)
+	req.Header.Set("X-recv-Signature", signature)
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {

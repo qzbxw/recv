@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/store"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -142,14 +142,14 @@ func (s *AuthService) RequestTelegramLoginCode(ctx context.Context, input Telegr
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			metrics.IncAuthAttempt("telegram_code_request", "failure", "workspace_not_found")
-			return errors.New("Telegram username not found. Open @reqstxyz_bot, press Start, then request the code again")
+			return errors.New("Telegram username not found. Open @recvxyz_bot, press Start, then request the code again")
 		}
 		metrics.IncAuthAttempt("telegram_code_request", "failure", "load_workspace")
 		return fmt.Errorf("load workspace by username: %w", err)
 	}
 	if workspace.OwnerTelegramID == nil {
 		metrics.IncAuthAttempt("telegram_code_request", "failure", "telegram_unlinked")
-		return errors.New("Telegram account is not linked yet. Open @reqstxyz_bot and press Start first")
+		return errors.New("Telegram account is not linked yet. Open @recvxyz_bot and press Start first")
 	}
 
 	code, err := randomDigits(6)
@@ -188,7 +188,7 @@ func (s *AuthService) AuthenticateTelegramCode(ctx context.Context, input Telegr
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			metrics.IncAuthAttempt("telegram_code_login", "failure", "workspace_not_found")
-			return AuthResult{}, errors.New("Telegram username not found. Open @reqstxyz_bot, press Start, then request the code again")
+			return AuthResult{}, errors.New("Telegram username not found. Open @recvxyz_bot, press Start, then request the code again")
 		}
 		metrics.IncAuthAttempt("telegram_code_login", "failure", "load_workspace")
 		return AuthResult{}, fmt.Errorf("load workspace by username: %w", err)
@@ -620,7 +620,7 @@ func (s *AuthService) sendTelegramLoginCode(ctx context.Context, chatID int64, u
 	payload := map[string]any{
 		"chat_id": chatID,
 		"text": fmt.Sprintf(
-			"Reqst login code for @%s\n\n%s\n\nExpires at %s UTC. If this wasn't you, ignore this message.",
+			"recv login code for @%s\n\n%s\n\nExpires at %s UTC. If this wasn't you, ignore this message.",
 			username,
 			code,
 			expiresAt.UTC().Format("15:04"),

@@ -1,6 +1,6 @@
 ---
 title: Webhooks
-description: Как получать и проверять платежные уведомления Reqst.
+description: Как получать и проверять платежные уведомления recv.
 ---
 
 # Webhooks
@@ -9,15 +9,15 @@ description: Как получать и проверять платежные у
 
 ## Настройка
 
-Настройте URL вебхука в [Developer Portal](https://reqst.xyz/app/developer-portal). Reqst будет отправлять `POST`-запрос на этот URL с JSON-payload при каждом обновлении счета.
+Настройте URL вебхука в [Developer Portal](https://recv.money/app/developer-portal). recv будет отправлять `POST`-запрос на этот URL с JSON-payload при каждом обновлении счета.
 
 ## Заголовки вебхука
 
-При срабатывании события Reqst отправляет `POST`-запрос на ваш endpoint со следующими заголовками:
+При срабатывании события recv отправляет `POST`-запрос на ваш endpoint со следующими заголовками:
 
-- `X-Reqst-Event`: тип события (например, `invoice.paid`).
-- `X-Reqst-Timestamp`: Unix-время отправки вебхука (в секундах).
-- `X-Reqst-Signature`: подпись запроса (с префиксом `v1=`).
+- `X-recv-Event`: тип события (например, `invoice.paid`).
+- `X-recv-Timestamp`: Unix-время отправки вебхука (в секундах).
+- `X-recv-Signature`: подпись запроса (с префиксом `v1=`).
 
 ## Примеры payload
 
@@ -67,7 +67,7 @@ description: Как получать и проверять платежные у
 
 ## Проверка подписи
 
-Чтобы убедиться, что вебхук действительно отправлен Reqst, вы **обязаны** проверять заголовок `X-Reqst-Signature`, используя ваш **Webhook Secret** как ключ.
+Чтобы убедиться, что вебхук действительно отправлен recv, вы **обязаны** проверять заголовок `X-recv-Signature`, используя ваш **Webhook Secret** как ключ.
 
 Подпись вычисляется как: `v1=` + HMAC-SHA256 hex-дайджест строки `<Timestamp>.<Raw Body>`.
 
@@ -88,9 +88,9 @@ function verifyWebhook(rawBody, signature, timestamp, secret) {
 }
 
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.headers['x-reqst-signature'];
-  const timestamp = req.headers['x-reqst-timestamp'];
-  const secret = process.env.REQST_WEBHOOK_SECRET;
+  const signature = req.headers['x-recv-signature'];
+  const timestamp = req.headers['x-recv-timestamp'];
+  const secret = process.env.RECV_WEBHOOK_SECRET;
 
   if (!signature || !timestamp || !verifyWebhook(req.body.toString(), signature, timestamp, secret)) {
     return res.status(401).send('invalid signature');
@@ -113,8 +113,8 @@ SECRET = "whsec_...".encode()
 
 @app.post("/webhook")
 def webhook():
-    signature = request.headers.get("X-Reqst-Signature", "")
-    timestamp = request.headers.get("X-Reqst-Timestamp", "")
+    signature = request.headers.get("X-recv-Signature", "")
+    timestamp = request.headers.get("X-recv-Timestamp", "")
     raw_body = request.get_data()  # точные байты
 
     mac = hmac.new(SECRET, f"{timestamp}.".encode() + raw_body, hashlib.sha256)
@@ -141,15 +141,15 @@ def webhook():
 | `invoice.overpaid` | Перевод превысил сумму к оплате. |
 | `invoice.manual_review` | Счет требует ручной проверки. |
 | `invoice.expired` | Окно оплаты закрылось без оплаты. |
-| `subscription.activated` | Оплачен счет за тариф/подписку Reqst (отправляется вместе с `invoice.paid`). |
+| `subscription.activated` | Оплачен счет за тариф/подписку recv (отправляется вместе с `invoice.paid`). |
 
 ## Повторные доставки (retries)
 
-Reqst повторяет неуспешные доставки (ответ не 2xx, таймаут или ошибка соединения). Максимум попыток задается бюджетом ретраев вашего тарифа — **3** на Developer, **5** на Business, **8** на Enterprise. Доставки и попытки видны в Developer Portal, где можно также переотправить вручную.
+recv повторяет неуспешные доставки (ответ не 2xx, таймаут или ошибка соединения). Максимум попыток задается бюджетом ретраев вашего тарифа — **3** на Developer и **5** на Business. Доставки и попытки видны в Developer Portal, где можно также переотправить вручную.
 
 ## Лучшие практики
 
 - **Отвечайте 200 OK**: всегда возвращайте 200 для подтверждения получения.
-- **Идемпотентность**: обработчик должен быть идемпотентным, так как Reqst может повторить уведомление, не получив 200. Дедуплицируйте по `transition_id` (или `invoice.public_id` + `status`).
+- **Идемпотентность**: обработчик должен быть идемпотентным, так как recv может повторить уведомление, не получив 200. Дедуплицируйте по `transition_id` (или `invoice.public_id` + `status`).
 - **Проверяйте подписи**: всегда проверяйте подпись для защиты от подделки.
 - **Асинхронная обработка**: подтверждайте получение сразу и обрабатывайте асинхронно во избежание таймаутов.

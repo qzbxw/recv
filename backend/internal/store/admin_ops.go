@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/metrics"
+	"recv/backend/internal/metrics"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
@@ -410,9 +410,9 @@ func (s *Store) GetAdminAnalytics(ctx context.Context, from time.Time, to time.T
 	if err := s.pool.QueryRow(ctx, `
 		SELECT COALESCE(SUM(
 			CASE plan_code
-				WHEN 'merchant' THEN 39
-				WHEN 'developer' THEN 199
-				WHEN 'business' THEN 499
+				WHEN 'merchant' THEN 9
+				WHEN 'developer' THEN 29
+				WHEN 'business' THEN 79
 				ELSE 0
 			END
 		), 0)

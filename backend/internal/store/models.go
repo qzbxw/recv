@@ -37,7 +37,7 @@ func (n Network) WalletBucket() Network {
 
 func (n Network) IsSupportedWalletNetwork() bool {
 	switch n {
-	case NetworkTON, NetworkTRON, NetworkSOLANA, NetworkEVM:
+	case NetworkTON, NetworkTRON, NetworkEVM:
 		return true
 	default:
 		return false
@@ -46,7 +46,7 @@ func (n Network) IsSupportedWalletNetwork() bool {
 
 func (n Network) IsSupportedPayableNetwork() bool {
 	switch n {
-	case NetworkTON, NetworkTRON, NetworkSOLANA, NetworkEVM, NetworkBASE, NetworkARBITRUM, NetworkBSC:
+	case NetworkTON, NetworkTON_USDT, NetworkTRON, NetworkBASE, NetworkBSC:
 		return true
 	default:
 		return false

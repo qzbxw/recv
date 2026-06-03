@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-const COOKIE_NAME = "reqst_attr";
+const COOKIE_NAME = "recv_attr";
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid"] as const;
 
 function readCookie() {

@@ -12,7 +12,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const copy = PUBLIC_MARKETING_COPY[lang];
 
   return {
-    title: `${copy.statusHub.title} | Reqst`,
+    title: `${copy.statusHub.title} | recv`,
     description: copy.statusHub.description,
     alternates: {
       canonical: `/${lang}/status`,
@@ -23,7 +23,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       },
     },
     openGraph: {
-      title: `${copy.statusHub.title} | Reqst`,
+      title: `${copy.statusHub.title} | recv`,
       description: copy.statusHub.description,
     },
   };

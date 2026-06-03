@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/config"
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/config"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 
 	"github.com/shopspring/decimal"
 )

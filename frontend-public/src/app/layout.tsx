@@ -2,24 +2,24 @@ import type { Metadata } from "next";
 import "./tailwind.css";
 import "./globals.css";
 
-const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://reqst.xyz").replace(/\/+$/, "");
+const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://recv.money").replace(/\/+$/, "");
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicSiteUrl),
   title: {
-    default: "Reqst | Crypto Payments Infrastructure",
+    default: "recv | Crypto Payments Infrastructure",
     template: "%s"
   },
-  description: "Professional crypto processing with instant payouts directly to your wallets. Non-custodial, fixed fees, and support for major networks like TON, Solana, and TRON.",
+  description: "Professional crypto processing with instant payouts directly to your wallets. Non-custodial, fixed fees, and support for major networks like TON, TON_USDT, and TRON.",
   openGraph: {
     type: "website",
-    siteName: "Reqst",
-    title: "Reqst | Crypto Payments Infrastructure",
+    siteName: "recv",
+    title: "recv | Crypto Payments Infrastructure",
     description: "Professional crypto processing with instant payouts directly to your wallets.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Reqst | Crypto Payments Infrastructure",
+    title: "recv | Crypto Payments Infrastructure",
     description: "Professional crypto processing with instant payouts directly to your wallets.",
   },
   robots: {

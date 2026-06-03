@@ -9,15 +9,15 @@ Webhooks allow you to receive real-time notifications when an invoice's status c
 
 ## Configuration
 
-Configure your webhook URL in the [Developer Portal](https://reqst.xyz/app/developer-portal). Reqst will send a `POST` request to this URL with a JSON payload whenever an invoice is updated.
+Configure your webhook URL in the [Developer Portal](https://recv.money/app/developer-portal). recv will send a `POST` request to this URL with a JSON payload whenever an invoice is updated.
 
 ## Webhook Headers
 
-Whenever an event is triggered, Reqst sends a `POST` request to your endpoint with the following headers:
+Whenever an event is triggered, recv sends a `POST` request to your endpoint with the following headers:
 
-- `X-Reqst-Event`: The type of event (e.g., `invoice.paid`).
-- `X-Reqst-Timestamp`: The Unix epoch timestamp when the webhook was sent (in seconds).
-- `X-Reqst-Signature`: The signature of the request (prefixed with `v1=`).
+- `X-recv-Event`: The type of event (e.g., `invoice.paid`).
+- `X-recv-Timestamp`: The Unix epoch timestamp when the webhook was sent (in seconds).
+- `X-recv-Signature`: The signature of the request (prefixed with `v1=`).
 
 ## Webhook Payload Examples
 
@@ -67,7 +67,7 @@ When a merchant subscription or plan payment is settled, the following event is 
 
 ## Verifying Signatures
 
-To ensure that a webhook was actually sent by Reqst, you **must** verify the `X-Reqst-Signature` header using your **Webhook Secret** as the key.
+To ensure that a webhook was actually sent by recv, you **must** verify the `X-recv-Signature` header using your **Webhook Secret** as the key.
 
 The signature is computed as: `v1=` + HMAC-SHA256 hex digest of the string `<Timestamp>.<Raw Body>`.
 
@@ -91,9 +91,9 @@ function verifyWebhook(rawBody, signature, timestamp, secret) {
 
 // Usage in Express handler:
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.headers['x-reqst-signature'];
-  const timestamp = req.headers['x-reqst-timestamp'];
-  const secret = process.env.REQST_WEBHOOK_SECRET;
+  const signature = req.headers['x-recv-signature'];
+  const timestamp = req.headers['x-recv-timestamp'];
+  const secret = process.env.RECV_WEBHOOK_SECRET;
 
   if (!signature || !timestamp || !verifyWebhook(req.body.toString(), signature, timestamp, secret)) {
     return res.status(401).send('invalid signature');
@@ -116,8 +116,8 @@ SECRET = "whsec_...".encode()
 
 @app.post("/webhook")
 def webhook():
-    signature = request.headers.get("X-Reqst-Signature", "")
-    timestamp = request.headers.get("X-Reqst-Timestamp", "")
+    signature = request.headers.get("X-recv-Signature", "")
+    timestamp = request.headers.get("X-recv-Timestamp", "")
     raw_body = request.get_data()  # exact bytes
 
     mac = hmac.new(SECRET, f"{timestamp}.".encode() + raw_body, hashlib.sha256)
@@ -144,16 +144,15 @@ def webhook():
 | `invoice.overpaid` | A transfer exceeded the payable amount. |
 | `invoice.manual_review` | Invoice needs merchant review. |
 | `invoice.expired` | Payment window closed without payment. |
-| `subscription.activated` | A Reqst plan/subscription invoice settled (fired alongside `invoice.paid`). |
+| `subscription.activated` | A recv plan/subscription invoice settled (fired alongside `invoice.paid`). |
 
 ## Retries
 
-Reqst retries failed deliveries (non-2xx response, timeout, or connection error). The maximum number of attempts is set by your plan's webhook retry budget — **3** on Developer, **5** on Business, **8** on Enterprise. Deliveries and their attempts are visible in the Developer Portal, where you can also resend manually.
+recv retries failed deliveries (non-2xx response, timeout, or connection error). The maximum number of attempts is set by your plan's webhook retry budget — **3** on Developer and **5** on Business. Deliveries and their attempts are visible in the Developer Portal, where you can also resend manually.
 
 ## Best Practices
 
 - **Respond with 200 OK**: Always return a 200 status code to acknowledge receipt of the webhook.
-- **Idempotency**: Your webhook handler should be idempotent, as Reqst may retry the same notification if it doesn't receive a 200 response. Dedupe on `transition_id` (or `invoice.public_id` + `status`).
+- **Idempotency**: Your webhook handler should be idempotent, as recv may retry the same notification if it doesn't receive a 200 response. Dedupe on `transition_id` (or `invoice.public_id` + `status`).
 - **Verify Signatures**: Always verify the signature to prevent spoofing.
 - **Async Processing**: Acknowledge the webhook immediately and process it asynchronously to avoid timeouts.
-

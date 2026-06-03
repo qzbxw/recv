@@ -4,7 +4,7 @@ import { getAllDocSlugs } from "@/lib/docs";
 export const revalidate = 3600;
 
 function publicSiteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://reqst.xyz").replace(/\/+$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://recv.money").replace(/\/+$/, "");
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -16,7 +16,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/dev", 
     "/merchant",
     "/business",
-    "/enterprise", 
     "/security",
     "/about",
     "/contact",
@@ -36,11 +35,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/products/mcp",
     "/networks",
     "/networks/ton",
+    "/networks/ton_usdt",
     "/networks/tron",
-    "/networks/solana",
     "/networks/base",
     "/networks/bsc",
-    "/networks/arbitrum",
     "/use-cases",
     "/use-cases/telegram-shops",
     "/use-cases/saas-billing",
@@ -48,8 +46,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/use-cases/paid-communities",
     "/compare",
     "/compare/nowpayments",
-    "/compare/reqst-vs-manual",
-    "/compare/reqst-vs-custodial",
+    "/compare/recv-vs-manual",
+    "/compare/recv-vs-custodial",
   ];
 
   const routes: MetadataRoute.Sitemap = locales.flatMap((locale) => 

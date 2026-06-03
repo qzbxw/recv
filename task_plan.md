@@ -1,7 +1,7 @@
-# Task Plan: Align Public Landing Pages and Documentation with Actual Project Features
+# Task Plan: Fix Mobile Burger Menu on Landing Page
 
 ## Goal
-Update all landing pages, translation files, and developer documentation in the public frontend (`frontend-public`) to exactly match the actual capabilities, API request parameters, webhook signatures, and network configurations implemented in the Go/Gin backend.
+Fix the mobile burger menu layout issue on the landing page, where only a small part of the menu is visible when opened, by moving the mobile menu markup outside the `<header>` element to resolve the containing block clipping caused by `backdrop-filter`.
 
 ## Current Phase
 Complete
@@ -9,39 +9,33 @@ Complete
 ## Phases
 
 ### Phase 1: Requirements & Discovery
-- [x] Analyze Go backend implementation (invoices, API keys, watchers, plans, webhooks).
-- [x] Identify mismatches between actual implementation and marketing/doc files (done: USDC vs USDT, invoice request fields, webhook signatures, rate limits).
-- [x] Document specific findings in `findings.md`.
+- [x] Diagnose why the mobile menu is partially hidden/clipped (resolved: `backdrop-filter: blur` on `<header>` forms a new containing block, restricting the `fixed inset-0` child).
+- [x] Identify the Header file: [Header.tsx](file:///home/qzbx/projs/recv/frontend-public/src/components/marketing/Header.tsx).
 - **Status:** complete
 
-### Phase 2: Refactoring Marketing Translation Files
-- [x] Edit `frontend-public/src/i18n/en.ts` and `ru.ts` to remove USDC references and fix marketing features.
-- [x] Edit `frontend-public/src/i18n/plans.en.ts` and `plans.ru.ts` to correct supported networks and FAQs.
-- [x] Edit `frontend-public/src/components/ProductPageClient.tsx` to fix JS code snippet for invoice creation.
+### Phase 2: Implementation
+- [x] Wrap `Header.tsx` return value in a React Fragment (`<>...</>`).
+- [x] Move the `isMenuOpen && (...)` mobile menu block outside the `<header>` tag.
+- [x] Keep the z-index of the mobile menu at `z-[90]` (below header's `z-[100]` to keep the header close button visible, but above body content).
 - **Status:** complete
 
-### Phase 3: Updating Developer Documentation (MDX files)
-- [x] Edit `frontend-public/content/docs/en/invoices.mdx` and `ru/invoices.mdx` (fix parameter lists, examples, response keys).
-- [x] Edit `frontend-public/content/docs/en/webhooks.mdx` and `ru/webhooks.mdx` (fix HMAC verification signature format, headers, payload json).
-- [x] Edit `frontend-public/content/docs/en/errors.mdx` and `ru/errors.mdx` (fix error json shape, correct rate limits and retries per plan).
+### Phase 3: Testing & Verification
+- [x] Run Next.js production build (`npm run build`) to ensure compilation succeeds.
+- [x] Run localization tests (`npm test`).
 - **Status:** complete
 
-### Phase 4: Testing & Verification
-- [x] Validate changes via Next.js dev or build command.
-- [x] Run typescript checks if configured.
+### Phase 4: Delivery
+- [x] Confirm fix to the user.
 - **Status:** complete
-
 
 ## Key Questions
-1. Do we support any USDC or is it strictly USDT? (Resolved: strictly USDT and native TON).
-2. What are the exact request body fields for `/v1/invoices`? (Resolved: `title`, `base_amount_usd`, `payable_network`, `expires_in_minutes`).
-3. How is the webhook signature generated and validated? (Resolved: `v1=` prepended to HMAC-SHA256 of `timestamp + "." + rawBody`).
+1. Does the change preserve mobile menu functionality? (Yes, the open/close state is managed by the same state hook in the same component).
+2. Does the close button remain visible/interactive? (Yes, `<header>` remains on top with `z-[100]`).
 
 ## Decisions Made
 | Decision | Rationale |
 |----------|-----------|
-| Remove USDC support mentions | Backend stablecoin specs only map to USDT contracts across EVM, BSC, Arbitrum, Base, Solana, TON. |
-| Align invoice code examples | Backend uses `base_amount_usd` and `payable_network`, not `amount` and `asset`/`network`. |
+| Move mobile menu sibling to `<header>` | Avoids browser layout engine constraints on fixed descendants inside `backdrop-filter` parent elements. |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

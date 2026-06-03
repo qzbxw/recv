@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"reqst/backend/internal/store"
+	"recv/backend/internal/store"
 
 	"github.com/gin-gonic/gin"
 )
@@ -279,6 +279,6 @@ func (s *Server) handleSwitchWorkspace(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
-	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
+	setRefreshCookie(c, "recv_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusOK, result)
 }

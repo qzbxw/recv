@@ -37,12 +37,12 @@ import {
 } from "../lib/api";
 import { ApiError, formatApiError } from "../lib/errors";
 import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routing";
-import { formatInvoiceStatus, getInvoiceStatusMeta, formatNetworkLabel } from "../lib/status";
+import { formatInvoiceStatus, getInvoiceStatusMeta, getInvoiceStatusTooltip, formatNetworkLabel } from "../lib/status";
 import type { APIKey, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { SELLER_CONSOLE_COPY as COPY } from "../i18n";
 
-const BOT_URL = "https://t.me/reqstxyz_bot";
+const BOT_URL = "https://t.me/recvxyz_bot";
 
 declare global {
   interface Window {
@@ -73,18 +73,15 @@ type PanelKey = "overview" | "wallets" | "invoices" | "create" | "developer" | "
 const WALLET_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
   { value: "TON", label: "TON" },
   { value: "TRON", label: "TRON" },
-  { value: "SOLANA", label: "SOLANA" },
-  { value: "EVM", label: "ETHEREUM (EVM)" },
+  { value: "EVM", label: "Base/BSC wallet (EVM)" },
 ];
 
 const PAYABLE_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
   { value: "TON", label: "TON" },
+  { value: "TON_USDT", label: "TON USDT" },
   { value: "TRON", label: "TRON" },
-  { value: "SOLANA", label: "SOLANA" },
   { value: "BASE", label: "BASE" },
-  { value: "ARBITRUM", label: "ARBITRUM" },
   { value: "BSC", label: "BSC" },
-  { value: "EVM", label: "ETHEREUM" },
 ];
 
 function LiveValue({ value }: { value: string | number }) {
@@ -98,7 +95,7 @@ function LiveValue({ value }: { value: string | number }) {
 }
 
 function walletBucket(network: Network) {
-  return network === "BASE" || network === "ARBITRUM" || network === "BSC" ? "EVM" : network === "TON_USDT" ? "TON" : network;
+  return network === "BASE" || network === "BSC" ? "EVM" : network === "TON_USDT" ? "TON" : network;
 }
 
 const STATUS_TONE_CLASS: Record<string, string> = {
@@ -529,7 +526,7 @@ export function SellerConsolePage() {
         <div className="dev-portal__layout">
           <aside className="dev-portal__sidebar">
             <div className="dev-portal__sidebar-brand">
-              <strong className="dev-portal__skeleton-brand">reqst<span className="brand-dot">.</span></strong>
+              <strong className="dev-portal__skeleton-brand">recv<span className="brand-dot">.</span></strong>
             </div>
             <div className="dev-portal__nav-menu">
               <div className="dev-portal__skeleton-nav-label" />
@@ -610,9 +607,9 @@ export function SellerConsolePage() {
     .sort((a, b) => b.usd - a.usd);
   const maxNetworkUsd = networkBreakdown.reduce((m, n) => Math.max(m, n.usd), 0);
 
-  const apiBaseUrl = getApiBase() || "https://api.reqst.xyz";
+  const apiBaseUrl = getApiBase() || "https://api.recv.money";
   const apiSnippet = `curl -X POST ${apiBaseUrl}/v1/invoices \\
-  -H "X-API-Key: ${environment === "test" ? "rqst_test_..." : "rqst_live_..."}" \\
+  -H "X-API-Key: ${environment === "test" ? "test_..." : "live_..."}" \\
   -H "Content-Type: application/json" \\
   -d '{"title":"Order #1","base_amount_usd":"49.00","payable_network":"${invoiceForm.network}","expires_in_minutes":30}'`;
   const onboardingSteps = [
@@ -654,7 +651,7 @@ export function SellerConsolePage() {
         <aside className={`dev-portal__sidebar portal-animate-in ${isMobileMenuOpen ? "is-open" : ""}`}>
           <div className="dev-portal__sidebar-brand">
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
-              <strong>reqst<span className="brand-dot">.</span></strong>
+              <strong>recv<span className="brand-dot">.</span></strong>
             </Link>
           </div>
           
@@ -703,7 +700,7 @@ export function SellerConsolePage() {
                 </div>
               </button>
               <Link className="dev-portal__brand-mobile" to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
-                <strong>reqst<span className="brand-dot">.</span></strong>
+                <strong>recv<span className="brand-dot">.</span></strong>
               </Link>
             </div>
 
@@ -809,7 +806,7 @@ export function SellerConsolePage() {
                           <div key={status} className="dev-breakdown__row">
                             <div className="dev-breakdown__head">
                               <span className={`dev-status-dot dev-status-dot--${statusToneClass(status)}`} />
-                              <span className="dev-breakdown__label">{formatInvoiceStatus(status, language, true)}</span>
+                              <span className="dev-breakdown__label" title={getInvoiceStatusTooltip(status, language) || undefined}>{formatInvoiceStatus(status, language, true)}</span>
                               <span className="dev-breakdown__value">{count} · {pct}%</span>
                             </div>
                             <div className="dev-breakdown__track">
@@ -913,7 +910,7 @@ export function SellerConsolePage() {
                           <div className="dev-resource-card__info dev-resource-card__info--tight">
                             <div className="dev-resource-card__title dev-resource-card__title--small">{inv.title}</div>
                             <div className="dev-resource-card__meta dev-resource-card__meta--row">
-                              <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'} dev-api-badge--micro`}>
+                              <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'} dev-api-badge--micro`} title={getInvoiceStatusTooltip(inv.status, language) || undefined}>
                                 {formatInvoiceStatus(inv.status, language, true)}
                               </span>
                               <span className="dev-resource-card__amount">{inv.payable_amount} {inv.payable_network}</span>
@@ -1072,7 +1069,7 @@ export function SellerConsolePage() {
                       <div className="dev-card__head">
                         <div>
                           <div className="dev-card__status-row">
-                            <span className={`dev-api-badge dev-status-badge dev-status-badge--${statusToneClass(inv.status)}`}>
+                            <span className={`dev-api-badge dev-status-badge dev-status-badge--${statusToneClass(inv.status)}`} title={getInvoiceStatusTooltip(inv.status, language) || undefined}>
                               {formatInvoiceStatus(inv.status, language, true)}
                             </span>
                             <span className="dev-api-badge dev-api-badge--secondary">{formatNetworkLabel(inv.payable_network)}</span>
@@ -1714,7 +1711,7 @@ export function SellerConsolePage() {
                       <label>{t.common.plan}</label>
                       <CustomSelect
                         value={billingForm.plan}
-                        options={session.me.plans.filter(p => p.code !== 'enterprise' && p.code !== 'trial').map(p => ({ value: p.code, label: p.name }))}
+                        options={session.me.plans.filter(p => p.code !== 'trial').map(p => ({ value: p.code, label: p.name }))}
                         ariaLabel={t.common.plan}
                         onChange={v => setBillingForm(c => ({ ...c, plan: v }))}
                       />
@@ -1858,11 +1855,9 @@ export function SellerConsolePage() {
 }
 
 const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
-  { value: "TRON", label: "TRON" },
-  { value: "SOLANA", label: "SOLANA" },
-  { value: "BASE", label: "BASE" },
-  { value: "ARBITRUM", label: "ARBITRUM" },
-  { value: "BSC", label: "BSC" },
-  { value: "EVM", label: "ETH" },
   { value: "TON", label: "TON" },
+  { value: "TON_USDT", label: "TON USDT" },
+  { value: "TRON", label: "TRON" },
+  { value: "BASE", label: "BASE" },
+  { value: "BSC", label: "BSC" },
 ];

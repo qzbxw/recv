@@ -13,7 +13,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const copy = getCopy(locale);
 
   return {
-    title: `${copy.marketing.networksHub.title} | Reqst`,
+    title: `${copy.marketing.networksHub.title} | recv`,
     description: copy.marketing.networksHub.description,
     alternates: {
       canonical: `/${locale}/networks`,
@@ -33,11 +33,10 @@ export default async function NetworksHubPage(props: Props) {
 
   const networks = [
     { name: "TON", slug: "ton", desc: locale === "ru" ? "Нативная сеть Telegram для быстрых и дешёвых переводов с поддержкой TON USDT." : "Telegram-native network for fast, low-cost transfers with TON USDT support." },
+    { name: "TON USDT", slug: "ton_usdt", desc: locale === "ru" ? "Стейблкоин Tether (USDT) в сети TON для стабильных Telegram-платежей." : "Tether (USDT) stablecoin on the TON network for volatility-free Telegram payments." },
     { name: "TRON", slug: "tron", desc: locale === "ru" ? "Самая популярная сеть для USDT. Высокая ликвидность и широкое принятие." : "The most popular network for USDT payments with high liquidity and adoption." },
-    { name: "Solana", slug: "solana", desc: locale === "ru" ? "Молниеносные транзакции с минимальными комиссиями для масштабируемого процессинга." : "Lightning-fast transactions with minimal fees for scalable payment processing." },
     { name: "Base", slug: "base", desc: locale === "ru" ? "L2 сеть от Coinbase для надёжных EVM-совместимых платежей." : "Coinbase's L2 for reliable EVM-compatible payments with institutional backing." },
     { name: "BSC", slug: "bsc", desc: locale === "ru" ? "Binance Smart Chain с широкой поддержкой токенов и высокой ликвидностью." : "Binance Smart Chain with broad token support and high DeFi liquidity." },
-    { name: "Arbitrum", slug: "arbitrum", desc: locale === "ru" ? "Ведущий Ethereum L2 с низкими комиссиями и надёжностью EVM." : "Leading Ethereum L2 with low fees and full EVM compatibility." },
   ];
 
   const cards = networks.map((net) => ({
@@ -57,7 +56,7 @@ export default async function NetworksHubPage(props: Props) {
       "@type": "ListItem",
       position: idx + 1,
       name: net.name,
-      url: `https://reqst.xyz/${locale}/networks/${net.slug}`,
+      url: `https://recv.money/${locale}/networks/${net.slug}`,
     })),
   };
 
@@ -70,7 +69,7 @@ export default async function NetworksHubPage(props: Props) {
         title={copy.marketing.networksHub.title}
         description={copy.marketing.networksHub.description}
         cards={cards}
-        finalTitle={locale === "ru" ? "Запустить Reqst" : "Launch Reqst"}
+        finalTitle={locale === "ru" ? "Запустить recv" : "Launch recv"}
         finalBody={locale === "ru"
           ? "Non-custodial криптоплатежи напрямую на ваши кошельки. Без комиссии с оборота."
           : "Non-custodial crypto payments straight to your wallets. Zero turnover fees."}

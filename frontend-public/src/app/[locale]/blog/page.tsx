@@ -2,10 +2,10 @@ import { Metadata } from "next";
 import { BlogIndexClient, type BlogPostSummary } from "@/components/blog/BlogIndexClient";
 
 export const metadata: Metadata = {
-  title: "Blog | Reqst",
+  title: "Blog | recv",
   description: "Insights, technical deep-dives, and updates on crypto payments infrastructure.",
   openGraph: {
-    title: "Blog | Reqst",
+    title: "Blog | recv",
     description: "Insights, technical deep-dives, and updates on crypto payments infrastructure.",
   },
 };
@@ -18,7 +18,7 @@ const FALLBACK_POSTS: Record<"en" | "ru", BlogPostSummary[]> = {
       slug: "non-custodial-crypto-checkout",
       title: "How non-custodial crypto checkout works",
       excerpt: "A practical overview of direct-to-wallet invoices, payment detection, and webhook-based fulfillment.",
-      author: "Reqst Core Team",
+      author: "recv Core Team",
       published_at: "2026-03-13T00:00:00.000Z",
     },
   ],
@@ -27,7 +27,7 @@ const FALLBACK_POSTS: Record<"en" | "ru", BlogPostSummary[]> = {
       slug: "non-custodial-crypto-checkout",
       title: "Как работает non-custodial crypto checkout",
       excerpt: "Практичный обзор direct-to-wallet инвойсов, детекции платежей и webhook-выдачи.",
-      author: "Reqst Core Team",
+      author: "recv Core Team",
       published_at: "2026-03-13T00:00:00.000Z",
     },
   ],

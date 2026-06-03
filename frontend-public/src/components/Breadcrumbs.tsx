@@ -13,7 +13,7 @@ interface BreadcrumbsProps {
 }
 
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://reqst.xyz").replace(/\/+$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://recv.money").replace(/\/+$/, "");
   
   const breadcrumbListSchema = {
     "@context": "https://schema.org",

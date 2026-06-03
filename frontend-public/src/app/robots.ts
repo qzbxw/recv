@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 function publicSiteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://reqst.xyz").replace(/\/+$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://recv.money").replace(/\/+$/, "");
 }
 
 export default function robots(): MetadataRoute.Robots {

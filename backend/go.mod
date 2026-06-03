@@ -1,4 +1,4 @@
-module reqst/backend
+module recv/backend
 
 go 1.24.0
 

@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"reqst/backend/internal/config"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/config"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 	"github.com/shopspring/decimal"
@@ -115,7 +115,7 @@ func TestWatcherTickWithActiveTONInvoice(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWallet: %v", err)
 	}
-	comment := "REQST-TICK001"
+	comment := "RECV-TICK001"
 	_, err = st.CreateInvoice(ctx, store.CreateInvoiceParams{
 		WorkspaceID:        workspace.ID,
 		Kind:               store.InvoiceKindMerchant,
@@ -326,7 +326,7 @@ func TestPollTON(t *testing.T) {
 					},
 					"in_msg": map[string]any{
 						"value":   "2500000000",
-						"message": "REQST-ABC123",
+						"message": "RECV-ABC123",
 					},
 				},
 			},
@@ -358,7 +358,7 @@ func TestPollTON(t *testing.T) {
 	if !transfers[0].Amount.Equal(decimal.RequireFromString("2.500000")) {
 		t.Fatalf("unexpected amount: %s", transfers[0].Amount)
 	}
-	if transfers[0].PaymentComment != "REQST-ABC123" {
+	if transfers[0].PaymentComment != "RECV-ABC123" {
 		t.Fatalf("unexpected payment comment: %s", transfers[0].PaymentComment)
 	}
 }
@@ -624,7 +624,7 @@ func TestWatcherTickWalletPollError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWallet: %v", err)
 	}
-	comment := "REQST-TICK099"
+	comment := "RECV-TICK099"
 	_, err = st.CreateInvoice(ctx, store.CreateInvoiceParams{
 		WorkspaceID:        workspace.ID,
 		Kind:               store.InvoiceKindMerchant,
@@ -794,12 +794,12 @@ func newWatcherTestStore(t *testing.T, ctx context.Context) *store.Store {
 	pgConfig := embeddedpostgres.DefaultConfig().
 		Version(embeddedpostgres.V16).
 		Port(port).
-		Database("reqst").
-		Username("reqst").
-		Password("reqst").
+		Database("recv").
+		Username("recv").
+		Password("recv").
 		RuntimePath(filepath.Join(baseDir, "runtime")).
 		DataPath(filepath.Join(baseDir, "data")).
-		CachePath(filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")).
+		CachePath(filepath.Join(os.TempDir(), "recv-embedded-postgres-cache")).
 		Locale("C").
 		Encoding("UTF8").
 		StartTimeout(45 * time.Second).

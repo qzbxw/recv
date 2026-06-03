@@ -63,7 +63,7 @@ function initials(name?: string | null) {
 
 export function BlogPostClient({ language, post }: { language: "en" | "ru"; post: BlogPost }) {
   const reveal = useReveal();
-  const authorSlug = (post.author || "Reqst Core Team").toLowerCase().replace(/\s+/g, "-");
+  const authorSlug = (post.author || "recv Core Team").toLowerCase().replace(/\s+/g, "-");
 
   return (
     <MarketingLayout language={language}>
@@ -87,7 +87,7 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
                 {initials(post.author)}
               </Link>
               <div className="flex flex-col">
-                <Link href={`/${language}/blog/author/${authorSlug}`} className="font-semibold text-white/85 hover:text-accent transition-colors">{post.author || "Reqst Core Team"}</Link>
+                <Link href={`/${language}/blog/author/${authorSlug}`} className="font-semibold text-white/85 hover:text-accent transition-colors">{post.author || "recv Core Team"}</Link>
                 <time dateTime={post.published_at} className="text-white/35 text-sm">{formatDate(post.published_at, language)}</time>
               </div>
             </div>
@@ -110,7 +110,7 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
               {language === "ru" ? "Все материалы" : "All articles"}
             </Link>
             <Link href="/app/auth" className="lend-primary px-8 py-3 rounded-xl flex items-center gap-2 group/cta">
-              {language === "ru" ? "Начать с Reqst" : "Start with Reqst"}
+              {language === "ru" ? "Начать с recv" : "Start with recv"}
               <span className="group-hover/cta:translate-x-1.5 transition-transform duration-500">→</span>
             </Link>
           </div>

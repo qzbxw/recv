@@ -13,7 +13,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const copy = getCopy(locale);
 
   return {
-    title: `${copy.marketing.compareHub.title} | Reqst`,
+    title: `${copy.marketing.compareHub.title} | recv`,
     description: copy.marketing.compareHub.description,
     alternates: {
       canonical: `/${locale}/compare`,
@@ -49,7 +49,7 @@ export default async function CompareHubPage(props: Props) {
       "@type": "ListItem",
       position: idx + 1,
       name: item.title,
-      url: `https://reqst.xyz/${locale}/compare/${item.slug}`,
+      url: `https://recv.money/${locale}/compare/${item.slug}`,
     })),
   };
 
@@ -64,8 +64,8 @@ export default async function CompareHubPage(props: Props) {
         cards={cards}
         finalTitle={locale === "ru" ? "Готовы обновить инфраструктуру?" : "Ready to upgrade your infrastructure?"}
         finalBody={locale === "ru"
-          ? "Подключите Reqst для безопасного non-custodial процессинга без комиссий с оборота."
-          : "Join forward-thinking companies that choose Reqst for secure, non-custodial processing."}
+          ? "Подключите recv для безопасного non-custodial процессинга без комиссий с оборота."
+          : "Join forward-thinking companies that choose recv for secure, non-custodial processing."}
         finalPrimary={copy.hero.primary}
         finalSecondaryLabel={copy.nav.docs}
         finalSecondaryHref={`/${locale}/docs`}

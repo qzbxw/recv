@@ -11,7 +11,7 @@ export type AttributionPayload = {
 };
 
 export function readAttribution(): AttributionPayload | undefined {
-  const match = document.cookie.match(/(?:^|;\s*)reqst_attr=([^;]+)/);
+  const match = document.cookie.match(/(?:^|;\s*)recv_attr=([^;]+)/);
   if (!match) return undefined;
   try {
     const parsed = JSON.parse(decodeURIComponent(match[1])) as AttributionPayload;

@@ -22,10 +22,10 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "Reqst",
-    "url": "https://reqst.xyz",
-    "logo": "https://reqst.xyz/opengraph-image",
-    "sameAs": ["https://twitter.com/reqst_xyz", "https://github.com/reqst-xyz"]
+    "name": "recv",
+    "url": "https://recv.money",
+    "logo": "https://recv.money/opengraph-image",
+    "sameAs": ["https://twitter.com/recv_xyz", "https://github.com/recv-xyz"]
   };
 
   const faqSchema = {
@@ -41,10 +41,10 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "Reqst",
-    "url": "https://reqst.xyz",
+    "name": "recv",
+    "url": "https://recv.money",
     "inLanguage": language,
-    "publisher": { "@type": "Organization", "name": "Reqst" }
+    "publisher": { "@type": "Organization", "name": "recv" }
   };
 
   return (
@@ -335,7 +335,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
               </ul>
             </div>
 
-            {/* Reqst protocol card */}
+            {/* recv protocol card */}
             <div className="relative p-10 md:p-16 rounded-[3.5rem] bg-white/[0.01] border border-accent/20 backdrop-blur-3xl transition-all duration-700 ease-in-out scale-100 lg:scale-[1.03] group-hover:scale-[1.06] group-hover:-translate-y-3 group-hover:border-accent/65 shadow-[0_30px_70px_rgba(0,0,0,0.8)] hover:shadow-[0_40px_100px_rgba(168,85,247,0.18)] overflow-hidden" onMouseMove={handleMouseMove}>
               {/* Custom border/background mouse spotlight overrides */}
               <div className="lend-card-spotlight" />
@@ -353,19 +353,19 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </div>
-                  <span className="text-[10px] font-bold tracking-[0.4em] text-accent block uppercase">{language === "ru" ? "Протокол Reqst" : "Reqst Protocol"}</span>
+                  <span className="text-[10px] font-bold tracking-[0.4em] text-accent block uppercase">{language === "ru" ? "Протокол recv" : "recv Protocol"}</span>
                 </div>
 
                 <ul className="space-y-8">
                   {copy.compare.rows.map((row) => (
                     <li 
-                      key={row.reqst} 
+                      key={row.recv} 
                       className="flex items-center gap-6 group/row p-4 -mx-4 rounded-2xl hover:bg-accent/[0.03] border border-transparent hover:border-accent/10 transition-all duration-500"
                     >
                       <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center flex-shrink-0 group-hover/row:bg-green-500/20 group-hover/row:border-green-500/40 transition-all duration-500 shadow-md">
                         <span className="text-green-400 text-base font-bold drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]">✓</span>
                       </div>
-                      <p className="text-lg md:text-xl font-bold text-white/90 leading-snug tracking-tight group-hover/row:text-white transition-colors duration-300">{row.reqst}</p>
+                      <p className="text-lg md:text-xl font-bold text-white/90 leading-snug tracking-tight group-hover/row:text-white transition-colors duration-300">{row.recv}</p>
                     </li>
                   ))}
                 </ul>
@@ -383,10 +383,10 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
             <h2 className="text-4xl md:text-7xl font-bold tracking-tight">{copy.pricing.title}</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lend-reveal--2">
-            {(["merchant", "developer", "business", "enterprise"] as const).map((tier) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lend-reveal--2">
+            {(["trial", "merchant", "developer", "business"] as const).map((tier) => {
               const t = copy.pricing[tier];
-              const isPro = tier === "business" || tier === "enterprise";
+              const isPro = tier === "business";
               const isPopular = tier === "business";
               
               return (
@@ -409,9 +409,9 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                     
                     <div className="lend-price-container flex justify-center">
                       <div className="flex items-baseline gap-1">
-                        <span className="lend-price-symbol">{tier === "enterprise" ? "" : "$"}</span>
-                        <span className={`lend-price-amount inline-block ${tier === "enterprise" ? "is-custom" : ""} ${isPopular ? "bg-gradient-to-r from-purple-400 via-violet-500 to-indigo-500 bg-clip-text text-transparent drop-shadow-[0_2px_15px_rgba(124,58,237,0.3)]" : ""}`}>{t.price}</span>
-                        {tier !== "enterprise" && <span className="lend-price-period">/mo</span>}
+                        <span className="lend-price-symbol">$</span>
+                        <span className={`lend-price-amount inline-block ${isPopular ? "bg-gradient-to-r from-purple-400 via-violet-500 to-indigo-500 bg-clip-text text-transparent drop-shadow-[0_2px_15px_rgba(124,58,237,0.3)]" : ""}`}>{t.price}</span>
+                        <span className="lend-price-period">/mo</span>
                       </div>
                     </div>
 
@@ -430,7 +430,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
 
                     <Link 
                       className={`lend-pricing-button ${isPro ? 'is-pro' : ''} ${isPopular ? 'lend-primary bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 border-none hover:shadow-[0_0_35px_rgba(168,85,247,0.4)]' : ''} mt-auto`}
-                      href={`/${language}/${tier === "merchant" ? "merchant" : tier === "developer" ? "dev" : tier}`}
+                      href={tier === "trial" ? "/app/auth" : `/${language}/${tier === "merchant" ? "merchant" : tier === "developer" ? "dev" : tier}`}
                     >
                       <span>{t.cta}</span>
                       <svg className="w-4 h-4 ml-2 group-hover:translate-x-1.5 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -514,7 +514,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
 
         {/* Massive Background Text */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[30rem] font-black text-white/[0.01] select-none pointer-events-none whitespace-nowrap font-['Montserrat'] tracking-tighter">
-          REQST PROTOCOL
+          RECV PROTOCOL
         </div>
 
         {/* Multi-layered neon glow */}

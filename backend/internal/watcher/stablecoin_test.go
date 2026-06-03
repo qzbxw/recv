@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"reqst/backend/internal/config"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/config"
+	"recv/backend/internal/store"
 
 	"github.com/shopspring/decimal"
 )

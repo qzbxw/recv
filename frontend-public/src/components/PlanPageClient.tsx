@@ -10,14 +10,13 @@ import { planSEOEn } from "@/i18n/plans.en";
 import { planSEORu } from "@/i18n/plans.ru";
 import "./marketing/plans/plans.css";
 
-export type Variant = "merchant" | "developer" | "business" | "enterprise";
+export type Variant = "merchant" | "developer" | "business";
 
 const GRADIENT_WORDS = new Set([
   "merchant",
   "developer",
   "business",
-  "enterprise",
-  "reqst",
+  "recv",
   "crypto",
   "payments",
   "usdt",
@@ -51,10 +50,9 @@ export function PlanPage({ variant }: { variant: Variant }) {
   };
 
   const priceMap = {
-    merchant: "39.00",
-    developer: "199.00",
-    business: "499.00",
-    enterprise: "0.00",
+    merchant: "9.00",
+    developer: "29.00",
+    business: "79.00",
   };
 
   const applicationSchema = {
@@ -83,8 +81,6 @@ export function PlanPage({ variant }: { variant: Variant }) {
       }
     }))
   };
-
-  const isEnterprise = variant === "enterprise";
 
   return (
     <MarketingLayout language={language}>
@@ -116,34 +112,20 @@ export function PlanPage({ variant }: { variant: Variant }) {
             {seoText.hero.body}
           </p>
           <div className="lend-reveal--4 flex flex-col sm:flex-row items-center justify-center gap-5">
-            {isEnterprise ? (
-              <div className="relative group/btn-wrap">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-70 group-hover/btn-wrap:scale-110 transition-all duration-700" />
-                <a className="lend-primary relative z-10 px-9 py-4 text-base min-w-[220px] rounded-2xl group/btn flex items-center justify-center" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
-                  <span className="relative z-10 flex items-center justify-center gap-3">
-                    {text.discuss}
-                    <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500">→</span>
-                  </span>
-                </a>
-              </div>
-            ) : (
-              <>
-                <div className="relative group/btn-wrap">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-70 group-hover/btn-wrap:scale-110 transition-all duration-700" />
-                  <Link className="lend-primary relative z-10 px-9 py-4 text-base min-w-[220px] rounded-2xl group/btn flex items-center justify-center" href="/app/auth">
-                    <span className="relative z-10 flex items-center justify-center gap-3">
-                      {marketing.activate}
-                      <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500">→</span>
-                    </span>
-                  </Link>
-                </div>
-                <Link className="lend-secondary px-9 py-4 text-base min-w-[220px] rounded-2xl group/sec flex items-center justify-center" href="/app/auth">
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    {text.auth}
-                  </span>
-                </Link>
-              </>
-            )}
+            <div className="relative group/btn-wrap">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-70 group-hover/btn-wrap:scale-110 transition-all duration-700" />
+              <Link className="lend-primary relative z-10 px-9 py-4 text-base min-w-[220px] rounded-2xl group/btn flex items-center justify-center" href="/app/auth">
+                <span className="relative z-10 flex items-center justify-center gap-3">
+                  {marketing.activate}
+                  <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500">→</span>
+                </span>
+              </Link>
+            </div>
+            <Link className="lend-secondary px-9 py-4 text-base min-w-[220px] rounded-2xl group/sec flex items-center justify-center" href="/app/auth">
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {text.auth}
+              </span>
+            </Link>
           </div>
         </div>
       </section>
@@ -431,23 +413,13 @@ export function PlanPage({ variant }: { variant: Variant }) {
           </div>
 
           <div className="lend-reveal--2 flex justify-center items-center gap-6 mb-12">
-            {isEnterprise ? (
-              <div className="relative group/btn-wrap">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-75 group-hover/btn-wrap:scale-110 transition-all duration-700" />
-                <a className="lend-primary px-16 py-6 text-xl font-bold rounded-2xl min-w-[280px] flex items-center justify-center gap-3 group/btn shadow-[0_20px_50px_rgba(124,58,237,0.3)] transition-all duration-300" href="https://t.me/kynexq" target="_blank" rel="noopener noreferrer">
-                  {text.discuss}
-                  <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500">→</span>
-                </a>
-              </div>
-            ) : (
-              <div className="relative group/btn-wrap">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-75 group-hover/btn-wrap:scale-110 transition-all duration-700" />
-                <Link className="lend-primary px-16 py-6 text-xl font-bold rounded-2xl min-w-[280px] flex items-center justify-center gap-3 group/btn shadow-[0_20px_50px_rgba(124,58,237,0.3)] transition-all duration-300" href="/app/auth">
-                  {marketing.activateVerb} {product.badge}
-                  <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500">→</span>
-                </Link>
-              </div>
-            )}
+            <div className="relative group/btn-wrap">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-75 group-hover/btn-wrap:scale-110 transition-all duration-700" />
+              <Link className="lend-primary px-16 py-6 text-xl font-bold rounded-2xl min-w-[280px] flex items-center justify-center gap-3 group/btn shadow-[0_20px_50px_rgba(124,58,237,0.3)] transition-all duration-300" href="/app/auth">
+                {marketing.activateVerb} {product.badge}
+                <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500">→</span>
+              </Link>
+            </div>
           </div>
           
           <div className="lend-reveal--3 text-white/30 text-xs font-semibold tracking-wider uppercase flex justify-center items-center gap-6">

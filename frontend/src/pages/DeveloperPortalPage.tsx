@@ -32,13 +32,11 @@ const PLAN_OPTIONS = [
 ] as const;
 
 const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
-  { value: "TRON", label: "TRON" },
-  { value: "SOLANA", label: "SOLANA" },
-  { value: "BASE", label: "BASE" },
-  { value: "ARBITRUM", label: "ARBITRUM" },
-  { value: "BSC", label: "BSC" },
-  { value: "EVM", label: "ETH" },
   { value: "TON", label: "TON" },
+  { value: "TON_USDT", label: "TON USDT" },
+  { value: "TRON", label: "TRON" },
+  { value: "BASE", label: "BASE" },
+  { value: "BSC", label: "BSC" },
 ];
 
 const DEFAULT_SCOPES = ["invoices:read", "invoices:write"];
@@ -191,7 +189,7 @@ export function DeveloperPortalPage() {
     setSampleBusy(true);
     try {
       const invoice = await createDeveloperInvoice(secret, {
-        title: "Reqst API test invoice",
+        title: "recv API test invoice",
         base_amount_usd: "10.00",
         payable_network: "TRON",
         expires_in_minutes: 30,
@@ -268,7 +266,7 @@ export function DeveloperPortalPage() {
       params: [
         { name: "title", type: "string", desc: t.api.endpoints[2].params[0] },
         { name: "base_amount_usd", type: "decimal", desc: t.api.endpoints[2].params[1] },
-        { name: "payable_network", type: "string", desc: "TRON, SOLANA, BASE, TON, ETH, etc." },
+        { name: "payable_network", type: "string", desc: "TON, TON_USDT, TRON, BASE, or BSC." },
         { name: "expires_in_minutes", type: "int", desc: t.api.endpoints[2].params[2] }
       ],
       response: {
@@ -276,7 +274,7 @@ export function DeveloperPortalPage() {
         public_id: "RQST-9N2QK7",
         title: "Product Subscription",
         status: "awaiting_payment",
-        checkout_url: "https://reqst.xyz/app/checkout/RQST-9N2QK7",
+        checkout_url: "https://recv.money/app/checkout/RQST-9N2QK7",
         base_amount_usd: "25.00",
         payable_amount: "25.000000",
         payable_network: "TRON",
@@ -318,7 +316,7 @@ export function DeveloperPortalPage() {
       
       <div className="dev-portal__shell">
         <header className="dev-portal__topbar portal-animate-in">
-          <Link className="dev-portal__brand" to="/">reqst</Link>
+          <Link className="dev-portal__brand" to="/">recv</Link>
           <div className="dev-portal__header-links">
             <Link className="dev-btn dev-btn--primary" to="/console">{t.common.console}</Link>
           </div>
@@ -382,11 +380,11 @@ export function DeveloperPortalPage() {
               </div>
               <div className="portal-quickstart">
                 {[
-                  { done: Boolean(testKey || sampleSecret), title: t.quickstart.testKey, body: testKey?.prefix ?? "rqst_test_..." },
+                  { done: Boolean(testKey || sampleSecret), title: t.quickstart.testKey, body: testKey?.prefix ?? "test_..." },
                   { done: Boolean(sampleInvoice), title: t.quickstart.testInvoice, body: sampleInvoice?.public_id ?? "POST /v1/invoices" },
                   { done: sampleInvoice?.status === "paid", title: t.quickstart.simulate, body: sampleInvoice ? formatInvoiceStatus(sampleInvoice.status, language) : "simulate-payment" },
                   { done: webhooks.length > 0, title: t.quickstart.webhook, body: webhooks[0]?.url ?? "https://..." },
-                  { done: Boolean(liveKey), title: "Live", body: liveKey?.prefix ?? "rqst_live_..." },
+                  { done: Boolean(liveKey), title: "Live", body: liveKey?.prefix ?? "live_..." },
                 ].map((step) => (
                   <div key={step.title} className="portal-quickstart__step">
                     <span className={`dev-api-badge dev-api-badge--${step.done ? "done" : "post"}`}>{step.done ? t.quickstart.done : t.quickstart.next}</span>
@@ -672,7 +670,7 @@ export function DeveloperPortalPage() {
                   <div className="dev-form">
                     <h3 className="dev-card__title--small">{t.mcp.runTitle}</h3>
                     <pre className="dev-code-box__content dev-code-box__content--compact" style={{ marginTop: "0.5rem" }}>
-                      <code>{`npx -y reqst-mcp`}</code>
+                      <code>{`npx -y recv-mcp`}</code>
                     </pre>
                   </div>
                   
@@ -682,12 +680,12 @@ export function DeveloperPortalPage() {
                     <pre className="dev-code-box__content dev-code-box__content--compact">
                       <code>{JSON.stringify({
                         mcpServers: {
-                          reqst: {
+                          recv: {
                             command: "npx",
-                            args: ["-y", "reqst-mcp"],
+                            args: ["-y", "recv-mcp"],
                             env: {
-                              REQST_API_KEY: liveKey?.prefix ? `${liveKey.prefix}***` : "rqst_live_...",
-                              REQST_ACCESS_TOKEN: token ? `${token.substring(0, 10)}...` : "your_token"
+                              RECV_API_KEY: liveKey?.prefix ? `${liveKey.prefix}***` : "live_...",
+                              RECV_ACCESS_TOKEN: token ? `${token.substring(0, 10)}...` : "your_token"
                             }
                           }
                         }
@@ -733,9 +731,9 @@ export function DeveloperPortalPage() {
                   ) : (
                     <div className="dev-form dev-form--centered">
                       <div className="dev-card--note">
-                        <p className="dev-card__note-text">{t.billing.enterpriseNote}</p>
+                        <p className="dev-card__note-text">{t.billing.businessNote}</p>
                       </div>
-                      <Link to="/enterprise" className="dev-btn dev-btn--secondary dev-btn--large dev-btn--full-width">{t.billing.contactSupport}</Link>
+                      <Link to="/auth" className="dev-btn dev-btn--secondary dev-btn--large dev-btn--full-width">{t.billing.contactSupport}</Link>
                     </div>
                   )}
                 </div>

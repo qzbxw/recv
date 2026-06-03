@@ -10,7 +10,7 @@ The required environment variables vary based on the deployment environment: `de
 | `JWT_SECRET` | Secret for user sessions | Dev secret | Strong secret | Strong secret |
 | `INTERNAL_TOKEN` | Token for internal service communication | Dev token | Strong token | Strong token |
 | `ALLOW_INSECURE_DEV_AUTH` | Allows bypassing standard auth for dev | `true` | `false` | `false` |
-| `PUBLIC_APP_URL` | Public origin for generated app links, checkout links, bot URLs, and webhook-facing payload URLs. Do not include `/app` or `/api`. | `http://localhost:3000` | Staging origin | `https://reqst.xyz` |
+| `PUBLIC_APP_URL` | Public origin for generated app links, checkout links, bot URLs, and webhook-facing payload URLs. Do not include `/app` or `/api`. | `http://localhost:3000` | Staging origin | `https://recv.money` |
 | **Database** |
 | `DATABASE_URL` | Full connection string to PostgreSQL | Required | Required | Required |
 | `POSTGRES_DB` | Database name | Required | Required | Required |
@@ -23,10 +23,10 @@ The required environment variables vary based on the deployment environment: `de
 | `TRONGRID_API_KEY` | Tron API Key | Optional | Required | Required |
 | `TONCENTER_BASE_URL` | Base URL for TON API | Required | Required | Required |
 | `TONCENTER_API_KEY` | TON API Key | Optional | Required | Required |
-| `SOLANA_RPC_URL` | Solana RPC endpoint | Required | Required | Required |
-| `ETHEREUM_RPC_URL` | Ethereum RPC endpoint | Required | Required | Required |
+| `TON_USDT_RPC_URL` | TON_USDT RPC endpoint | Required | Required | Required |
+| `ETHEREUM_RPC_URL` | Base RPC endpoint | Required | Required | Required |
 | `BASE_RPC_URL` | Base RPC endpoint | Required | Required | Required |
-| `ARBITRUM_RPC_URL` | Arbitrum RPC endpoint | Required | Required | Required |
+| `BASE_RPC_URL` | Base RPC endpoint | Required | Required | Required |
 | `BSC_RPC_URL` | Binance Smart Chain RPC endpoint | Required | Required | Required |
 | **Telegram Bot** |
 | `TELEGRAM_BOT_TOKEN` | Token for the Telegram worker | Optional/Mocked | Required | Required |
@@ -42,6 +42,6 @@ The required environment variables vary based on the deployment environment: `de
 | `SMTP_PASSWORD` | SMTP password | Optional/Mocked | Required | Required |
 | `SMTP_FROM_EMAIL` | Sender email address | Optional/Mocked | Required | Required |
 | **Frontend** |
-| `NEXT_PUBLIC_SITE_URL` | Canonical public origin used by Next metadata routes (`robots.ts`, `sitemap.ts`, canonical metadata). Do not include a path. | `http://localhost:3000` | Staging origin | `https://reqst.xyz` |
-| `NEXT_PUBLIC_API_URL` | Public origin used by Next server components to call API routes. Code appends `/api/...`; do not include `/api`. | `http://localhost:3000` | Staging origin | `https://reqst.xyz` |
-| `VITE_API_BASE_URL` | Public origin used by Vite app API client. Code appends `/api/...` and `/v1/...`; do not include `/api`. | `http://localhost:3000` | Staging origin | `https://reqst.xyz` |
+| `NEXT_PUBLIC_SITE_URL` | Canonical public origin used by Next metadata routes (`robots.ts`, `sitemap.ts`, canonical metadata). Do not include a path. | `http://localhost:3000` | Staging origin | `https://recv.money` |
+| `NEXT_PUBLIC_API_URL` | Public origin used by Next server components to call API routes. Code appends `/api/...`; do not include `/api`. | `http://localhost:3000` | Staging origin | `https://recv.money` |
+| `VITE_API_BASE_URL` | Public origin used by Vite app API client. Code appends `/api/...` and `/v1/...`; do not include `/api`. | `http://localhost:3000` | Staging origin | `https://recv.money` |

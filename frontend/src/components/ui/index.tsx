@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
-import { formatInvoiceStatus, getInvoiceStatusMeta, type Language } from "../../lib/status";
+import { formatInvoiceStatus, getInvoiceStatusMeta, getInvoiceStatusTooltip, type Language } from "../../lib/status";
 import type { Invoice } from "../../lib/types";
 
 export function Button({ className = "", variant = "secondary", ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" | "ghost" }) {
@@ -20,8 +20,9 @@ export function Badge({ children, tone = "neutral", className = "" }: { children
 
 export function StatusPill({ status, language, short = false, className = "" }: { status: Invoice["status"]; language: Language; short?: boolean; className?: string }) {
   const meta = getInvoiceStatusMeta(status);
+  const tooltip = getInvoiceStatusTooltip(status, language);
   return (
-    <span className={`status-pill status-${status} ui-status ui-status--${meta.tone} ${className}`.trim()}>
+    <span className={`status-pill status-${status} ui-status ui-status--${meta.tone} ${className}`.trim()} title={tooltip || undefined} aria-label={tooltip || undefined}>
       {formatInvoiceStatus(status, language, short)}
     </span>
   );
@@ -100,4 +101,3 @@ export function MetricCard({ label, value, meta, tone = "neutral" }: { label: st
     </div>
   );
 }
-

@@ -9,8 +9,8 @@ describe("routing helpers", () => {
   });
 
   it("builds absolute checkout URLs in a browser context", () => {
-    vi.stubGlobal("window", { location: { origin: "https://reqst.test" } });
-    expect(buildCheckoutUrl("REQST-1")).toBe("https://reqst.test/app/checkout/REQST-1");
+    vi.stubGlobal("window", { location: { origin: "https://recv.test" } });
+    expect(buildCheckoutUrl("RECV-1")).toBe("https://recv.test/app/checkout/RECV-1");
     vi.unstubAllGlobals();
   });
 

@@ -1,7 +1,7 @@
 import { getAllDocSlugs } from "@/lib/docs";
 
 export async function GET() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://reqst.xyz";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://recv.money";
   
   // Try to gather documentation slugs for linking
   let docsLinks = "";
@@ -17,9 +17,9 @@ export async function GET() {
     console.error("Failed to list docs for llms.txt:", e);
   }
 
-  const content = `# Reqst LLM Guide
+  const content = `# recv LLM Guide
 
-Reqst is a cryptocurrency payment gateway focused on Telegram bots and SaaS billing.
+recv is a cryptocurrency payment gateway focused on Telegram bots and SaaS billing.
 
 ## Key Features
 - **One-click Checkout**: Fast payment flow for users.

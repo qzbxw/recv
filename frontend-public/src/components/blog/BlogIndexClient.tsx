@@ -99,7 +99,7 @@ export function BlogIndexClient({
                 <div className="flex items-center gap-4 text-sm">
                   <span className="w-9 h-9 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-[11px] font-bold text-accent">{initials(featured.author)}</span>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-white/80">{featured.author || "Reqst Core Team"}</span>
+                    <span className="font-semibold text-white/80">{featured.author || "recv Core Team"}</span>
                     <span className="text-white/30 text-xs">{formatDate(featured.published_at, language)}</span>
                   </div>
                   <span className="ml-auto lend-arrow text-accent text-xl group-hover:translate-x-1.5 transition-transform duration-500">→</span>
@@ -132,7 +132,7 @@ export function BlogIndexClient({
                     <h3 className="text-xl font-bold mb-4 tracking-tight leading-snug group-hover:text-white transition-colors">{post.title}</h3>
                     {post.excerpt && <p className="opacity-50 text-sm leading-relaxed mb-6 flex-grow group-hover:opacity-70 transition-opacity line-clamp-3">{post.excerpt}</p>}
                     <div className="flex items-center gap-3 text-xs mt-auto pt-4 border-t border-white/5">
-                      <span className="font-semibold text-white/70">{post.author || "Reqst Team"}</span>
+                      <span className="font-semibold text-white/70">{post.author || "recv Team"}</span>
                       <span className="text-white/20">•</span>
                       <span className="text-white/30">{formatDate(post.published_at, language)}</span>
                     </div>

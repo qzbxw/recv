@@ -1,60 +1,44 @@
-# Progress Log
+# Progress Log: Mobile Burger Menu Fix
 
-## Session: 2026-05-31
+## Session: 2026-06-03
 
 ### Phase 1: Requirements & Discovery
 - **Status:** complete
-- **Started:** 2026-05-31T20:57:00
+- **Started:** 2026-06-03T17:05:00
 - Actions taken:
-  - Scanned Go API server routes and models.
-  - Inspected blockchain watchers and specs, verifying only USDT and native TON are supported.
-  - Checked webhook dispatch logic and headers/signature algorithm.
-  - Examined plans catalog and limits.
+  - Diagnosed viewport clipping issue under mobile viewports as a containing block layout bug caused by `backdrop-filter` on parent `<header>`.
 - Files created/modified:
   - `task_plan.md`
   - `findings.md`
   - `progress.md`
 
-### Phase 2: Refactoring Marketing Translation Files
+### Phase 2: Implementation
 - **Status:** complete
+- **Started:** 2026-06-03T17:07:00
 - Actions taken:
-  - Removed USDC references from `en.ts`, `ru.ts`, `plans.en.ts`, and `plans.ru.ts`.
-  - Updated supported assets to correctly reflect USDT and native TON support.
-  - Removed misleading/exaggerated claims about FaceID/TouchID, TWA native haptic feedback, 20+ languages global reach, and custom branding in the checkout page (since the Vite app handles payments purely via copy-paste/QR code and deep links to mobile wallets like Tonkeeper/Phantom).
-  - Aligned JS code snippets for invoice creation and webhook signature validation in `ProductPageClient.tsx`.
-
+  - Wrapped header rendering in a React Fragment and moved the mobile menu container outside of the `<header>` block, avoiding containing block boundaries constraints.
 - Files created/modified:
-  - `frontend-public/src/i18n/en.ts`
-  - `frontend-public/src/i18n/ru.ts`
-  - `frontend-public/src/i18n/plans.en.ts`
-  - `frontend-public/src/i18n/plans.ru.ts`
-  - `frontend-public/src/components/ProductPageClient.tsx`
+  - `frontend-public/src/components/marketing/Header.tsx`
 
-### Phase 3: Updating Developer Documentation (MDX files)
+### Phase 3: Testing & Verification
 - **Status:** complete
+- **Started:** 2026-06-03T17:10:00
 - Actions taken:
-  - Aligned parameter names, Python examples, response fields, and status list in `invoices.mdx` (en/ru).
-  - Corrected headers list, JSON schemas for `invoice.paid` and `subscription.activated` events, signature hashing algorithm, and timing-safe Node.js code snippets in `webhooks.mdx` (en/ru).
-  - Aligned error response schema, workspace plan rate limits, and webhook retry limits in `errors.mdx` (en/ru).
+  - Ran `npm run build` in `frontend-public` to verify Next.js compiler output (successful, generated all 86 static routes).
+  - Ran `npm test` in `frontend-public` to verify Vitest tests (successful, all 3 tests passed).
 - Files created/modified:
-  - `frontend-public/content/docs/en/invoices.mdx`
-  - `frontend-public/content/docs/ru/invoices.mdx`
-  - `frontend-public/content/docs/en/webhooks.mdx`
-  - `frontend-public/content/docs/ru/webhooks.mdx`
-  - `frontend-public/content/docs/en/errors.mdx`
-  - `frontend-public/content/docs/ru/errors.mdx`
+  - None (verification only).
 
-### Phase 4: Testing & Verification
+### Phase 4: Delivery
 - **Status:** complete
+- **Started:** 2026-06-03T17:15:00
 - Actions taken:
-  - Ran `npm test` inside `frontend-public` ensuring translation tests pass.
-  - Ran `npm run build` inside `frontend-public` to verify TypeScript type checking and Next.js static generation compiles correctly.
+  - Invoiced details to the user and closed the task.
 - Files created/modified:
-  - None (validation check only).
+  - None.
 
 ## Test Results
 | Test | Input | Expected | Actual | Status |
 |------|-------|----------|--------|--------|
-| Translation Tests | `npm test` | All tests pass | All tests passed successfully | success |
-| Next.js Production Build | `npm run build` | Builds successfully without type/TS/remote compile errors | Compiled and optimized successfully (84/84 static pages generated) | success |
-
+| Next.js Production Build | `npm run build` | Builds successfully without compiler or layout errors | Compiled successfully and generated 86 static routes | success |
+| Unit Tests | `npm test` | All tests pass | 3 tests passed successfully | success |

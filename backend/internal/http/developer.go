@@ -17,9 +17,9 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -63,7 +63,7 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 		plan := workspace.EffectivePlan(time.Now())
 		if !plan.HasAPI {
 			metrics.IncLimitDecision("api_access", "denied", "plan")
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "current plan does not include Reqst Dev or Reqst Enterprise API access"})
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "current plan does not include Developer or Business API access"})
 			return
 		}
 
@@ -197,9 +197,9 @@ func (s *Server) handleCreateAPIKey(c *gin.Context) {
 	if strings.EqualFold(strings.TrimSpace(body.Mode), "test") || strings.EqualFold(strings.TrimSpace(body.Environment), "test") {
 		mode = "test"
 	}
-	prefixName := "rqst_live_"
+	prefixName := "live_"
 	if mode == "test" {
-		prefixName = "rqst_test_"
+		prefixName = "test_"
 	}
 	token, prefix, err := generateTokenWithPrefix(prefixName, 24)
 	if err != nil {
@@ -539,7 +539,7 @@ func (s *Server) handleAPISimulatePayment(c *gin.Context) {
 	}
 	keyCtx := apiKeyFromContext(c)
 	if keyCtx.Key.Mode != "test" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "payment simulator is only available for rqst_test_ API keys"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "payment simulator is only available for test_ API keys"})
 		return
 	}
 	wc := workspaceFromContext(c)

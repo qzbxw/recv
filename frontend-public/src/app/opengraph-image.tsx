@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Reqst — Crypto Payment Gateway";
+export const alt = "recv — Crypto Payment Gateway";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -31,13 +31,13 @@ export default function OpengraphImage() {
             marginBottom: 24,
           }}
         >
-          reqst.xyz
+          recv.money
         </div>
         <div style={{ fontSize: 84, fontWeight: 800, lineHeight: 1.05 }}>
           Crypto Payment Gateway
         </div>
         <div style={{ fontSize: 36, color: "rgba(255,255,255,0.7)", marginTop: 28 }}>
-          Non-custodial checkout & API for USDT, TON, TRON, Solana & EVM
+          Non-custodial checkout & API for USDT, TON, TRON, TON_USDT & EVM
         </div>
       </div>
     ),

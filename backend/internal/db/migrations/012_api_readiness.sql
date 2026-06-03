@@ -2,7 +2,7 @@ ALTER TABLE api_keys
   ADD COLUMN IF NOT EXISTS mode TEXT NOT NULL DEFAULT 'live';
 
 UPDATE api_keys
-SET mode = CASE WHEN prefix LIKE 'rk_test_%' THEN 'test' ELSE 'live' END
+SET mode = CASE WHEN prefix LIKE 'test_%' THEN 'test' ELSE 'live' END
 WHERE mode = '';
 
 CREATE INDEX IF NOT EXISTS idx_api_keys_mode

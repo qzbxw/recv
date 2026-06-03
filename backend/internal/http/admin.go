@@ -7,12 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shopspring/decimal"
 )
 
 type adminContext struct {
@@ -69,7 +68,7 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 
 	c.Request = c.Request.WithContext(ctx)
 	if result.RefreshToken != "" {
-		setRefreshCookie(c, "reqst_admin_refresh", result.RefreshToken, s.cfg.AppEnv)
+		setRefreshCookie(c, "recv_admin_refresh", result.RefreshToken, s.cfg.AppEnv)
 	}
 	c.JSON(http.StatusOK, result)
 }
@@ -91,12 +90,12 @@ func (s *Server) handleAdminVerifyTOTP(c *gin.Context) {
 	if s.store != nil {
 		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), result.Email, "admin_mfa_verified", "admin", result.Email, gin.H{"ip": c.ClientIP(), "recovery_codes_issued": len(result.RecoveryCodes)})
 	}
-	setRefreshCookie(c, "reqst_admin_refresh", result.RefreshToken, s.cfg.AppEnv)
+	setRefreshCookie(c, "recv_admin_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusOK, result)
 }
 
 func (s *Server) handleAdminRefresh(c *gin.Context) {
-	refreshToken := refreshTokenFromRequest(c, "reqst_admin_refresh")
+	refreshToken := refreshTokenFromRequest(c, "recv_admin_refresh")
 	if refreshToken == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing admin refresh token"})
 		return
@@ -110,11 +109,11 @@ func (s *Server) handleAdminRefresh(c *gin.Context) {
 }
 
 func (s *Server) handleAdminLogout(c *gin.Context) {
-	refreshToken := refreshTokenFromRequest(c, "reqst_admin_refresh")
+	refreshToken := refreshTokenFromRequest(c, "recv_admin_refresh")
 	if refreshToken != "" {
 		_ = s.adminService.RevokeRefreshToken(c.Request.Context(), refreshToken)
 	}
-	clearRefreshCookie(c, "reqst_admin_refresh", s.cfg.AppEnv)
+	clearRefreshCookie(c, "recv_admin_refresh", s.cfg.AppEnv)
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
@@ -412,23 +411,8 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 		return
 	}
 
-	var overridePrice *decimal.Decimal
-	if planCode == store.PlanCodeEnterprise {
-		trimmedAmount := strings.TrimSpace(body.BaseAmountUSD)
-		if trimmedAmount == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "base_amount_usd is required for enterprise"})
-			return
-		}
-		parsedAmount, err := decimal.NewFromString(trimmedAmount)
-		if err != nil || !parsedAmount.IsPositive() {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid base_amount_usd"})
-			return
-		}
-		overridePrice = &parsedAmount
-	}
-
 	ctx := metrics.WithSource(c.Request.Context(), "admin_api")
-	invoice, err := s.invoiceService.CreatePlanInvoiceWithPrice(ctx, workspace, planCode, network, overridePrice)
+	invoice, err := s.invoiceService.CreatePlanInvoiceWithPrice(ctx, workspace, planCode, network, nil)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -438,9 +422,6 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 
 	plan := store.ResolvePlan(planCode)
 	priceLabel := plan.PriceUSDString
-	if overridePrice != nil {
-		priceLabel = overridePrice.StringFixed(2)
-	}
 	c.JSON(http.StatusCreated, gin.H{
 		"workspace": gin.H{
 			"id":       workspace.ID,
@@ -699,8 +680,6 @@ func validAdminPlanCode(raw string) (store.PlanCode, bool) {
 		return store.PlanCodeDeveloper, true
 	case store.PlanCodeBusiness:
 		return store.PlanCodeBusiness, true
-	case store.PlanCodeEnterprise:
-		return store.PlanCodeEnterprise, true
 	default:
 		return "", false
 	}

@@ -36,7 +36,7 @@ type ProductCopy = {
   };
   comparison: {
     title: string;
-    items: ReadonlyArray<{ legacy: string; reqst: string }>;
+    items: ReadonlyArray<{ legacy: string; recv: string }>;
   };
   bento: {
     title: string;
@@ -50,8 +50,8 @@ type ProductCopy = {
 
 const productContent = {
   en: {
-    oldWay: "Without Reqst",
-    reqstWay: "With Reqst",
+    oldWay: "Without recv",
+    recvWay: "With recv",
     checkoutProduct: {
       overviewTitle: "Customer payment flow",
       overviewBody:
@@ -64,7 +64,7 @@ const productContent = {
       tertiaryPath: "business",
       flow: [
         "Customer opens a hosted checkout link from your store or bot.",
-        "Reqst locks the amount, network and recipient address.",
+        "recv locks the amount, network and recipient address.",
         "Customer scans QR or copies the address into a wallet.",
         "Watchers detect the transfer and move the order through the payment states.",
         "Your system receives a settled result and can fulfill the order.",
@@ -78,14 +78,14 @@ const productContent = {
         { label: "Expired", body: "The payment window has closed and the address should not be reused.", tone: "danger" },
       ],
       networksTitle: "Networks and address mechanics",
-      networks: ["TON", "TRON USDT", "Solana", "Base", "Arbitrum", "BSC"],
+      networks: ["TON", "TRON USDT", "TON_USDT", "Base", "Base", "BSC"],
       address: "TQDt...n4V7",
       qrCaption: "QR, copy address and network warnings live in one screen.",
     },
     apiProduct: {
       overviewTitle: "API overview",
       overviewBody:
-        "Reqst API gives developers invoice creation, payment monitoring and signed callbacks while keeping pricing decisions out of the integration path.",
+        "recv API gives developers invoice creation, payment monitoring and signed callbacks while keeping pricing decisions out of the integration path.",
       primaryCta: "Open docs",
       secondaryCta: "Developer",
       tertiaryCta: "Business",
@@ -100,10 +100,10 @@ const productContent = {
         { title: "Rate limits", body: "Clear request ceilings with upgrade paths for higher volume business workloads." },
       ],
       codeTitle: "Code examples",
-      invoiceCode: `const invoice = await fetch("https://reqst.xyz/v1/invoices", {
+      invoiceCode: `const invoice = await fetch("https://recv.money/v1/invoices", {
   method: "POST",
   headers: {
-    "Authorization": "Bearer rqst_live_...",
+    "Authorization": "Bearer live_...",
     "Idempotency-Key": "order_9841",
     "Content-Type": "application/json"
   },
@@ -114,8 +114,8 @@ const productContent = {
     expires_in_minutes: 60
   })
 });`,
-      webhookCode: `const signature = req.headers["x-reqst-signature"];
-const timestamp = req.headers["x-reqst-timestamp"];
+      webhookCode: `const signature = req.headers["x-recv-signature"];
+const timestamp = req.headers["x-recv-timestamp"];
 const expected = "v1=" + hmacSha256(timestamp + "." + rawBody, webhookSecret);
 
 if (signature !== expected) {
@@ -125,7 +125,7 @@ if (signature !== expected) {
     invoicingProduct: {
       overviewTitle: "Invoice lifecycle",
       overviewBody:
-        "Reqst Invoicing is a merchant workflow for creating, sharing and settling professional crypto invoices before the buyer ever sees a pricing page.",
+        "recv Invoicing is a merchant workflow for creating, sharing and settling professional crypto invoices before the buyer ever sees a pricing page.",
       primaryCta: "Activate Merchant",
       primaryPath: "merchant",
       lifecycle: [
@@ -158,18 +158,18 @@ if (signature !== expected) {
     mcpProduct: {
       overviewTitle: "How it works",
       overviewBody:
-        "Drop the Reqst MCP server into any MCP-compatible host. Your agent immediately gets 12 tools for onboarding, billing, and payment verification — no dashboard, no manual setup.",
+        "Drop the recv MCP server into any MCP-compatible host. Your agent immediately gets 12 tools for onboarding, billing, and payment verification — no dashboard, no manual setup.",
       primaryCta: "Read MCP Docs",
       primaryPath: "docs/mcp",
       configTitle: "Add to claude_desktop_config.json",
       configCode: `{
   "mcpServers": {
-    "reqst": {
+    "recv": {
       "command": "npx",
-      "args": ["-y", "reqst-mcp"],
+      "args": ["-y", "recv-mcp"],
       "env": {
-        "REQST_API_KEY": "rqst_live_...",
-        "REQST_ACCESS_TOKEN": "your_token"
+        "RECV_API_KEY": "live_...",
+        "RECV_ACCESS_TOKEN": "your_token"
       }
     }
   }
@@ -192,8 +192,8 @@ if (signature !== expected) {
     },
   },
   ru: {
-    oldWay: "Без Reqst",
-    reqstWay: "С Reqst",
+    oldWay: "Без recv",
+    recvWay: "С recv",
     checkoutProduct: {
       overviewTitle: "Путь клиента к оплате",
       overviewBody:
@@ -206,7 +206,7 @@ if (signature !== expected) {
       tertiaryPath: "business",
       flow: [
         "Клиент открывает hosted checkout из магазина или бота.",
-        "Reqst фиксирует сумму, сеть и адрес получателя.",
+        "recv фиксирует сумму, сеть и адрес получателя.",
         "Клиент сканирует QR или копирует адрес в кошелек.",
         "Вотчеры обнаруживают перевод и проводят заказ по статусам оплаты.",
         "Ваша система получает settled-результат и выдает товар или доступ.",
@@ -220,14 +220,14 @@ if (signature !== expected) {
         { label: "Expired", body: "Окно оплаты закрыто, адрес не должен использоваться повторно.", tone: "danger" },
       ],
       networksTitle: "Сети, QR и адресная механика",
-      networks: ["TON", "TRON USDT", "Solana", "Base", "Arbitrum", "BSC"],
+      networks: ["TON", "TRON USDT", "TON_USDT", "Base", "Base", "BSC"],
       address: "TQDt...n4V7",
       qrCaption: "QR, копирование адреса и предупреждения по сети находятся на одном экране.",
     },
     apiProduct: {
       overviewTitle: "Обзор API",
       overviewBody:
-        "Reqst API дает разработчикам создание инвойсов, мониторинг оплат и подписанные callback-уведомления, оставляя тарифные решения вне интеграционного сценария.",
+        "recv API дает разработчикам создание инвойсов, мониторинг оплат и подписанные callback-уведомления, оставляя тарифные решения вне интеграционного сценария.",
       primaryCta: "Открыть docs",
       secondaryCta: "Developer",
       tertiaryCta: "Business",
@@ -242,10 +242,10 @@ if (signature !== expected) {
         { title: "Rate limits", body: "Понятные лимиты запросов с переходом на business-объемы при росте нагрузки." },
       ],
       codeTitle: "Примеры кода",
-      invoiceCode: `const invoice = await fetch("https://reqst.xyz/v1/invoices", {
+      invoiceCode: `const invoice = await fetch("https://recv.money/v1/invoices", {
   method: "POST",
   headers: {
-    "Authorization": "Bearer rqst_live_...",
+    "Authorization": "Bearer live_...",
     "Idempotency-Key": "order_9841",
     "Content-Type": "application/json"
   },
@@ -256,8 +256,8 @@ if (signature !== expected) {
     expires_in_minutes: 60
   })
 });`,
-      webhookCode: `const signature = req.headers["x-reqst-signature"];
-const timestamp = req.headers["x-reqst-timestamp"];
+      webhookCode: `const signature = req.headers["x-recv-signature"];
+const timestamp = req.headers["x-recv-timestamp"];
 const expected = "v1=" + hmacSha256(timestamp + "." + rawBody, webhookSecret);
 
 if (signature !== expected) {
@@ -267,7 +267,7 @@ if (signature !== expected) {
     invoicingProduct: {
       overviewTitle: "Invoice lifecycle",
       overviewBody:
-        "Reqst Invoicing - это рабочий процесс мерчанта для создания, отправки и закрытия профессиональных крипто-счетов до того, как покупатель попадет на тарифную страницу.",
+        "recv Invoicing - это рабочий процесс мерчанта для создания, отправки и закрытия профессиональных крипто-счетов до того, как покупатель попадет на тарифную страницу.",
       primaryCta: "Активировать Merchant",
       primaryPath: "merchant",
       lifecycle: [
@@ -300,18 +300,18 @@ if (signature !== expected) {
     mcpProduct: {
       overviewTitle: "Как это работает",
       overviewBody:
-        "Добавьте MCP-сервер Reqst в любой MCP-совместимый хост. Агент сразу получает 12 инструментов для онбординга, биллинга и проверки платежей — без дашборда и ручной настройки.",
+        "Добавьте MCP-сервер recv в любой MCP-совместимый хост. Агент сразу получает 12 инструментов для онбординга, биллинга и проверки платежей — без дашборда и ручной настройки.",
       primaryCta: "Документация MCP",
       primaryPath: "docs/mcp",
       configTitle: "Добавить в claude_desktop_config.json",
       configCode: `{
   "mcpServers": {
-    "reqst": {
+    "recv": {
       "command": "npx",
-      "args": ["-y", "reqst-mcp"],
+      "args": ["-y", "recv-mcp"],
       "env": {
-        "REQST_API_KEY": "rqst_live_...",
-        "REQST_ACCESS_TOKEN": "your_token"
+        "RECV_API_KEY": "live_...",
+        "RECV_ACCESS_TOKEN": "your_token"
       }
     }
   }
@@ -356,7 +356,7 @@ const GRADIENT_WORDS = new Set([
   "инвойсинг",
   "вебхуки",
   "webhooks",
-  "reqst",
+  "recv",
   "usdt",
   "ton",
   "tron",
@@ -393,19 +393,19 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
         "@type": "ListItem",
         "position": 1,
         "name": fullCopy.marketing.breadcrumbs.home,
-        "item": `https://reqst.xyz/${language}`
+        "item": `https://recv.money/${language}`
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": fullCopy.marketing.breadcrumbs.products,
-        "item": `https://reqst.xyz/${language}/products`
+        "item": `https://recv.money/${language}/products`
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": product.title,
-        "item": `https://reqst.xyz/${language}/products/${variant === "checkoutProduct" ? "checkout" : variant === "apiProduct" ? "api" : variant === "mcpProduct" ? "mcp" : "invoicing"}`
+        "item": `https://recv.money/${language}/products/${variant === "checkoutProduct" ? "checkout" : variant === "apiProduct" ? "api" : variant === "mcpProduct" ? "mcp" : "invoicing"}`
       }
     ]
   };
@@ -542,8 +542,8 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
                   <p className="text-base text-white/55 leading-relaxed italic">{item.legacy}</p>
                 </div>
                 <div className="flex-1 border-t md:border-t-0 md:border-l border-white/[0.08] pt-6 md:pt-0 md:pl-12 relative z-10">
-                  <span className="text-[10px] font-bold text-accent/80 uppercase tracking-widest mb-2 block">{commonText.reqstWay}</span>
-                  <p className="text-base text-white/80 leading-relaxed font-semibold">{item.reqst}</p>
+                  <span className="text-[10px] font-bold text-accent/80 uppercase tracking-widest mb-2 block">{commonText.recvWay}</span>
+                  <p className="text-base text-white/80 leading-relaxed font-semibold">{item.recv}</p>
                 </div>
               </article>
             ))}

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"reqst/backend/internal/db"
-	"reqst/backend/internal/metrics"
+	"recv/backend/internal/db"
+	"recv/backend/internal/metrics"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -1069,7 +1069,7 @@ func (s *Store) GetWatchedWallets(ctx context.Context, graceWindow time.Duration
 	rows, err := s.pool.Query(ctx, `
 		SELECT DISTINCT
 			CASE
-				WHEN i.payable_network IN ('EVM', 'BASE', 'ARBITRUM', 'BSC') THEN 'EVM'
+				WHEN i.payable_network IN ('BASE', 'BSC') THEN 'EVM'
 				WHEN i.payable_network::text = 'TON_USDT' THEN 'TON_USDT'
 				ELSE i.payable_network::text
 			END AS poll_network,
@@ -1484,7 +1484,7 @@ func payableScale(network Network) int32 {
 	switch network {
 	case NetworkTON:
 		return 6
-	case NetworkTRON, NetworkSOLANA, NetworkEVM, NetworkBASE, NetworkARBITRUM, NetworkBSC:
+	case NetworkTON_USDT, NetworkTRON, NetworkBASE, NetworkBSC:
 		return 6
 	default:
 		return 6

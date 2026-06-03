@@ -42,11 +42,10 @@ export function StatusPageClient() {
 
   const networks = [
     { name: "TON", href: `/${language}/networks/ton`, status: copy.statusHub.operational, color: "green" as const },
+    { name: "TON USDT", href: `/${language}/networks/ton_usdt`, status: copy.statusHub.operational, color: "green" as const },
     { name: "TRON", href: `/${language}/networks/tron`, status: copy.statusHub.operational, color: "green" as const },
-    { name: "Solana", href: `/${language}/networks/solana`, status: copy.statusHub.operational, color: "green" as const },
     { name: "Base", href: `/${language}/networks/base`, status: copy.statusHub.operational, color: "green" as const },
     { name: "BSC", href: `/${language}/networks/bsc`, status: copy.statusHub.operational, color: "green" as const },
-    { name: "Arbitrum", href: `/${language}/networks/arbitrum`, status: copy.statusHub.operational, color: "green" as const },
   ];
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {

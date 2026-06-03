@@ -15,7 +15,7 @@ export type StaticMarketingPageCopy = {
 
 // Keywords that get the signature gradient treatment in the hero headline.
 const GRADIENT_WORDS = new Set([
-  "reqst",
+  "recv",
   "crypto",
   "payments",
   "payment",
@@ -61,7 +61,7 @@ export function StaticMarketingPage({
     e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
   };
 
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://reqst.xyz").replace(/\/+$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://recv.money").replace(/\/+$/, "");
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -170,7 +170,7 @@ export function StaticMarketingPage({
         <div className="container mx-auto px-6 text-center relative z-10">
           <div className="lend-reveal--1 max-w-3xl mx-auto mb-12">
             <h2 className="text-4xl md:text-6xl font-extrabold tracking-tighter leading-[0.95] font-['Montserrat'] bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent mb-6">
-              {copy.cta || (locale === "ru" ? "Запустить Reqst" : "Launch Reqst")}
+              {copy.cta || (locale === "ru" ? "Запустить recv" : "Launch recv")}
             </h2>
             <p className="text-base md:text-lg text-white/50 max-w-xl mx-auto leading-relaxed font-medium">
               {locale === "ru"

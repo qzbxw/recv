@@ -2,11 +2,11 @@ import { LegalPage } from "@/components/LegalPageClient";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Reqst",
-  description: "Privacy policy and data processing agreement for Reqst.",
+  title: "Privacy Policy | recv",
+  description: "Privacy policy and data processing agreement for recv.",
   openGraph: {
     title: "Privacy Policy",
-    description: "Reqst Privacy Policy",
+    description: "recv Privacy Policy",
   },
 };
 

@@ -31,7 +31,7 @@ describe("public site i18n", () => {
     expect(Object.keys(copyByLocale.en.marketing.networkPages)).toEqual([
       "ton",
       "tron",
-      "solana",
+      "ton_usdt",
       "base",
       "bsc",
       "arbitrum",

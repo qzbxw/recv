@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 		panic("failed to pick free port: " + err.Error())
 	}
 
-	baseDir, err := os.MkdirTemp("", "reqst-store-test-*")
+	baseDir, err := os.MkdirTemp("", "recv-store-test-*")
 	if err != nil {
 		panic("mktemp: " + err.Error())
 	}
@@ -150,7 +150,7 @@ func TestTONCommentExists(t *testing.T) {
 	}
 
 	// Assert: non-existent comment returns false
-	exists, err := st.TONCommentExists(ctx, "REQST-NONEXISTENT")
+	exists, err := st.TONCommentExists(ctx, "RECV-NONEXISTENT")
 	if err != nil {
 		t.Fatalf("TONCommentExists: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestTONCommentExists(t *testing.T) {
 	}
 
 	// Act: create invoice with a payment comment
-	comment := "REQST-TON001"
+	comment := "RECV-TON001"
 	_, err = st.CreateInvoice(ctx, CreateInvoiceParams{
 		WorkspaceID:        workspace.ID,
 		Kind:               InvoiceKindMerchant,
@@ -528,7 +528,7 @@ func TestCountAPIRequestsSince(t *testing.T) {
 	}
 
 	// Create an API key to record requests against
-	apiKey, err := st.CreateAPIKey(ctx, workspace.ID, "test-key", "rqst_", "hashvalue123", []string{"invoices:read"}, "live")
+	apiKey, err := st.CreateAPIKey(ctx, workspace.ID, "test-key", "recv_", "hashvalue123", []string{"invoices:read"}, "live")
 	if err != nil {
 		t.Fatalf("CreateAPIKey: %v", err)
 	}
@@ -1138,7 +1138,7 @@ func TestCreateInvoiceEdgeCases(t *testing.T) {
 	})
 
 	t.Run("create subscription invoice", func(t *testing.T) {
-		comment := "REQST-SUB001"
+		comment := "RECV-SUB001"
 		inv, err := st.CreateInvoice(ctx, CreateInvoiceParams{
 			WorkspaceID:        workspace.ID,
 			Kind:               InvoiceKindSubscription,
@@ -1401,12 +1401,12 @@ func storeDBTestPostgresConfig(port uint32, baseDir string) embeddedpostgres.Con
 	return embeddedpostgres.DefaultConfig().
 		Version(embeddedpostgres.V16).
 		Port(port).
-		Database("reqst").
-		Username("reqst").
-		Password("reqst").
+		Database("recv").
+		Username("recv").
+		Password("recv").
 		RuntimePath(filepath.Join(baseDir, "runtime")).
 		DataPath(filepath.Join(baseDir, "data")).
-		CachePath(filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")).
+		CachePath(filepath.Join(os.TempDir(), "recv-embedded-postgres-cache")).
 		Locale("C").
 		Encoding("UTF8").
 		StartTimeout(45 * time.Second).
@@ -1461,7 +1461,7 @@ func TestAPIKeyOperations(t *testing.T) {
 		}
 	})
 
-	apiKey, err := st.CreateAPIKey(ctx, workspace.ID, "test-key", "rqst_", "hash-1", []string{"invoices:read"}, "live")
+	apiKey, err := st.CreateAPIKey(ctx, workspace.ID, "test-key", "recv_", "hash-1", []string{"invoices:read"}, "live")
 	if err != nil {
 		t.Fatalf("CreateAPIKey: %v", err)
 	}
@@ -2169,7 +2169,7 @@ func TestIdempotencyRecords(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
 	}
-	apiKey, err := st.CreateAPIKey(ctx, workspace.ID, "idemp-key", "rqst_", "idemp-hash", []string{"invoices:write"}, "live")
+	apiKey, err := st.CreateAPIKey(ctx, workspace.ID, "idemp-key", "recv_", "idemp-hash", []string{"invoices:write"}, "live")
 	if err != nil {
 		t.Fatalf("CreateAPIKey: %v", err)
 	}
@@ -2566,7 +2566,7 @@ func TestStorePaymentMatchingAndCompletionFlows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWallet TON: %v", err)
 	}
-	comment := "REQST-PAYFLOW-TON"
+	comment := "RECV-PAYFLOW-TON"
 	tonInvoice, err := st.CreateInvoice(ctx, CreateInvoiceParams{
 		WorkspaceID:        workspace.ID,
 		Kind:               InvoiceKindMerchant,
@@ -2704,7 +2704,7 @@ func TestStoreCanceledContextErrorBranches(t *testing.T) {
 		return err
 	})
 	expectErr("TONCommentExists", func() error {
-		_, err := st.TONCommentExists(canceled, "REQST-CTX")
+		_, err := st.TONCommentExists(canceled, "RECV-CTX")
 		return err
 	})
 	expectErr("SuffixRecentlyUsed", func() error {
@@ -2760,7 +2760,7 @@ func TestStoreCanceledContextErrorBranches(t *testing.T) {
 		return err
 	})
 	expectErr("FindInvoiceByTONComment", func() error {
-		_, err := st.FindInvoiceByTONComment(canceled, wallet.Address, "REQST-CTX")
+		_, err := st.FindInvoiceByTONComment(canceled, wallet.Address, "RECV-CTX")
 		return err
 	})
 	expectErr("FindInvoiceByExactAmount", func() error {
@@ -2908,7 +2908,7 @@ func TestStoreCanceledContextErrorBranches(t *testing.T) {
 		return err
 	})
 	expectErr("CreateAPIKey", func() error {
-		_, err := st.CreateAPIKey(canceled, workspace.ID, "ctx", "rqst_", "hash", []string{"invoices:read"}, "live")
+		_, err := st.CreateAPIKey(canceled, workspace.ID, "ctx", "recv_", "hash", []string{"invoices:read"}, "live")
 		return err
 	})
 	expectErr("RevokeAPIKey", func() error {
@@ -3325,11 +3325,11 @@ func TestLimitStringHelper(t *testing.T) {
 		limit int
 		want  string
 	}{
-		{"hello", 10, "hello"},           // under limit
-		{"hello world", 5, "hello"},      // over limit, truncated
-		{"  spaces  ", 10, "spaces"},     // trimmed
-		{"", 5, ""},                      // empty
-		{"exactly", 7, "exactly"},        // exact limit
+		{"hello", 10, "hello"},       // under limit
+		{"hello world", 5, "hello"},  // over limit, truncated
+		{"  spaces  ", 10, "spaces"}, // trimmed
+		{"", 5, ""},                  // empty
+		{"exactly", 7, "exactly"},    // exact limit
 	}
 	for _, tc := range cases {
 		got := limitString(tc.input, tc.limit)

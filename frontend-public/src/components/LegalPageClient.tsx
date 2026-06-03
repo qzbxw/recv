@@ -30,13 +30,13 @@ type LegalCopy = {
 
 
 const LEGAL_PROFILE = {
-  operatorName: "Reqst",
-  contactEmail: "legal@reqst.xyz",
-  supportEmail: "support@reqst.xyz",
-  address: "Contact legal@reqst.xyz for formal notices.",
+  operatorName: "recv",
+  contactEmail: "legal@recv.money",
+  supportEmail: "support@recv.money",
+  address: "Contact legal@recv.money for formal notices.",
   jurisdiction: "To be specified in the merchant agreement.",
-  domain: "reqst.xyz",
-  refundPolicy: "Reqst platform subscription refunds are handled case by case according to the active service agreement.",
+  domain: "recv.money",
+  refundPolicy: "recv platform subscription refunds are handled case by case according to the active service agreement.",
   effectiveDate: {
     ru: "13 марта 2026",
     en: "March 13, 2026",
@@ -130,7 +130,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
             <Link href={`/${language}/terms`} className="text-white/50 hover:text-accent transition-colors">Terms</Link>
             <Link href={`/${language}/docs/introduction`} className="text-white/50 hover:text-accent transition-colors">Docs</Link>
             <Link href={`/${language}/dev`} className="text-white/50 hover:text-accent transition-colors">API</Link>
-            <Link href={`/${language}/enterprise`} className="text-white/50 hover:text-accent transition-colors">B2B</Link>
+            <Link href={`/${language}/business`} className="text-white/50 hover:text-accent transition-colors">Business</Link>
             <Link href="/app/auth" className="text-accent hover:text-accent/80 transition-colors font-semibold">Console</Link>
           </div>
         </div>

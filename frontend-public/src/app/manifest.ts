@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Reqst",
-    short_name: "Reqst",
+    name: "recv",
+    short_name: "recv",
     description: "Non-custodial crypto payments infrastructure for merchants and developers.",
     start_url: "/en",
     scope: "/",

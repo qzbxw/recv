@@ -1,34 +1,34 @@
 ---
-title: Introduction to Reqst
-description: What Reqst is, how the non-custodial architecture works, and where the developer API and AI tooling fit.
+title: Introduction to recv
+description: What recv is, how the non-custodial architecture works, and where the developer API and AI tooling fit.
 ---
 
 # Introduction
 
-Reqst is a **non-custodial crypto payment gateway**. Customers pay you on-chain, the funds land **directly in your own wallet**, and Reqst never touches the money. Instead of taking a percentage of every transaction, Reqst charges a **flat subscription** — there are no turnover fees.
+recv is a **non-custodial crypto payment gateway**. Customers pay you on-chain, the funds land **directly in your own wallet**, and recv never touches the money. Instead of taking a percentage of every transaction, recv charges a **flat subscription** — there are no turnover fees.
 
-## What Reqst does
+## What recv does
 
-- **Creates invoices.** You generate a payment request for a USD amount on a specific blockchain network. Reqst converts the USD price into the payable on-chain amount, picks one of your payout wallets as the destination address, and returns a hosted checkout link plus a payment URI.
-- **Watches the chain.** Reqst's watchers observe incoming transfers to your destination addresses and match them to open invoices.
-- **Confirms and notifies.** When a matching transfer is seen, the invoice transitions (`paid`, `underpaid`, `overpaid`, `manual_review`), and Reqst fires a signed webhook to your endpoint.
+- **Creates invoices.** You generate a payment request for a USD amount on a specific blockchain network. recv converts the USD price into the payable on-chain amount, picks one of your payout wallets as the destination address, and returns a hosted checkout link plus a payment URI.
+- **Watches the chain.** recv's watchers observe incoming transfers to your destination addresses and match them to open invoices.
+- **Confirms and notifies.** When a matching transfer is seen, the invoice transitions (`paid`, `underpaid`, `overpaid`, `manual_review`), and recv fires a signed webhook to your endpoint.
 
 ```text
- Customer            Reqst                         You
+ Customer            recv                         You
     │   pays on-chain   │                            │
     │ ─────────────────►│  destination = YOUR wallet │
-    │                   │  (funds never touch Reqst) │
+    │                   │  (funds never touch recv) │
     │                   │  matches transfer→invoice  │
     │                   │ ──── signed webhook ──────►│  update order
 ```
 
 ## Non-custodial model
 
-You connect payout wallets per network in the Merchant Console. Every invoice is created against one of *your* addresses, so settlement is direct customer → merchant. Reqst's role is detection, accounting, and notification — not custody. There is no payout step, no Reqst-held balance, and no withdrawal flow.
+You connect payout wallets per network in the Merchant Console. Every invoice is created against one of *your* addresses, so settlement is direct customer → merchant. recv's role is detection, accounting, and notification — not custody. There is no payout step, no recv-held balance, and no withdrawal flow.
 
 ## Supported networks
 
-Reqst settles payments on **TON, TRON, Solana, and EVM chains (Ethereum, Base, Arbitrum, BSC)**. See [Supported Networks](/en/docs/networks) for the exact list and per-network notes.
+recv settles payments on **native TON, TON_USDT, TRON, Base, and BSC**. See [Supported Networks](/en/docs/networks) for the exact list and per-network notes.
 
 ## Two ways to integrate
 

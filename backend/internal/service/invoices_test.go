@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"reqst/backend/internal/store"
+	"recv/backend/internal/store"
 
 	"github.com/shopspring/decimal"
 )

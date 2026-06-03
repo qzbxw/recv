@@ -1,4 +1,4 @@
-export type Network = "TON" | "TON_USDT" | "TRON" | "SOLANA" | "EVM" | "BASE" | "ARBITRUM" | "BSC";
+export type Network = "TON" | "TON_USDT" | "TRON" | "EVM" | "BASE" | "BSC";
 export type InvoiceStatus = "draft" | "awaiting_payment" | "paid" | "expired" | "underpaid" | "overpaid" | "manual_review";
 export type APIKeyMode = "live" | "test";
 export type WebhookDeliveryStatus = "pending" | "delivered" | "failed" | "retrying" | "exhausted" | string;
@@ -21,7 +21,7 @@ export type Workspace = {
   name: string;
   slug: string;
   default_network: Network;
-  plan_code: "trial" | "merchant" | "developer" | "business" | "enterprise";
+  plan_code: "trial" | "merchant" | "developer" | "business";
   subscription_ends_at: string | null;
   is_blocked: boolean;
   created_at: string;
@@ -76,7 +76,7 @@ export type Invoice = {
   public_id: string;
   kind?: "merchant" | "subscription";
   subscription_days?: number;
-  plan_code?: "trial" | "merchant" | "developer" | "business" | "enterprise" | "";
+  plan_code?: "trial" | "merchant" | "developer" | "business" | "";
   checkout_badge?: string;
   title: string;
   workspace_id?: number;
@@ -106,7 +106,7 @@ export type MeResponse = {
 };
 
 export type Plan = {
-  code: "trial" | "merchant" | "developer" | "business" | "enterprise";
+  code: "trial" | "merchant" | "developer" | "business";
   name: string;
   checkout_title: string;
   checkout_badge: string;
@@ -427,7 +427,7 @@ export type AdminBillingCheckoutResponse = {
     email: string;
   };
   plan: {
-    code: "merchant" | "developer" | "business" | "enterprise";
+    code: "merchant" | "developer" | "business";
     name: string;
     price_usd: string;
     billing_days: number;

@@ -12,11 +12,11 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const isRu = locale === "ru";
   return {
     title: isRu
-      ? "Reqst — крипто-платёжный шлюз для USDT, TON и TRON"
-      : "Reqst — Crypto Payment Gateway for USDT, TON & TRON",
+      ? "recv — крипто-платёжный шлюз для USDT, TON и TRON"
+      : "recv — Crypto Payment Gateway for USDT, TON & TRON",
     description: isRu
-      ? "Принимайте криптоплатежи напрямую на свои кошельки. Non-custodial checkout, API и вебхуки для USDT, TON, TRON, Solana и EVM. Без комиссии с оборота."
-      : "Accept crypto payments directly to your own wallets. Non-custodial checkout, API, and webhooks for USDT, TON, TRON, Solana, and EVM — with zero turnover fees.",
+      ? "Принимайте криптоплатежи напрямую на свои кошельки. Non-custodial checkout, API и вебхуки для USDT, TON, TON_USDT, TRON, Base и BSC. Без комиссии с оборота."
+      : "Accept crypto payments directly to your own wallets. Non-custodial checkout, API, and webhooks for USDT, TON, TON_USDT, TRON, Base, and BSC — with zero turnover fees.",
     alternates: {
       canonical: `/${locale}`,
       languages: {

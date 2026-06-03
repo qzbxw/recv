@@ -14,7 +14,7 @@ export default function NotFound() {
             Page not found
           </h1>
           <p className="mt-6 text-base md:text-lg text-white/55 leading-relaxed">
-            The requested Reqst page does not exist or has moved.
+            The requested recv page does not exist or has moved.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/en" className="lend-primary px-9 py-4 rounded-2xl font-bold">Home</Link>

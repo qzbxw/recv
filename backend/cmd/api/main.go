@@ -10,16 +10,16 @@ import (
 	"syscall"
 	"time"
 
-	"reqst/backend/internal/config"
-	httpapi "reqst/backend/internal/http"
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/config"
+	httpapi "recv/backend/internal/http"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 )
 
-// @title           Reqst API
+// @title           recv API
 // @version         1.0
-// @description     Reqst Payment API
+// @description     recv Payment API
 // @host            localhost:8080
 // @BasePath        /v1
 
@@ -65,7 +65,7 @@ func main() {
 		_ = server.Shutdown(shutdownCtx)
 	}()
 
-	log.Printf("reqst api listening on :%s", cfg.HTTPPort)
+	log.Printf("recv api listening on :%s", cfg.HTTPPort)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}

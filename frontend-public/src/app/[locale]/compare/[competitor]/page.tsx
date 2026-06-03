@@ -18,7 +18,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   if (!data) return { title: "Comparison Not Found" };
 
   return {
-    title: `${data.title} | Reqst`,
+    title: `${data.title} | recv`,
     description: data.description,
     alternates: {
       canonical: `/${locale}/compare/${competitor}`,

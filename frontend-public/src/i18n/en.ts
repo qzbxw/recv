@@ -14,7 +14,7 @@ const en = {
       title: "Performance First",
       body: "Experience raw efficiency with our optimized blockchain monitoring protocol.",
       amount: "149.00 USDT",
-      invoice: "REQST-INFRA-99",
+      invoice: "RECV-INFRA-99",
       status: "Confirmed",
       primary: "Demo Checkout",
       secondary: "Console",
@@ -75,7 +75,7 @@ const en = {
     mcp: {
       kicker: "AI & MCP",
       title: "Let AI agents accept crypto for you.",
-      body: "Reqst ships a Model Context Protocol server, so agents like Claude and Cursor can create invoices, check payment status, and verify webhooks autonomously — no glue code required.",
+      body: "recv ships a Model Context Protocol server, so agents like Claude and Cursor can create invoices, check payment status, and verify webhooks autonomously — no glue code required.",
       tools: [
         { name: "create_invoice", body: "Issue payment requests on any supported network." },
         { name: "get_invoice", body: "Check real-time status and confirmations." },
@@ -89,84 +89,61 @@ const en = {
     networks: {
       kicker: "NETWORKS",
       title: "Global Connectivity.",
-      list: ["TON", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC", "ETHEREUM"],
+      list: ["TON", "TON_USDT", "TRON", "BASE", "BSC"],
       rails: [
-        {
-          name: "TON",
-          body: "The native choice for Telegram-based commerce and the growing TON ecosystem.",
-        },
-        {
-          name: "TRON",
-          body: "The global standard for USDT settlement with high throughput and low costs.",
-        },
-        {
-          name: "SOL",
-          body: "Fast, confirmation-aware monitoring for businesses that need predictable payment operations.",
-        },
-        {
-          name: "EVM",
-          body: "Base, Arbitrum, BSC — support the EVM networks available in the current checkout flow.",
-        },
-        {
-          name: "BASE",
-          body: "Optimistic L2 by Coinbase, offering low fees and Ethereum security.",
-        },
-        {
-          name: "BSC",
-          body: "High-performance network with one of the largest ecosystem of active users.",
-        },
-        {
-          name: "ARBITRUM",
-          body: "The leading layer-2 for Ethereum, providing professional-grade scalability.",
-        }
+        { name: "TON", body: "Native TON payments for Telegram-based commerce and the growing TON ecosystem." },
+        { name: "TON_USDT", body: "USDT on TON for stablecoin payments in the TON ecosystem." },
+        { name: "TRON", body: "The global standard for USDT settlement with high throughput and low costs." },
+        { name: "BASE", body: "Coinbase's L2 for reliable EVM-compatible stablecoin payments." },
+        { name: "BSC", body: "High-performance network with one of the largest ecosystems of active users." }
       ]
     },
     compare: {
       kicker: "EVOLUTION",
-      title: "The Reqst Advantage.",
+      title: "The recv Advantage.",
       rows: [
         {
           legacy: "Manual verification and screenshot chasing.",
-          reqst: "Automated blockchain watchers & instant alerts.",
+          recv: "Automated blockchain watchers & instant alerts.",
         },
         {
           legacy: "Gateway fees (1-5%) eating your profit.",
-          reqst: "0% turnover fees. Keep 100% of what you earn.",
+          recv: "0% turnover fees. Keep 100% of what you earn.",
         },
         {
           legacy: "Custodial risk & withdrawal delays.",
-          reqst: "Non-custodial. Direct-to-wallet. Instant liquidity.",
+          recv: "Non-custodial. Direct-to-wallet. Instant liquidity.",
         },
       ],
     },
     pricing: {
       kicker: "ACCESS",
-      title: "Transparent pricing. No fees.",
+      title: "0% commission on all plans.",
       popular: "Popular",
+      trial: {
+        name: "Trial",
+        price: "0",
+        features: ["15 live invoices total", "No API access (manual only)", "1 Webhook endpoint", "Telegram bot notifications", "1 Workspace / 1 Seat", "Community support"],
+        cta: "Start Free Trial"
+      },
       merchant: {
         name: "Merchant",
-        price: "39",
-        trial: "Free in Test Mode",
-        features: ["Direct-to-Wallet Payouts", "Manual Invoice Management", "0% Turnover Fees", "Standard Analytics"],
+        price: "9",
+        trial: "Payment links",
+        features: ["Payment links", "Telegram-flow", "Manual review", "API limit"],
         cta: "Activate Merchant"
       },
       developer: {
         name: "Developer",
-        price: "199",
-        features: ["Full API & Webhooks", "50k Monthly Requests", "3 Seats / Workspaces", "Priority Support"],
+        price: "29",
+        features: ["Full API", "Webhooks", "Idempotency", "MCP tools"],
         cta: "Activate Developer"
       },
       business: {
         name: "Business",
-        price: "499",
-        features: ["200k Monthly Requests", "10 Seats / Workspaces", "Advanced Reporting", "Dedicated Support"],
+        price: "79",
+        features: ["Teams", "Audit logs", "Custom branding", "200k monthly requests"],
         cta: "Activate Business"
-      },
-      enterprise: {
-        name: "Enterprise",
-        price: "Custom",
-        features: ["Unlimited Requests", "Unlimited Seats", "Custom SLA / B2B", "Direct Dev Channel"],
-        cta: "Contact Sales"
       }
     },
     faq: {
@@ -175,12 +152,12 @@ const en = {
       body: "Essential insights on asset security, payment mechanics, and platform integration.",
       items: [
         {
-          question: "How does Reqst ensure the security of my funds?",
-          answer: "We utilize a non-custodial architecture. This means your private keys never leave your device, and funds are sent directly from the client to your address. Reqst only monitors the blockchain and provides transaction notifications.",
+          question: "How does recv ensure the security of my funds?",
+          answer: "We utilize a non-custodial architecture. This means your private keys never leave your device, and funds are sent directly from the client to your address. recv only monitors the blockchain and provides transaction notifications.",
         },
         {
           question: "Which networks and assets are currently supported?",
-          answer: "We currently support TON, TRON (USDT), Solana, and major EVM chains (Base, BSC, Arbitrum). We are continuously adding new liquid protocols based on enterprise-tier demands.",
+          answer: "We currently support TON, TON_USDT, TRON, Base, and BSC. We are continuously adding new liquid protocols based on business-tier demands.",
         },
         {
           question: "Can I automate the delivery of digital goods?",
@@ -188,32 +165,32 @@ const en = {
         },
         {
           question: "How are underpayments or incorrect amounts handled?",
-          answer: "Reqst intelligently detects any deviations from the expected amount. If an underpayment occurs, the transaction is flagged as 'Underpaid,' allowing you to either request the balance or manually approve the order.",
+          answer: "recv intelligently detects any deviations from the expected amount. If an underpayment occurs, the transaction is flagged as 'Underpaid,' allowing you to either request the balance or manually approve the order.",
         },
         {
-          question: "Do I need to pass KYC to start using Reqst?",
+          question: "Do I need to pass KYC to start using recv?",
           answer: "No. Since we operate strictly as non-custodial middleware and do not hold or process fiat currency, we do not require KYC verification from merchants. You can start accepting crypto immediately.",
         },
         {
           question: "Is there a limit on how many invoices I can create?",
-          answer: "There are absolutely no limits on invoice creation. You can generate millions of payment links. Our subscription tiers only restrict the number of API requests to our monitoring nodes.",
+          answer: "Paid subscription plans have absolutely no limits on manual invoice creation. However, the free Trial plan has a lifetime limit of 15 live invoices. You can upgrade to any paid plan to unlock unlimited invoices.",
         },
         {
-          question: "What happens if a network (e.g., Solana) goes down?",
-          answer: "Our watchers are distributed across multiple global RPC providers. If a network halts, Reqst queues the monitoring tasks. Once the blockchain resumes block production, all pending transactions will be automatically verified and webhooks fired.",
+          question: "What happens if a network (e.g., TON_USDT) goes down?",
+          answer: "Our watchers are distributed across multiple global RPC providers. If a network halts, recv queues the monitoring tasks. Once the blockchain resumes block production, all pending transactions will be automatically verified and webhooks fired.",
         },
       ],
     },
     final: {
       kicker: "GET STARTED",
-      title: "Scale Your Business with Reqst.",
+      title: "Scale Your Business with recv.",
       body:
         "Join industry leaders who have already automated their crypto processing and eliminated manual overhead.",
       primary: "Get Started Now",
       secondary: "Documentation",
     },
     footer: {
-      title: "reqst",
+      title: "recv",
       body: "Automated crypto payments with direct-to-wallet payouts. Fair, fast, professional.",
       product: "Product",
       privacy: "Privacy",
@@ -246,17 +223,16 @@ const en = {
         title: "Networks",
         ton: "TON",
         tron: "TRON",
-        solana: "Solana",
+        ton_usdt: "TON USDT",
         base: "Base",
         bsc: "BSC",
-        arbitrum: "Arbitrum",
+        arbitrum: "Base",
       },
       pricing: {
         title: "Pricing",
         merchant: "Merchant",
         developer: "Developer",
         business: "Business",
-        enterprise: "Enterprise",
       },
       docs: "Docs",
       blog: "Blog",
@@ -275,7 +251,7 @@ const en = {
     tryDemo: "Try Demo",
     common: {
       whyChoose: "Why choose",
-      engineered: "Direct-to-wallet settlement, signed webhooks, and zero turnover fees across TON, TRON, Solana, and EVM.",
+      engineered: "Direct-to-wallet settlement, signed webhooks, and zero turnover fees across TON, TON_USDT, TRON, Base, and BSC.",
       implementation: "IMPLEMENTATION",
       readyInMinutes: "Production-ready in minutes",
       integrateEase: "Integrate our high-performance API into your existing stack with ease.",
@@ -283,38 +259,38 @@ const en = {
       workflow: "WORKFLOW",
       intelligence: "INTELLIGENCE",
       readyToScale: "Ready to Scale?",
-      joinMerchants: "Join hundreds of merchants who have already optimized their revenue flow with Reqst.",
+      joinMerchants: "Join hundreds of merchants who have already optimized their revenue flow with recv.",
       benefits: "BENEFITS",
     },
     ogSubtitle: "Next-generation crypto payments infrastructure",
     checkoutProduct: {
       metadata: {
-        title: "Accept Crypto Payments | Non-Custodial Checkout for TON, TRC-20, Solana",
-        description: "Scale your business with the highest-converting crypto checkout. Support USDT (TRC-20, TON, Solana, EVM) with 0% turnover fees. Non-custodial, secure, and Telegram-ready.",
-        keywords: "accept crypto payments, crypto checkout gateway, TON payments, TRON USDT gateway, Solana checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout"
+        title: "Accept Crypto Payments | Non-Custodial Checkout for TON, TRC-20, TON_USDT",
+        description: "Scale your business with the highest-converting crypto checkout. Support USDT (TRC-20, TON, TON_USDT, Base, BSC) with 0% turnover fees. Non-custodial, secure, and Telegram-ready.",
+        keywords: "accept crypto payments, crypto checkout gateway, TON payments, TRON USDT gateway, TON_USDT checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout"
       },
       kicker: "CONVERSION ENGINE",
       title: "Checkout: The Gold Standard of Crypto UX",
       description: "Why settle for generic payment links? Offer a premium, non-custodial checkout experience engineered to eliminate 'copy-paste' fatigue and reduce underpayment errors.",
       hero: {
         title: "Maximum Conversion. Minimum Friction.",
-        body: "Reqst Checkout is the ultimate non-custodial interface designed to turn abandoned carts into confirmed transactions. Seamlessly integrated, multi-chain by default, and optimized for every device.",
+        body: "recv Checkout is the ultimate non-custodial interface designed to turn abandoned carts into confirmed transactions. Seamlessly integrated, multi-chain by default, and optimized for every device.",
         cta: "Try Live Demo"
       },
       comparison: {
-        title: "The Reqst Evolution",
+        title: "The recv Evolution",
         items: [
           {
             legacy: "Manual wallet address copying leads to errors and lost funds.",
-            reqst: "QR-native flow and one-tap deep linking ensures 100% accuracy."
+            recv: "QR-native flow and one-tap deep linking ensures 100% accuracy."
           },
           {
             legacy: "Customers get stuck on 'waiting' screens for minutes.",
-            reqst: "Sub-second mempool monitoring provides instant visual feedback."
+            recv: "Sub-second mempool monitoring provides instant visual feedback."
           },
           {
             legacy: "Underpayments cause support nightmares and order loss.",
-            reqst: "Intelligent resolution prompts for the exact remaining balance."
+            recv: "Intelligent resolution prompts for the exact remaining balance."
           }
         ]
       },
@@ -332,7 +308,7 @@ const en = {
       deepDive: [
         {
           title: "Intelligent Underpayment Resolution",
-          body: "Underpayments are the #1 cause of support tickets in crypto. Reqst solves this by detecting the partial amount, instantly updating the checkout UI with the remaining balance, and allowing the customer to complete the transaction without starting over. No more lost orders, no more manual refunds."
+          body: "Underpayments are the #1 cause of support tickets in crypto. recv solves this by detecting the partial amount, instantly updating the checkout UI with the remaining balance, and allowing the customer to complete the transaction without starting over. No more lost orders, no more manual refunds."
         },
         {
           title: "Native Telegram Integration",
@@ -340,7 +316,7 @@ const en = {
         },
         {
           title: "Cross-Chain Unified UI",
-          body: "Whether it's the 10-decimal precision of Solana or the unique memo requirements of TON, Reqst abstracts the complexity. Your customers get a consistent, polished experience regardless of the underlying blockchain technology, reducing cognitive load and increasing trust."
+          body: "Whether it's the 10-decimal precision of TON_USDT or the unique memo requirements of TON, recv abstracts the complexity. Your customers get a consistent, polished experience regardless of the underlying blockchain technology, reducing cognitive load and increasing trust."
         }
       ],
       stats: [
@@ -350,17 +326,17 @@ const en = {
         { value: "<5ms", label: "UI Latency" }
       ],
       finalTitle: "Ready to optimize your checkout conversion?",
-      seo: "Reqst Checkout is a non-custodial payment gateway engineered for high-conversion cryptocurrency processing. Designed to eliminate friction in digital commerce, the UI supports direct-to-wallet transactions across TON, TRON (TRC-20), Solana, and EVM-compatible networks. Core functionality includes dynamic exchange rate calculation, deep linking to major mobile wallets, and intelligent underpayment resolution to recover partial transactions. By bypassing intermediary custodians, merchants retain full control of their liquidity while providing customers with a seamless, multi-chain payment experience without turnover fees."
+      seo: "recv Checkout is a non-custodial payment gateway engineered for high-conversion cryptocurrency processing. Designed to eliminate friction in digital commerce, the UI supports direct-to-wallet transactions across TON, TRON (TRC-20), Base, and BSC-compatible networks. Core functionality includes dynamic exchange rate calculation, deep linking to major mobile wallets, and intelligent underpayment resolution to recover partial transactions. By bypassing intermediary custodians, merchants retain full control of their liquidity while providing customers with a seamless, multi-chain payment experience without turnover fees."
     },
     apiProduct: {
       metadata: {
         title: "Unified Blockchain API | Webhooks & Monitoring for TON, TRON, EVM",
-        description: "High-performance crypto infrastructure for developers. One API for TON, TRC-20, Solana and EVM with 100% webhook delivery and HMAC security.",
+        description: "High-performance crypto infrastructure for developers. One API for TON, TRC-20, Base and BSC with 100% webhook delivery and HMAC security.",
         keywords: "crypto payment api, blockchain monitoring api, webhooks for crypto, TON developer api, TRON trc20 api, automated crypto payments, unified blockchain api"
       },
       kicker: "DEVELOPER FIRST",
       title: "API & Infrastructure for Scale",
-      description: "Reliability is the only metric that matters. Reqst API provides the high-performance primitives you need to build production-grade payment flows.",
+      description: "Reliability is the only metric that matters. recv API provides the high-performance primitives you need to build production-grade payment flows.",
       hero: {
         title: "Built by Developers, for Developers.",
         body: "Automate your revenue flow with our robust API and high-performance blockchain monitoring engine. From idempotent requests to HMAC-signed webhooks.",
@@ -371,15 +347,15 @@ const en = {
         items: [
           {
             legacy: "Managing multiple RPC nodes and brittle explorers.",
-            reqst: "One unified API for 7+ chains with standardized JSON."
+            recv: "One unified API for 7+ chains with standardized JSON."
           },
           {
             legacy: "Webhooks that fail without retry logic or signatures.",
-            reqst: "Guaranteed delivery with exponential backoff and HMAC."
+            recv: "Guaranteed delivery with exponential backoff and HMAC."
           },
           {
             legacy: "Duplicate processing of the same transaction.",
-            reqst: "Built-in idempotency keys for exactly-once execution."
+            recv: "Built-in idempotency keys for exactly-once execution."
           }
         ]
       },
@@ -401,7 +377,7 @@ const en = {
         },
         {
           title: "Unified Chain Abstraction",
-          body: "Integrating TON, TRON, and EVM usually requires three different libraries and logic flows. Reqst provides a single schema for all networks. Create an invoice for TRC-20 USDT the same way you create one for TON Jettons or Solana assets."
+          body: "Integrating TON, TRON, and EVM usually requires three different libraries and logic flows. recv provides a single schema for all networks. Create an invoice for TRC-20 USDT the same way you create one for TON Jettons or TON_USDT assets."
         },
         {
           title: "High-Performance Watchers",
@@ -415,17 +391,17 @@ const en = {
         { value: "128-bit", label: "Encryption" }
       ],
       finalTitle: "Build your next-gen payment flow today.",
-      seo: "The Reqst Unified API provides robust infrastructure for developers integrating blockchain payments into B2B software, gaming platforms, and enterprise applications. Instead of managing disparate RPC nodes, development teams utilize a single RESTful interface to interact with multiple protocols including TRON, TON, and Ethereum. The system prioritizes transactional integrity via native idempotency keys to prevent duplicate processing, while the webhook engine ensures guaranteed delivery utilizing exponential backoff and HMAC-SHA256 payload signatures for secure, asynchronous event monitoring."
+      seo: "The recv Unified API provides robust infrastructure for developers integrating blockchain payments into B2B software, gaming platforms, and business applications. Instead of managing disparate RPC nodes, development teams utilize a single RESTful interface to interact with multiple protocols including TRON, TON, and Base. The system prioritizes transactional integrity via native idempotency keys to prevent duplicate processing, while the webhook engine ensures guaranteed delivery utilizing exponential backoff and HMAC-SHA256 payload signatures for secure, asynchronous event monitoring."
     },
     invoicingProduct: {
       metadata: {
         title: "Professional Crypto Invoicing | B2B Billing Solution with 0% Fees",
-        description: "Issue, track, and manage professional crypto invoices. Support for USDT, TON, and Solana. Non-custodial, automated tracking, and CSV reports for accounting.",
+        description: "Issue, track, and manage professional crypto invoices. Support for USDT, TON, and TON_USDT. Non-custodial, automated tracking, and CSV reports for accounting.",
         keywords: "crypto invoicing for business, b2b crypto billing, freelance crypto invoices, professional usdt billing, crypto payment tracking, 0 fee crypto invoicing"
       },
       kicker: "BUSINESS GRADE",
       title: "Invoicing: Professional Billing for Modern Commerce",
-      description: "Stop using spreadsheets. Reqst Invoicing provides a professional way to issue, track, and manage crypto payments with zero turnover fees.",
+      description: "Stop using spreadsheets. recv Invoicing provides a professional way to issue, track, and manage crypto payments with zero turnover fees.",
       hero: {
         title: "Professional Billing for the Crypto Native.",
         body: "Move beyond manual wallet screenshots and spreadsheet tracking. Issue, track, and manage invoices with a UI that commands respect from your clients.",
@@ -436,15 +412,15 @@ const en = {
         items: [
           {
             legacy: "Sending 'trust me' wallet addresses in Telegram DMs.",
-            reqst: "Branded hosted invoice pages with real-time status."
+            recv: "Branded hosted invoice pages with real-time status."
           },
           {
             legacy: "Manually checking explorers for client payments.",
-            reqst: "Instant Telegram and Email alerts when settled."
+            recv: "Instant Telegram and Email alerts when settled."
           },
           {
             legacy: "Cluttered spreadsheets for monthly accounting.",
-            reqst: "Centralized console with CSV/JSON export capabilities."
+            recv: "Centralized console with CSV/JSON export capabilities."
           }
         ]
       },
@@ -462,15 +438,15 @@ const en = {
       deepDive: [
         {
           title: "B2B Workflow Automation",
-          body: "Reqst Invoicing is designed for businesses that need more than just a payment link. Manage the entire lifecycle from draft to settlement. Track 'Overdue' or 'Underpaid' states and communicate professionally with your partners at every step."
+          body: "recv Invoicing is designed for businesses that need more than just a payment link. Manage the entire lifecycle from draft to settlement. Track 'Overdue' or 'Underpaid' states and communicate professionally with your partners at every step."
         },
         {
           title: "Direct-to-Wallet Security",
-          body: "Unlike custodial competitors, Reqst never touches the funds in your invoices. Your clients pay you directly on-chain. Our service acts as a professional monitoring layer, ensuring you get notified without having to watch the ledger yourself."
+          body: "Unlike custodial competitors, recv never touches the funds in your invoices. Your clients pay you directly on-chain. Our service acts as a professional monitoring layer, ensuring you get notified without having to watch the ledger yourself."
         },
         {
           title: "Global Multi-Currency Support",
-          body: "Bill in USD or any supported stablecoin. Reqst handles the real-time conversion rates, ensuring that the amount of USDT, TON, or SOL requested matches your desired fiat value at the moment the invoice is generated."
+          body: "Bill in USD or any supported stablecoin. recv handles the real-time conversion rates, ensuring that the amount of USDT, TON, or SOL requested matches your desired fiat value at the moment the invoice is generated."
         }
       ],
       stats: [
@@ -480,7 +456,7 @@ const en = {
         { value: "100%", label: "Non-Custodial" }
       ],
       finalTitle: "Professionalize your B2B billing now.",
-      seo: "Streamline corporate financial operations with Reqst Invoicing, a specialized billing solution tailored for B2B crypto transactions and freelance accounting. The platform enables businesses to generate branded, multi-currency invoices with automated fiat-to-crypto pegging at the time of creation. Administrative features include real-time payment tracking via dedicated Telegram and email notifications, centralized client management, and comprehensive CSV export capabilities to simplify tax reporting and reconciliation. Operating on a zero-fee, direct-transfer model, it modernizes accounts receivable without introducing third-party holding risks."
+      seo: "Streamline corporate financial operations with recv Invoicing, a specialized billing solution tailored for B2B crypto transactions and freelance accounting. The platform enables businesses to generate branded, multi-currency invoices with automated fiat-to-crypto pegging at the time of creation. Administrative features include real-time payment tracking via dedicated Telegram and email notifications, centralized client management, and comprehensive CSV export capabilities to simplify tax reporting and reconciliation. Operating on a zero-fee, direct-transfer model, it modernizes accounts receivable without introducing third-party holding risks."
     },
     breadcrumbs: {
       home: "Home",
@@ -495,15 +471,15 @@ const en = {
     mcpProduct: {
       metadata: {
         title: "MCP Agent Integration | AI-Native Crypto Payments via Model Context Protocol",
-        description: "Connect AI agents to Reqst via Model Context Protocol. Autonomous workspace setup, plan purchase, invoice creation, and webhook management — all from your LLM.",
-        keywords: "mcp crypto payments, model context protocol payments, ai agent payments, llm invoice creation, autonomous crypto billing, claude mcp reqst"
+        description: "Connect AI agents to recv via Model Context Protocol. Autonomous workspace setup, plan purchase, invoice creation, and webhook management — all from your LLM.",
+        keywords: "mcp crypto payments, model context protocol payments, ai agent payments, llm invoice creation, autonomous crypto billing, claude mcp recv"
       },
       kicker: "AI-NATIVE",
       title: "Payments for the Agentic Era",
-      description: "The first crypto payment infrastructure built for AI agents. Reqst MCP lets any Claude, GPT, or custom LLM agent bootstrap a workspace, buy a plan, and start accepting payments — zero human intervention required.",
+      description: "The first crypto payment infrastructure built for AI agents. recv MCP lets any Claude, GPT, or custom LLM agent bootstrap a workspace, buy a plan, and start accepting payments — zero human intervention required.",
       hero: {
         title: "Your AI Agent, Now a Crypto Merchant.",
-        body: "Reqst is the first payment platform with a native Model Context Protocol server. Any MCP-compatible agent can onboard, subscribe, create invoices, and verify webhooks without touching a dashboard.",
+        body: "recv is the first payment platform with a native Model Context Protocol server. Any MCP-compatible agent can onboard, subscribe, create invoices, and verify webhooks without touching a dashboard.",
         cta: "View MCP Docs"
       },
       comparison: {
@@ -511,15 +487,15 @@ const en = {
         items: [
           {
             legacy: "Agents can't sign up, buy plans, or get API keys without a human.",
-            reqst: "bootstrap_agent_workspace creates a workspace and returns an access token in one call."
+            recv: "bootstrap_agent_workspace creates a workspace and returns an access token in one call."
           },
           {
             legacy: "LLMs have no way to generate or verify payment invoices natively.",
-            reqst: "create_invoice and get_invoice are first-class MCP tools your agent can call directly."
+            recv: "create_invoice and get_invoice are first-class MCP tools your agent can call directly."
           },
           {
             legacy: "Webhook signature verification requires manual backend code and secrets.",
-            reqst: "verify_webhook runs locally in the MCP server — no network call, no leaking secrets."
+            recv: "verify_webhook runs locally in the MCP server — no network call, no leaking secrets."
           }
         ]
       },
@@ -537,11 +513,11 @@ const en = {
       deepDive: [
         {
           title: "Zero-Touch Agent Onboarding",
-          body: "An AI agent can fully onboard itself to Reqst without any human action. It calls bootstrap_agent_workspace, receives an access token, purchases a Developer or Business subscription via create_subscription_checkout, polls get_checkout_invoice until paid, then issues its own API key. The entire flow is expressible as a sequence of MCP tool calls."
+          body: "An AI agent can fully onboard itself to recv without any human action. It calls bootstrap_agent_workspace, receives an access token, purchases a Developer or Business subscription via create_subscription_checkout, polls get_checkout_invoice until paid, then issues its own API key. The entire flow is expressible as a sequence of MCP tool calls."
         },
         {
           title: "Any MCP-Compatible Runtime",
-          body: "The Reqst MCP server runs over stdio and works with Claude Desktop, Claude Code, Cursor, Cline, Continue, and any other host that implements the Model Context Protocol spec. Add it to your mcp.json with REQST_API_KEY and REQST_ACCESS_TOKEN and your agent gains payment superpowers immediately."
+          body: "The recv MCP server runs over stdio and works with Claude Desktop, Claude Code, Cursor, Cline, Continue, and any other host that implements the Model Context Protocol spec. Add it to your mcp.json with RECV_API_KEY and RECV_ACCESS_TOKEN and your agent gains payment superpowers immediately."
         },
         {
           title: "Secure by Design",
@@ -555,11 +531,11 @@ const en = {
         { value: "0", label: "Human Steps" }
       ],
       finalTitle: "Give your agent the power to earn.",
-      seo: "Reqst MCP (Model Context Protocol) integration enables AI agents and LLM-powered applications to autonomously manage the full lifecycle of crypto payments. Agents running in Claude Desktop, Claude Code, Cursor, or any MCP-compatible host can call bootstrap_agent_workspace to self-register, purchase a subscription plan, generate API keys, create and monitor payment invoices across TON, TRON, Solana, and EVM networks, and register webhook endpoints for event-driven payment flows. The verify_webhook tool performs local HMAC-SHA256 signature validation without exposing secrets to the network. This makes Reqst the first payment infrastructure platform natively designed for the agentic era of autonomous software."
+      seo: "recv MCP (Model Context Protocol) integration enables AI agents and LLM-powered applications to autonomously manage the full lifecycle of crypto payments. Agents running in Claude Desktop, Claude Code, Cursor, or any MCP-compatible host can call bootstrap_agent_workspace to self-register, purchase a subscription plan, generate API keys, create and monitor payment invoices across TON, TON_USDT, TRON, Base, and BSC networks, and register webhook endpoints for event-driven payment flows. The verify_webhook tool performs local HMAC-SHA256 signature validation without exposing secrets to the network. This makes recv the first payment infrastructure platform natively designed for the agentic era of autonomous software."
     },
     productsHub: {
       title: "Solutions for Every Business Scale",
-      description: "From simple payment links to enterprise-grade infrastructure. Choose the product that fits your current growth stage.",
+      description: "From simple payment links to business-grade infrastructure. Choose the product that fits your current growth stage.",
       kicker: "PRODUCTS",
       checkout: {
         title: "Checkout",
@@ -584,7 +560,7 @@ const en = {
     },
     networksHub: {
       title: "Universal Blockchain Connectivity",
-      description: "We bridge the gap between businesses and decentralized liquidity. Reqst supports all major protocols with a single integration.",
+      description: "We bridge the gap between businesses and decentralized liquidity. recv supports all major protocols with a single integration.",
       kicker: "NETWORKS",
       explanation: "All networks operate on a direct-to-wallet basis. We never touch your funds, ensuring maximum security and zero counterparty risk."
     },
@@ -594,12 +570,12 @@ const en = {
         fullName: "The Open Network",
         metadata: {
           title: "Accept TON Payments for Telegram Commerce",
-          description: "Use Reqst to accept TON and supported Jetton payments with hosted Checkout, API invoices, payment comments, and direct-to-wallet settlement.",
+          description: "Use recv to accept TON and supported Jetton payments with hosted Checkout, API invoices, payment comments, and direct-to-wallet settlement.",
         },
         kicker: "TON NETWORK",
         hero: {
           title: "TON payments built for Telegram-native commerce.",
-          body: "Reqst turns TON transfers into clean checkout states for Telegram shops, paid communities, and mobile-first buyers while keeping funds direct to your wallet.",
+          body: "recv turns TON transfers into clean checkout states for Telegram shops, paid communities, and mobile-first buyers while keeping funds direct to your wallet.",
         },
         snapshot: {
           kicker: "NETWORK INVOICE",
@@ -632,7 +608,7 @@ const en = {
           steps: [
             { title: "Create invoice", body: "Checkout or API creates a TON payment request with the exact amount, asset, address, and required comment." },
             { title: "Show payment", body: "The buyer sees a hosted page with QR, copyable address, amount, and clear comment instructions." },
-            { title: "Detect transfer", body: "Reqst watchers match the incoming transfer by amount and required payment comment." },
+            { title: "Detect transfer", body: "recv watchers match the incoming transfer by amount and required payment comment." },
             { title: "Send event", body: "Your dashboard or webhook receives the paid state for fulfillment, access, or order updates." },
           ],
         },
@@ -662,24 +638,24 @@ const en = {
         },
         cta: {
           title: "Launch TON checkout with direct settlement.",
-          body: "Use Reqst to accept TON payments, detect transfers automatically, and keep customer payments flowing directly to your wallet.",
+          body: "Use recv to accept TON payments, detect transfers automatically, and keep customer payments flowing directly to your wallet.",
           primary: { label: "Start accepting TON", href: "/app/auth" },
           secondary: { label: "Explore Checkout", href: "/products/checkout" },
         },
         seoLabel: "TON network payment details",
-        seo: "Reqst supports TON payments for Telegram commerce with hosted Checkout, API invoice creation, required payment comments, blockchain watchers, direct-to-wallet settlement, and webhooks for order or access automation.",
+        seo: "recv supports TON payments for Telegram commerce with hosted Checkout, API invoice creation, required payment comments, blockchain watchers, direct-to-wallet settlement, and webhooks for order or access automation.",
       },
       tron: {
         name: "TRON",
         fullName: "TRON Network",
         metadata: {
           title: "Accept TRON USDT Payments for SaaS and Business",
-          description: "Accept USDT TRC-20 through Reqst Checkout and API with stablecoin-friendly invoices, watcher matching, signed webhooks, and direct payouts.",
+          description: "Accept USDT TRC-20 through recv Checkout and API with stablecoin-friendly invoices, watcher matching, signed webhooks, and direct payouts.",
         },
         kicker: "TRON NETWORK",
         hero: {
           title: "TRON USDT payments for global stablecoin buyers.",
-          body: "Reqst makes TRC-20 USDT practical for SaaS, invoices, and business checkout flows without percentage fees or custodial settlement accounts.",
+          body: "recv makes TRC-20 USDT practical for SaaS, invoices, and business checkout flows without percentage fees or custodial settlement accounts.",
         },
         snapshot: {
           kicker: "STABLECOIN INVOICE",
@@ -712,7 +688,7 @@ const en = {
           steps: [
             { title: "Create invoice", body: "Checkout or API creates a TRON invoice for the exact USDT amount and destination wallet." },
             { title: "Guide buyer", body: "Checkout shows TRC-20 network instructions, QR, address, and a live payment state." },
-            { title: "Track transfer", body: "Reqst watchers detect the incoming TRC-20 transfer and match it to the invoice." },
+            { title: "Track transfer", body: "recv watchers detect the incoming TRC-20 transfer and match it to the invoice." },
             { title: "Confirm payment", body: "Signed webhooks and dashboard events move your order, invoice, or subscription to paid." },
           ],
         },
@@ -742,102 +718,104 @@ const en = {
         },
         cta: {
           title: "Accept TRON USDT without manual reconciliation.",
-          body: "Use Reqst to issue TRC-20 invoices, track transfers in real time, and connect stablecoin payments to your business systems.",
+          body: "Use recv to issue TRC-20 invoices, track transfers in real time, and connect stablecoin payments to your business systems.",
           primary: { label: "Start with USDT", href: "/app/auth" },
           secondary: { label: "View Business", href: "/business" },
         },
         seoLabel: "TRON USDT payment details",
-        seo: "Reqst enables TRON USDT payments through Checkout, API invoices, TRC-20 watcher detection, signed webhooks, direct-to-wallet settlement, and stablecoin payment flows for SaaS and business use cases.",
+        seo: "recv enables TRON USDT payments through Checkout, API invoices, TRC-20 watcher detection, signed webhooks, direct-to-wallet settlement, and stablecoin payment flows for SaaS and business use cases.",
       },
-      solana: {
-        name: "Solana",
-        fullName: "Solana Blockchain",
+      ton_usdt: {
+        name: "TON USDT",
+        fullName: "Tether USDT on TON",
         metadata: {
-          title: "Accept Solana Payments with API and Checkout",
-          description: "Use Reqst to accept SOL and supported SPL assets with fast checkout flows, API invoices, watcher detection, and signed webhooks.",
+          title: "Accept TON USDT Payments | Stablecoin Checkout on TON",
+          description: "Accept USDT stablecoin on The Open Network (TON) with recv. Hosted Checkout, API invoices, automated comment matching, and direct-to-wallet payouts.",
         },
-        kicker: "SOLANA NETWORK",
+        kicker: "TON USDT STABLECOIN",
         hero: {
-          title: "Solana payments for fast developer-owned checkout.",
-          body: "Reqst brings SOL and supported SPL assets into one payment API, so web3 products can create invoices and react to confirmed transfers without custom watcher logic.",
+          title: "Accept TON USDT payments with direct settlement.",
+          body: "Seamlessly accept Tether (USDT) on TON. recv handles payment detection and comment-based matching, sending funds directly to your non-custodial wallet.",
         },
         snapshot: {
-          kicker: "API EVENT",
-          title: "payment.network.solana",
+          kicker: "STABLECOIN CHECKOUT",
+          title: "checkout.network.ton_usdt",
           amount: "49.00 USDT",
           items: [
-            { label: "Assets", value: "SPL USDT" },
-            { label: "Flow", value: "API" },
-            { label: "Status", value: "Detected" },
+            { label: "Asset", value: "USDT (Jetton)" },
+            { label: "Network", value: "TON" },
+            { label: "Matching", value: "Comment" },
           ],
         },
         assets: {
-          kicker: "SUPPORTED ASSETS",
-          title: "USDT SPL payments on Solana.",
-          body: "Solana support fits teams that need fast stablecoin payments on the Solana network.",
+          kicker: "SUPPORTED STABLECOINS",
+          title: "USDT as a native TON Jetton.",
+          body: "Collect USD-pegged stablecoin payments on The Open Network, leveraging Telegram's native ecosystem without exposing buyers to price volatility.",
           items: [
-            { name: "SPL USDT", body: "The standard stablecoin on Solana for high-speed, low-fee USD-denominated payments." },
+            { name: "TON USDT", body: "The official USD₮ Jetton on the TON blockchain, widely used in Telegram Wallet and Tonkeeper." },
+            { name: "TON", body: "The native network asset used for transaction fees (gas) when sending Jettons." },
+            { name: "Direct Payouts", body: "USDT goes directly to your non-custodial TON wallet without holding periods or intermediaries." },
           ],
         },
         why: {
-          kicker: "WHY SOLANA",
-          title: "Fast payment feedback for web3 users.",
-          body: "Solana is a strong fit when your buyers already use Solana wallets and expect quick confirmation in developer tools, apps, or digital goods flows.",
+          kicker: "WHY TON USDT",
+          title: "Stablecoin stability with Telegram-native speed.",
+          body: "TON USDT is the perfect solution for Telegram commerce. It eliminates the price volatility of native TON while retaining the fast transaction speeds, low fees, and deep integration with Telegram chats.",
         },
         mechanics: {
-          kicker: "CHECKOUT AND API MECHANICS",
-          title: "One invoice flow for SOL and SPL assets.",
+          kicker: "AUTOMATED DETECTOR",
+          title: "Jetton transfer monitoring with custom comments.",
           steps: [
-            { title: "Create invoice", body: "Your backend creates a Solana invoice through Reqst API or uses hosted Checkout." },
-            { title: "Show wallet data", body: "Checkout displays network, asset, amount, address, and QR in a buyer-friendly screen." },
-            { title: "Watch transfer", body: "Reqst tracks native or SPL transfers and matches the payment to the invoice." },
-            { title: "Trigger backend", body: "A signed webhook tells your product when to unlock access, deliver goods, or update status." },
+            { title: "Create Invoice", body: "Generate a TON USDT invoice specifying the exact USDT amount and required payment comment." },
+            { title: "Present Details", body: "Checkout shows the destination TON address, QR code, and the required payment comment." },
+            { title: "Watch Blockchain", body: "recv monitors TON blockchain transactions to detect matching USDT Jetton transfers with the correct comment." },
+            { title: "Trigger Backend", body: "An automated webhook notifies your application when the payment is confirmed, instantly unlocking access or completing orders." },
           ],
         },
         limitations: {
           kicker: "LIMITATIONS AND NOTES",
-          title: "Asset and wallet selection must be precise.",
-          body: "Buyers need to send the configured Solana asset on Solana. Token account behavior, wallet support, and temporary network congestion can affect the payment experience.",
+          title: "Memo-based matching and transaction fees.",
+          body: "Just like native TON, TON USDT matching relies on the required comment. Buyers must not modify this comment. Additionally, buyers or wallets must have native TON to cover blockchain transaction fees (gas).",
         },
         useCases: {
-          kicker: "RELEVANT USE CASES",
-          title: "Best for web3-native products.",
-          body: "Solana is useful when payments are part of a product that already speaks to developers, creators, or crypto-native buyers.",
+          kicker: "USE CASES",
+          title: "Built for Telegram commerce and bots.",
+          body: "TON USDT is ideal for businesses that want stable, dollar-pegged pricing but sell products inside the Telegram ecosystem.",
           items: [
-            { name: "Developer tools", body: "Create invoices from your backend and use webhooks for automated access." },
-            { name: "Digital goods", body: "Sell keys, downloads, or licenses to Solana wallet users." },
-            { name: "Web3 apps", body: "Add a fast payment option for users already active in the Solana ecosystem." },
+            { name: "Telegram Mini Apps", body: "Enable one-click USDT stablecoin checkouts directly within your app or bot." },
+            { name: "Digital Subscriptions", body: "Bill recurring memberships, courses, or private group access in stable dollar values." },
+            { name: "E-Commerce", body: "Sell physical or digital goods to global customers using Telegram and TON-compatible wallets." },
           ],
         },
         related: {
           kicker: "RELATED",
-          title: "Connect Solana to your backend.",
+          title: "Build the TON USDT flow.",
           links: [
-            { kicker: "Product", label: "API", body: "Create invoices and receive normalized payment events.", href: "/products/api" },
-            { kicker: "Plan", label: "Developer", body: "API and webhooks for production integrations.", href: "/dev" },
-            { kicker: "Docs", label: "Integration", body: "Read the developer documentation for payment automation.", href: "/docs" },
+            { kicker: "Use Case", label: "Telegram Shops", body: "Automate shop payments and orders in Telegram.", href: "/use-cases/telegram-shops" },
+            { kicker: "Product", label: "Checkout", body: "Hosted payment pages with multi-network support.", href: "/products/checkout" },
+            { kicker: "Product", label: "API", body: "Integrate recv directly into your custom backend application.", href: "/products/api" },
           ],
         },
         cta: {
-          title: "Add Solana payments to your product.",
-          body: "Use Reqst API and Checkout to accept Solana assets and let signed events drive your payment state.",
-          primary: { label: "Start integration", href: "/app/auth" },
-          secondary: { label: "Explore API", href: "/products/api" },
+          title: "Start accepting TON USDT today.",
+          body: "Set up stablecoin checkouts on TON, automate invoice matching via comments, and receive payments directly to your own wallet.",
+          primary: { label: "Get started", href: "/app/auth" },
+          secondary: { label: "View API Docs", href: "/docs" },
         },
-        seoLabel: "Solana network payment details",
-        seo: "Reqst supports Solana payments with SOL and configured SPL assets, hosted Checkout, API invoice creation, blockchain watchers, signed webhooks, and developer-focused payment automation.",
+        seoLabel: "TON USDT payment gateway details",
+        seo: "recv supports TON USDT payments (Tether on TON) with hosted Checkout, API invoice creation, required comment matching, blockchain watchers, and direct-to-wallet settlement for Telegram bots and Mini Apps.",
       },
       base: {
         name: "Base",
         fullName: "Base L2",
         metadata: {
           title: "Accept Base Payments with Unified API",
-          description: "Accept ETH and supported ERC-20 assets on Base with Reqst Checkout, API invoices, watcher monitoring, and business-ready webhooks.",
+          description: "Accept ETH and supported ERC-20 assets on Base with recv Checkout, API invoices, watcher monitoring, and business-ready webhooks.",
         },
         kicker: "BASE NETWORK",
         hero: {
           title: "Base payments for EVM buyers and low-cost checkout.",
-          body: "Reqst lets teams add Base to the same checkout and API flow they use for other networks, with direct settlement and normalized payment events.",
+          body: "recv lets teams add Base to the same checkout and API flow they use for other networks, with direct settlement and normalized payment events.",
         },
         snapshot: {
           kicker: "L2 INVOICE",
@@ -864,18 +842,18 @@ const en = {
         },
         mechanics: {
           kicker: "CHECKOUT AND API MECHANICS",
-          title: "Same Reqst flow, Base-specific watcher.",
+          title: "Same recv flow, Base-specific watcher.",
           steps: [
             { title: "Create invoice", body: "Use Checkout or API with Base as the payable network and the configured asset." },
             { title: "Present payment", body: "The buyer sees Base network instructions, amount, address, and QR." },
-            { title: "Monitor chain", body: "Reqst watches native and ERC-20 transfers on Base and matches them to invoices." },
+            { title: "Monitor chain", body: "recv watches native and ERC-20 transfers on Base and matches them to invoices." },
             { title: "Emit webhook", body: "Your backend receives the same normalized payment state used across other supported networks." },
           ],
         },
         limitations: {
           kicker: "LIMITATIONS AND NOTES",
           title: "Base assets must be sent on Base.",
-          body: "Ethereum mainnet, Arbitrum, BSC, and other EVM transfers are separate networks. Wrong-chain deposits are not automatically interchangeable with Base payments.",
+          body: "Base, Base, BSC, and other EVM transfers are separate networks. Wrong-chain deposits are not automatically interchangeable with Base payments.",
         },
         useCases: {
           kicker: "RELEVANT USE CASES",
@@ -898,24 +876,24 @@ const en = {
         },
         cta: {
           title: "Accept Base payments through one integration.",
-          body: "Use Reqst to add Base checkout, monitor transfers, and keep your backend payment logic consistent across networks.",
+          body: "Use recv to add Base checkout, monitor transfers, and keep your backend payment logic consistent across networks.",
           primary: { label: "Start integration", href: "/app/auth" },
           secondary: { label: "Explore API", href: "/products/api" },
         },
         seoLabel: "Base network payment details",
-        seo: "Reqst supports Base payments with ETH and configured ERC-20 assets, hosted Checkout, API invoices, Base watchers, normalized webhooks, direct-to-wallet settlement, and business payment workflows.",
+        seo: "recv supports Base payments with ETH and configured ERC-20 assets, hosted Checkout, API invoices, Base watchers, normalized webhooks, direct-to-wallet settlement, and business payment workflows.",
       },
       bsc: {
         name: "BSC",
         fullName: "BNB Smart Chain",
         metadata: {
           title: "Accept BSC Payments with Checkout and API",
-          description: "Accept BNB and supported BEP-20 assets on BSC with Reqst payment links, API invoices, watcher detection, and direct-to-wallet settlement.",
+          description: "Accept BNB and supported BEP-20 assets on BSC with recv payment links, API invoices, watcher detection, and direct-to-wallet settlement.",
         },
         kicker: "BSC NETWORK",
         hero: {
           title: "BSC payments for broad retail stablecoin reach.",
-          body: "Reqst helps businesses accept BNB Smart Chain payments through a clean checkout and unified API flow built for direct settlement.",
+          body: "recv helps businesses accept BNB Smart Chain payments through a clean checkout and unified API flow built for direct settlement.",
         },
         snapshot: {
           kicker: "BEP-20 INVOICE",
@@ -944,9 +922,9 @@ const en = {
           kicker: "CHECKOUT AND API MECHANICS",
           title: "BEP-20 monitoring without separate business logic.",
           steps: [
-            { title: "Create invoice", body: "Choose BSC and the payable asset through hosted Checkout or the Reqst API." },
+            { title: "Create invoice", body: "Choose BSC and the payable asset through hosted Checkout or the recv API." },
             { title: "Show instructions", body: "Checkout shows BSC network details, QR, address, amount, and payment state." },
-            { title: "Detect transfer", body: "Reqst watchers track native BNB and BEP-20 transfers for the invoice." },
+            { title: "Detect transfer", body: "recv watchers track native BNB and BEP-20 transfers for the invoice." },
             { title: "Update system", body: "Dashboard and webhooks update your order, invoice, or account state after confirmation." },
           ],
         },
@@ -976,99 +954,99 @@ const en = {
         },
         cta: {
           title: "Add BSC payments without extra reconciliation.",
-          body: "Use Reqst to accept BNB Smart Chain transfers through Checkout, API invoices, and real-time payment events.",
+          body: "Use recv to accept BNB Smart Chain transfers through Checkout, API invoices, and real-time payment events.",
           primary: { label: "Start accepting BSC", href: "/app/auth" },
           secondary: { label: "View Business", href: "/business" },
         },
         seoLabel: "BSC network payment details",
-        seo: "Reqst supports BSC payments with BNB and configured BEP-20 assets, hosted Checkout, API invoice creation, blockchain watchers, webhooks, and direct-to-wallet settlement for business payment flows.",
+        seo: "recv supports BSC payments with BNB and configured BEP-20 assets, hosted Checkout, API invoice creation, blockchain watchers, webhooks, and direct-to-wallet settlement for business payment flows.",
       },
       arbitrum: {
-        name: "Arbitrum",
-        fullName: "Arbitrum One",
+        name: "Base",
+        fullName: "Base One",
         metadata: {
-          title: "Accept Arbitrum Payments with Reqst API",
-          description: "Accept ETH and supported ERC-20 assets on Arbitrum One with Checkout, API invoices, watcher monitoring, webhooks, and direct settlement.",
+          title: "Accept Base Payments with recv API",
+          description: "Accept ETH and supported ERC-20 assets on Base One with Checkout, API invoices, watcher monitoring, webhooks, and direct settlement.",
         },
-        kicker: "ARBITRUM NETWORK",
+        kicker: "BASE NETWORK",
         hero: {
-          title: "Arbitrum payments for Ethereum-aligned buyers.",
-          body: "Reqst adds Arbitrum One to your payment stack with the same checkout, invoice, and webhook model used across supported networks.",
+          title: "Base payments for Base-aligned buyers.",
+          body: "recv adds Base One to your payment stack with the same checkout, invoice, and webhook model used across supported networks.",
         },
         snapshot: {
           kicker: "L2 PAYMENT",
           title: "payment.network.arbitrum",
           amount: "249.00 USDT",
           items: [
-            { label: "Rail", value: "Arbitrum One" },
+            { label: "Rail", value: "Base One" },
             { label: "Assets", value: "ERC-20 USDT" },
             { label: "Settlement", value: "Direct" },
           ],
         },
         assets: {
           kicker: "SUPPORTED ASSETS",
-          title: "Arbitrum-native USDT payments.",
-          body: "Use Arbitrum for customers who want Ethereum-compatible assets with lower transaction costs than mainnet.",
+          title: "Base-native USDT payments.",
+          body: "Use Base for customers who want Base-compatible assets with lower transaction costs than mainnet.",
           items: [
-            { name: "USDT on Arbitrum", body: "USDT stablecoin transfer on Arbitrum One layer 2 for highly scalable USD-denominated payments." },
+            { name: "USDT on Base", body: "USDT stablecoin transfer on Base One layer 2 for highly scalable USD-denominated payments." },
           ],
         },
         why: {
-          kicker: "WHY ARBITRUM",
-          title: "Ethereum alignment without mainnet costs.",
-          body: "Arbitrum is a practical option for EVM-native customers who prefer Ethereum tooling but need lower fees for routine payments.",
+          kicker: "WHY BASE",
+          title: "Base alignment without mainnet costs.",
+          body: "Base is a practical option for EVM-native customers who prefer Base tooling but need lower fees for routine payments.",
         },
         mechanics: {
           kicker: "CHECKOUT AND API MECHANICS",
-          title: "Normalized events for Arbitrum transfers.",
+          title: "Normalized events for Base transfers.",
           steps: [
-            { title: "Create invoice", body: "Use Reqst Checkout or API with Arbitrum One as the payable network." },
-            { title: "Guide payment", body: "The buyer sees Arbitrum-specific address, amount, asset, and QR instructions." },
-            { title: "Monitor transfer", body: "Reqst watchers detect native and ERC-20 transfers on Arbitrum One." },
+            { title: "Create invoice", body: "Use recv Checkout or API with Base One as the payable network." },
+            { title: "Guide payment", body: "The buyer sees Base-specific address, amount, asset, and QR instructions." },
+            { title: "Monitor transfer", body: "recv watchers detect native and ERC-20 transfers on Base One." },
             { title: "Sync backend", body: "Signed webhooks update your order or billing system with the same event shape as other networks." },
           ],
         },
         limitations: {
           kicker: "LIMITATIONS AND NOTES",
-          title: "Arbitrum One is separate from mainnet and other L2s.",
-          body: "Payments must be sent on Arbitrum One. Ethereum mainnet, Base, BSC, or other EVM transfers are different rails and will not be treated as the same payment automatically.",
+          title: "Base One is separate from mainnet and other L2s.",
+          body: "Payments must be sent on Base One. Base, Base, BSC, or other EVM transfers are different rails and will not be treated as the same payment automatically.",
         },
         useCases: {
           kicker: "RELEVANT USE CASES",
           title: "Best for EVM-native businesses.",
-          body: "Arbitrum works well for teams whose buyers already operate in Ethereum L2 environments.",
+          body: "Base works well for teams whose buyers already operate in Base L2 environments.",
           items: [
-            { name: "API payments", body: "Add Arbitrum to backend-driven invoice and webhook flows." },
-            { name: "Business billing", body: "Collect stablecoin invoices from Ethereum-aligned customers." },
+            { name: "API payments", body: "Add Base to backend-driven invoice and webhook flows." },
+            { name: "Business billing", body: "Collect stablecoin invoices from Base-aligned customers." },
             { name: "Web3 services", body: "Support buyers who prefer L2 settlement for recurring or one-time services." },
           ],
         },
         related: {
           kicker: "RELATED",
-          title: "Use Arbitrum in production flows.",
+          title: "Use Base in production flows.",
           links: [
-            { kicker: "Product", label: "API", body: "Create Arbitrum invoices and process signed payment events.", href: "/products/api" },
+            { kicker: "Product", label: "API", body: "Create Base invoices and process signed payment events.", href: "/products/api" },
             { kicker: "Plan", label: "Business", body: "Scale EVM payment operations with team features.", href: "/business" },
             { kicker: "Plan", label: "Developer", body: "Backend integration access for production teams.", href: "/dev" },
           ],
         },
         cta: {
-          title: "Add Arbitrum payments to your checkout stack.",
-          body: "Use Reqst to accept Arbitrum One payments, monitor transfers, and keep settlement direct to your wallet.",
+          title: "Add Base payments to your checkout stack.",
+          body: "Use recv to accept Base One payments, monitor transfers, and keep settlement direct to your wallet.",
           primary: { label: "Start integration", href: "/app/auth" },
           secondary: { label: "Explore API", href: "/products/api" },
         },
-        seoLabel: "Arbitrum network payment details",
-        seo: "Reqst supports Arbitrum One payments with ETH and configured ERC-20 assets, hosted Checkout, API invoices, blockchain watchers, signed webhooks, and direct-to-wallet settlement for EVM business workflows.",
+        seoLabel: "Base network payment details",
+        seo: "recv supports Base One payments with ETH and configured ERC-20 assets, hosted Checkout, API invoices, blockchain watchers, signed webhooks, and direct-to-wallet settlement for EVM business workflows.",
       },
     },
     useCasesHub: {
       title: "Solutions for Every Business Scale",
-      description: "Explore how different industries use Reqst to automate their crypto operations and eliminate manual overhead.",
+      description: "Explore how different industries use recv to automate their crypto operations and eliminate manual overhead.",
       kicker: "USE CASES",
       customUseCase: {
         title: "Have a unique use case?",
-        body: "Our API is flexible enough to power any payment flow. Let's discuss how Reqst can help your specific business.",
+        body: "Our API is flexible enough to power any payment flow. Let's discuss how recv can help your specific business.",
       }
     },
     useCasePages: {
@@ -1081,7 +1059,7 @@ const en = {
         kicker: "TELEGRAM COMMERCE",
         hero: {
           title: "Accept Crypto Payments in Telegram Bots & Mini Apps",
-          body: "Reqst provides a high-performance checkout flow, real-time blockchain monitoring, and direct-to-wallet settlement for Telegram-native commerce.",
+          body: "recv provides a high-performance checkout flow, real-time blockchain monitoring, and direct-to-wallet settlement for Telegram-native commerce.",
         },
         snapshot: {
           kicker: "LIVE ORDER",
@@ -1099,9 +1077,9 @@ const en = {
           body: "Comparing wallet screenshots and checking explorer statuses by hand is prone to error. Partial payments and incorrect network transfers turn simple orders into complex support threads.",
         },
         solution: {
-          kicker: "REQST FLOW",
+          kicker: "RECV FLOW",
           title: "Automated Checkout Links replace manual checks.",
-          body: "Generate secure payment links for every order. Reqst watchers monitor the blockchain 24/7, moving orders to 'paid' state automatically as soon as the transfer is confirmed.",
+          body: "Generate secure payment links for every order. recv watchers monitor the blockchain 24/7, moving orders to 'paid' state automatically as soon as the transfer is confirmed.",
         },
         productPlan: {
           kicker: "PRODUCT AND PLAN",
@@ -1129,7 +1107,7 @@ const en = {
           items: [
             { name: "TON", body: "The native choice for Telegram-based commerce and the growing TON ecosystem." },
             { name: "TRON USDT", body: "The global standard for USDT settlement with high throughput and low costs." },
-            { name: "Solana / Base", body: "High-performance L1/L2 alternatives for web3-native audiences." },
+            { name: "TON_USDT / Base", body: "High-performance L1/L2 alternatives for web3-native audiences." },
           ],
         },
         flow: {
@@ -1138,7 +1116,7 @@ const en = {
           steps: [
             { title: "Invoice Created", body: "The seller or bot generates a payment request for a specific Telegram order." },
             { title: "Checkout Opened", body: "The buyer opens a hosted link showing exact amount, address, and QR." },
-            { title: "Transfer Detected", body: "Reqst watchers detect the on-chain transfer and verify the amount instantly." },
+            { title: "Transfer Detected", body: "recv watchers detect the on-chain transfer and verify the amount instantly." },
             { title: "Order Confirmed", body: "The dashboard signals a paid state, enabling immediate order fulfillment." },
           ],
         },
@@ -1153,13 +1131,13 @@ const en = {
         },
         cta: {
           title: "Ready to automate your Telegram commerce?",
-          body: "Stop checking screenshots. Let Reqst handle the blockchain monitoring while you focus on scaling your business.",
+          body: "Stop checking screenshots. Let recv handle the blockchain monitoring while you focus on scaling your business.",
           primary: { label: "Start Accepting Payments", href: "/app/auth" },
           secondary: { label: "Explore Checkout", href: "/products/checkout" },
         },
         features: ["TON & Jetton Support", "Real-time Order Status", "Direct-to-Wallet Payouts", "Telegram Mini App Optimized"],
         seoLabel: "Telegram shop crypto payments documentation",
-        seo: "Reqst enables Telegram shops to accept crypto payments with hosted checkout links, TON support, stablecoin networks, direct-to-wallet settlement, and real-time payment detection for order fulfillment.",
+        seo: "recv enables Telegram shops to accept crypto payments with hosted checkout links, TON support, stablecoin networks, direct-to-wallet settlement, and real-time payment detection for order fulfillment.",
       },
       "saas-billing": {
         name: "SaaS Billing",
@@ -1169,8 +1147,8 @@ const en = {
         },
         kicker: "SAAS INFRASTRUCTURE",
         hero: {
-          title: "Enterprise-Grade Crypto Billing for SaaS",
-          body: "Eliminate percentage-based fees. Reqst provides the API primitives for idempotent invoice creation and guaranteed webhook delivery.",
+          title: "Business-Grade Crypto Billing for SaaS",
+          body: "Eliminate percentage-based fees. recv provides the API primitives for idempotent invoice creation and guaranteed webhook delivery.",
         },
         snapshot: {
           kicker: "BILLING EVENT",
@@ -1188,7 +1166,7 @@ const en = {
           body: "Handling recurring payments and renewals requires 100% uptime and duplicate-safe logic. Managing disparate blockchain nodes adds unnecessary engineering overhead.",
         },
         solution: {
-          kicker: "REQST FLOW",
+          kicker: "RECV FLOW",
           title: "Unified API & Signed Webhooks",
           body: "Create invoices via a single REST interface. Use our HMAC-signed webhooks to trigger subscription updates only after cryptographic confirmation.",
         },
@@ -1214,18 +1192,18 @@ const en = {
         networks: {
           kicker: "NETWORKS",
           title: "Universal Network Support",
-          body: "Default to USDT (TRC-20) for business stability or add Base and Arbitrum for lower-cost EVM transactions.",
+          body: "Default to USDT (TRC-20) for business stability or add Base and Base for lower-cost EVM transactions.",
           items: [
             { name: "TRON USDT", body: "The industry standard for USD-denominated stablecoin billing." },
-            { name: "Base / Arbitrum", body: "Optimized L2 networks for low-fee Ethereum ecosystem payments." },
-            { name: "TON / Solana", body: "High-performance options for web3-native user bases." },
+            { name: "Base / Base", body: "Optimized L2 networks for low-fee Base ecosystem payments." },
+            { name: "TON / TON_USDT", body: "High-performance options for web3-native user bases." },
           ],
         },
         flow: {
           kicker: "INTEGRATION FLOW",
           title: "Automated Renewal Cycle",
           steps: [
-            { title: "Invoice Issued", body: "Your billing service creates a Reqst invoice with an idempotency key." },
+            { title: "Invoice Issued", body: "Your billing service creates a recv invoice with an idempotency key." },
             { title: "Buyer Notified", body: "The customer pays through your custom UI or our hosted checkout." },
             { title: "Event Verified", body: "Your backend verifies the HMAC signature and processes the 'paid' event." },
             { title: "Access Extended", body: "Subscription state is updated in your DB without manual intervention." },
@@ -1248,7 +1226,7 @@ const en = {
         },
         features: ["Idempotent API Requests", "HMAC-SHA256 Webhooks", "Subscription Management", "Multi-Chain Abstraction"],
         seoLabel: "SaaS crypto billing infrastructure details",
-        seo: "Reqst provides SaaS platforms with robust crypto billing infrastructure, featuring idempotent API calls, HMAC-signed webhooks, and universal support for TON, TRON, and EVM networks with 0% turnover fees.",
+        seo: "recv provides SaaS platforms with robust crypto billing infrastructure, featuring idempotent API calls, HMAC-signed webhooks, and universal support for TON, TRON, and EVM networks with 0% turnover fees.",
       },
       "digital-goods": {
         name: "Digital Goods",
@@ -1259,7 +1237,7 @@ const en = {
         kicker: "DIGITAL COMMERCE",
         hero: {
           title: "Instant Fulfillment for Digital Goods",
-          body: "Automate the delivery of licenses, keys, and downloads. Reqst triggers fulfillment events immediately upon blockchain confirmation.",
+          body: "Automate the delivery of licenses, keys, and downloads. recv triggers fulfillment events immediately upon blockchain confirmation.",
         },
         snapshot: {
           kicker: "FULFILLMENT",
@@ -1277,9 +1255,9 @@ const en = {
           body: "Digital products require instant gratification. Waiting for manual transaction verification leads to poor UX and increased support overhead.",
         },
         solution: {
-          kicker: "REQST FLOW",
+          kicker: "RECV FLOW",
           title: "Checkout-to-Delivery Automation",
-          body: "Combine our high-conversion checkout with automated fulfillment logic. Reqst handles the payment monitoring; your server handles the delivery.",
+          body: "Combine our high-conversion checkout with automated fulfillment logic. recv handles the payment monitoring; your server handles the delivery.",
         },
         productPlan: {
           kicker: "PRODUCT AND PLAN",
@@ -1307,15 +1285,15 @@ const en = {
           items: [
             { name: "TRON USDT", body: "Low-fee stablecoin transfers preferred by software and gaming buyers." },
             { name: "TON", body: "The native choice for digital assets sold within the Telegram ecosystem." },
-            { name: "Solana", body: "Fast, confirmation-aware monitoring for high-speed digital sales." },
+            { name: "TON_USDT", body: "Fast, confirmation-aware monitoring for high-speed digital sales." },
           ],
         },
         flow: {
           kicker: "INTEGRATION FLOW",
           title: "From Payment to Download",
           steps: [
-            { title: "Order Created", body: "Your store generates a unique Reqst checkout link for the digital item." },
-            { title: "Payment Confirmed", body: "Reqst watchers detect the transaction and verify it against the order." },
+            { title: "Order Created", body: "Your store generates a unique recv checkout link for the digital item." },
+            { title: "Payment Confirmed", body: "recv watchers detect the transaction and verify it against the order." },
             { title: "Webhook Received", body: "Your fulfillment service receives a signed event confirming the payment." },
             { title: "Access Granted", body: "The license key or download link is automatically released to the customer." },
           ],
@@ -1331,24 +1309,24 @@ const en = {
         },
         cta: {
           title: "Ready to automate your digital storefront?",
-          body: "Switch to Reqst for 0% turnover fees and instant on-chain fulfillment signals.",
+          body: "Switch to recv for 0% turnover fees and instant on-chain fulfillment signals.",
           primary: { label: "Start Selling Now", href: "/app/auth" },
           secondary: { label: "Explore API", href: "/products/api" },
         },
         features: ["Instant Payment Detection", "Automated Webhooks", "Low-Fee Networks", "No Chargeback Risk"],
         seoLabel: "Digital goods crypto payment automation details",
-        seo: "Reqst provides automated crypto checkout for digital products, supporting instant fulfillment via signed webhooks, multi-chain monitoring, and direct-to-wallet payouts with 0% fees.",
+        seo: "recv provides automated crypto checkout for digital products, supporting instant fulfillment via signed webhooks, multi-chain monitoring, and direct-to-wallet payouts with 0% fees.",
       },
       "paid-communities": {
         name: "Paid Communities",
         metadata: {
           title: "Accept Crypto for Private Communities & Channels",
-          description: "Manage membership access for Telegram channels and private groups with automated crypto payments. Support for TON, USDT, and Solana.",
+          description: "Manage membership access for Telegram channels and private groups with automated crypto payments. Support for TON, USDT, and TON_USDT.",
         },
         kicker: "MEMBERSHIP ECONOMY",
         hero: {
           title: "Automated Access for Paid Communities",
-          body: "Connect on-chain payments to community access. Reqst provides the infrastructure to monitor memberships and trigger access events automatically.",
+          body: "Connect on-chain payments to community access. recv provides the infrastructure to monitor memberships and trigger access events automatically.",
         },
         snapshot: {
           kicker: "ACCESS EVENT",
@@ -1366,9 +1344,9 @@ const en = {
           body: "Checking usernames against wallet transfers is time-consuming and prone to fraud. Handling renewals and expirations manually leads to revenue leakage.",
         },
         solution: {
-          kicker: "REQST FLOW",
+          kicker: "RECV FLOW",
           title: "Payment States as Access Signals",
-          body: "Use Reqst to verify membership payments instantly. Our events can drive your bot or management tool to invite or remove members based on real on-chain data.",
+          body: "Use recv to verify membership payments instantly. Our events can drive your bot or management tool to invite or remove members based on real on-chain data.",
         },
         productPlan: {
           kicker: "PRODUCT AND PLAN",
@@ -1396,7 +1374,7 @@ const en = {
           items: [
             { name: "TON", body: "The most friction-less experience for Telegram-native communities." },
             { name: "TRON USDT", body: "A reliable stablecoin option for USD-denominated memberships." },
-            { name: "Base / Arbitrum", body: "Ideal for web3-native groups and decentralized organizations." },
+            { name: "Base / Base", body: "Ideal for web3-native groups and decentralized organizations." },
           ],
         },
         flow: {
@@ -1404,7 +1382,7 @@ const en = {
           title: "From Payment to Community Entry",
           steps: [
             { title: "Pass Selected", body: "The user chooses a membership tier or renewal period." },
-            { title: "Checkout Opened", body: "Reqst generates a unique payment request with exact network/asset data." },
+            { title: "Checkout Opened", body: "recv generates a unique payment request with exact network/asset data." },
             { title: "Payment Verified", body: "Our watchers confirm the transfer on the blockchain in real-time." },
             { title: "Access Triggered", body: "Your management bot invites the user once the 'paid' event is emitted." },
           ],
@@ -1426,93 +1404,93 @@ const en = {
         },
         features: ["TON & Jetton Native", "Automated Access Signals", "Membership Renewal Tracking", "No Percentage Fees"],
         seoLabel: "Paid community crypto payment details",
-        seo: "Reqst enables paid communities to accept crypto for Telegram channels and private groups, featuring TON support, automated access signals via webhooks, and 0% turnover fees.",
+        seo: "recv enables paid communities to accept crypto for Telegram channels and private groups, featuring TON support, automated access signals via webhooks, and 0% turnover fees.",
       },
     },
     compareHub: {
       title: "The Smarter Way to Process Crypto",
-      description: "Compare Reqst to manual verification and custodial gateways: direct-to-wallet settlement, zero turnover fees, signed webhooks, and seven supported networks.",
+      description: "Compare recv to manual verification and custodial gateways: direct-to-wallet settlement, zero turnover fees, signed webhooks, and seven supported networks.",
       kicker: "COMPARE",
       items: [
-        { title: "Reqst vs Manual Verification", slug: "reqst-vs-manual", body: "Discover how automation eliminates human error and scales your operations." },
-        { title: "Reqst vs Custodial Gateways", slug: "reqst-vs-custodial", body: "Why non-custodial infrastructure is safer and more cost-effective for your business." },
-        { title: "Reqst vs NowPayments", slug: "nowpayments", body: "A direct comparison of fees, control, and integration flexibility." },
+        { title: "recv vs Manual Verification", slug: "recv-vs-manual", body: "Discover how automation eliminates human error and scales your operations." },
+        { title: "recv vs Custodial Gateways", slug: "recv-vs-custodial", body: "Why non-custodial infrastructure is safer and more cost-effective for your business." },
+        { title: "recv vs NowPayments", slug: "nowpayments", body: "A direct comparison of fees, control, and integration flexibility." },
       ]
     },
     comparePages: {
-      "reqst-vs-manual": {
+      "recv-vs-manual": {
         name: "Manual Payments",
-        title: "Reqst vs Manual Wallet Payments: Why Automate?",
-        description: "Comparing automated non-custodial processing with manual wallet tracking. Learn how Reqst eliminates human error and scales your crypto operations.",
+        title: "recv vs Manual Wallet Payments: Why Automate?",
+        description: "Comparing automated non-custodial processing with manual wallet tracking. Learn how recv eliminates human error and scales your crypto operations.",
         kicker: "AUTOMATION",
         points: [
           {
             title: "Scalability",
             competitor: "Impossible to scale. Every transaction requires manual verification and manual accounting.",
-            reqst: "Fully automated. Handle thousands of invoices simultaneously with real-time monitoring and webhooks."
+            recv: "Fully automated. Handle thousands of invoices simultaneously with real-time monitoring and webhooks."
           },
           {
             title: "Accuracy",
             competitor: "High risk of human error. Typos in wallet addresses, missed payments, or wrong network transfers.",
-            reqst: "Zero errors. Automated matching of exact amounts and unique payment identifiers."
+            recv: "Zero errors. Automated matching of exact amounts and unique payment identifiers."
           },
           {
             title: "Customer UX",
             competitor: "Slow and frustrating. Customers wait hours for manual confirmation and product delivery.",
-            reqst: "Instant gratification. Real-time detection leads to immediate order fulfillment."
+            recv: "Instant gratification. Real-time detection leads to immediate order fulfillment."
           }
         ]
       },
-      "reqst-vs-custodial": {
+      "recv-vs-custodial": {
         name: "Custodial Gateways",
-        title: "Reqst vs Custodial Gateways: Non-Custodial Advantage",
-        description: "Why pay 1-3% commission and risk your funds? Compare Reqst's non-custodial infrastructure with traditional payment processors.",
+        title: "recv vs Custodial Gateways: Non-Custodial Advantage",
+        description: "Why pay 1-3% commission and risk your funds? Compare recv's non-custodial infrastructure with traditional payment processors.",
         kicker: "SOVEREIGNTY",
         points: [
           {
             title: "Control of Funds",
             competitor: "Third-party custody. Risk of frozen accounts, withdrawal delays, and platform insolvency.",
-            reqst: "100% Non-custodial. Funds flow directly to your wallet. We never touch or hold your money."
+            recv: "100% Non-custodial. Funds flow directly to your wallet. We never touch or hold your money."
           },
           {
             title: "Fee Structure",
             competitor: "Variable fees (1% to 3%). Your costs grow as your business scales, eating into margins.",
-            reqst: "Fixed subscription. Zero turnover fees. Predictable costs regardless of your volume."
+            recv: "Fixed subscription. Zero turnover fees. Predictable costs regardless of your volume."
           },
           {
             title: "Compliance & Privacy",
             competitor: "Strict KYC/KYB requirements and data sharing. Dependency on third-party policy changes.",
-            reqst: "Privacy-first infrastructure. You maintain your own relationships with your users."
+            recv: "Privacy-first infrastructure. You maintain your own relationships with your users."
           }
         ]
       },
       "nowpayments": {
         name: "NowPayments",
-        title: "Reqst vs NowPayments: Control vs Convenience",
+        title: "recv vs NowPayments: Control vs Convenience",
         description: "A detailed comparison of two popular crypto payment solutions. Choose the one that fits your scaling needs.",
         kicker: "COMPARISON",
         points: [
           {
             title: "Payout Model",
             competitor: "Internal balance system. You need to manually withdraw or wait for automated payout cycles.",
-            reqst: "Atomic payouts. Every transaction hits your wallet as soon as it is confirmed on-chain."
+            recv: "Atomic payouts. Every transaction hits your wallet as soon as it is confirmed on-chain."
           },
           {
             title: "Commission",
             competitor: "Starts at 0.5% + network fees. High volume means high absolute costs.",
-            reqst: "0% commission. Only pay your fixed subscription and standard network gas fees."
+            recv: "0% commission. Only pay your fixed subscription and standard network gas fees."
           },
           {
             title: "Integration",
             competitor: "Proprietary API and standard plugins. Focus on generic e-commerce platforms.",
-            reqst: "Developer-first protocol. Optimized for high-throughput SaaS, Telegram Mini Apps, and custom builds."
+            recv: "Developer-first protocol. Optimized for high-throughput SaaS, Telegram Mini Apps, and custom builds."
           }
         ]
       }
     },
     statusHub: {
       title: "System Status",
-      description: "Real-time monitoring of Reqst infrastructure and network connectivity.",
+      description: "Real-time monitoring of recv infrastructure and network connectivity.",
       kicker: "STATUS",
       allSystemsOperational: "All Systems Operational",
       operational: "Operational",
@@ -1536,12 +1514,12 @@ const en = {
     codeBody: "Seamlessly integrate our protocol into your existing workflow.",
     processingNote: "Non-custodial architecture. All transactions go directly to your wallets.",
     compareSectionTitle: "Direct Access Architecture",
-    compareSectionBody: "Reqst operates as a transparent middleware. Transactions flow directly from client to merchant, bypassing intermediary accounts.",
+    compareSectionBody: "recv operates as a transparent middleware. Transactions flow directly from client to merchant, bypassing intermediary accounts.",
     merchant: {
-      badge: "Reqst Merchant",
+      badge: "recv Merchant",
       title: "Accept Crypto. 0% Turnover Fees.",
       body: "Professional dashboard for manual and semi-automated payment acceptance. Direct payouts to your wallets and full control.",
-      priceLabel: "$39",
+      priceLabel: "$9",
       period: "per month",
       stats: [
         { value: "0%", label: "Fee" },
@@ -1556,20 +1534,20 @@ const en = {
         { title: "Instant Alerts", body: "Real-time Telegram notifications for every single transaction." },
       ],
       flow: [
-        { title: "Account Setup", body: "Quick Telegram registration and adding your payout details." },
+        { title: "Account Setup", body: "Quick Telegram registration and adding your TON, TRON, or EVM payout details." },
         { title: "Invoice Creation", body: "Generate payment links in a few clicks via our intuitive dashboard." },
         { title: "Real-time Tracking", body: "Live blockchain monitoring. We confirm transactions automatically." },
       ],
       code: `// Manual Invoice Link
-// https://reqst.xyz/app/checkout/demo
+// https://recv.money/app/checkout/demo
 // No code required for Merchant plan.
 // Just share the link and get paid.`
     },
     developer: {
-      badge: "Reqst Developer",
+      badge: "recv Developer",
       title: "Payments Infrastructure. Control in Your Hands.",
       body: "Professional API and Webhooks for full business automation. Direct payouts and zero turnover commissions.",
-      priceLabel: "$199",
+      priceLabel: "$29",
       period: "per month",
       stats: [
         { value: "50k", label: "Requests/mo" },
@@ -1580,31 +1558,31 @@ const en = {
       features: [
         { title: "Webhook Delivery", body: "Guaranteed delivery with automated retries and HMAC signatures." },
         { title: "Real-time Monitoring", body: "Real-time transaction monitoring. Detect payments instantly." },
-        { title: "Unified API v1", body: "A single interface for 7+ networks: TON, TRON, SOL, Base, and more." },
+        { title: "Unified API v1", body: "A single interface for native TON, TON_USDT, TRON, Base, and BSC." },
         { title: "Idempotency", body: "Built-in protection against duplicate transactions at the API level." },
       ],
       flow: [
-        { title: "API Key Provisioning", body: "Generate rqst_live_ keys. Manage scopes for secure backend integration." },
+        { title: "API Key Provisioning", body: "Generate live_ keys. Manage scopes for secure backend integration." },
         { title: "Webhook Config", body: "Set up HMAC-SHA256 signed callbacks for instant notifications." },
         { title: "Automated Processing", body: "Our watchers track transactions 24/7, confirming payments autonomously." },
       ],
-      code: `// Create Invoice via Reqst API
-const res = await fetch("https://api.reqst.xyz/v1/invoices", {
+      code: `// Create Invoice via recv API
+const res = await fetch("https://api.recv.money/v1/invoices", {
   method: "POST",
-  headers: { "X-API-Key": "rqst_live_..." },
+  headers: { "X-API-Key": "live_..." },
   body: JSON.stringify({
     title: "Order #99",
-    base_amount_usd: "199.00",
+    base_amount_usd: "29.00",
     payable_network: "TON"
   })
 });
 const inv = await res.json();`
     },
     business: {
-      badge: "Reqst Business",
+      badge: "recv Business",
       title: "Scalable Processing. For Growing Teams.",
       body: "Extended API limits, team access, and priority support for businesses with high payment volume.",
-      priceLabel: "$499",
+      priceLabel: "$79",
       period: "per month",
       stats: [
         { value: "200k", label: "Requests/mo" },
@@ -1628,41 +1606,12 @@ const inv = await res.json();`
 // Isolated API keys and team seats
 // Advanced Analytics enabled`
     },
-    enterprise: {
-      badge: "Reqst Enterprise",
-      title: "Corporate Standard. Infrastructure Without Limits.",
-      body: "Custom limits, SLA guarantees, and dedicated support for major market players.",
-      priceLabel: "Custom",
-      period: "individual pricing",
-      stats: [
-        { value: "1M+", label: "Requests/mo" },
-        { value: "∞", label: "Seats" },
-        { value: "SLA", label: "Guarantee" },
-        { value: "Dedicated", label: "Support" },
-      ],
-      features: [
-        { title: "Custom Rate Limits", body: "Individually tailored API throughput for your peak loads." },
-        { title: "SLA & B2B Contracts", body: "Legal uptime guarantees and official corporate contracting." },
-        { title: "Dedicated Engineering", body: "Direct communication with core developers for consultation." },
-        { title: "Onboarding Assist", body: "Personal manager for integration and migration assistance." },
-      ],
-      flow: [
-        { title: "Infrastructure Audit", body: "Analyzing your payment flows to design the optimal monitoring architecture." },
-        { title: "Dedicated Provisioning", body: "Deploying isolated infrastructure for maximum reliability." },
-        { title: "Hyper-scale Support", body: "Launch with unlimited quotas under direct supervision of our team." },
-      ],
-      code: `// Enterprise SLA Integration
-// 99.9% Uptime Guarantee
-// Dedicated monitoring nodes
-// 24/7 Incident Response
-// Custom Webhook retry logic`
-    },
   },
   legal: { privacy: {
       kicker: "PRIVACY POLICY",
       title: "PRIVACY POLICY AND DATA PROCESSING AGREEMENT",
       summary:
-        "READ THIS DOCUMENT CAREFULLY. BY ACCESSING THE REQST SOFTWARE, DASHBOARD, API, OR PUBLIC CHECKOUT PAGES, YOU EXPLICITLY CONSENT TO THE DATA PRACTICES DESCRIBED HEREIN. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY CEASE ALL USE OF THE SERVICE.",
+        "READ THIS DOCUMENT CAREFULLY. BY ACCESSING THE RECV SOFTWARE, DASHBOARD, API, OR PUBLIC CHECKOUT PAGES, YOU EXPLICITLY CONSENT TO THE DATA PRACTICES DESCRIBED HEREIN. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY CEASE ALL USE OF THE SERVICE.",
       updatedLabel: "Last Updated",
       operatorLabel: "Effective Date",
       metaItems: ["Last Updated: March 13, 2026", "Effective Date: March 13, 2026"],
@@ -1680,14 +1629,14 @@ const inv = await res.json();`
         {
           title: "1. PREAMBLE AND SCOPE",
           paragraphs: [
-            'This Privacy Policy (the "Policy") governs how reqst ("Company", "we", "us", "our") collects, processes, utilizes, and safeguards information when you ("Merchant", "User", "you") or your end-users ("Customers") interact with our software-as-a-service infrastructure, Telegram bots, API endpoints, and public checkout interfaces (collectively, the "Service").',
+            'This Privacy Policy (the "Policy") governs how recv ("Company", "we", "us", "our") collects, processes, utilizes, and safeguards information when you ("Merchant", "User", "you") or your end-users ("Customers") interact with our software-as-a-service infrastructure, Telegram bots, API endpoints, and public checkout interfaces (collectively, the "Service").',
             "This Policy is designed to comply with global data protection principles while explicitly acknowledging the inherently public, immutable, and decentralized nature of cryptographic blockchain technology.",
           ],
         },
         {
           title: "2. THE FUNDAMENTAL REALITY OF BLOCKCHAIN DATA (CRITICAL NOTICE)",
           paragraphs: [
-            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TRON, Solana, Ethereum, Base, Arbitrum, and BSC) are decentralized, public ledgers.",
+            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TON_USDT, TRON, Base, and BSC) are decentralized, public ledgers.",
             '2.2. No Expectation of Privacy On-Chain: Wallet addresses, transaction hashes (TXIDs), timestamps, transfer amounts, and on-chain memos/comments are inherently public, permanently recorded, and accessible to anyone globally. The Company does not control these networks and cannot erase, obfuscate, or alter on-chain data. 2.3. Exemption from Deletion Requests: Requests to invoke the "Right to be Forgotten" or data erasure under the GDPR or CCPA cannot and will not apply to cryptographic data broadcasted to and confirmed on public blockchain networks.',
           ],
         },
@@ -1743,7 +1692,7 @@ const inv = await res.json();`
           ],
           bullets: [
             "Telegram Messenger Inc.: For authentication, bot interactions, and Merchant notifications.",
-            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM/Solana node providers) used to read the blockchain.",
+            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM/TON_USDT node providers) used to read the blockchain.",
             "Cloud Infrastructure: Secure database hosting (PostgreSQL) and server environments (e.g., AWS, DigitalOcean, or Cloudflare for edge routing).",
             "Market Oracles: Third-party APIs (e.g., CoinGecko) to fetch real-time USD to Digital Asset exchange rates.",
           ],
@@ -1779,7 +1728,7 @@ const inv = await res.json();`
       kicker: "TERMS OF SERVICE",
       title: "TERMS OF SERVICE: COMPREHENSIVE END-USER LICENSE AND USAGE AGREEMENT",
       summary:
-        "PLEASE READ THIS COMPREHENSIVE AGREEMENT CAREFULLY. IT CONTAINS A MANDATORY BINDING ARBITRATION CLAUSE, A CLASS ACTION WAIVER, AND EXTENSIVE DISCLAIMERS OF LIABILITY THAT MATERIALLY AFFECT YOUR LEGAL RIGHTS. BY ACCESSING, INTEGRATING, OR UTILIZING THE REQST SOFTWARE, API, OR WEBHOOKS, YOU EXPLICITLY AGREE TO BE BOUND BY THESE TERMS IN THEIR ENTIRETY.",
+        "PLEASE READ THIS COMPREHENSIVE AGREEMENT CAREFULLY. IT CONTAINS A MANDATORY BINDING ARBITRATION CLAUSE, A CLASS ACTION WAIVER, AND EXTENSIVE DISCLAIMERS OF LIABILITY THAT MATERIALLY AFFECT YOUR LEGAL RIGHTS. BY ACCESSING, INTEGRATING, OR UTILIZING THE RECV SOFTWARE, API, OR WEBHOOKS, YOU EXPLICITLY AGREE TO BE BOUND BY THESE TERMS IN THEIR ENTIRETY.",
       updatedLabel: "Last Updated",
       operatorLabel: "Effective Date",
       metaItems: ["Last Updated: March 13, 2026", "Effective Date: March 13, 2026"],
@@ -1787,7 +1736,7 @@ const inv = await res.json();`
       draftBody:
         "This page preserves the provided Terms text in its original language mix and legal wording.",
       draftItems: [
-        'Company: reqst',
+        'Company: recv',
         'Scope: software, API, webhooks, blockchain monitoring',
         'Model: non-custodial, direct-to-wallet',
         'Dispute flow: arbitration + class action waiver',
@@ -1797,7 +1746,7 @@ const inv = await res.json();`
         {
           title: "1. PREAMBLE AND ACCEPTANCE OF TERMS",
           paragraphs: [
-            '1.1. Parties to the Agreement: This Terms of Service Agreement (the "Agreement") constitutes a legally binding contract between you (acting individually or on behalf of a corporate entity, hereinafter "Merchant", "Licensee", "User", "you", or "your") and reqst (hereinafter "Company", "we", "us", "our", or "Service Provider").',
+            '1.1. Parties to the Agreement: This Terms of Service Agreement (the "Agreement") constitutes a legally binding contract between you (acting individually or on behalf of a corporate entity, hereinafter "Merchant", "Licensee", "User", "you", or "your") and recv (hereinafter "Company", "we", "us", "our", or "Service Provider").',
             "1.2. Capacity to Contract: By utilizing the Service via Telegram authentication or our API, you represent and warrant that you are at least eighteen (18) years of age, possess the legal capacity to enter into this Agreement, and, if acting on behalf of a legal entity, possess the requisite authority to bind said entity.",
             "1.3. Modifications: We reserve the absolute, unilateral right to amend, modify, or append to this Agreement at any time. Continued use of the Service following the publication of any modifications constitutes your irrevocable acceptance of the amended terms.",
           ],
@@ -1806,7 +1755,7 @@ const inv = await res.json();`
           title: '2. STRICT DEFINITION OF THE SERVICE (THE "MERE CONDUIT" DOCTRINE)',
           paragraphs: [
             '2.1. Software as a Service (SaaS): The "Service" refers exclusively to the proprietary, non-custodial software middleware provided by the Company. This includes the dashboard, checkout page generators, smart-matching algorithms, API endpoints, webhook delivery systems, and blockchain monitoring logic (the "Watchers").',
-            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, Solana, EVM-compatible chains) and visualizes this data.",
+            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, TON_USDT, Base, BSC-compatible chains) and visualizes this data.",
             "2.3. Zero Financial Intermediation: The Company is strictly not a payment processor, payment gateway, money transmitter, clearinghouse, custodian, fiduciary, or financial institution. At no point in the technical architecture does the Company receive, hold, control, or possess any fiat currency, digital assets, or cryptographic private keys belonging to the Merchant or the Merchant’s end-users (\"Customers\").",
             "2.4. Direct-to-Wallet Execution: All transfers of Digital Assets occur exclusively and directly on the public blockchain from the Customer's unhosted or custodial wallet directly to the Merchant's designated destination address.",
           ],
@@ -1838,7 +1787,7 @@ const inv = await res.json();`
         {
           title: "5. TECHNICAL MECHANICS, PROTOCOLS, AND USER ERROR",
           paragraphs: [
-            "5.1. Smart-Tracking and Exactness: To facilitate automated invoice status resolution, the Service employs a Smart-Tracking matching protocol. For TRON, Solana, and EVM networks, a unique decimal suffix (e.g., 0.000123) is appended to the payable amount. For the TON network, a mandatory unique payment comment (memo) is generated.",
+            "5.1. Smart-Tracking and Exactness: To facilitate automated invoice status resolution, the Service employs a Smart-Tracking matching protocol. For TRON, Base, and BSC networks, a unique decimal suffix (e.g., 0.000123) is appended to the payable amount. For the TON network, a mandatory unique payment comment (memo) is generated.",
             "5.2. Waiver of Liability for User Error: The Company bears absolutely ZERO liability for any financial loss, delayed access to digital goods, or unfulfilled invoices arising from:",
             "5.3. Irrevocability of Transactions: The Merchant acknowledges that blockchain transactions are mathematically immutable. The Company cannot reverse, refund, or alter any on-chain transfer. All dispute resolutions, underpayment negotiations, and refund processing are solely the responsibility of the Merchant.",
             "5.4. Third-Party RPC Reliance: The Service’s blockchain monitoring capabilities are wholly dependent on the stability, uptime, and accuracy of third-party Remote Procedure Call (RPC) node providers (e.g., TronGrid, TonCenter) and external oracle APIs (e.g., CoinGecko for fiat/crypto exchange rates). The Company is not liable for Service degradation, delayed webhooks, or failed mempool tracking caused by external RPC outages, rate-limiting, or public network congestion.",
@@ -1852,9 +1801,9 @@ const inv = await res.json();`
         {
           title: "6. API, WEBHOOKS, AND INTEGRATION SLAs",
           paragraphs: [
-            "6.1. API License: Subject to these Terms and active subscription status, the Company grants the Merchant a limited, non-exclusive, non-transferable, and revocable license to access the Reqst API (v1).",
+            "6.1. API License: Subject to these Terms and active subscription status, the Company grants the Merchant a limited, non-exclusive, non-transferable, and revocable license to access the recv API (v1).",
             '6.2. Webhook Delivery and Idempotency: Webhook notifications are delivered on an "at-least-once" basis. Due to network conditions, duplicate webhooks may be transmitted. The Merchant is strictly required to implement Idempotency Safety on their servers to prevent duplicate order fulfillment.',
-            "6.3. Cryptographic Verification: The Merchant must cryptographically verify all incoming webhooks using the X-Reqst-Signature header via HMAC-SHA256 algorithm. The Company disclaims any liability for unauthorized actions resulting from the Merchant's failure to validate webhook authenticity.",
+            "6.3. Cryptographic Verification: The Merchant must cryptographically verify all incoming webhooks using the X-recv-Signature header via HMAC-SHA256 algorithm. The Company disclaims any liability for unauthorized actions resulting from the Merchant's failure to validate webhook authenticity.",
           ],
         },
         {
@@ -1900,7 +1849,7 @@ const inv = await res.json();`
         {
           title: "12. FORCE MAJEURE AND BLOCKCHAIN ANOMALIES",
           paragraphs: [
-            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM or Solana).",
+            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM or TON_USDT).",
           ],
         },
         {

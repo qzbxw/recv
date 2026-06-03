@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"reqst/backend/internal/store"
+	"recv/backend/internal/store"
 
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 )
@@ -42,14 +42,14 @@ func TestSendWebhookDelivery(t *testing.T) {
 		if r.Method != http.MethodPost {
 			t.Fatalf("unexpected method: %s", r.Method)
 		}
-		if r.Header.Get("X-Reqst-Event") != "invoice.paid" {
-			t.Fatalf("unexpected event header: %q", r.Header.Get("X-Reqst-Event"))
+		if r.Header.Get("X-recv-Event") != "invoice.paid" {
+			t.Fatalf("unexpected event header: %q", r.Header.Get("X-recv-Event"))
 		}
-		if r.Header.Get("X-Reqst-Timestamp") == "" {
+		if r.Header.Get("X-recv-Timestamp") == "" {
 			t.Fatal("expected timestamp header")
 		}
-		if !strings.HasPrefix(r.Header.Get("X-Reqst-Signature"), "v1=") {
-			t.Fatalf("unexpected signature header: %q", r.Header.Get("X-Reqst-Signature"))
+		if !strings.HasPrefix(r.Header.Get("X-recv-Signature"), "v1=") {
+			t.Fatalf("unexpected signature header: %q", r.Header.Get("X-recv-Signature"))
 		}
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -269,12 +269,12 @@ func newWebhookTestStore(t *testing.T, ctx context.Context) *store.Store {
 	pgConfig := embeddedpostgres.DefaultConfig().
 		Version(embeddedpostgres.V16).
 		Port(port).
-		Database("reqst").
-		Username("reqst").
-		Password("reqst").
+		Database("recv").
+		Username("recv").
+		Password("recv").
 		RuntimePath(filepath.Join(baseDir, "runtime")).
 		DataPath(filepath.Join(baseDir, "data")).
-		CachePath(filepath.Join(os.TempDir(), "reqst-embedded-postgres-cache")).
+		CachePath(filepath.Join(os.TempDir(), "recv-embedded-postgres-cache")).
 		Locale("C").
 		Encoding("UTF8").
 		StartTimeout(45 * time.Second).

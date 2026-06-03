@@ -3,7 +3,7 @@ import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
 export const runtime = "edge";
 
-export const alt = "Reqst | Crypto Payments Infrastructure";
+export const alt = "recv | Crypto Payments Infrastructure";
 export const size = {
   width: 1200,
   height: 630,
@@ -62,7 +62,7 @@ export default async function Image({ params }: { params: { locale: string } }) 
             marginBottom: "10px",
           }}
         >
-          Reqst
+          recv
         </div>
         <div
           style={{

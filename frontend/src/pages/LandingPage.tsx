@@ -52,7 +52,7 @@ export function LandingPage() {
         <header className="lend-topbar">
           <div className="lend-topbar-main">
             <Link className="lend-brand" to="/">
-              <strong>reqst</strong>
+              <strong>recv</strong>
             </Link>
 
             <div className="lend-topbar-actions">
@@ -150,13 +150,13 @@ export function LandingPage() {
             {copy.compare.rows.map((row) => (
               <article key={row.legacy} className="lend-compare-row">
                 <div className="lend-compare-legacy">
-                  <span>BEFORE REQST</span>
+                  <span>BEFORE RECV</span>
                   <p>{row.legacy}</p>
                 </div>
                 <div className="lend-compare-separator" />
-                <div className="lend-compare-reqst">
-                  <span>WITH REQST</span>
-                  <p>{row.reqst}</p>
+                <div className="lend-compare-recv">
+                  <span>WITH RECV</span>
+                  <p>{row.recv}</p>
                 </div>
               </article>
             ))}
@@ -246,14 +246,14 @@ export function LandingPage() {
           <div className="lend-pricing-card lend-spotlight-card" onMouseMove={handleMouseMove}>
             <div className="lend-card-spotlight" />
             <div className="lend-dogfood-glow" />
-            <h3>{copy.pricing.enterprise.name}</h3>
+            <h3>{copy.pricing.business.name}</h3>
             <div className="lend-price">
-              {copy.pricing.enterprise.price}
+              {copy.pricing.business.price}
             </div>
-            <ul className={copy.pricing.enterprise.price === 'Custom' ? 'lend-pricing-card__list--custom-margin' : ''}>
-              {copy.pricing.enterprise.features.map(f => <li key={f}>{f}</li>)}
+            <ul>
+              {copy.pricing.business.features.map(f => <li key={f}>{f}</li>)}
             </ul>
-            <Link className="lend-secondary" to="/enterprise">{copy.pricing.enterprise.cta}</Link>
+            <Link className="lend-secondary" to="/auth">{copy.pricing.business.cta}</Link>
           </div>
         </div>
       </section>
@@ -316,7 +316,7 @@ export function LandingPage() {
                 <Link className="lend-secondary" to="/dev">
                   {copy.footer.api}
                 </Link>
-                <Link className="lend-secondary" to="/enterprise">
+                <Link className="lend-secondary" to="/auth">
                   {copy.footer.b2b}
                 </Link>
               </div>
@@ -330,7 +330,7 @@ export function LandingPage() {
             <Link to="/terms">{copy.footer.terms}</Link>
             <Link to="/developers">Docs</Link>
             <Link to="/dev">{copy.footer.api}</Link>
-            <Link to="/enterprise">{copy.footer.b2b}</Link>
+            <Link to="/auth">{copy.footer.b2b}</Link>
             <Link to="/auth">{copy.footer.console}</Link>
           </div>
         </footer>

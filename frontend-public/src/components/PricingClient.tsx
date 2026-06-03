@@ -5,10 +5,10 @@ import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayo
 import { getCopy } from "@/i18n";
 
 const TIER_LINKS = {
+  trial: "auth",
   merchant: "merchant",
   developer: "dev",
   business: "business",
-  enterprise: "enterprise",
 } as const;
 
 const POPULAR_TIER = "developer";
@@ -27,7 +27,7 @@ function CheckIcon() {
 export function PricingClient({ locale }: { locale: string }) {
   const copy = getCopy(locale as "en" | "ru");
   const reveal = useReveal();
-  const tiers: Tier[] = ["merchant", "developer", "business", "enterprise"];
+  const tiers: Tier[] = ["trial", "merchant", "developer", "business"];
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -56,8 +56,8 @@ export function PricingClient({ locale }: { locale: string }) {
           </h1>
           <p className="lend-reveal--3 !text-lg md:!text-xl text-white/55 leading-relaxed max-w-2xl mx-auto">
             {isRu
-              ? "Выберите тариф под текущий объём и подключите прямые выплаты на свои кошельки."
-              : "Choose the plan that matches your volume and keep payouts going directly to your wallets."}
+              ? "Выберите тариф под текущий объём. 0% комиссии на всех планах, выплаты идут напрямую на ваши кошельки."
+              : "Choose the plan that matches your volume. 0% commission on all plans, with payouts going directly to your wallets."}
           </p>
         </div>
       </section>
@@ -65,12 +65,12 @@ export function PricingClient({ locale }: { locale: string }) {
       {/* PRICING CARDS */}
       <section className="py-12 md:py-20 pb-24" ref={reveal}>
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lend-reveal--2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lend-reveal--2">
             {tiers.map((tier, idx) => {
               const item = copy.pricing[tier];
               const isPopular = tier === POPULAR_TIER;
-              const isCustom = item.price === "Custom" || isNaN(Number(item.price));
-              const href = `/${locale}/${TIER_LINKS[tier]}`;
+              const isCustom = isNaN(Number(item.price));
+              const href = tier === "trial" ? "/app/auth" : `/${locale}/${TIER_LINKS[tier]}`;
 
               return (
                 <article
@@ -146,7 +146,7 @@ export function PricingClient({ locale }: { locale: string }) {
             {[
               { stat: "0%", label: isRu ? "Комиссии с оборота" : "Turnover fees" },
               { stat: "100%", label: isRu ? "Non-custodial" : "Non-custodial" },
-              { stat: "6+", label: isRu ? "Поддерживаемых сетей" : "Supported networks" },
+              { stat: "5", label: isRu ? "Платежных сетей MVP" : "MVP payment networks" },
               { stat: "∞", label: isRu ? "Объём транзакций" : "Transaction volume" },
             ].map(({ stat, label }) => (
               <div key={label} className="text-center">
@@ -164,7 +164,7 @@ export function PricingClient({ locale }: { locale: string }) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
         <div className="container mx-auto px-6 text-center relative z-10 max-w-3xl">
           <h2 className="lend-reveal--1 text-4xl md:text-6xl font-extrabold tracking-tighter leading-[0.95] font-['Montserrat'] bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent mb-6">
-            {isRu ? "Запустить Reqst" : "Launch Reqst"}
+            {isRu ? "Запустить recv" : "Launch recv"}
           </h2>
           <p className="lend-reveal--2 text-base md:text-lg text-white/50 max-w-xl mx-auto leading-relaxed font-medium mb-12">
             {isRu
@@ -176,8 +176,8 @@ export function PricingClient({ locale }: { locale: string }) {
               {copy.hero.primary}
               <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500">→</span>
             </Link>
-            <Link className="lend-secondary px-12 py-5 text-lg font-bold rounded-2xl min-w-[240px] flex items-center justify-center" href={`/${locale}/enterprise`}>
-              {copy.nav.pricing.enterprise}
+            <Link className="lend-secondary px-12 py-5 text-lg font-bold rounded-2xl min-w-[240px] flex items-center justify-center" href={`/${locale}/dev`}>
+              {copy.nav.pricing.developer}
             </Link>
           </div>
         </div>

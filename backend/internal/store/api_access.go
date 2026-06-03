@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"reqst/backend/internal/metrics"
+	"recv/backend/internal/metrics"
 
 	"github.com/jackc/pgx/v5"
 )

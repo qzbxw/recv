@@ -16,7 +16,7 @@ type UIContextValue = {
 
 const UIContext = createContext<UIContextValue | null>(null);
 
-const themeKey = "reqst_theme";
+const themeKey = "recv_theme";
 
 export function UIProvider({ children, initialLanguage }: { children: ReactNode, initialLanguage: Language }) {
   const [theme, setTheme] = useState<Theme>("dark");

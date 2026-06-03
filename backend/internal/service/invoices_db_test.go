@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"reqst/backend/internal/store"
+	"recv/backend/internal/store"
 
 	"github.com/shopspring/decimal"
 )
@@ -34,15 +34,15 @@ func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
 	// Use fixed TON rate so no external HTTP call is needed
 	svc := NewInvoiceService(st, "5.0")
 
-	t.Run("CreateInvoice on EVM exercises generateUniqueSuffix", func(t *testing.T) {
+	t.Run("CreateInvoice on BASE exercises generateUniqueSuffix", func(t *testing.T) {
 		inv, err := svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
-			Title:          "EVM Test",
+			Title:          "BASE Test",
 			BaseAmountUSD:  decimal.RequireFromString("10"),
-			PayableNetwork: store.NetworkEVM,
+			PayableNetwork: store.NetworkBASE,
 			WalletID:       evmWallet.ID,
 		})
 		if err != nil {
-			t.Fatalf("CreateInvoice EVM: %v", err)
+			t.Fatalf("CreateInvoice BASE: %v", err)
 		}
 		if inv.PublicID == "" {
 			t.Fatal("expected PublicID to be set")
@@ -62,8 +62,8 @@ func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
 		if err != nil {
 			t.Fatalf("CreateInvoice TON: %v", err)
 		}
-		if inv.PaymentComment == nil || !strings.HasPrefix(*inv.PaymentComment, "REQST-") {
-			t.Fatalf("expected REQST- payment comment for TON, got %v", inv.PaymentComment)
+		if inv.PaymentComment == nil || !strings.HasPrefix(*inv.PaymentComment, "RECV-") {
+			t.Fatalf("expected RECV- payment comment for TON, got %v", inv.PaymentComment)
 		}
 	})
 
@@ -100,7 +100,7 @@ func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
 		_, err = svc.CreateInvoice(ctx, blockedWs, CreateInvoiceInput{
 			Title:          "Blocked",
 			BaseAmountUSD:  decimal.RequireFromString("10"),
-			PayableNetwork: store.NetworkEVM,
+			PayableNetwork: store.NetworkBASE,
 		})
 		if err == nil || !strings.Contains(err.Error(), "blocked") {
 			t.Fatalf("expected blocked error, got %v", err)
@@ -110,7 +110,7 @@ func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
 	t.Run("CreateInvoice rejects missing title", func(t *testing.T) {
 		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
 			BaseAmountUSD:  decimal.RequireFromString("10"),
-			PayableNetwork: store.NetworkEVM,
+			PayableNetwork: store.NetworkBASE,
 		})
 		if err == nil || !strings.Contains(err.Error(), "required") {
 			t.Fatalf("expected title required error, got %v", err)
@@ -121,7 +121,7 @@ func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
 		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
 			Title:          "Neg",
 			BaseAmountUSD:  decimal.RequireFromString("-1"),
-			PayableNetwork: store.NetworkEVM,
+			PayableNetwork: store.NetworkBASE,
 		})
 		if err == nil || !strings.Contains(err.Error(), "positive") {
 			t.Fatalf("expected positive amount error, got %v", err)
@@ -144,7 +144,7 @@ func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
 		_, err = svc.CreateInvoice(ctx, trialWs, CreateInvoiceInput{
 			Title:          "Trial",
 			BaseAmountUSD:  decimal.RequireFromString("10"),
-			PayableNetwork: store.NetworkEVM,
+			PayableNetwork: store.NetworkBASE,
 		})
 		if err == nil || !strings.Contains(err.Error(), "trial") {
 			t.Fatalf("expected trial limit error, got %v", err)
@@ -203,7 +203,7 @@ func TestInvoiceServiceCreatePlanInvoiceWithDB(t *testing.T) {
 
 	t.Run("CreatePlanInvoiceWithPrice with override price zero rejected", func(t *testing.T) {
 		zero := decimal.Zero
-		_, err := svc.CreatePlanInvoiceWithPrice(ctx, workspace, store.PlanCodeEnterprise, store.NetworkTON, &zero)
+		_, err := svc.CreatePlanInvoiceWithPrice(ctx, workspace, store.PlanCodeBusiness, store.NetworkTON, &zero)
 		if err == nil {
 			t.Fatal("expected error for zero override price")
 		}
@@ -261,7 +261,7 @@ func TestInvoiceServiceCreateInvoiceWalletBranches(t *testing.T) {
 		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
 			Title:          "Mismatch",
 			BaseAmountUSD:  decimal.RequireFromString("10"),
-			PayableNetwork: store.NetworkEVM, // EVM network but TON wallet
+			PayableNetwork: store.NetworkBASE, // BASE payable network but TON wallet
 			WalletID:       tonWallet.ID,
 		})
 		if err == nil || !strings.Contains(err.Error(), "network") {
@@ -270,11 +270,11 @@ func TestInvoiceServiceCreateInvoiceWalletBranches(t *testing.T) {
 	})
 
 	t.Run("CreateInvoice without wallet and no active wallet fails", func(t *testing.T) {
-		// No wallet created for SOLANA → active wallet lookup fails
+		// No wallet created for BSC → active wallet lookup fails
 		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
 			Title:          "No Wallet",
 			BaseAmountUSD:  decimal.RequireFromString("10"),
-			PayableNetwork: store.NetworkSOLANA,
+			PayableNetwork: store.NetworkBSC,
 		})
 		if err == nil {
 			t.Fatal("expected error when no active wallet for network")
@@ -285,7 +285,7 @@ func TestInvoiceServiceCreateInvoiceWalletBranches(t *testing.T) {
 		_, err = svc.CreateInvoice(ctx, workspace, CreateInvoiceInput{
 			Title:          "BadWallet",
 			BaseAmountUSD:  decimal.RequireFromString("10"),
-			PayableNetwork: store.NetworkEVM,
+			PayableNetwork: store.NetworkBASE,
 			WalletID:       99999999,
 		})
 		if err == nil {

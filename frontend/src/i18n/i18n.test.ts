@@ -17,7 +17,7 @@ describe("Vite app i18n", () => {
     expect(CHECKOUT_COPY.ru.loading).toBeTruthy();
     expect(DEVELOPER_PORTAL_COPY.en.nav.docs).toBe("Documentation");
     expect(LANDING_COPY.ru.footer.console).toBe("Консоль");
-    expect(PLAN_COPY.en.dev.badge).toBe("Reqst Developer");
+    expect(PLAN_COPY.en.dev.badge).toBe("recv Developer");
     expect(SELLER_CONSOLE_COPY.ru.nav.invoices).toBe("Транзакции");
   });
 

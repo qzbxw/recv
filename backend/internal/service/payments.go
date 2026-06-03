@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/store"
 )
 
 type PaymentService struct {

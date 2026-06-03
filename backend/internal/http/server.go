@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"reqst/backend/internal/config"
-	"reqst/backend/internal/metrics"
-	"reqst/backend/internal/service"
-	"reqst/backend/internal/store"
+	"recv/backend/internal/config"
+	"recv/backend/internal/metrics"
+	"recv/backend/internal/service"
+	"recv/backend/internal/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -87,7 +87,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	router.Use(gin.Logger(), gin.Recovery(), corsMiddleware(cfg), requestMetricsMiddleware())
 
 	router.GET("/healthz", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"ok": true, "service": "reqst-api"})
+		c.JSON(http.StatusOK, gin.H{"ok": true, "service": "recv-api"})
 	})
 
 	router.POST("/api/auth/telegram", server.handleTelegramAuth)
@@ -208,7 +208,7 @@ func (s *Server) handleTelegramAuth(c *gin.Context) {
 	}
 
 	metrics.IncAuthAttempt("telegram", "success", "authenticated")
-	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
+	setRefreshCookie(c, "recv_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusOK, result)
 }
 
@@ -248,7 +248,7 @@ func (s *Server) handleTelegramCodeLogin(c *gin.Context) {
 	}
 
 	metrics.IncAuthAttempt("telegram_code_login", "success", "authenticated")
-	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
+	setRefreshCookie(c, "recv_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusOK, result)
 }
 
@@ -269,12 +269,12 @@ func (s *Server) handleAgentBootstrap(c *gin.Context) {
 	}
 
 	metrics.IncAuthAttempt("agent_bootstrap", "success", "created")
-	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
+	setRefreshCookie(c, "recv_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusCreated, result)
 }
 
 func (s *Server) handleAuthRefresh(c *gin.Context) {
-	refreshToken := refreshTokenFromRequest(c, "reqst_refresh")
+	refreshToken := refreshTokenFromRequest(c, "recv_refresh")
 	if refreshToken == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing refresh token"})
 		return
@@ -284,16 +284,16 @@ func (s *Server) handleAuthRefresh(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-	setRefreshCookie(c, "reqst_refresh", result.RefreshToken, s.cfg.AppEnv)
+	setRefreshCookie(c, "recv_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusOK, result)
 }
 
 func (s *Server) handleAuthLogout(c *gin.Context) {
-	refreshToken := refreshTokenFromRequest(c, "reqst_refresh")
+	refreshToken := refreshTokenFromRequest(c, "recv_refresh")
 	if refreshToken != "" {
 		_ = s.authService.Logout(c.Request.Context(), refreshToken)
 	}
-	clearRefreshCookie(c, "reqst_refresh", s.cfg.AppEnv)
+	clearRefreshCookie(c, "recv_refresh", s.cfg.AppEnv)
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
@@ -895,7 +895,7 @@ func paymentURI(invoice store.Invoice) string {
 			comment = *invoice.PaymentComment
 		}
 		return "ton://transfer/" + invoice.DestinationAddress + "?amount=" + invoice.PayableAmount.Mul(decimal.NewFromInt(1_000_000_000)).StringFixed(0) + "&text=" + url.QueryEscape(comment)
-	case store.NetworkTRON, store.NetworkSOLANA, store.NetworkEVM, store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC:
+	case store.NetworkTON_USDT, store.NetworkTRON, store.NetworkBASE, store.NetworkBSC:
 		return invoice.DestinationAddress
 	default:
 		return invoice.DestinationAddress

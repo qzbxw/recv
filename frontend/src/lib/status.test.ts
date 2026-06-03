@@ -12,7 +12,7 @@ import type { Invoice } from "./types";
 
 const baseInvoice: Invoice = {
   id: 1,
-  public_id: "REQST-1",
+  public_id: "RECV-1",
   title: "Demo",
   base_amount_usd: "10.00",
   payable_amount: "10.000000",
@@ -24,7 +24,7 @@ const baseInvoice: Invoice = {
   expires_at: "2026-01-01T00:00:00.000Z",
   created_at: "2025-01-01T00:00:00.000Z",
   received_amount: "0",
-  checkout_url: "/app/checkout/REQST-1",
+  checkout_url: "/app/checkout/RECV-1",
   payment_uri: "ton://transfer/wallet",
 };
 

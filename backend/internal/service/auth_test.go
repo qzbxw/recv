@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"reqst/backend/internal/store"
+	"recv/backend/internal/store"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -1068,7 +1068,6 @@ func TestAuthServiceParseTokenEdgeCases(t *testing.T) {
 		}
 	})
 }
-
 
 func rewriteServiceTelegramClient(t *testing.T, server *httptest.Server) *http.Client {
 	t.Helper()

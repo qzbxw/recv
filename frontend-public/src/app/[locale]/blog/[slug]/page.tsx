@@ -12,10 +12,10 @@ const FALLBACK_POSTS = {
       slug: "non-custodial-crypto-checkout",
       title: "How non-custodial crypto checkout works",
       excerpt: "A practical overview of direct-to-wallet invoices, payment detection, and webhook-based fulfillment.",
-      author: "Reqst Core Team",
+      author: "recv Core Team",
       published_at: "2026-03-13T00:00:00.000Z",
       updated_at: "2026-03-13T00:00:00.000Z",
-      content_md: "## Direct settlement\n\nReqst creates payment instructions while funds settle directly to the merchant wallet.\n\n## Detection and fulfillment\n\nThe watcher observes supported networks, matches transfers to invoices, and emits signed webhooks for fulfillment.",
+      content_md: "## Direct settlement\n\nrecv creates payment instructions while funds settle directly to the merchant wallet.\n\n## Detection and fulfillment\n\nThe watcher observes supported networks, matches transfers to invoices, and emits signed webhooks for fulfillment.",
     },
   },
   ru: {
@@ -23,10 +23,10 @@ const FALLBACK_POSTS = {
       slug: "non-custodial-crypto-checkout",
       title: "Как работает non-custodial crypto checkout",
       excerpt: "Практичный обзор direct-to-wallet инвойсов, детекции платежей и webhook-выдачи.",
-      author: "Reqst Core Team",
+      author: "recv Core Team",
       published_at: "2026-03-13T00:00:00.000Z",
       updated_at: "2026-03-13T00:00:00.000Z",
-      content_md: "## Прямое зачисление\n\nReqst создает платежные инструкции, а средства приходят напрямую на кошелек продавца.\n\n## Детекция и выдача\n\nWatcher наблюдает поддерживаемые сети, сопоставляет переводы с инвойсами и отправляет подписанные webhooks для выдачи.",
+      content_md: "## Прямое зачисление\n\nrecv создает платежные инструкции, а средства приходят напрямую на кошелек продавца.\n\n## Детекция и выдача\n\nWatcher наблюдает поддерживаемые сети, сопоставляет переводы с инвойсами и отправляет подписанные webhooks для выдачи.",
     },
   },
 } as const;
@@ -61,8 +61,8 @@ export async function generateMetadata(
   }
 
   return {
-    title: `${post.title} | Reqst Blog`,
-    description: post.excerpt || "Read the latest updates and engineering insights from Reqst.",
+    title: `${post.title} | recv Blog`,
+    description: post.excerpt || "Read the latest updates and engineering insights from recv.",
     alternates: {
       canonical: `/${params.locale}/blog/${params.slug}`,
     },
@@ -104,8 +104,8 @@ export default async function BlogPost(props: Props) {
     "dateModified": post.updated_at || post.published_at,
     "author": [{
       "@type": "Person",
-      "name": post.author || "Reqst Core Team",
-      "url": `https://reqst.xyz/${language}/blog/author/${(post.author || "reqst-core").toLowerCase().replace(/\s+/g, '-')}`
+      "name": post.author || "recv Core Team",
+      "url": `https://recv.money/${language}/blog/author/${(post.author || "recv-core").toLowerCase().replace(/\s+/g, '-')}`
     }]
   };
 
