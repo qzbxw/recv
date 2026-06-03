@@ -37,6 +37,7 @@ export default async function NetworksHubPage(props: Props) {
     { name: "TRON", slug: "tron", desc: locale === "ru" ? "Самая популярная сеть для USDT. Высокая ликвидность и широкое принятие." : "The most popular network for USDT payments with high liquidity and adoption." },
     { name: "Solana", slug: "solana", desc: locale === "ru" ? "Высокоскоростная сеть с ультра-низкими комиссиями и мгновенным подтверждением." : "High-speed network with ultra-low fees and near-instant confirmations." },
     { name: "Base", slug: "base", desc: locale === "ru" ? "L2 сеть от Coinbase для надёжных EVM-совместимых платежей." : "Coinbase's L2 for reliable EVM-compatible payments with institutional backing." },
+    { name: "Arbitrum", slug: "arbitrum", desc: locale === "ru" ? "EVM L2 для USDT и Circle-native USDC платежей." : "EVM L2 for USDT and Circle-native USDC payments." },
     { name: "BSC", slug: "bsc", desc: locale === "ru" ? "Binance Smart Chain с широкой поддержкой токенов и высокой ликвидностью." : "Binance Smart Chain with broad token support and high DeFi liquidity." },
   ];
 

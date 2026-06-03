@@ -96,8 +96,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                         base_amount_usd: { type: "string", description: "Amount in USD as a decimal string (e.g. '10.50')" },
                         payable_network: {
                             type: "string",
-                            description: "Network the customer pays on. One of: TON, TON_USDT, TRON, BASE, BSC.",
-                            enum: ["TON", "TON_USDT", "TRON", "BASE", "BSC"],
+                            description: "Legacy single-option network. One of: TON, TON_USDT, TRON, SOLANA, BASE, ARBITRUM, BSC.",
+                            enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"],
+                        },
+                        payable_asset: {
+                            type: "string",
+                            description: "Optional asset for legacy single-option requests. One of: TON, USDT, USDC, SOL, BNB.",
+                            enum: ["TON", "USDT", "USDC", "SOL", "BNB"],
+                        },
+                        payment_options: {
+                            type: "array",
+                            description: "Optional list of up to two payment choices, e.g. [{network:'TRON', asset:'USDT'}, {network:'SOLANA', asset:'SOL'}].",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    network: { type: "string", enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] },
+                                    asset: { type: "string", enum: ["TON", "USDT", "USDC", "SOL", "BNB"] },
+                                },
+                                required: ["network", "asset"],
+                            },
+                            maxItems: 2,
                         },
                         expires_in_minutes: { type: "number", description: "Optional invoice lifetime in minutes (default 30)" },
                     },
@@ -133,8 +151,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                         },
                         payable_network: {
                             type: "string",
-                            description: "Network used to pay recv for the subscription. One of: TON, TON_USDT, TRON, BASE, BSC.",
-                            enum: ["TON", "TON_USDT", "TRON", "BASE", "BSC"],
+                            description: "Legacy single-option network used to pay recv for the subscription.",
+                            enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"],
+                        },
+                        payable_asset: { type: "string", enum: ["TON", "USDT", "USDC", "SOL", "BNB"] },
+                        payment_options: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    network: { type: "string", enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] },
+                                    asset: { type: "string", enum: ["TON", "USDT", "USDC", "SOL", "BNB"] },
+                                },
+                                required: ["network", "asset"],
+                            },
+                            maxItems: 2,
                         },
                     },
                     required: ["plan_code", "payable_network"],
@@ -250,7 +281,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 return {
                     content: [{
                             type: "text",
-                            text: "recv supports the following payable_network values:\n- TON — native TON\n- TON_USDT — USDT on TON\n- TRON — USDT TRC-20\n- BASE — USDC/USDT on Base\n- BSC — USDT on BNB Smart Chain"
+                            text: "recv supports these payment options:\n- TON/TON\n- TON_USDT/USDT\n- TRON/USDT\n- SOLANA/SOL, SOLANA/USDT, SOLANA/USDC\n- BASE/USDT, BASE/USDC\n- ARBITRUM/USDT, ARBITRUM/USDC\n- BSC/BNB, BSC/USDT"
                         }],
                 };
             }
@@ -278,12 +309,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             case "create_invoice": {
                 if (!API_KEY)
                     throw new Error("API_KEY not set");
-                const { title, base_amount_usd, payable_network, expires_in_minutes } = args || {};
+                const { title, base_amount_usd, payable_network, payable_asset, payment_options, expires_in_minutes } = args || {};
                 const body = {
                     title,
                     base_amount_usd,
                     payable_network: String(payable_network || "").toUpperCase(),
                 };
+                if (payable_asset)
+                    body.payable_asset = String(payable_asset).toUpperCase();
+                if (Array.isArray(payment_options))
+                    body.payment_options = payment_options;
                 if (expires_in_minutes != null)
                     body.expires_in_minutes = expires_in_minutes;
                 const response = await fetch(`${API_BASE_URL}/invoices`, {
@@ -317,13 +352,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             case "create_subscription_checkout": {
                 if (!ACCESS_TOKEN)
                     throw new Error("RECV_ACCESS_TOKEN not set");
-                const { plan_code = "developer", payable_network = "TRON" } = args || {};
+                const { plan_code = "developer", payable_network = "TRON", payable_asset, payment_options } = args || {};
                 const response = await fetch(appApiUrl("/api/billing/checkout"), {
                     method: "POST",
                     headers: consoleHeaders,
                     body: JSON.stringify({
                         plan_code: String(plan_code || "developer").toLowerCase(),
                         payable_network: String(payable_network || "TRON").toUpperCase(),
+                        ...(payable_asset ? { payable_asset: String(payable_asset).toUpperCase() } : {}),
+                        ...(Array.isArray(payment_options) ? { payment_options } : {}),
                     }),
                 });
                 const data = await response.json();

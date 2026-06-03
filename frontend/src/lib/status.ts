@@ -124,6 +124,10 @@ export function formatNetworkLabel(network: Network) {
       return "ETHEREUM";
     case "TON_USDT":
       return "TON USDT";
+    case "SOLANA":
+      return "Solana";
+    case "ARBITRUM":
+      return "Arbitrum";
     default:
       return network;
   }

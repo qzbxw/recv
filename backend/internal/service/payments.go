@@ -63,12 +63,15 @@ func (s *PaymentService) ProcessObservedTransfer(ctx context.Context, transfer s
 }
 
 func (s *PaymentService) matchTransfer(ctx context.Context, transfer store.ObservedTransfer) (*store.Invoice, string, store.InvoiceStatus, error) {
+	if transfer.Asset == "" {
+		transfer.Asset = store.DefaultAssetForNetwork(transfer.Network)
+	}
 	switch transfer.Network {
 	case store.NetworkTON:
-		if transfer.PaymentComment == "" {
+		if transfer.Asset != store.AssetTON || transfer.PaymentComment == "" {
 			return nil, "unmatched", store.InvoiceStatusDraft, nil
 		}
-		invoice, err := s.store.FindInvoiceByTONComment(ctx, transfer.DestinationAddress, transfer.PaymentComment)
+		invoice, err := s.store.FindInvoiceByPaymentComment(ctx, transfer.DestinationAddress, transfer.Network, transfer.Asset, transfer.PaymentComment)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
 				return nil, "unmatched", store.InvoiceStatusDraft, nil
@@ -78,7 +81,7 @@ func (s *PaymentService) matchTransfer(ctx context.Context, transfer store.Obser
 		decision := store.DecideInvoicePaymentStatus(invoice, transfer.Amount, transfer.ObservedAt, "")
 		return &invoice, decision.Classification, decision.Status, nil
 	default:
-		invoice, err := s.store.FindInvoiceByExactAmount(ctx, transfer.DestinationAddress, transfer.Network, transfer.Amount)
+		invoice, err := s.store.FindInvoiceByExactAmountAndAsset(ctx, transfer.DestinationAddress, transfer.Network, transfer.Asset, transfer.Amount)
 		if err == nil {
 			decision := store.DecideInvoicePaymentStatus(invoice, transfer.Amount, transfer.ObservedAt, "")
 			return &invoice, decision.Classification, decision.Status, nil
@@ -87,7 +90,7 @@ func (s *PaymentService) matchTransfer(ctx context.Context, transfer store.Obser
 			return nil, "", store.InvoiceStatusDraft, err
 		}
 
-		invoice, err = s.store.FindPotentialUnderpaidInvoice(ctx, transfer.DestinationAddress, transfer.Network, transfer.Amount)
+		invoice, err = s.store.FindPotentialUnderpaidInvoiceByAsset(ctx, transfer.DestinationAddress, transfer.Network, transfer.Asset, transfer.Amount)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
 				return nil, "unmatched", store.InvoiceStatusDraft, nil
@@ -111,6 +114,12 @@ func normalizeObservedTransfer(transfer *store.ObservedTransfer) error {
 	}
 	if transfer.Network == "" {
 		return errors.New("network is required")
+	}
+	if transfer.Asset == "" {
+		transfer.Asset = store.DefaultAssetForNetwork(transfer.Network)
+	}
+	if !store.IsSupportedPaymentOption(transfer.Network, transfer.Asset) {
+		return fmt.Errorf("unsupported payment option %s/%s", transfer.Network, transfer.Asset)
 	}
 	if !transfer.Amount.IsPositive() {
 		return errors.New("amount must be positive")

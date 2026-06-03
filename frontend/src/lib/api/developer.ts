@@ -71,6 +71,8 @@ export async function createDeveloperInvoice(apiKey: string, payload: {
   title: string;
   base_amount_usd: string;
   payable_network: string;
+  payable_asset?: string;
+  payment_options?: Array<{ network: string; asset: string }>;
   expires_in_minutes: number;
   environment?: Environment;
 }) {

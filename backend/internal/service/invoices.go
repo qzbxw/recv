@@ -9,6 +9,7 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -32,9 +33,16 @@ type CreateInvoiceInput struct {
 	Title            string
 	BaseAmountUSD    decimal.Decimal
 	PayableNetwork   store.Network
+	PayableAsset     store.PaymentAsset
+	PaymentOptions   []PaymentOptionInput
 	WalletID         int64
 	ExpiresInMinutes int
 	Mode             string
+}
+
+type PaymentOptionInput struct {
+	Network store.Network
+	Asset   store.PaymentAsset
 }
 
 func NewInvoiceService(st *store.Store, tonRateEnv string) *InvoiceService {
@@ -67,15 +75,15 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, workspace store.Work
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(network), string(planCode), "failure", "invalid_amount")
 		return store.Invoice{}, errors.New("base_amount_usd must be positive")
 	}
-	if input.ExpiresInMinutes <= 0 {
-		input.ExpiresInMinutes = 30
+	requests, err := s.normalizePaymentOptionInputs(workspace.DefaultNetwork, input.PayableNetwork, input.PayableAsset, input.PaymentOptions)
+	if err != nil {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(network), string(planCode), "failure", "unsupported_payment_option")
+		return store.Invoice{}, err
 	}
-	if input.PayableNetwork == "" {
-		input.PayableNetwork = workspace.DefaultNetwork
-	}
-	if !input.PayableNetwork.IsSupportedPayableNetwork() {
-		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "unsupported_network")
-		return store.Invoice{}, fmt.Errorf("unsupported network %s", input.PayableNetwork)
+	input.ExpiresInMinutes, err = normalizeTTL(input.ExpiresInMinutes, requests, 30)
+	if err != nil {
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(requests[0].Network), string(planCode), "failure", "invalid_ttl")
+		return store.Invoice{}, err
 	}
 
 	if workspace.EffectivePlanCode(time.Now()) == store.PlanCodeTrial && workspace.FreeInvoicesUsed >= TrialInvoiceLimit {
@@ -84,46 +92,46 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, workspace store.Work
 		return store.Invoice{}, fmt.Errorf("trial limit reached: %d invoices. Unlock a paid recv plan to keep generating links.", TrialInvoiceLimit)
 	}
 
-	var (
-		wallet store.Wallet
-		err    error
-	)
-	if input.WalletID > 0 {
-		wallet, err = s.store.GetWalletByID(ctx, workspace.ID, input.WalletID)
+	wallets := make(map[store.Network]store.Wallet)
+	if input.WalletID > 0 && len(requests) == 1 {
+		wallet, err := s.store.GetWalletByID(ctx, workspace.ID, input.WalletID)
 		if err != nil {
-			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "wallet_lookup")
+			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(requests[0].Network), string(planCode), "failure", "wallet_lookup")
 			return store.Invoice{}, fmt.Errorf("selected wallet %d: %w", input.WalletID, err)
 		}
-		if input.PayableNetwork == "" {
-			input.PayableNetwork = wallet.Network
+		if wallet.Network != requests[0].Network.WalletBucket() {
+			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(requests[0].Network), string(planCode), "failure", "wallet_network_mismatch")
+			return store.Invoice{}, fmt.Errorf("wallet %d does not support network %s", wallet.ID, requests[0].Network)
 		}
-		if wallet.Network != input.PayableNetwork.WalletBucket() {
-			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "wallet_network_mismatch")
-			return store.Invoice{}, fmt.Errorf("wallet %d does not support network %s", wallet.ID, input.PayableNetwork)
-		}
+		wallets[wallet.Network] = wallet
 	} else {
-		wallet, err = s.store.GetActiveWalletForNetwork(ctx, workspace.ID, input.PayableNetwork.WalletBucket())
-		if err != nil {
-			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "active_wallet_lookup")
-			return store.Invoice{}, fmt.Errorf("active wallet for network %s: %w", input.PayableNetwork, err)
+		for _, request := range requests {
+			bucket := request.Network.WalletBucket()
+			if _, ok := wallets[bucket]; ok {
+				continue
+			}
+			wallet, err := s.store.GetActiveWalletForNetwork(ctx, workspace.ID, bucket)
+			if err != nil {
+				metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(request.Network), string(planCode), "failure", "active_wallet_lookup")
+				return store.Invoice{}, fmt.Errorf("active wallet for network %s: %w", request.Network, err)
+			}
+			wallets[bucket] = wallet
 		}
 	}
 
 	mode := normalizedMode(input.Mode)
-	invoice, err := s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
-		WorkspaceID:        workspace.ID,
-		Kind:               store.InvoiceKindMerchant,
-		SubscriptionDays:   0,
-		PlanCode:           "",
-		CountTowardsTrial:  mode != "test",
-		Title:              strings.TrimSpace(input.Title),
-		BaseAmountUSD:      input.BaseAmountUSD.Round(6),
-		PayableNetwork:     input.PayableNetwork,
-		DestinationAddress: wallet.Address,
-		Mode:               mode,
-	}, input.ExpiresInMinutes)
+	invoice, err := s.createInvoiceFromOptions(ctx, store.CreateInvoiceParams{
+		WorkspaceID:       workspace.ID,
+		Kind:              store.InvoiceKindMerchant,
+		SubscriptionDays:  0,
+		PlanCode:          "",
+		CountTowardsTrial: mode != "test",
+		Title:             strings.TrimSpace(input.Title),
+		BaseAmountUSD:     input.BaseAmountUSD.Round(6),
+		Mode:              mode,
+	}, requests, wallets, input.ExpiresInMinutes)
 	if err != nil {
-		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(input.PayableNetwork), string(planCode), "failure", "create_invoice")
+		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(requests[0].Network), string(planCode), "failure", "create_invoice")
 		return store.Invoice{}, err
 	}
 	metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindMerchant), string(invoice.PayableNetwork), string(planCode), "success", "created")
@@ -139,8 +147,16 @@ func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, workspace store.
 }
 
 func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, network store.Network, overridePriceUSD *decimal.Decimal) (store.Invoice, error) {
+	return s.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, []PaymentOptionInput{{Network: network}}, overridePriceUSD)
+}
+
+func (s *InvoiceService) CreatePlanInvoiceWithPriceAndOptions(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, requestedOptions []PaymentOptionInput, overridePriceUSD *decimal.Decimal) (store.Invoice, error) {
 	source := metrics.SourceFromContext(ctx)
 	planCode = store.NormalizePlanCode(string(planCode))
+	network := store.Network("")
+	if len(requestedOptions) > 0 {
+		network = requestedOptions[0].Network
+	}
 	if workspace.IsBlocked {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(planCode), "failure", "workspace_blocked")
 		return store.Invoice{}, errors.New("workspace is blocked")
@@ -150,9 +166,10 @@ func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, workspa
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "trial_plan")
 		return store.Invoice{}, errors.New("trial does not require billing")
 	}
-	if !network.IsSupportedPayableNetwork() {
+	requests, err := s.normalizePaymentOptionInputs(store.NetworkTRON, network, "", requestedOptions)
+	if err != nil {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "unsupported_network")
-		return store.Invoice{}, fmt.Errorf("unsupported network %s", network)
+		return store.Invoice{}, err
 	}
 	baseAmountUSD := plan.PriceUSD
 	if overridePriceUSD != nil {
@@ -162,24 +179,34 @@ func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, workspa
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "invalid_price")
 		return store.Invoice{}, errors.New("subscription price must be positive")
 	}
-	address, err := s.store.GetBillingWalletAddress(ctx, network)
-	if err != nil || strings.TrimSpace(address) == "" {
-		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "billing_wallet_missing")
-		return store.Invoice{}, fmt.Errorf("billing wallet is not configured for network %s", network)
+	wallets := make(map[store.Network]store.Wallet)
+	for _, request := range requests {
+		bucket := request.Network.WalletBucket()
+		if _, ok := wallets[bucket]; ok {
+			continue
+		}
+		address, err := s.store.GetBillingWalletAddress(ctx, request.Network)
+		if err != nil || strings.TrimSpace(address) == "" {
+			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(request.Network), string(plan.Code), "failure", "billing_wallet_missing")
+			return store.Invoice{}, fmt.Errorf("billing wallet is not configured for network %s", request.Network)
+		}
+		wallets[bucket] = store.Wallet{Network: bucket, Address: address}
 	}
 
-	invoice, err := s.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
-		WorkspaceID:        workspace.ID,
-		Kind:               store.InvoiceKindSubscription,
-		SubscriptionDays:   plan.BillingDays,
-		PlanCode:           plan.Code,
-		CountTowardsTrial:  false,
-		Title:              plan.CheckoutTitle,
-		BaseAmountUSD:      baseAmountUSD,
-		PayableNetwork:     network,
-		DestinationAddress: address,
-		Mode:               "live",
-	}, 60)
+	ttl, err := normalizeTTL(0, requests, 60)
+	if err != nil {
+		return store.Invoice{}, err
+	}
+	invoice, err := s.createInvoiceFromOptions(ctx, store.CreateInvoiceParams{
+		WorkspaceID:       workspace.ID,
+		Kind:              store.InvoiceKindSubscription,
+		SubscriptionDays:  plan.BillingDays,
+		PlanCode:          plan.Code,
+		CountTowardsTrial: false,
+		Title:             plan.CheckoutTitle,
+		BaseAmountUSD:     baseAmountUSD,
+		Mode:              "live",
+	}, requests, wallets, ttl)
 	if err != nil {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "create_invoice")
 		return store.Invoice{}, err
@@ -196,46 +223,92 @@ func normalizedMode(mode string) string {
 }
 
 func (s *InvoiceService) createInvoiceWithDestination(ctx context.Context, params store.CreateInvoiceParams, expiresInMinutes int) (store.Invoice, error) {
+	request := PaymentOptionInput{Network: params.PayableNetwork, Asset: params.PayableAsset}
+	if request.Asset == "" {
+		request.Asset = store.DefaultAssetForNetwork(request.Network)
+	}
+	wallets := map[store.Network]store.Wallet{
+		params.PayableNetwork.WalletBucket(): {
+			Network: params.PayableNetwork.WalletBucket(),
+			Address: params.DestinationAddress,
+		},
+	}
+	return s.createInvoiceFromOptions(ctx, params, []PaymentOptionInput{request}, wallets, expiresInMinutes)
+}
+
+func (s *InvoiceService) createInvoiceFromOptions(ctx context.Context, params store.CreateInvoiceParams, requests []PaymentOptionInput, wallets map[store.Network]store.Wallet, expiresInMinutes int) (store.Invoice, error) {
 	publicID, err := s.generateUniquePublicID(ctx)
 	if err != nil {
 		return store.Invoice{}, err
 	}
 
-	var payableAmount decimal.Decimal
-	var paymentComment *string
-	var matchingSuffix *decimal.Decimal
-
-	switch params.PayableNetwork {
-	case store.NetworkTON:
-		payableAmount, err = s.calculateTONAmount(ctx, params.BaseAmountUSD)
-		if err != nil {
-			return store.Invoice{}, err
-		}
-		comment := "RECV-" + publicID
-		paymentComment = &comment
-	case store.NetworkTON_USDT, store.NetworkTRON, store.NetworkBASE, store.NetworkBSC:
-		suffix, err := s.generateUniqueSuffix(ctx, params.DestinationAddress, params.PayableNetwork)
-		if err != nil {
-			return store.Invoice{}, err
-		}
-		payableAmount = params.BaseAmountUSD.Add(suffix).Round(6)
-		matchingSuffix = &suffix
-	default:
-		return store.Invoice{}, fmt.Errorf("unsupported network %s", params.PayableNetwork)
-	}
-
 	if expiresInMinutes <= 0 {
 		expiresInMinutes = 30
 	}
+	options := make([]store.CreatePaymentOptionParams, 0, len(requests))
+	for i, request := range requests {
+		wallet := wallets[request.Network.WalletBucket()]
+		if strings.TrimSpace(wallet.Address) == "" {
+			return store.Invoice{}, fmt.Errorf("active wallet for network %s: %w", request.Network, store.ErrNotFound)
+		}
+		option, err := s.buildPaymentOption(ctx, publicID, params.BaseAmountUSD, request, strings.TrimSpace(wallet.Address), i == 0)
+		if err != nil {
+			return store.Invoice{}, err
+		}
+		options = append(options, option)
+	}
+	defaultOption := options[0]
 	params.PublicID = publicID
-	params.PayableAmount = payableAmount
-	params.PaymentComment = paymentComment
-	params.MatchingSuffix = matchingSuffix
+	params.PayableAmount = defaultOption.PayableAmount
+	params.PayableNetwork = defaultOption.Network
+	params.PayableAsset = defaultOption.Asset
+	params.DestinationAddress = defaultOption.DestinationAddress
+	params.PaymentComment = defaultOption.PaymentComment
+	params.MatchingSuffix = defaultOption.MatchingSuffix
+	params.PaymentOptions = options
 	params.ExpiresAt = time.Now().UTC().Add(time.Duration(expiresInMinutes) * time.Minute)
 	if params.Kind == "" {
 		params.Kind = store.InvoiceKindMerchant
 	}
 	return s.store.CreateInvoice(ctx, params)
+}
+
+func (s *InvoiceService) buildPaymentOption(ctx context.Context, publicID string, baseAmountUSD decimal.Decimal, request PaymentOptionInput, address string, isDefault bool) (store.CreatePaymentOptionParams, error) {
+	var (
+		payableAmount  decimal.Decimal
+		paymentComment *string
+		matchingSuffix *decimal.Decimal
+		err            error
+	)
+	switch request.Asset {
+	case store.AssetTON, store.AssetSOL, store.AssetBNB:
+		payableAmount, err = s.calculateNativeAmount(ctx, request.Asset, baseAmountUSD)
+		if err != nil {
+			return store.CreatePaymentOptionParams{}, err
+		}
+		if request.Asset == store.AssetTON {
+			comment := "RECV-" + publicID
+			paymentComment = &comment
+		}
+	case store.AssetUSDT, store.AssetUSDC:
+		suffix, err := s.generateUniqueSuffixForAsset(ctx, address, request.Network, request.Asset)
+		if err != nil {
+			return store.CreatePaymentOptionParams{}, err
+		}
+		payableAmount = baseAmountUSD.Add(suffix).Round(6)
+		matchingSuffix = &suffix
+	default:
+		return store.CreatePaymentOptionParams{}, fmt.Errorf("unsupported asset %s", request.Asset)
+	}
+	return store.CreatePaymentOptionParams{
+		Network:            request.Network,
+		Asset:              request.Asset,
+		PayableAmount:      payableAmount,
+		DestinationAddress: address,
+		PaymentComment:     paymentComment,
+		MatchingSuffix:     matchingSuffix,
+		IsDefault:          isDefault,
+	}, nil
 }
 
 func (s *InvoiceService) generateUniquePublicID(ctx context.Context) (string, error) {
@@ -262,6 +335,10 @@ func (s *InvoiceService) generateUniquePublicID(ctx context.Context) (string, er
 }
 
 func (s *InvoiceService) generateUniqueSuffix(ctx context.Context, address string, network store.Network) (decimal.Decimal, error) {
+	return s.generateUniqueSuffixForAsset(ctx, address, network, store.DefaultAssetForNetwork(network))
+}
+
+func (s *InvoiceService) generateUniqueSuffixForAsset(ctx context.Context, address string, network store.Network, asset store.PaymentAsset) (decimal.Decimal, error) {
 	for range 64 {
 		n, err := rand.Int(rand.Reader, big.NewInt(9999))
 		if err != nil {
@@ -270,7 +347,7 @@ func (s *InvoiceService) generateUniqueSuffix(ctx context.Context, address strin
 
 		// Keep the matching suffix tiny so the checkout amount stays visually close to the base price.
 		suffix := decimal.NewFromInt(n.Int64() + 1).Div(decimal.NewFromInt(1_000_000)).Round(6)
-		used, err := s.store.SuffixRecentlyUsed(ctx, address, network, suffix)
+		used, err := s.store.SuffixRecentlyUsedForAsset(ctx, address, network, asset, suffix)
 		if err != nil {
 			return decimal.Zero, err
 		}
@@ -282,59 +359,146 @@ func (s *InvoiceService) generateUniqueSuffix(ctx context.Context, address strin
 }
 
 func (s *InvoiceService) calculateTONAmount(ctx context.Context, baseAmountUSD decimal.Decimal) (decimal.Decimal, error) {
-	rate, err := s.tonRateUSD(ctx)
+	return s.calculateNativeAmount(ctx, store.AssetTON, baseAmountUSD)
+}
+
+func (s *InvoiceService) calculateNativeAmount(ctx context.Context, asset store.PaymentAsset, baseAmountUSD decimal.Decimal) (decimal.Decimal, error) {
+	rate, err := s.nativeRateUSD(ctx, asset)
 	if err != nil {
 		return decimal.Zero, err
 	}
 	if !rate.IsPositive() {
-		return decimal.Zero, errors.New("invalid TON/USD rate")
+		return decimal.Zero, fmt.Errorf("invalid %s/USD rate", asset)
 	}
 	return baseAmountUSD.Div(rate).Round(6), nil
 }
 
 func (s *InvoiceService) tonRateUSD(ctx context.Context) (decimal.Decimal, error) {
-	if strings.TrimSpace(s.tonRateEnv) != "" {
-		value, err := decimal.NewFromString(strings.TrimSpace(s.tonRateEnv))
+	return s.nativeRateUSD(ctx, store.AssetTON)
+}
+
+func (s *InvoiceService) nativeRateUSD(ctx context.Context, asset store.PaymentAsset) (decimal.Decimal, error) {
+	envName, coinGeckoID, payloadKey, metricName, err := rateConfig(asset)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	envValue := os.Getenv(envName)
+	if asset == store.AssetTON {
+		envValue = s.tonRateEnv
+	}
+	if strings.TrimSpace(envValue) != "" {
+		value, err := decimal.NewFromString(strings.TrimSpace(envValue))
 		if err != nil {
-			metrics.ObserveUpstream("ton_rate_override", "parse", "failure", 0)
-			return decimal.Zero, fmt.Errorf("TON_USD_RATE: %w", err)
+			metrics.ObserveUpstream(metricName+"_override", "parse", "failure", 0)
+			return decimal.Zero, fmt.Errorf("%s: %w", envName, err)
 		}
-		metrics.ObserveUpstream("ton_rate_override", "parse", "success", 0)
+		metrics.ObserveUpstream(metricName+"_override", "parse", "success", 0)
 		return value, nil
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.coingecko.com/api/v3/simple/price?ids="+coinGeckoID+"&vs_currencies=usd", nil)
 	if err != nil {
-		return decimal.Zero, fmt.Errorf("build ton rate request: %w", err)
+		return decimal.Zero, fmt.Errorf("build %s rate request: %w", asset, err)
 	}
 	startedAt := time.Now()
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		metrics.ObserveUpstream("coingecko", "ton_rate", "failure", time.Since(startedAt))
-		return decimal.Zero, fmt.Errorf("fetch ton rate: %w", err)
+		metrics.ObserveUpstream("coingecko", metricName, "failure", time.Since(startedAt))
+		return decimal.Zero, fmt.Errorf("fetch %s rate: %w", asset, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-		metrics.ObserveUpstream("coingecko", "ton_rate", "failure", time.Since(startedAt))
+		metrics.ObserveUpstream("coingecko", metricName, "failure", time.Since(startedAt))
 		return decimal.Zero, fmt.Errorf("fetch ton rate failed: %s", strings.TrimSpace(string(body)))
 	}
 
-	var payload struct {
-		TheOpenNetwork struct {
-			USD json.Number `json:"usd"`
-		} `json:"the-open-network"`
+	var payload map[string]struct {
+		USD json.Number `json:"usd"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		metrics.ObserveUpstream("coingecko", "ton_rate", "failure", time.Since(startedAt))
-		return decimal.Zero, fmt.Errorf("decode ton rate: %w", err)
+		metrics.ObserveUpstream("coingecko", metricName, "failure", time.Since(startedAt))
+		return decimal.Zero, fmt.Errorf("decode %s rate: %w", asset, err)
 	}
-	value, err := decimal.NewFromString(payload.TheOpenNetwork.USD.String())
+	value, err := decimal.NewFromString(payload[payloadKey].USD.String())
 	if err != nil {
-		metrics.ObserveUpstream("coingecko", "ton_rate", "failure", time.Since(startedAt))
-		return decimal.Zero, fmt.Errorf("parse ton rate: %w", err)
+		metrics.ObserveUpstream("coingecko", metricName, "failure", time.Since(startedAt))
+		return decimal.Zero, fmt.Errorf("parse %s rate: %w", asset, err)
 	}
-	metrics.ObserveUpstream("coingecko", "ton_rate", "success", time.Since(startedAt))
+	metrics.ObserveUpstream("coingecko", metricName, "success", time.Since(startedAt))
 	return value, nil
+}
+
+func (s *InvoiceService) normalizePaymentOptionInputs(defaultNetwork store.Network, legacyNetwork store.Network, legacyAsset store.PaymentAsset, requested []PaymentOptionInput) ([]PaymentOptionInput, error) {
+	if len(requested) == 0 {
+		if legacyNetwork == "" {
+			legacyNetwork = defaultNetwork
+		}
+		if legacyAsset == "" {
+			legacyAsset = store.DefaultAssetForNetwork(legacyNetwork)
+		}
+		requested = []PaymentOptionInput{{Network: legacyNetwork, Asset: legacyAsset}}
+	}
+	if len(requested) == 0 || len(requested) > 2 {
+		return nil, errors.New("payment_options must contain 1 or 2 options")
+	}
+	seen := map[string]struct{}{}
+	normalized := make([]PaymentOptionInput, 0, len(requested))
+	for _, option := range requested {
+		option.Network = store.Network(strings.ToUpper(strings.TrimSpace(string(option.Network))))
+		if option.Network == "" {
+			option.Network = defaultNetwork
+		}
+		if option.Asset == "" {
+			option.Asset = store.DefaultAssetForNetwork(option.Network)
+		}
+		option.Asset = store.NormalizePaymentAsset(string(option.Asset))
+		if !option.Network.IsSupportedPayableNetwork() {
+			return nil, fmt.Errorf("unsupported network %s", option.Network)
+		}
+		if !store.IsSupportedPaymentOption(option.Network, option.Asset) {
+			return nil, fmt.Errorf("unsupported payment option %s/%s", option.Network, option.Asset)
+		}
+		key := string(option.Network) + ":" + string(option.Asset)
+		if _, ok := seen[key]; ok {
+			return nil, fmt.Errorf("duplicate payment option %s/%s", option.Network, option.Asset)
+		}
+		seen[key] = struct{}{}
+		normalized = append(normalized, option)
+	}
+	return normalized, nil
+}
+
+func normalizeTTL(value int, options []PaymentOptionInput, stableDefault int) (int, error) {
+	hasNative := false
+	for _, option := range options {
+		if store.IsNativeAsset(option.Asset) {
+			hasNative = true
+			break
+		}
+	}
+	if value <= 0 {
+		if hasNative {
+			return 10, nil
+		}
+		return stableDefault, nil
+	}
+	if hasNative && value > 15 {
+		return 0, errors.New("expires_in_minutes cannot exceed 15 for native volatile assets")
+	}
+	return value, nil
+}
+
+func rateConfig(asset store.PaymentAsset) (envName string, coinGeckoID string, payloadKey string, metricName string, err error) {
+	switch asset {
+	case store.AssetTON:
+		return "TON_USD_RATE", "the-open-network", "the-open-network", "ton_rate", nil
+	case store.AssetSOL:
+		return "SOL_USD_RATE", "solana", "solana", "sol_rate", nil
+	case store.AssetBNB:
+		return "BNB_USD_RATE", "binancecoin", "binancecoin", "bnb_rate", nil
+	default:
+		return "", "", "", "", fmt.Errorf("asset %s does not need a native USD rate", asset)
+	}
 }

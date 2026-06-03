@@ -104,8 +104,7 @@ services:
       CADDY_EMAIL: ${CADDY_EMAIL:-}
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-localhost}
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

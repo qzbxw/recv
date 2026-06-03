@@ -3,6 +3,8 @@ import { request } from "./core";
 
 export async function createBillingCheckout(token: string, payload: {
   payable_network: string;
+  payable_asset?: string;
+  payment_options?: Array<{ network: string; asset: string }>;
   plan_code?: string;
 }) {
   return request<Invoice>("/api/billing/checkout", {
@@ -10,4 +12,3 @@ export async function createBillingCheckout(token: string, payload: {
     body: JSON.stringify(payload),
   }, token);
 }
-

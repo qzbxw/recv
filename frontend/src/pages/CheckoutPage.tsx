@@ -95,6 +95,7 @@ export function CheckoutPage() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [now, setNow] = useState(Date.now());
   const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "">("");
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
   const [retryNonce, setRetryNonce] = useState(0);
   const statusRef = useRef("");
   const trackedCheckoutRef = useRef("");
@@ -126,6 +127,12 @@ export function CheckoutPage() {
   useEffect(() => {
     statusRef.current = invoice?.status || "";
   }, [invoice?.status]);
+
+  useEffect(() => {
+    if (!invoice?.payment_options?.[selectedOptionIndex]) {
+      setSelectedOptionIndex(0);
+    }
+  }, [invoice?.payment_options, selectedOptionIndex]);
 
   useEffect(() => {
     let active = true;
@@ -162,7 +169,8 @@ export function CheckoutPage() {
       });
     }
 
-    const source = invoice.payment_uri || fallbackPaymentURI(invoice);
+    const option = invoice.payment_options?.[selectedOptionIndex] ?? invoice.payment_options?.[0];
+    const source = option?.payment_uri || invoice.payment_uri || fallbackPaymentURI(invoice);
 
     void QRCode.toDataURL(source, {
       width: 288,
@@ -190,7 +198,7 @@ export function CheckoutPage() {
           setQrDataUrl("");
         }
       });
-  }, [invoice]);
+  }, [invoice, selectedOptionIndex]);
 
   useEffect(() => {
     if (!copiedField) {
@@ -221,6 +229,26 @@ export function CheckoutPage() {
   }, [invoice?.title, text.pageTitle]);
 
   const title = invoice?.title?.trim() || text.paymentRequest;
+  const selectedOption = invoice?.payment_options?.[selectedOptionIndex] ?? invoice?.payment_options?.[0] ?? null;
+  const activePayment = invoice && selectedOption
+    ? {
+        payable_amount: selectedOption.payable_amount,
+        payable_network: selectedOption.network,
+        payable_asset: selectedOption.asset,
+        destination_address: selectedOption.destination_address,
+        payment_comment: selectedOption.payment_comment,
+        payment_uri: selectedOption.payment_uri,
+      }
+    : invoice
+      ? {
+          payable_amount: invoice.payable_amount,
+          payable_network: invoice.payable_network,
+          payable_asset: invoice.payable_asset,
+          destination_address: invoice.destination_address,
+          payment_comment: invoice.payment_comment,
+          payment_uri: invoice.payment_uri,
+        }
+      : null;
   const checkoutBadge = invoice?.checkout_badge || (invoice?.kind === "subscription" ? "recv Billing" : text.paymentRequest);
   const checkoutVariant = invoice?.plan_code && invoice.plan_code !== "trial" ? invoice.plan_code : "merchant";
   const statusLabel = invoice ? formatInvoiceStatus(invoice.status, language) : "";
@@ -239,15 +267,15 @@ export function CheckoutPage() {
         {
           key: "amount" as const,
           label: text.amount,
-          value: invoice.payable_amount,
-          secondary: formatNetworkLabel(invoice.payable_network),
+          value: activePayment?.payable_amount || invoice.payable_amount,
+          secondary: `${activePayment?.payable_asset || invoice.payable_asset || ""} ${formatNetworkLabel(activePayment?.payable_network || invoice.payable_network)}`.trim(),
           copyLabel: text.copyAmount,
         },
         {
           key: "address" as const,
           label: text.wallet,
-          value: invoice.destination_address,
-          secondary: formatAddressPreview(invoice.destination_address),
+          value: activePayment?.destination_address || invoice.destination_address,
+          secondary: formatAddressPreview(activePayment?.destination_address || invoice.destination_address),
           copyLabel: text.copyAddress,
         },
       ]
@@ -340,7 +368,7 @@ export function CheckoutPage() {
                     <span className="payment-sheet-kicker">{text.paymentDetails}</span>
                   </div>
                   <div className="payment-essentials">
-                    {invoice.payment_comment ? (
+                    {(activePayment?.payment_comment || invoice.payment_comment) ? (
                       <div className="payload-callout payload-callout--critical">
                         <div className="payload-head">
                           <div className="payload-info">
@@ -351,7 +379,7 @@ export function CheckoutPage() {
                             <p>{text.payloadHint}</p>
                           </div>
                           {canCopyDetails && (
-                            <button type="button" className={`field-copy field-copy--named ${copiedField === "comment" ? "is-copied" : ""}`} onClick={() => void copyValue("comment", invoice.payment_comment ?? "")} aria-label={text.copyComment}>
+                            <button type="button" className={`field-copy field-copy--named ${copiedField === "comment" ? "is-copied" : ""}`} onClick={() => void copyValue("comment", activePayment?.payment_comment || invoice.payment_comment || "")} aria-label={text.copyComment}>
                               <Icons.Copy />
                               {copiedField === "comment" ? text.copied : text.copyComment}
                             </button>
@@ -360,7 +388,7 @@ export function CheckoutPage() {
                         <div className="payment-field payment-field--alert">
                           <div>
                             <label>{text.comment}</label>
-                            <code>{invoice.payment_comment}</code>
+                            <code>{activePayment?.payment_comment || invoice.payment_comment}</code>
                           </div>
                         </div>
                       </div>
@@ -390,11 +418,25 @@ export function CheckoutPage() {
               <aside className="payment-rail">
                 <div className={`amount-totem amount-totem--receipt amount-totem--rail ${isPaid ? "is-success" : isExpired ? "is-error" : ""}`}>
                   <span>{text.amount}</span>
-                  <strong>{invoice.payable_amount}</strong>
+                  <strong>{activePayment?.payable_amount || invoice.payable_amount}</strong>
                   <div className="network-badge">
-                    <b>{formatNetworkLabel(invoice.payable_network)}</b>
+                    <b>{activePayment?.payable_asset || invoice.payable_asset || ""} {formatNetworkLabel(activePayment?.payable_network || invoice.payable_network)}</b>
                     <small>{text.networkOnly}</small>
                   </div>
+                  {invoice.payment_options && invoice.payment_options.length > 1 ? (
+                    <div className="dev-preset-row">
+                      {invoice.payment_options.map((option, index) => (
+                        <button
+                          key={`${option.network}-${option.asset}`}
+                          type="button"
+                          className={`dev-preset-chip ${selectedOptionIndex === index ? "is-active" : ""}`}
+                          onClick={() => setSelectedOptionIndex(index)}
+                        >
+                          {option.asset} · {formatNetworkLabel(option.network)}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                   {canCopyDetails && (
                     <div className="exact-amount-warning">
                       <Icons.Alert />
@@ -402,13 +444,13 @@ export function CheckoutPage() {
                     </div>
                   )}
                   {canCopyDetails && (
-                    <button type="button" className={`ghost-button compact-button payment-rail-action ${copiedField === "amount" ? "is-copied" : ""}`} onClick={() => void copyValue("amount", invoice.payable_amount)}>
+                    <button type="button" className={`ghost-button compact-button payment-rail-action ${copiedField === "amount" ? "is-copied" : ""}`} onClick={() => void copyValue("amount", activePayment?.payable_amount || invoice.payable_amount)}>
                       <Icons.Copy />
                       {copiedField === "amount" ? text.copied : text.copyAmount}
                     </button>
                   )}
-                  {canCopyDetails && invoice.payment_uri ? (
-                    <a className="ghost-button compact-button payment-rail-action" href={invoice.payment_uri}>
+                  {canCopyDetails && (activePayment?.payment_uri || invoice.payment_uri) ? (
+                    <a className="ghost-button compact-button payment-rail-action" href={activePayment?.payment_uri || invoice.payment_uri}>
                       {text.openWallet}
                     </a>
                   ) : null}

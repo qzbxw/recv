@@ -85,7 +85,13 @@ func (w *Watcher) tick(ctx context.Context) error {
 		case store.NetworkTON_USDT:
 			transfers, err = w.pollTON_USDT(ctx, wallet)
 		case store.NetworkSOLANA:
-			transfers, err = w.pollSolanaStablecoin(ctx, wallet)
+			if wallet.Asset == store.AssetSOL {
+				transfers, err = w.pollSolanaNative(ctx, wallet)
+			} else {
+				transfers, err = w.pollSolanaStablecoin(ctx, wallet)
+			}
+		case store.NetworkBSC:
+			transfers, err = w.pollBSCNative(ctx, wallet)
 		case store.NetworkEVM:
 			transfers, err = w.pollEVMStablecoin(ctx, wallet)
 		default:
@@ -178,6 +184,7 @@ func (w *Watcher) pollTRC20(ctx context.Context, wallet store.WatchedWallet) ([]
 		transfer := store.ObservedTransfer{
 			TxHash:             item.TransactionID,
 			Network:            wallet.PayableNetwork,
+			Asset:              store.AssetUSDT,
 			DestinationAddress: item.To,
 			Amount:             amount,
 			ObservedAt:         time.UnixMilli(item.BlockTime).UTC(),
@@ -248,6 +255,7 @@ func (w *Watcher) pollTON(ctx context.Context, wallet store.WatchedWallet) ([]st
 		transfer := store.ObservedTransfer{
 			TxHash:             item.TxID.Hash,
 			Network:            wallet.PayableNetwork,
+			Asset:              store.AssetTON,
 			DestinationAddress: wallet.Address,
 			Amount:             amount,
 			PaymentComment:     strings.TrimSpace(item.InMsg.Message),
@@ -328,6 +336,7 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 		transfer := store.ObservedTransfer{
 			TxHash:             item.TransactionHash,
 			Network:            wallet.PayableNetwork,
+			Asset:              store.AssetUSDT,
 			DestinationAddress: wallet.Address,
 			Amount:             amount,
 			ObservedAt:         time.Unix(item.UTime, 0).UTC(),
@@ -347,7 +356,7 @@ func (w *Watcher) filterTransfersAfterCheckpoint(ctx context.Context, wallet sto
 	if w.store == nil {
 		return transfers
 	}
-	checkpoint, err := w.store.GetWatcherCheckpoint(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Address)
+	checkpoint, err := w.store.GetWatcherCheckpointForAsset(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Asset, wallet.Address)
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		w.logger.Warn("load watcher checkpoint failed", "network", wallet.PayableNetwork, "address", wallet.Address, "error", err)
 		return transfers
@@ -373,6 +382,7 @@ func (w *Watcher) filterTransfersAfterCheckpoint(ctx context.Context, wallet sto
 		if err := w.store.SaveWatcherCheckpoint(ctx, store.WatcherCheckpoint{
 			PollNetwork:        wallet.PollNetwork,
 			PayableNetwork:     wallet.PayableNetwork,
+			Asset:              wallet.Asset,
 			DestinationAddress: wallet.Address,
 			LastBlock:          lastBlock,
 			LastObservedAt:     maxObserved,

@@ -198,6 +198,7 @@ func TestPublicInvoiceResponse(t *testing.T) {
 		BaseAmountUSD:      decimal.RequireFromString("39"),
 		PayableAmount:      decimal.RequireFromString("11.250000"),
 		PayableNetwork:     store.NetworkTON,
+		PayableAsset:       store.AssetTON,
 		DestinationAddress: "UQBuzCySn6dYEHzKoGzUPmclj9Dg_m1dA-mzeDEvuF3F9x6P",
 		PaymentComment:     &comment,
 		Status:             store.InvoiceStatusAwaitingPayment,
@@ -278,6 +279,7 @@ func TestInvoicePresentationHelpers(t *testing.T) {
 		PlanCode:           store.PlanCodeTrial,
 		SubscriptionDays:   30,
 		PayableNetwork:     store.NetworkTON,
+		PayableAsset:       store.AssetTON,
 		DestinationAddress: "UQWallet",
 		PayableAmount:      decimal.RequireFromString("1.25"),
 		PaymentComment:     &comment,
@@ -302,6 +304,7 @@ func TestInvoicePresentationHelpers(t *testing.T) {
 	invoice.Kind = store.InvoiceKindMerchant
 	invoice.SubscriptionDays = 0
 	invoice.PayableNetwork = store.NetworkBASE
+	invoice.PayableAsset = store.AssetUSDT
 	invoice.DestinationAddress = "0x1111111111111111111111111111111111111111"
 	if !isWorkspaceManagedInvoice(invoice) {
 		t.Fatal("expected merchant invoice to be workspace managed")

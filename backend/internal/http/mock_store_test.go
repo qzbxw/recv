@@ -123,11 +123,11 @@ func (m *mockHTTPStore) CreateIdempotencyRecord(ctx context.Context, workspaceID
 	return m.real.CreateIdempotencyRecord(ctx, workspaceID, apiKeyID, method, path, key, requestHash)
 }
 
-func (m *mockHTTPStore) CreateWallet(ctx context.Context, workspaceID int64, network store.Network, address string) (store.Wallet, error) {
+func (m *mockHTTPStore) CreateWallet(ctx context.Context, workspaceID int64, network store.Network, address string, env ...store.Environment) (store.Wallet, error) {
 	if m.failAt == errAtCreateWallet {
 		return store.Wallet{}, m.mockErr(errAtCreateWallet)
 	}
-	return m.real.CreateWallet(ctx, workspaceID, network, address)
+	return m.real.CreateWallet(ctx, workspaceID, network, address, env...)
 }
 
 func (m *mockHTTPStore) CreateWebhookEndpoint(ctx context.Context, workspaceID int64, label string, endpointURL string, secret string, environment string) (store.WebhookEndpoint, error) {

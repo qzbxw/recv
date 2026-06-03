@@ -1,4 +1,5 @@
-export type Network = "TON" | "TON_USDT" | "TRON" | "EVM" | "BASE" | "BSC";
+export type Network = "TON" | "TON_USDT" | "TRON" | "EVM" | "SOLANA" | "BASE" | "ARBITRUM" | "BSC";
+export type PaymentAsset = "TON" | "USDT" | "USDC" | "SOL" | "BNB";
 export type InvoiceStatus = "draft" | "awaiting_payment" | "paid" | "expired" | "underpaid" | "overpaid" | "manual_review";
 export type APIKeyMode = "live" | "test";
 export type WebhookDeliveryStatus = "pending" | "delivered" | "failed" | "retrying" | "exhausted" | string;
@@ -83,6 +84,8 @@ export type Invoice = {
   base_amount_usd: string;
   payable_amount: string;
   payable_network: Network;
+  payable_asset?: PaymentAsset;
+  payment_options?: PaymentOption[];
   destination_address: string;
   payment_comment: string | null;
   status: InvoiceStatus;
@@ -95,6 +98,16 @@ export type Invoice = {
   finalized_at?: string | null;
   checkout_url: string;
   payment_uri: string;
+};
+
+export type PaymentOption = {
+  network: Network;
+  asset: PaymentAsset;
+  payable_amount: string;
+  destination_address: string;
+  payment_comment: string | null;
+  payment_uri: string;
+  is_default: boolean;
 };
 
 export type MeResponse = {

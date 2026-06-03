@@ -428,10 +428,15 @@ func (s *Server) handleAPICreateInvoice(c *gin.Context) {
 		idempotencyRecord = &created
 	}
 	var body struct {
-		Title            string `json:"title"`
-		BaseAmountUSD    string `json:"base_amount_usd"`
-		PayableNetwork   string `json:"payable_network"`
-		ExpiresInMinutes int    `json:"expires_in_minutes"`
+		Title          string `json:"title"`
+		BaseAmountUSD  string `json:"base_amount_usd"`
+		PayableNetwork string `json:"payable_network"`
+		PayableAsset   string `json:"payable_asset"`
+		PaymentOptions []struct {
+			Network string `json:"network"`
+			Asset   string `json:"asset"`
+		} `json:"payment_options"`
+		ExpiresInMinutes int `json:"expires_in_minutes"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		recordIdempotentJSON(c, s.store, idempotencyRecord, http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -448,6 +453,8 @@ func (s *Server) handleAPICreateInvoice(c *gin.Context) {
 		Title:            strings.TrimSpace(body.Title),
 		BaseAmountUSD:    baseAmount,
 		PayableNetwork:   store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork))),
+		PayableAsset:     store.NormalizePaymentAsset(body.PayableAsset),
+		PaymentOptions:   parsePaymentOptionInputs(body.PaymentOptions),
 		ExpiresInMinutes: body.ExpiresInMinutes,
 		Mode:             keyCtx.Key.Mode,
 	})

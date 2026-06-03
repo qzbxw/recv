@@ -32,7 +32,7 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 	env := newIntegrationEnv(t, ctx)
 	client := env.server.Client()
 
-	assertMigrationCount(t, ctx, env.store, 18)
+	assertMigrationCount(t, ctx, env.store, 19)
 
 	auth := loginSeller(t, client, env.server.URL, 10001, "alice")
 	assertAuthSessionLifecycle(t, client, env.server.URL, auth.RefreshToken)

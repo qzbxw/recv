@@ -29,32 +29,75 @@ type stablecoinSpec struct {
 }
 
 func stablecoinForNetwork(network store.Network) stablecoinSpec {
+	return stablecoinForOption(network, store.AssetUSDT)
+}
+
+func stablecoinForOption(network store.Network, asset store.PaymentAsset) stablecoinSpec {
+	if asset == "" {
+		asset = store.DefaultAssetForNetwork(network)
+	}
 	switch network {
 	case store.NetworkEVM:
+		if asset != store.AssetUSDT {
+			return stablecoinSpec{}
+		}
 		return stablecoinSpec{
 			Symbol:      "USDT",
 			Decimals:    6,
 			EVMContract: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
 		}
 	case store.NetworkBASE:
+		if asset == store.AssetUSDC {
+			return stablecoinSpec{
+				Symbol:      "USDC",
+				Decimals:    6,
+				EVMContract: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+			}
+		}
+		if asset != store.AssetUSDT {
+			return stablecoinSpec{}
+		}
 		return stablecoinSpec{
 			Symbol:      "USDT",
 			Decimals:    6,
 			EVMContract: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
 		}
 	case store.NetworkARBITRUM:
+		if asset == store.AssetUSDC {
+			return stablecoinSpec{
+				Symbol:      "USDC",
+				Decimals:    6,
+				EVMContract: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+			}
+		}
+		if asset != store.AssetUSDT {
+			return stablecoinSpec{}
+		}
 		return stablecoinSpec{
 			Symbol:      "USDT",
 			Decimals:    6,
 			EVMContract: "0xFd086bC7CD5C481DCC9C85ebe478A1C0b69FCbb9",
 		}
 	case store.NetworkBSC:
+		if asset != store.AssetUSDT {
+			return stablecoinSpec{}
+		}
 		return stablecoinSpec{
 			Symbol:      "USDT",
 			Decimals:    18,
 			EVMContract: "0x55d398326f99059fF775485246999027B3197955",
 		}
 	case store.NetworkSOLANA:
+		if asset == store.AssetUSDC {
+			return stablecoinSpec{
+				Symbol:     "USDC",
+				Decimals:   6,
+				SolanaMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+			}
+		}
+		if asset != store.AssetUSDT {
+			return stablecoinSpec{}
+		}
 		return stablecoinSpec{
 			Symbol:     "USDT",
 			Decimals:   6,
@@ -66,9 +109,9 @@ func stablecoinForNetwork(network store.Network) stablecoinSpec {
 }
 
 func (w *Watcher) pollEVMStablecoin(ctx context.Context, wallet store.WatchedWallet) ([]store.ObservedTransfer, error) {
-	spec := stablecoinForNetwork(wallet.PayableNetwork)
+	spec := stablecoinForOption(wallet.PayableNetwork, wallet.Asset)
 	if spec.EVMContract == "" {
-		return nil, fmt.Errorf("stablecoin contract is not configured for network %s", wallet.PayableNetwork)
+		return nil, fmt.Errorf("stablecoin contract is not configured for %s/%s", wallet.PayableNetwork, wallet.Asset)
 	}
 	rpcURL := w.evmRPCURL(wallet.PayableNetwork)
 	if rpcURL == "" {
@@ -89,7 +132,7 @@ func (w *Watcher) pollEVMStablecoin(ctx context.Context, wallet store.WatchedWal
 	}
 	fromBlock := toBlock - w.cfg.WatcherBackfillBlocks
 	if w.store != nil {
-		checkpoint, err := w.store.GetWatcherCheckpoint(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Address)
+		checkpoint, err := w.store.GetWatcherCheckpointForAsset(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Asset, wallet.Address)
 		if err == nil && checkpoint.LastBlock > 0 {
 			fromBlock = checkpoint.LastBlock + 1
 		}
@@ -142,6 +185,7 @@ func (w *Watcher) pollEVMStablecoin(ctx context.Context, wallet store.WatchedWal
 		transfer := store.ObservedTransfer{
 			TxHash:             fmt.Sprintf("%s:%s", item.TxHash, item.LogIndex),
 			Network:            wallet.PayableNetwork,
+			Asset:              wallet.Asset,
 			DestinationAddress: wallet.Address,
 			Amount:             amount.Round(6),
 			ObservedAt:         observedAt,
@@ -157,7 +201,7 @@ func (w *Watcher) pollEVMStablecoin(ctx context.Context, wallet store.WatchedWal
 }
 
 func (w *Watcher) pollSolanaStablecoin(ctx context.Context, wallet store.WatchedWallet) ([]store.ObservedTransfer, error) {
-	spec := stablecoinForNetwork(wallet.PayableNetwork)
+	spec := stablecoinForOption(wallet.PayableNetwork, wallet.Asset)
 	if spec.SolanaMint == "" {
 		return nil, fmt.Errorf("solana stablecoin mint is not configured")
 	}
@@ -217,6 +261,7 @@ func (w *Watcher) pollSolanaStablecoin(ctx context.Context, wallet store.Watched
 				transfer := store.ObservedTransfer{
 					TxHash:             fmt.Sprintf("%s:%d", signature.Signature, accountIndex),
 					Network:            wallet.PayableNetwork,
+					Asset:              wallet.Asset,
 					DestinationAddress: wallet.Address,
 					Amount:             amount.Round(6),
 					ObservedAt:         observedAt,
@@ -227,6 +272,147 @@ func (w *Watcher) pollSolanaStablecoin(ctx context.Context, wallet store.Watched
 				}
 				transfers = append(transfers, transfer)
 			}
+		}
+	}
+	transfers = w.filterTransfersAfterCheckpoint(ctx, wallet, transfers, 0)
+	return transfers, nil
+}
+
+func (w *Watcher) pollBSCNative(ctx context.Context, wallet store.WatchedWallet) ([]store.ObservedTransfer, error) {
+	rpcURL := w.evmRPCURL(store.NetworkBSC)
+	if rpcURL == "" {
+		return nil, fmt.Errorf("rpc url is not configured for network %s", store.NetworkBSC)
+	}
+	latestBlockHex, err := w.callEVMRPCString(ctx, rpcURL, store.NetworkBSC, "eth_blockNumber", []any{})
+	if err != nil {
+		return nil, err
+	}
+	latestBlock, err := parseHexInt(latestBlockHex)
+	if err != nil {
+		return nil, fmt.Errorf("parse latest bsc block: %w", err)
+	}
+	toBlock := latestBlock - w.cfg.EVMConfirmationDepth
+	if toBlock < 0 {
+		return nil, nil
+	}
+	fromBlock := toBlock - w.cfg.WatcherBackfillBlocks
+	if w.store != nil {
+		checkpoint, err := w.store.GetWatcherCheckpointForAsset(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Asset, wallet.Address)
+		if err == nil && checkpoint.LastBlock > 0 {
+			fromBlock = checkpoint.LastBlock + 1
+		}
+	}
+	if fromBlock < 0 {
+		fromBlock = 0
+	}
+	if fromBlock > toBlock {
+		return nil, nil
+	}
+
+	transfers := make([]store.ObservedTransfer, 0)
+	for block := fromBlock; block <= toBlock; block++ {
+		var payload struct {
+			Timestamp    string `json:"timestamp"`
+			Transactions []struct {
+				Hash  string `json:"hash"`
+				To    string `json:"to"`
+				Value string `json:"value"`
+			} `json:"transactions"`
+		}
+		if err := w.callEVMRPC(ctx, rpcURL, store.NetworkBSC, "eth_getBlockByNumber", []any{hexQuantity(block), true}, &payload); err != nil {
+			continue
+		}
+		timestamp, _ := parseHexInt(payload.Timestamp)
+		observedAt := time.Unix(timestamp, 0).UTC()
+		for _, tx := range payload.Transactions {
+			if !strings.EqualFold(tx.To, wallet.Address) {
+				continue
+			}
+			amount, err := hexAmountToDecimal(tx.Value, 18)
+			if err != nil || !amount.IsPositive() {
+				continue
+			}
+			raw, _ := json.Marshal(tx)
+			transfer := store.ObservedTransfer{
+				TxHash:             tx.Hash,
+				Network:            wallet.PayableNetwork,
+				Asset:              store.AssetBNB,
+				DestinationAddress: wallet.Address,
+				Amount:             amount.Round(6),
+				ObservedAt:         observedAt,
+				RawPayload:         raw,
+			}
+			if err := service.NormalizeObservedTransfer(&transfer); err != nil {
+				continue
+			}
+			transfers = append(transfers, transfer)
+		}
+	}
+	transfers = w.filterTransfersAfterCheckpoint(ctx, wallet, transfers, toBlock)
+	return transfers, nil
+}
+
+func (w *Watcher) pollSolanaNative(ctx context.Context, wallet store.WatchedWallet) ([]store.ObservedTransfer, error) {
+	var signatures []struct {
+		Signature string `json:"signature"`
+		BlockTime *int64 `json:"blockTime"`
+	}
+	if err := w.callSolanaRPC(ctx, w.cfg.SolanaRPCURL, "getSignaturesForAddress", []any{
+		wallet.Address,
+		map[string]any{"limit": 25, "commitment": "finalized"},
+	}, &signatures); err != nil {
+		return nil, err
+	}
+	transfers := make([]store.ObservedTransfer, 0)
+	for _, signature := range signatures {
+		var tx struct {
+			BlockTime   *int64 `json:"blockTime"`
+			Transaction struct {
+				Message struct {
+					AccountKeys []struct {
+						Pubkey string `json:"pubkey"`
+					} `json:"accountKeys"`
+				} `json:"message"`
+			} `json:"transaction"`
+			Meta struct {
+				PreBalances  []int64 `json:"preBalances"`
+				PostBalances []int64 `json:"postBalances"`
+			} `json:"meta"`
+		}
+		if err := w.callSolanaRPC(ctx, w.cfg.SolanaRPCURL, "getTransaction", []any{
+			signature.Signature,
+			map[string]any{"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0, "commitment": "finalized"},
+		}, &tx); err != nil {
+			continue
+		}
+		for index, key := range tx.Transaction.Message.AccountKeys {
+			if !strings.EqualFold(key.Pubkey, wallet.Address) || index >= len(tx.Meta.PreBalances) || index >= len(tx.Meta.PostBalances) {
+				continue
+			}
+			diffLamports := tx.Meta.PostBalances[index] - tx.Meta.PreBalances[index]
+			if diffLamports <= 0 {
+				continue
+			}
+			observedAt := time.Now().UTC()
+			if tx.BlockTime != nil {
+				observedAt = time.Unix(*tx.BlockTime, 0).UTC()
+			} else if signature.BlockTime != nil {
+				observedAt = time.Unix(*signature.BlockTime, 0).UTC()
+			}
+			raw, _ := json.Marshal(tx)
+			transfer := store.ObservedTransfer{
+				TxHash:             signature.Signature,
+				Network:            wallet.PayableNetwork,
+				Asset:              store.AssetSOL,
+				DestinationAddress: wallet.Address,
+				Amount:             decimal.NewFromInt(diffLamports).Div(decimal.NewFromInt(1_000_000_000)).Round(6),
+				ObservedAt:         observedAt,
+				RawPayload:         raw,
+			}
+			if err := service.NormalizeObservedTransfer(&transfer); err != nil {
+				continue
+			}
+			transfers = append(transfers, transfer)
 		}
 	}
 	transfers = w.filterTransfersAfterCheckpoint(ctx, wallet, transfers, 0)

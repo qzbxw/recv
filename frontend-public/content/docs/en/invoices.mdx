@@ -21,8 +21,10 @@ POST /v1/invoices        (scope: invoices:write)
 |-------|------|----------|-------------|
 | `title` | string | Yes | Label shown on checkout (e.g. `"Order #9841"`). Must be non-empty. |
 | `base_amount_usd` | string | Yes | Amount in USD as a decimal string (e.g. `"149.00"`). Must be positive. |
-| `payable_network` | string | Yes | One of `TON`, `TON_USDT`, `TRON`, `BASE`, `BSC`. You must have an active payout wallet for the matching wallet bucket. |
-| `expires_in_minutes` | integer | No | Payment window in minutes. Defaults to **30** when omitted or ≤ 0. |
+| `payable_network` | string | Yes unless `payment_options` is used | Legacy single-option network. |
+| `payable_asset` | string | No | Asset for legacy single-option requests. Defaults from the network. |
+| `payment_options` | array | No | Up to two `{ "network": "...", "asset": "..." }` options, for example USDT and SOL on one invoice. |
+| `expires_in_minutes` | integer | No | Payment window in minutes. Defaults to **30** for stablecoins and **10** when any native volatile asset is present. Native volatile invoices reject values above **15**. |
 
 The invoice environment (`test`/`live`) is inherited from the API key — there is no `mode` field in the body.
 
@@ -43,8 +45,10 @@ curl -X POST https://recv.money/v1/invoices \
   -d '{
     "title": "Premium Subscription",
     "base_amount_usd": "100.00",
-    "payable_network": "TON",
-    "expires_in_minutes": 60
+    "payment_options": [
+      { "network": "TRON", "asset": "USDT" },
+      { "network": "SOLANA", "asset": "SOL" }
+    ]
   }'
 ```
 
@@ -59,8 +63,10 @@ resp = requests.post(
     json={
         "title": "Premium Subscription",
         "base_amount_usd": "100.00",
-        "payable_network": "TON",
-        "expires_in_minutes": 60,
+        "payment_options": [
+            {"network": "TRON", "asset": "USDT"},
+            {"network": "SOLANA", "asset": "SOL"},
+        ],
     },
 )
 invoice = resp.json()
@@ -82,7 +88,28 @@ A `201`/`200` response returns the invoice object:
   "checkout_badge": "Merchant Checkout",
   "base_amount_usd": "100.00",
   "payable_amount": "100.000000",
-  "payable_network": "TON",
+  "payable_network": "TRON",
+  "payable_asset": "USDT",
+  "payment_options": [
+    {
+      "network": "TRON",
+      "asset": "USDT",
+      "payable_amount": "100.000123",
+      "destination_address": "TQDt...",
+      "payment_comment": "",
+      "payment_uri": "TQDt...",
+      "is_default": true
+    },
+    {
+      "network": "SOLANA",
+      "asset": "SOL",
+      "payable_amount": "0.684211",
+      "destination_address": "9x...",
+      "payment_comment": "",
+      "payment_uri": "9x...",
+      "is_default": false
+    }
+  ],
   "destination_address": "EQC...",
   "payment_comment": "",
   "status": "awaiting_payment",
@@ -113,6 +140,8 @@ A `201`/`200` response returns the invoice object:
 | `base_amount_usd` | string | USD price, 2 decimals. |
 | `payable_amount` | string | On-chain amount to pay, 6 decimals. |
 | `payable_network` | string | Network the customer pays on. |
+| `payable_asset` | string | Asset for the legacy/default payment option. |
+| `payment_options` | array | All payment choices available on the hosted checkout. |
 | `destination_address` | string | Your payout wallet that must receive the payment. |
 | `payment_comment` | string | Memo/comment required by some networks (empty string if none). |
 | `status` | string | Current status — see [Statuses](#statuses). |

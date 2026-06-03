@@ -121,6 +121,7 @@ export function Header({ language }: { language: "ru" | "en" }) {
                     { name: nav.networks.tron, slug: "tron" },
                     { name: nav.networks.solana, slug: "solana" },
                     { name: nav.networks.base, slug: "base" },
+                    { name: "Arbitrum", slug: "arbitrum" },
                     { name: nav.networks.bsc, slug: "bsc" },
                   ].map((net) => (
                     <Link key={net.slug} href={`/${language}/networks/${net.slug}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 text-[11px] font-semibold text-white/60 hover:text-white transition-colors">

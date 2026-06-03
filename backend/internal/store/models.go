@@ -22,6 +22,30 @@ const (
 	NetworkBSC      Network = "BSC"
 )
 
+type PaymentAsset string
+
+const (
+	AssetTON  PaymentAsset = "TON"
+	AssetUSDT PaymentAsset = "USDT"
+	AssetUSDC PaymentAsset = "USDC"
+	AssetSOL  PaymentAsset = "SOL"
+	AssetBNB  PaymentAsset = "BNB"
+)
+
+type PaymentOption struct {
+	ID                 int64            `json:"id"`
+	InvoiceID          int64            `json:"invoice_id"`
+	Network            Network          `json:"network"`
+	Asset              PaymentAsset     `json:"asset"`
+	PayableAmount      decimal.Decimal  `json:"payable_amount"`
+	DestinationAddress string           `json:"destination_address"`
+	PaymentComment     *string          `json:"payment_comment"`
+	MatchingSuffix     *decimal.Decimal `json:"matching_suffix"`
+	PaymentURI         string           `json:"payment_uri"`
+	IsDefault          bool             `json:"is_default"`
+	CreatedAt          time.Time        `json:"created_at"`
+}
+
 func (n Network) WalletBucket() Network {
 	switch n {
 	case NetworkBASE, NetworkARBITRUM, NetworkBSC, NetworkEVM:
@@ -37,7 +61,7 @@ func (n Network) WalletBucket() Network {
 
 func (n Network) IsSupportedWalletNetwork() bool {
 	switch n {
-	case NetworkTON, NetworkTRON, NetworkEVM:
+	case NetworkTON, NetworkTRON, NetworkEVM, NetworkSOLANA:
 		return true
 	default:
 		return false
@@ -46,11 +70,49 @@ func (n Network) IsSupportedWalletNetwork() bool {
 
 func (n Network) IsSupportedPayableNetwork() bool {
 	switch n {
-	case NetworkTON, NetworkTON_USDT, NetworkTRON, NetworkBASE, NetworkBSC:
+	case NetworkTON, NetworkTON_USDT, NetworkTRON, NetworkSOLANA, NetworkBASE, NetworkARBITRUM, NetworkBSC:
 		return true
 	default:
 		return false
 	}
+}
+
+func NormalizePaymentAsset(value string) PaymentAsset {
+	return PaymentAsset(strings.ToUpper(strings.TrimSpace(value)))
+}
+
+func DefaultAssetForNetwork(network Network) PaymentAsset {
+	switch network {
+	case NetworkTON:
+		return AssetTON
+	case NetworkSOLANA:
+		return AssetSOL
+	case NetworkBSC:
+		return AssetUSDT
+	default:
+		return AssetUSDT
+	}
+}
+
+func IsSupportedPaymentOption(network Network, asset PaymentAsset) bool {
+	switch network {
+	case NetworkTON:
+		return asset == AssetTON
+	case NetworkTON_USDT, NetworkTRON:
+		return asset == AssetUSDT
+	case NetworkSOLANA:
+		return asset == AssetSOL || asset == AssetUSDT || asset == AssetUSDC
+	case NetworkBASE, NetworkARBITRUM:
+		return asset == AssetUSDT || asset == AssetUSDC
+	case NetworkBSC:
+		return asset == AssetBNB || asset == AssetUSDT
+	default:
+		return false
+	}
+}
+
+func IsNativeAsset(asset PaymentAsset) bool {
+	return asset == AssetTON || asset == AssetSOL || asset == AssetBNB
 }
 
 func ValidateWalletAddress(network Network, address string) error {
@@ -227,6 +289,8 @@ type Invoice struct {
 	DestinationAddress string           `json:"destination_address"`
 	PaymentComment     *string          `json:"payment_comment"`
 	MatchingSuffix     *decimal.Decimal `json:"matching_suffix"`
+	PayableAsset       PaymentAsset     `json:"payable_asset"`
+	PaymentOptions     []PaymentOption  `json:"payment_options,omitempty"`
 	Status             InvoiceStatus    `json:"status"`
 	Environment        Environment      `json:"environment"`
 	ExpiresAt          time.Time        `json:"expires_at"`
@@ -248,6 +312,7 @@ type PaymentEvent struct {
 	ID                 int64           `json:"id"`
 	TxHash             string          `json:"tx_hash"`
 	Network            Network         `json:"network"`
+	Asset              PaymentAsset    `json:"asset"`
 	DestinationAddress string          `json:"destination_address"`
 	Amount             decimal.Decimal `json:"amount"`
 	PaymentComment     *string         `json:"payment_comment"`
@@ -265,6 +330,7 @@ type ObservedTransfer struct {
 	TxHash             string
 	ExternalEventID    string
 	Network            Network
+	Asset              PaymentAsset
 	DestinationAddress string
 	Amount             decimal.Decimal
 	PaymentComment     string
@@ -275,6 +341,7 @@ type ObservedTransfer struct {
 type WatchedWallet struct {
 	PollNetwork    Network
 	PayableNetwork Network
+	Asset          PaymentAsset
 	Address        string
 	Environment    Environment
 }

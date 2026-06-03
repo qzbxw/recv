@@ -23,7 +23,7 @@ type httpStore interface {
 	CreateAdminInternalComment(ctx context.Context, targetType string, targetID string, body string, author string) (store.AdminInternalComment, error)
 	CreateBlogPost(ctx context.Context, post store.BlogPost) (store.BlogPost, error)
 	CreateIdempotencyRecord(ctx context.Context, workspaceID int64, apiKeyID int64, method string, path string, key string, requestHash string) (store.IdempotencyRecord, error)
-	CreateWallet(ctx context.Context, workspaceID int64, network store.Network, address string) (store.Wallet, error)
+	CreateWallet(ctx context.Context, workspaceID int64, network store.Network, address string, env ...store.Environment) (store.Wallet, error)
 	CreateWebhookEndpoint(ctx context.Context, workspaceID int64, label string, endpointURL string, secret string, environment string) (store.WebhookEndpoint, error)
 	CreateWorkspaceInvite(ctx context.Context, workspaceID int64, username string, role store.MemberRole, invitedBy int64) (store.WorkspaceInvite, error)
 	DeactivateWallet(ctx context.Context, workspaceID int64, walletID int64) error

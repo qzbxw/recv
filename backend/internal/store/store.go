@@ -66,6 +66,20 @@ const invoiceSelectColumns = `
 	created_at
 `
 
+const paymentOptionSelectColumns = `
+	id,
+	invoice_id,
+	network,
+	asset,
+	payable_amount,
+	destination_address,
+	payment_comment,
+	matching_suffix,
+	payment_uri,
+	is_default,
+	created_at
+`
+
 func New(ctx context.Context, databaseURL string) (*Store, error) {
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
@@ -396,7 +410,7 @@ func (s *Store) ConsumeTelegramAuthCode(ctx context.Context, workspaceID int64, 
 func (s *Store) ListWallets(ctx context.Context, workspaceID int64) ([]Wallet, error) {
 	wallets := make([]Wallet, 0)
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, workspace_id, network, address, is_active, created_at
+		SELECT id, workspace_id, network, address, environment, is_active, created_at
 		FROM wallets
 		WHERE workspace_id = $1 AND is_active = TRUE
 		ORDER BY created_at DESC
@@ -416,14 +430,18 @@ func (s *Store) ListWallets(ctx context.Context, workspaceID int64) ([]Wallet, e
 	return wallets, rows.Err()
 }
 
-func (s *Store) CreateWallet(ctx context.Context, workspaceID int64, network Network, address string) (Wallet, error) {
+func (s *Store) CreateWallet(ctx context.Context, workspaceID int64, network Network, address string, env ...Environment) (Wallet, error) {
+	walletEnv := EnvironmentLive
+	if len(env) > 0 && env[0] != "" {
+		walletEnv = env[0]
+	}
 	row := s.pool.QueryRow(ctx, `
-		INSERT INTO wallets (workspace_id, network, address, is_active)
-		VALUES ($1, $2, $3, TRUE)
+		INSERT INTO wallets (workspace_id, network, address, environment, is_active)
+		VALUES ($1, $2, $3, $4, TRUE)
 		ON CONFLICT (workspace_id, network, address)
 		DO UPDATE SET is_active = TRUE
-		RETURNING id, workspace_id, network, address, is_active, created_at
-	`, workspaceID, network, address)
+		RETURNING id, workspace_id, network, address, environment, is_active, created_at
+	`, workspaceID, network, address, walletEnv)
 	wallet, err := scanWallet(row)
 	if err != nil {
 		metrics.IncResourceOperation("wallet", "create", "failure")
@@ -453,7 +471,7 @@ func (s *Store) DeactivateWallet(ctx context.Context, workspaceID int64, walletI
 
 func (s *Store) GetActiveWalletForNetwork(ctx context.Context, workspaceID int64, network Network) (Wallet, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, workspace_id, network, address, is_active, created_at
+		SELECT id, workspace_id, network, address, environment, is_active, created_at
 		FROM wallets
 		WHERE workspace_id = $1 AND network = $2 AND is_active = TRUE
 		ORDER BY created_at DESC
@@ -464,7 +482,7 @@ func (s *Store) GetActiveWalletForNetwork(ctx context.Context, workspaceID int64
 
 func (s *Store) GetWalletByID(ctx context.Context, workspaceID int64, walletID int64) (Wallet, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, workspace_id, network, address, is_active, created_at
+		SELECT id, workspace_id, network, address, environment, is_active, created_at
 		FROM wallets
 		WHERE id = $1 AND workspace_id = $2 AND is_active = TRUE
 	`, walletID, workspaceID)
@@ -499,18 +517,24 @@ func (s *Store) TONCommentExists(ctx context.Context, comment string) (bool, err
 }
 
 func (s *Store) SuffixRecentlyUsed(ctx context.Context, address string, network Network, suffix decimal.Decimal) (bool, error) {
+	return s.SuffixRecentlyUsedForAsset(ctx, address, network, DefaultAssetForNetwork(network), suffix)
+}
+
+func (s *Store) SuffixRecentlyUsedForAsset(ctx context.Context, address string, network Network, asset PaymentAsset, suffix decimal.Decimal) (bool, error) {
 	var exists bool
 	err := s.pool.QueryRow(ctx, `
 		SELECT EXISTS(
 			SELECT 1
-			FROM invoices
-			WHERE destination_address = $1
-			  AND payable_network = $2
-			  AND matching_suffix = $3
-			  AND mode = 'live'
-			  AND status IN ('awaiting_payment', 'underpaid')
+			FROM invoice_payment_options ipo
+			JOIN invoices i ON i.id = ipo.invoice_id
+			WHERE ipo.destination_address = $1
+			  AND ipo.network = $2
+			  AND ipo.asset = $3
+			  AND ipo.matching_suffix = $4
+			  AND i.mode = 'live'
+			  AND i.status IN ('awaiting_payment', 'underpaid')
 		)
-	`, address, network, suffix).Scan(&exists)
+	`, address, network, asset, suffix).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("check suffix collision: %w", err)
 	}
@@ -531,8 +555,21 @@ type CreateInvoiceParams struct {
 	DestinationAddress string
 	PaymentComment     *string
 	MatchingSuffix     *decimal.Decimal
+	PayableAsset       PaymentAsset
+	PaymentOptions     []CreatePaymentOptionParams
 	ExpiresAt          time.Time
 	Mode               string
+}
+
+type CreatePaymentOptionParams struct {
+	Network            Network
+	Asset              PaymentAsset
+	PayableAmount      decimal.Decimal
+	DestinationAddress string
+	PaymentComment     *string
+	MatchingSuffix     *decimal.Decimal
+	PaymentURI         string
+	IsDefault          bool
 }
 
 func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (Invoice, error) {
@@ -544,24 +581,45 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 	if params.Mode == "" {
 		params.Mode = "live"
 	}
+	if params.PayableAsset == "" {
+		params.PayableAsset = DefaultAssetForNetwork(params.PayableNetwork)
+	}
+	if len(params.PaymentOptions) == 0 {
+		params.PaymentOptions = []CreatePaymentOptionParams{{
+			Network:            params.PayableNetwork,
+			Asset:              params.PayableAsset,
+			PayableAmount:      params.PayableAmount,
+			DestinationAddress: params.DestinationAddress,
+			PaymentComment:     params.PaymentComment,
+			MatchingSuffix:     params.MatchingSuffix,
+			IsDefault:          true,
+		}}
+	}
+	if !params.PaymentOptions[0].IsDefault {
+		params.PaymentOptions[0].IsDefault = true
+	}
 	if params.Mode == "live" {
-		var collision bool
-		if err := tx.QueryRow(ctx, `
-			SELECT EXISTS(
-				SELECT 1
-				FROM invoices
-				WHERE destination_address = $1
-				  AND payable_network = $2
-				  AND payable_amount = $3
-				  AND mode = 'live'
-				  AND status IN ('awaiting_payment', 'underpaid')
-				FOR UPDATE
-			)
-		`, params.DestinationAddress, params.PayableNetwork, params.PayableAmount).Scan(&collision); err != nil {
-			return Invoice{}, fmt.Errorf("check active payment collision: %w", err)
-		}
-		if collision {
-			return Invoice{}, ErrActivePaymentCollision
+		for _, option := range params.PaymentOptions {
+			var collision bool
+			if err := tx.QueryRow(ctx, `
+				SELECT EXISTS(
+					SELECT 1
+					FROM invoice_payment_options ipo
+					JOIN invoices i ON i.id = ipo.invoice_id
+					WHERE ipo.destination_address = $1
+					  AND ipo.network = $2
+					  AND ipo.asset = $3
+					  AND ipo.payable_amount = $4
+					  AND i.mode = 'live'
+					  AND i.status IN ('awaiting_payment', 'underpaid')
+					FOR UPDATE
+				)
+			`, option.DestinationAddress, option.Network, option.Asset, option.PayableAmount).Scan(&collision); err != nil {
+				return Invoice{}, fmt.Errorf("check active payment option collision: %w", err)
+			}
+			if collision {
+				return Invoice{}, ErrActivePaymentCollision
+			}
 		}
 	}
 
@@ -592,6 +650,38 @@ func (s *Store) CreateInvoice(ctx context.Context, params CreateInvoiceParams) (
 	if err != nil {
 		return Invoice{}, err
 	}
+	if _, err := tx.Exec(ctx, `
+		DELETE FROM invoice_payment_options
+		WHERE invoice_id = $1
+	`, invoice.ID); err != nil {
+		return Invoice{}, fmt.Errorf("clear invoice payment options: %w", err)
+	}
+	for i, option := range params.PaymentOptions {
+		if option.Asset == "" {
+			option.Asset = DefaultAssetForNetwork(option.Network)
+		}
+		if option.IsDefault || i == 0 {
+			option.IsDefault = true
+		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO invoice_payment_options (
+				invoice_id,
+				network,
+				asset,
+				payable_amount,
+				destination_address,
+				payment_comment,
+				matching_suffix,
+				payment_uri,
+				is_default
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		`, invoice.ID, option.Network, option.Asset, option.PayableAmount, option.DestinationAddress, option.PaymentComment, option.MatchingSuffix, option.PaymentURI, option.IsDefault); err != nil {
+			return Invoice{}, fmt.Errorf("insert invoice payment option: %w", err)
+		}
+	}
+	invoice.PaymentOptions = paramsToPaymentOptions(invoice.ID, params.PaymentOptions)
+	invoice.PayableAsset = params.PaymentOptions[0].Asset
 
 	if params.CountTowardsTrial {
 		if _, err := tx.Exec(ctx, `
@@ -662,7 +752,13 @@ func (s *Store) ListInvoices(ctx context.Context, workspaceID int64, filter List
 		}
 		invoices = append(invoices, invoice)
 	}
-	return invoices, total, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	if err := s.attachPaymentOptions(ctx, invoices); err != nil {
+		return nil, 0, err
+	}
+	return invoices, total, nil
 }
 
 func (s *Store) GetInvoiceByID(ctx context.Context, workspaceID int64, invoiceID int64) (Invoice, error) {
@@ -671,7 +767,16 @@ func (s *Store) GetInvoiceByID(ctx context.Context, workspaceID int64, invoiceID
 		FROM invoices
 		WHERE id = $1 AND workspace_id = $2
 	`, invoiceID, workspaceID)
-	return scanInvoice(row)
+	invoice, err := scanInvoice(row)
+	if err != nil {
+		return Invoice{}, err
+	}
+	options, err := s.ListPaymentOptionsForInvoice(ctx, invoice.ID)
+	if err != nil {
+		return Invoice{}, err
+	}
+	applyPaymentOptions(&invoice, options)
+	return invoice, nil
 }
 
 func (s *Store) GetInvoiceByPublicID(ctx context.Context, publicID string) (Invoice, error) {
@@ -680,7 +785,16 @@ func (s *Store) GetInvoiceByPublicID(ctx context.Context, publicID string) (Invo
 		FROM invoices
 		WHERE public_id = $1
 	`, publicID)
-	return scanInvoice(row)
+	invoice, err := scanInvoice(row)
+	if err != nil {
+		return Invoice{}, err
+	}
+	options, err := s.ListPaymentOptionsForInvoice(ctx, invoice.ID)
+	if err != nil {
+		return Invoice{}, err
+	}
+	applyPaymentOptions(&invoice, options)
+	return invoice, nil
 }
 
 func (s *Store) SetInvoiceStatus(ctx context.Context, workspaceID int64, invoiceID int64, status InvoiceStatus) (Invoice, error) {
@@ -776,11 +890,11 @@ func (s *Store) RecordObservedTransfer(ctx context.Context, transfer ObservedTra
 
 	var event PaymentEvent
 	row := s.pool.QueryRow(ctx, `
-		INSERT INTO payment_events (tx_hash, network, destination_address, amount, payment_comment, observed_at, raw_payload, external_event_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO payment_events (tx_hash, network, asset, destination_address, amount, payment_comment, observed_at, raw_payload, external_event_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (external_event_id) DO NOTHING
-		RETURNING id, tx_hash, network, destination_address, amount, payment_comment, observed_at, raw_payload, matched_invoice_id, classification, external_event_id, allocated_amount, created_at
-	`, transfer.TxHash, transfer.Network, transfer.DestinationAddress, transfer.Amount, comment, transfer.ObservedAt, transfer.RawPayload, externalEventID)
+		RETURNING id, tx_hash, network, asset, destination_address, amount, payment_comment, observed_at, raw_payload, matched_invoice_id, classification, external_event_id, allocated_amount, created_at
+	`, transfer.TxHash, transfer.Network, transfer.Asset, transfer.DestinationAddress, transfer.Amount, comment, transfer.ObservedAt, transfer.RawPayload, externalEventID)
 	if err := scanPaymentEvent(row, &event); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return PaymentEvent{TxHash: transfer.TxHash, Network: transfer.Network, ExternalEventID: externalEventID}, false, nil
@@ -794,36 +908,60 @@ func normalizeExternalEventID(transfer ObservedTransfer) string {
 	if strings.TrimSpace(transfer.ExternalEventID) != "" {
 		return strings.TrimSpace(transfer.ExternalEventID)
 	}
+	if strings.TrimSpace(string(transfer.Asset)) != "" {
+		return string(transfer.Network) + ":" + string(transfer.Asset) + ":" + strings.TrimSpace(transfer.TxHash)
+	}
 	return string(transfer.Network) + ":" + strings.TrimSpace(transfer.TxHash)
 }
 
 func (s *Store) FindInvoiceByTONComment(ctx context.Context, address string, comment string) (Invoice, error) {
+	return s.FindInvoiceByPaymentComment(ctx, address, NetworkTON, AssetTON, comment)
+}
+
+func (s *Store) FindInvoiceByPaymentComment(ctx context.Context, address string, network Network, asset PaymentAsset, comment string) (Invoice, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT `+invoiceSelectColumns+`
-		FROM invoices
-		WHERE payable_network = 'TON'
-		  AND destination_address = $1
-		  AND payment_comment = $2
-		  AND mode = 'live'
-		  AND status IN ('awaiting_payment', 'underpaid', 'expired')
-		ORDER BY created_at DESC
+		SELECT `+prefixedInvoiceSelectColumns("i")+`
+		FROM invoice_payment_options ipo
+		JOIN invoices i ON i.id = ipo.invoice_id
+		WHERE ipo.network = $1
+		  AND ipo.asset = $2
+		  AND ipo.destination_address = $3
+		  AND ipo.payment_comment = $4
+		  AND i.mode = 'live'
+		  AND i.status IN ('awaiting_payment', 'underpaid', 'expired')
+		ORDER BY i.created_at DESC
 		LIMIT 1
-	`, address, comment)
-	return scanInvoice(row)
+	`, network, asset, address, comment)
+	invoice, err := scanInvoice(row)
+	if err != nil {
+		return Invoice{}, err
+	}
+	options, err := s.ListPaymentOptionsForInvoice(ctx, invoice.ID)
+	if err != nil {
+		return Invoice{}, err
+	}
+	applyPaymentOptions(&invoice, options)
+	return invoice, nil
 }
 
 func (s *Store) FindInvoiceByExactAmount(ctx context.Context, address string, network Network, amount decimal.Decimal) (Invoice, error) {
+	return s.FindInvoiceByExactAmountAndAsset(ctx, address, network, DefaultAssetForNetwork(network), amount)
+}
+
+func (s *Store) FindInvoiceByExactAmountAndAsset(ctx context.Context, address string, network Network, asset PaymentAsset, amount decimal.Decimal) (Invoice, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT `+invoiceSelectColumns+`
-		FROM invoices
-		WHERE destination_address = $1
-		  AND payable_network = $2
-		  AND payable_amount = $3
-		  AND mode = 'live'
-		  AND status IN ('awaiting_payment', 'underpaid', 'expired')
-		ORDER BY created_at DESC
+		SELECT `+prefixedInvoiceSelectColumns("i")+`
+		FROM invoice_payment_options ipo
+		JOIN invoices i ON i.id = ipo.invoice_id
+		WHERE ipo.destination_address = $1
+		  AND ipo.network = $2
+		  AND ipo.asset = $3
+		  AND ipo.payable_amount = $4
+		  AND i.mode = 'live'
+		  AND i.status IN ('awaiting_payment', 'underpaid', 'expired')
+		ORDER BY i.created_at DESC
 		LIMIT 2
-	`, address, network, amount)
+	`, address, network, asset, amount)
 	if err != nil {
 		return Invoice{}, fmt.Errorf("find invoice by exact amount: %w", err)
 	}
@@ -845,23 +983,35 @@ func (s *Store) FindInvoiceByExactAmount(ctx context.Context, address string, ne
 	if len(invoices) > 1 {
 		return Invoice{}, ErrAmbiguousPaymentMatch
 	}
+	options, err := s.ListPaymentOptionsForInvoice(ctx, invoices[0].ID)
+	if err != nil {
+		return Invoice{}, err
+	}
+	applyPaymentOptions(&invoices[0], options)
+	selectInvoicePaymentOption(&invoices[0], network, asset)
 	return invoices[0], nil
 }
 
 func (s *Store) FindPotentialUnderpaidInvoice(ctx context.Context, address string, network Network, amount decimal.Decimal) (Invoice, error) {
+	return s.FindPotentialUnderpaidInvoiceByAsset(ctx, address, network, DefaultAssetForNetwork(network), amount)
+}
+
+func (s *Store) FindPotentialUnderpaidInvoiceByAsset(ctx context.Context, address string, network Network, asset PaymentAsset, amount decimal.Decimal) (Invoice, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT `+invoiceSelectColumns+`
-		FROM invoices
-		WHERE destination_address = $1
-		  AND payable_network = $2
-		  AND mode = 'live'
-		  AND status IN ('awaiting_payment', 'underpaid', 'expired')
-		  AND payable_amount > $3
-		  AND payable_amount - $3 <= 2.500000
-		  AND ROUND(payable_amount - TRUNC(payable_amount), 6) = ROUND($3 - TRUNC($3), 6)
-		ORDER BY payable_amount - $3 ASC, created_at DESC
+		SELECT `+prefixedInvoiceSelectColumns("i")+`
+		FROM invoice_payment_options ipo
+		JOIN invoices i ON i.id = ipo.invoice_id
+		WHERE ipo.destination_address = $1
+		  AND ipo.network = $2
+		  AND ipo.asset = $3
+		  AND i.mode = 'live'
+		  AND i.status IN ('awaiting_payment', 'underpaid', 'expired')
+		  AND ipo.payable_amount > $4
+		  AND ipo.payable_amount - $4 <= 2.500000
+		  AND ROUND(ipo.payable_amount - TRUNC(ipo.payable_amount), 6) = ROUND($4 - TRUNC($4), 6)
+		ORDER BY ipo.payable_amount - $4 ASC, i.created_at DESC
 		LIMIT 2
-	`, address, network, amount)
+	`, address, network, asset, amount)
 	if err != nil {
 		return Invoice{}, fmt.Errorf("find potential underpaid invoice: %w", err)
 	}
@@ -883,6 +1033,12 @@ func (s *Store) FindPotentialUnderpaidInvoice(ctx context.Context, address strin
 	if len(invoices) > 1 {
 		return Invoice{}, ErrAmbiguousPaymentMatch
 	}
+	options, err := s.ListPaymentOptionsForInvoice(ctx, invoices[0].ID)
+	if err != nil {
+		return Invoice{}, err
+	}
+	applyPaymentOptions(&invoices[0], options)
+	selectInvoicePaymentOption(&invoices[0], network, asset)
 	return invoices[0], nil
 }
 
@@ -1069,13 +1225,16 @@ func (s *Store) GetWatchedWallets(ctx context.Context, graceWindow time.Duration
 	rows, err := s.pool.Query(ctx, `
 		SELECT DISTINCT
 			CASE
-				WHEN i.payable_network IN ('BASE', 'BSC') THEN 'EVM'
-				WHEN i.payable_network::text = 'TON_USDT' THEN 'TON_USDT'
-				ELSE i.payable_network::text
+				WHEN ipo.network IN ('BASE', 'BSC', 'ARBITRUM') AND ipo.asset = 'BNB' THEN 'BSC'
+				WHEN ipo.network IN ('BASE', 'BSC', 'ARBITRUM') THEN 'EVM'
+				WHEN ipo.network::text = 'TON_USDT' THEN 'TON_USDT'
+				ELSE ipo.network::text
 			END AS poll_network,
-			i.payable_network,
-			i.destination_address
-		FROM invoices i
+			ipo.network,
+			ipo.asset,
+			ipo.destination_address
+		FROM invoice_payment_options ipo
+		JOIN invoices i ON i.id = ipo.invoice_id
 		WHERE i.mode = 'live'
 		  AND i.status IN ('awaiting_payment', 'underpaid', 'expired')
 		  AND i.expires_at >= NOW() - $1::interval
@@ -1088,7 +1247,7 @@ func (s *Store) GetWatchedWallets(ctx context.Context, graceWindow time.Duration
 	var wallets []WatchedWallet
 	for rows.Next() {
 		var wallet WatchedWallet
-		if err := rows.Scan(&wallet.PollNetwork, &wallet.PayableNetwork, &wallet.Address); err != nil {
+		if err := rows.Scan(&wallet.PollNetwork, &wallet.PayableNetwork, &wallet.Asset, &wallet.Address); err != nil {
 			return nil, fmt.Errorf("scan watched wallet: %w", err)
 		}
 		wallets = append(wallets, wallet)
@@ -1209,7 +1368,7 @@ func scanWorkspace(row pgx.Row) (Workspace, error) {
 
 func scanWallet(row interface{ Scan(dest ...any) error }) (Wallet, error) {
 	var wallet Wallet
-	err := row.Scan(&wallet.ID, &wallet.WorkspaceID, &wallet.Network, &wallet.Address, &wallet.IsActive, &wallet.CreatedAt)
+	err := row.Scan(&wallet.ID, &wallet.WorkspaceID, &wallet.Network, &wallet.Address, &wallet.Environment, &wallet.IsActive, &wallet.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Wallet{}, ErrNotFound
 	}
@@ -1253,6 +1412,7 @@ func scanInvoice(row interface{ Scan(dest ...any) error }) (Invoice, error) {
 		return Invoice{}, fmt.Errorf("scan invoice: %w", err)
 	}
 	invoice.Environment = Environment(invoice.Mode)
+	invoice.PayableAsset = DefaultAssetForNetwork(invoice.PayableNetwork)
 	return invoice, nil
 }
 
@@ -1261,6 +1421,7 @@ func scanPaymentEvent(row interface{ Scan(dest ...any) error }, event *PaymentEv
 		&event.ID,
 		&event.TxHash,
 		&event.Network,
+		&event.Asset,
 		&event.DestinationAddress,
 		&event.Amount,
 		&event.PaymentComment,
@@ -1276,6 +1437,137 @@ func scanPaymentEvent(row interface{ Scan(dest ...any) error }, event *PaymentEv
 		return ErrNotFound
 	}
 	return err
+}
+
+func scanPaymentOption(row interface{ Scan(dest ...any) error }) (PaymentOption, error) {
+	var option PaymentOption
+	err := row.Scan(
+		&option.ID,
+		&option.InvoiceID,
+		&option.Network,
+		&option.Asset,
+		&option.PayableAmount,
+		&option.DestinationAddress,
+		&option.PaymentComment,
+		&option.MatchingSuffix,
+		&option.PaymentURI,
+		&option.IsDefault,
+		&option.CreatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return PaymentOption{}, ErrNotFound
+	}
+	if err != nil {
+		return PaymentOption{}, fmt.Errorf("scan payment option: %w", err)
+	}
+	return option, nil
+}
+
+func paramsToPaymentOptions(invoiceID int64, params []CreatePaymentOptionParams) []PaymentOption {
+	options := make([]PaymentOption, 0, len(params))
+	for _, param := range params {
+		options = append(options, PaymentOption{
+			InvoiceID:          invoiceID,
+			Network:            param.Network,
+			Asset:              param.Asset,
+			PayableAmount:      param.PayableAmount,
+			DestinationAddress: param.DestinationAddress,
+			PaymentComment:     param.PaymentComment,
+			MatchingSuffix:     param.MatchingSuffix,
+			PaymentURI:         param.PaymentURI,
+			IsDefault:          param.IsDefault,
+		})
+	}
+	return options
+}
+
+func applyPaymentOptions(invoice *Invoice, options []PaymentOption) {
+	if len(options) == 0 {
+		options = []PaymentOption{{
+			InvoiceID:          invoice.ID,
+			Network:            invoice.PayableNetwork,
+			Asset:              DefaultAssetForNetwork(invoice.PayableNetwork),
+			PayableAmount:      invoice.PayableAmount,
+			DestinationAddress: invoice.DestinationAddress,
+			PaymentComment:     invoice.PaymentComment,
+			MatchingSuffix:     invoice.MatchingSuffix,
+			IsDefault:          true,
+		}}
+	}
+	invoice.PaymentOptions = options
+	for _, option := range options {
+		if option.IsDefault {
+			invoice.PayableNetwork = option.Network
+			invoice.PayableAsset = option.Asset
+			invoice.PayableAmount = option.PayableAmount
+			invoice.DestinationAddress = option.DestinationAddress
+			invoice.PaymentComment = option.PaymentComment
+			invoice.MatchingSuffix = option.MatchingSuffix
+			return
+		}
+	}
+	invoice.PayableNetwork = options[0].Network
+	invoice.PayableAsset = options[0].Asset
+	invoice.PayableAmount = options[0].PayableAmount
+	invoice.DestinationAddress = options[0].DestinationAddress
+	invoice.PaymentComment = options[0].PaymentComment
+	invoice.MatchingSuffix = options[0].MatchingSuffix
+}
+
+func selectInvoicePaymentOption(invoice *Invoice, network Network, asset PaymentAsset) {
+	for _, option := range invoice.PaymentOptions {
+		if option.Network == network && option.Asset == asset {
+			invoice.PayableNetwork = option.Network
+			invoice.PayableAsset = option.Asset
+			invoice.PayableAmount = option.PayableAmount
+			invoice.DestinationAddress = option.DestinationAddress
+			invoice.PaymentComment = option.PaymentComment
+			invoice.MatchingSuffix = option.MatchingSuffix
+			return
+		}
+	}
+}
+
+func (s *Store) ListPaymentOptionsForInvoice(ctx context.Context, invoiceID int64) ([]PaymentOption, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT `+paymentOptionSelectColumns+`
+		FROM invoice_payment_options
+		WHERE invoice_id = $1
+		ORDER BY is_default DESC, id ASC
+	`, invoiceID)
+	if err != nil {
+		return nil, fmt.Errorf("list invoice payment options: %w", err)
+	}
+	defer rows.Close()
+	options := make([]PaymentOption, 0)
+	for rows.Next() {
+		option, err := scanPaymentOption(rows)
+		if err != nil {
+			return nil, err
+		}
+		options = append(options, option)
+	}
+	return options, rows.Err()
+}
+
+func (s *Store) attachPaymentOptions(ctx context.Context, invoices []Invoice) error {
+	for i := range invoices {
+		options, err := s.ListPaymentOptionsForInvoice(ctx, invoices[i].ID)
+		if err != nil {
+			return err
+		}
+		applyPaymentOptions(&invoices[i], options)
+	}
+	return nil
+}
+
+func prefixedInvoiceSelectColumns(alias string) string {
+	prefix := strings.TrimSpace(alias) + "."
+	columns := strings.Split(invoiceSelectColumns, ",")
+	for i, column := range columns {
+		columns[i] = prefix + strings.TrimSpace(column)
+	}
+	return strings.Join(columns, ", ")
 }
 
 func applyInvoicePostPaymentEffects(ctx context.Context, tx pgx.Tx, invoice Invoice) error {

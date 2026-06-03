@@ -394,6 +394,7 @@ func TestPollSolanaStablecoin(t *testing.T) {
 
 	transfers, err := w.pollSolanaStablecoin(context.Background(), store.WatchedWallet{
 		PayableNetwork: store.NetworkSOLANA,
+		Asset:          store.AssetUSDT,
 		Address:        "owner-sol",
 	})
 	if err != nil {
@@ -428,6 +429,7 @@ func TestPollSolanaStablecoinBoundaries(t *testing.T) {
 		}
 		_, err := w.pollSolanaStablecoin(context.Background(), store.WatchedWallet{
 			PayableNetwork: store.NetworkSOLANA,
+			Asset:          store.AssetUSDT,
 			Address:        "owner-sol",
 		})
 		if err == nil || !strings.Contains(err.Error(), "owner lookup failed") {
@@ -501,6 +503,7 @@ func TestPollSolanaStablecoinBoundaries(t *testing.T) {
 		}
 		transfers, err := w.pollSolanaStablecoin(context.Background(), store.WatchedWallet{
 			PayableNetwork: store.NetworkSOLANA,
+			Asset:          store.AssetUSDT,
 			Address:        "owner-sol",
 		})
 		if err != nil {

@@ -382,7 +382,12 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 	var body struct {
 		PlanCode       string `json:"plan_code"`
 		PayableNetwork string `json:"payable_network"`
-		BaseAmountUSD  string `json:"base_amount_usd"`
+		PayableAsset   string `json:"payable_asset"`
+		PaymentOptions []struct {
+			Network string `json:"network"`
+			Asset   string `json:"asset"`
+		} `json:"payment_options"`
+		BaseAmountUSD string `json:"base_amount_usd"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -412,7 +417,11 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 	}
 
 	ctx := metrics.WithSource(c.Request.Context(), "admin_api")
-	invoice, err := s.invoiceService.CreatePlanInvoiceWithPrice(ctx, workspace, planCode, network, nil)
+	options := parsePaymentOptionInputs(body.PaymentOptions)
+	if len(options) == 0 {
+		options = []service.PaymentOptionInput{{Network: network, Asset: store.NormalizePaymentAsset(body.PayableAsset)}}
+	}
+	invoice, err := s.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, options, nil)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

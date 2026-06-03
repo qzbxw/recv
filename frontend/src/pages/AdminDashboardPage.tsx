@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   blockAdminWorkspace,
@@ -11,6 +11,7 @@ import {
   fetchAdminInvoices,
   fetchAdminOpsOverview,
   fetchAdminSEOTargets,
+  fetchAdminWorkspaces,
   getStoredAdminToken,
   loginAdmin,
   logoutAdmin,
@@ -20,22 +21,61 @@ import {
   setStoredAdminToken,
   verifyAdminTotp,
 } from "../lib/api";
-import { buildCheckoutUrl } from "../lib/routing";
-import type { AdminAnalyticsResponse, AdminAuditEvent, AdminInvoice, AdminInvoiceListResponse, AdminOpsOverviewResponse, SEOTarget } from "../lib/types";
+import { CustomSelect } from "../components/CustomSelect";
+import { buildCheckoutUrl, buildCheckoutPath } from "../lib/routing";
+import type {
+  AdminAnalyticsResponse,
+  AdminAuditEvent,
+  AdminInvoice,
+  AdminInvoiceListResponse,
+  AdminOpsOverviewResponse,
+  AdminWebhookDelivery,
+  AdminWorkspace,
+  SEOTarget,
+} from "../lib/types";
 
-type Tab = "core" | "actions" | "analytics" | "audit" | "content" | "seo";
+type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "audit" | "content";
 
-type Filters = {
-  status: string;
-  kind: string;
-  query: string;
-};
+type Filters = { status: string; kind: string; query: string };
+const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "" };
 
-const DEFAULT_FILTERS: Filters = {
-  status: "all",
-  kind: "all",
-  query: "",
-};
+const PLAN_OPTIONS = [
+  { value: "trial", label: "Trial" },
+  { value: "merchant", label: "Merchant" },
+  { value: "developer", label: "Developer" },
+  { value: "business", label: "Business" },
+];
+
+const NETWORK_OPTIONS = [
+  { value: "TON", label: "TON" },
+  { value: "TON_USDT", label: "TON USDT" },
+  { value: "TRON", label: "TRON USDT" },
+  { value: "BASE", label: "Base USDC" },
+  { value: "BSC", label: "BSC USDT" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "awaiting_payment", label: "Awaiting payment" },
+  { value: "paid", label: "Paid" },
+  { value: "underpaid", label: "Underpaid" },
+  { value: "overpaid", label: "Overpaid" },
+  { value: "manual_review", label: "Manual review" },
+  { value: "expired", label: "Expired" },
+];
+
+const KIND_OPTIONS = [
+  { value: "all", label: "All kinds" },
+  { value: "merchant", label: "Merchant" },
+  { value: "subscription", label: "Subscription" },
+];
+
+const GROUP_BY_OPTIONS = [
+  { value: "date", label: "By date" },
+  { value: "network", label: "By network" },
+  { value: "plan", label: "By plan" },
+  { value: "mode", label: "By mode" },
+];
 
 function formatMoney(value: string | number | null | undefined) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
@@ -46,72 +86,105 @@ function formatDateTime(value: string | null | undefined) {
   return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
-function statusClass(status: string) {
-  return `admin-status-pill status-${status}`;
+function statusTone(status: string): string {
+  switch (status) {
+    case "paid": return "success";
+    case "awaiting_payment": return "warning";
+    case "underpaid": return "danger";
+    case "overpaid": return "info";
+    case "manual_review": return "review";
+    case "expired":
+    case "cancelled": return "neutral";
+    default: return "neutral";
+  }
+}
+
+function prettyStatus(status: string) {
+  return status.replace(/_/g, " ");
+}
+
+const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
+  overview: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" /><rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" /></svg>,
+  invoices: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="16" y2="17" /></svg>,
+  review: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
+  workspaces: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+  webhooks: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
+  analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
+  audit: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+  content: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></svg>,
+  logout: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
+  refresh: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>,
+};
+
+function ToneBadge({ status }: { status: string }) {
+  return <span className={`dev-api-badge dev-status-badge dev-status-badge--${statusTone(status)}`}>{prettyStatus(status)}</span>;
+}
+
+function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+  e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
 }
 
 export function AdminDashboardPage() {
   const [token, setToken] = useState(() => getStoredAdminToken() || "");
   const [credentials, setCredentials] = useState({ username: "", password: "" });
-  const [mfa, setMfa] = useState<{ challengeToken: string; code: string; setupSecret: string; recoveryCodes: string[] }>({ challengeToken: "", code: "", setupSecret: "", recoveryCodes: [] });
-  const [activeTab, setActiveTab] = useState<Tab>("core");
+  const [mfa, setMfa] = useState<{ challengeToken: string; code: string; setupSecret: string }>({ challengeToken: "", code: "", setupSecret: "" });
+  const [activePanel, setActivePanel] = useState<PanelKey>("overview");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const [overview, setOverview] = useState<AdminOpsOverviewResponse | null>(null);
   const [invoiceList, setInvoiceList] = useState<AdminInvoiceListResponse | null>(null);
   const [analytics, setAnalytics] = useState<AdminAnalyticsResponse | null>(null);
   const [auditEvents, setAuditEvents] = useState<AdminAuditEvent[]>([]);
   const [seoTargets, setSeoTargets] = useState<SEOTarget[]>([]);
+  const [workspaces, setWorkspaces] = useState<AdminWorkspace[]>([]);
+
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  const [selectedInvoice, setSelectedInvoice] = useState<AdminInvoice | null>(null);
-  const [workspaceAction, setWorkspaceAction] = useState({ workspaceId: "", blocked: true, planCode: "developer" as "trial" | "merchant" | "developer" | "business", days: "30", reason: "" });
-  const [billingAction, setBillingAction] = useState({ workspaceId: "", planCode: "merchant" as "merchant" | "developer" | "business", payableNetwork: "TON" });
-  const [invoiceAction, setInvoiceAction] = useState({ invoiceId: "", result: "keep_manual_review" as "mark_paid" | "keep_manual_review" | "expire", comment: "" });
-  const [webhookAction, setWebhookAction] = useState({ deliveryId: "" });
-  const [commentAction, setCommentAction] = useState({ targetType: "invoice", targetId: "", body: "" });
-  const [generatedCheckoutUrl, setGeneratedCheckoutUrl] = useState("");
-  const [actionResult, setActionResult] = useState("");
-  const [error, setError] = useState("");
+  const [analyticsGroupBy, setAnalyticsGroupBy] = useState<"date" | "network" | "plan" | "mode">("date");
+
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
+  const [busyKey, setBusyKey] = useState("");
 
   const invoices = invoiceList?.items || [];
 
-  const metricCards = useMemo(() => {
-    if (!overview) return [];
-    return [
-      { label: "Gross paid", value: formatMoney(overview.revenue.gross_paid_usd), note: `${overview.invoices.paid} paid invoices` },
-      { label: "Open volume", value: formatMoney(overview.revenue.open_invoice_usd), note: `${overview.invoices.manual_review} manual reviews` },
-      { label: "Workspaces", value: overview.workspaces.total.toLocaleString("en-US"), note: `${overview.workspaces.active_subscribers} active subscribers` },
-      { label: "Subscriptions", value: overview.subscriptions.active.toLocaleString("en-US"), note: `${overview.subscriptions.paid_invoices} paid checkouts` },
-      { label: "Failed webhooks", value: String(overview.failed_webhook_queue.length), note: "latest retry queue" },
-      { label: "Bot queue", value: String(overview.notification_health.pending_total + overview.notification_health.failed_total), note: `${overview.notification_health.sent_24h} sent in 24h` },
-    ];
-  }, [overview]);
-
-  async function loadDashboard(activeToken: string, nextFilters = filters) {
+  const loadDashboard = useCallback(async (activeToken: string, nextFilters: Filters) => {
     setLoading(true);
     setError("");
     try {
-      const [nextOverview, nextInvoices, nextAnalytics, nextAuditEvents, nextSEO] = await Promise.all([
+      const [nextOverview, nextInvoices, nextAnalytics, nextAuditEvents, nextSEO, nextWorkspaces] = await Promise.all([
         fetchAdminOpsOverview(activeToken),
         fetchAdminInvoices(activeToken, { page: 1, page_size: 50, ...nextFilters }),
-        fetchAdminAnalytics(activeToken, { group_by: "date" }),
+        fetchAdminAnalytics(activeToken, { group_by: analyticsGroupBy }),
         fetchAdminAuditEvents(activeToken),
         fetchAdminSEOTargets(activeToken),
+        fetchAdminWorkspaces(activeToken).catch(() => ({ items: [] })),
       ]);
       setOverview(nextOverview);
       setInvoiceList(nextInvoices);
       setAnalytics(nextAnalytics);
       setAuditEvents(nextAuditEvents.items || []);
       setSeoTargets(nextSEO.items || []);
+      setWorkspaces(nextWorkspaces.items || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load admin dashboard");
     } finally {
       setLoading(false);
     }
-  }
+  }, [analyticsGroupBy]);
 
   useEffect(() => {
-    if (token) void loadDashboard(token);
+    if (token) void loadDashboard(token, filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(""), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -120,7 +193,7 @@ export function AdminDashboardPage() {
     try {
       const response = await loginAdmin(credentials);
       if (response.mfa_required && response.challenge_token) {
-        setMfa({ challengeToken: response.challenge_token, code: "", setupSecret: response.totp_secret || "", recoveryCodes: [] });
+        setMfa({ challengeToken: response.challenge_token, code: "", setupSecret: response.totp_secret || "" });
         return;
       }
       if (!response.token) throw new Error("Admin token was not returned");
@@ -141,7 +214,7 @@ export function AdminDashboardPage() {
       const response = await verifyAdminTotp({ challenge_token: mfa.challengeToken, code: mfa.code });
       setStoredAdminToken(response.token);
       setToken(response.token);
-      setMfa({ challengeToken: "", code: "", setupSecret: "", recoveryCodes: response.recovery_codes || [] });
+      setMfa({ challengeToken: "", code: "", setupSecret: "" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Admin MFA failed");
     } finally {
@@ -157,118 +230,82 @@ export function AdminDashboardPage() {
     setInvoiceList(null);
   }
 
-  async function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (token) await loadDashboard(token, filters);
-  }
-
-  async function runAction(fn: () => Promise<{ result: string }>) {
+  const runAction = useCallback(async (key: string, fn: () => Promise<{ result: string }>) => {
     if (!token) return;
-    setLoading(true);
+    setBusyKey(key);
     setError("");
-    setActionResult("");
     try {
       const response = await fn();
-      setActionResult(response.result);
-      await loadDashboard(token);
+      setToast(response.result || "Done");
+      await loadDashboard(token, filters);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Admin action failed");
     } finally {
-      setLoading(false);
+      setBusyKey("");
     }
+  }, [token, filters, loadDashboard]);
+
+  function handleNavClick(key: PanelKey) {
+    setActivePanel(key);
+    setIsMobileMenuOpen(false);
   }
 
-  async function handleWorkspaceBlock(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const workspaceId = Number(workspaceAction.workspaceId);
-    if (!Number.isFinite(workspaceId) || workspaceId <= 0) return setError("Workspace ID is required");
-    await runAction(() => blockAdminWorkspace(token, workspaceId, { blocked: workspaceAction.blocked, reason: workspaceAction.reason }));
+  async function applyFilters(next: Filters) {
+    setFilters(next);
+    if (token) await loadDashboard(token, next);
   }
 
-  async function handlePlanChange(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const workspaceId = Number(workspaceAction.workspaceId);
-    if (!Number.isFinite(workspaceId) || workspaceId <= 0) return setError("Workspace ID is required");
-    await runAction(() => changeAdminWorkspacePlan(token, workspaceId, {
-      plan_code: workspaceAction.planCode,
-      days: Number(workspaceAction.days) || undefined,
-      reason: workspaceAction.reason,
-    }));
-  }
-
-  async function handleCreateBillingCheckout(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const workspaceId = Number(billingAction.workspaceId);
-    if (!Number.isFinite(workspaceId) || workspaceId <= 0) return setError("Workspace ID is required");
-    await runAction(async () => {
-      const response = await createAdminBillingCheckout(token, workspaceId, {
-        plan_code: billingAction.planCode,
-        payable_network: billingAction.payableNetwork,
-      });
-      setGeneratedCheckoutUrl(buildCheckoutUrl(response.invoice.public_id));
-      return { result: `Billing checkout created for ${response.plan.name}.` };
-    });
-  }
-
-  async function handleInvoiceReview(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const invoiceId = Number(invoiceAction.invoiceId);
-    if (!Number.isFinite(invoiceId) || invoiceId <= 0) return setError("Invoice ID is required");
-    await runAction(() => reviewAdminInvoice(token, invoiceId, { result: invoiceAction.result, comment: invoiceAction.comment }));
-  }
-
-  async function handleRefreshInvoice(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const invoiceId = Number(invoiceAction.invoiceId);
-    if (!Number.isFinite(invoiceId) || invoiceId <= 0) return setError("Invoice ID is required");
-    await runAction(() => refreshAdminInvoiceStatus(token, invoiceId));
-  }
-
-  async function handleResendWebhook(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const deliveryId = Number(webhookAction.deliveryId);
-    if (!Number.isFinite(deliveryId) || deliveryId <= 0) return setError("Webhook delivery ID is required");
-    await runAction(() => resendAdminWebhookDelivery(token, deliveryId));
-  }
-
-  async function handleInternalComment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    await runAction(() => createAdminInternalComment(token, {
-      target_type: commentAction.targetType,
-      target_id: commentAction.targetId,
-      body: commentAction.body,
-    }));
+  async function reloadAnalytics(groupBy: "date" | "network" | "plan" | "mode") {
+    setAnalyticsGroupBy(groupBy);
+    if (!token) return;
+    try {
+      const res = await fetchAdminAnalytics(token, { group_by: groupBy });
+      setAnalytics(res);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load analytics");
+    }
   }
 
   if (!token) {
     return (
-      <main className="admin-shell">
-        <div className="admin-noise" />
-        <section className="admin-login-wrap">
-          <div className="admin-login-panel">
-            <div className="admin-login-copy">
-              <span className="admin-eyebrow">recv Admin</span>
-              <h1>Ops Center</h1>
-              <p>Sign in to operate merchants, invoices, billing, webhooks, content, and SEO status.</p>
+      <main className="dev-portal dev-portal--console admin-auth">
+        <div className="dev-portal__backdrop dev-portal__backdrop--grid" />
+        <section className="admin-auth__wrap portal-animate-in">
+          <div className="dev-card admin-auth__card console-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="console-card-spotlight" />
+            <div className="admin-auth__brand">
+              <strong>recv<span className="brand-dot">.</span></strong>
+              <span className="dev-api-badge dev-api-badge--post dev-api-badge--micro">Ops Center</span>
             </div>
+            <h1>Admin sign in</h1>
+            <p className="dev-card__note-text">Operate merchants, invoices, billing, webhooks and content.</p>
             {mfa.challengeToken ? (
-              <form className="admin-login-form" onSubmit={handleVerifyMFA}>
+              <form className="dev-form" onSubmit={handleVerifyMFA}>
                 {mfa.setupSecret && (
-                  <label>
-                    <span>TOTP secret</span>
-                    <input value={mfa.setupSecret} readOnly />
-                  </label>
+                  <div className="dev-input-group">
+                    <label>TOTP secret</label>
+                    <input className="dev-input" value={mfa.setupSecret} readOnly />
+                  </div>
                 )}
-                <label><span>Authenticator code</span><input value={mfa.code} onChange={(event) => setMfa({ ...mfa, code: event.target.value })} autoComplete="one-time-code" /></label>
-                {error && <p className="admin-error">{error}</p>}
-                <button type="submit" className="admin-login-button" disabled={loading}>{loading ? "Verifying..." : "Verify"}</button>
+                <div className="dev-input-group">
+                  <label>Authenticator code</label>
+                  <input className="dev-input" value={mfa.code} onChange={(e) => setMfa({ ...mfa, code: e.target.value })} autoComplete="one-time-code" placeholder="123456" />
+                </div>
+                {error && <div className="alert">{error}</div>}
+                <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={loading}>{loading ? "Verifying…" : "Verify"}</button>
               </form>
             ) : (
-              <form className="admin-login-form" onSubmit={handleLogin}>
-                <label><span>Email</span><input value={credentials.username} onChange={(event) => setCredentials({ ...credentials, username: event.target.value })} autoComplete="username" /></label>
-                <label><span>Password</span><input type="password" value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} autoComplete="current-password" /></label>
-                {error && <p className="admin-error">{error}</p>}
-                <button type="submit" className="admin-login-button" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</button>
+              <form className="dev-form" onSubmit={handleLogin}>
+                <div className="dev-input-group">
+                  <label>Email</label>
+                  <input className="dev-input" value={credentials.username} onChange={(e) => setCredentials({ ...credentials, username: e.target.value })} autoComplete="username" />
+                </div>
+                <div className="dev-input-group">
+                  <label>Password</label>
+                  <input className="dev-input" type="password" value={credentials.password} onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} autoComplete="current-password" />
+                </div>
+                {error && <div className="alert">{error}</div>}
+                <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</button>
               </form>
             )}
           </div>
@@ -277,303 +314,739 @@ export function AdminDashboardPage() {
     );
   }
 
+  const navGroups: Array<{ label: string; items: Array<{ key: PanelKey; label: string; badge?: number }> }> = [
+    {
+      label: "Operations",
+      items: [
+        { key: "overview", label: "Overview" },
+        { key: "invoices", label: "Invoices" },
+        { key: "review", label: "Manual review", badge: overview?.invoices.manual_review || 0 },
+        { key: "workspaces", label: "Workspaces" },
+      ],
+    },
+    {
+      label: "Insights & content",
+      items: [
+        { key: "webhooks", label: "Webhooks", badge: overview?.failed_webhook_queue?.length || 0 },
+        { key: "analytics", label: "Analytics" },
+        { key: "audit", label: "Audit log" },
+        { key: "content", label: "Content & SEO" },
+      ],
+    },
+  ];
+
   return (
-    <main className="admin-shell">
-      <div className="admin-noise" />
-      <section className="admin-dashboard">
-        <header className="admin-topbar">
-          <div>
-            <span className="admin-eyebrow">recv Admin</span>
-            <h1>Ops Center</h1>
-            <p>Guarded operational controls over live merchants, invoices, webhooks, content, and SEO work.</p>
+    <main className={`dev-portal dev-portal--console ${isMobileMenuOpen ? "is-menu-open" : ""}`}>
+      <div className="dev-portal__backdrop dev-portal__backdrop--grid" />
+      {isMobileMenuOpen && <div className="dev-portal__nav-backdrop" onClick={() => setIsMobileMenuOpen(false)} />}
+
+      <div className="dev-portal__layout">
+        <aside className={`dev-portal__sidebar portal-animate-in ${isMobileMenuOpen ? "is-open" : ""}`}>
+          <div className="dev-portal__sidebar-brand">
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
+              <strong>recv<span className="brand-dot">.</span></strong>
+            </Link>
+            <span className="dev-api-badge dev-api-badge--post dev-api-badge--micro admin-brand-tag">Ops</span>
           </div>
-          <div className="admin-topbar-actions">
-            <div className="admin-generated-at">
-              <span>Last snapshot</span>
-              <strong>{overview ? formatDateTime(overview.generated_at) : "Loading..."}</strong>
+          <nav className="dev-portal__nav-menu">
+            {navGroups.map((group) => (
+              <div className="dev-portal__nav-group" key={group.label}>
+                <span className="dev-portal__nav-label">{group.label}</span>
+                {group.items.map((item) => (
+                  <button key={item.key} className={`dev-portal__nav-link ${activePanel === item.key ? "is-active" : ""}`} onClick={() => handleNavClick(item.key)}>
+                    {ICONS[item.key]}
+                    <span className="admin-nav-text">{item.label}</span>
+                    {item.badge ? <span className="admin-nav-badge">{item.badge}</span> : null}
+                  </button>
+                ))}
+              </div>
+            ))}
+            <div className="dev-portal__nav-group dev-portal__nav-logout">
+              <button className="dev-portal__nav-link dev-btn--danger-color" onClick={handleLogout}>
+                {ICONS.logout}
+                <span className="admin-nav-text">Logout</span>
+              </button>
             </div>
-            <Link to="/admin/blog" className="admin-ghost-button">Content</Link>
-            <button type="button" className="admin-ghost-button" onClick={() => void loadDashboard(token)} disabled={loading}>Refresh</button>
-            <button type="button" className="admin-ghost-button" onClick={handleLogout}>Logout</button>
-          </div>
-        </header>
+          </nav>
+        </aside>
 
-        <nav className="admin-tabbar" aria-label="Admin sections">
-          {[
-            ["core", "Core Ops"],
-            ["actions", "Actions"],
-            ["analytics", "Analytics"],
-            ["audit", "Audit"],
-            ["content", "Content"],
-            ["seo", "SEO Ops"],
-          ].map(([id, label]) => (
-            <button key={id} type="button" className={activeTab === id ? "admin-tab is-active" : "admin-tab"} onClick={() => setActiveTab(id as Tab)}>{label}</button>
-          ))}
-        </nav>
+        <div className="dev-portal__content">
+          <header className="dev-portal__header portal-animate-in">
+            <div className="dev-portal__mobile-brand-row">
+              <button className="dev-portal__menu-trigger" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="Toggle menu">
+                <div className="dev-portal__menu-icon"><span /><span /><span /></div>
+              </button>
+              <Link className="dev-portal__brand-mobile" to="/" style={{ textDecoration: "none" }}>
+                <strong>recv<span className="brand-dot">.</span></strong>
+              </Link>
+            </div>
+            <div className="dev-portal__header-actions">
+              <div className="dev-portal__workspace-badge admin-snapshot">
+                <span>Last snapshot</span>
+                <strong>{overview ? formatDateTime(overview.generated_at) : "Loading…"}</strong>
+              </div>
+              <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact admin-refresh-btn" onClick={() => void loadDashboard(token, filters)} disabled={loading}>
+                {ICONS.refresh}<span>{loading ? "Refreshing…" : "Refresh"}</span>
+              </button>
+            </div>
+          </header>
 
-        {error && <p className="admin-error admin-error--inline">{error}</p>}
-        {actionResult && <p className="admin-success admin-error--inline">{actionResult}</p>}
+          <div className="dev-portal__body">
+            {error && <div className="alert portal-animate-in" onClick={() => setError("")}>{error}</div>}
+            {toast && <div className="alert alert--success portal-animate-in" onClick={() => setToast("")}>{toast}</div>}
 
-        <section className="admin-metric-grid">
-          {metricCards.map((metric) => (
-            <article className="admin-metric-card" key={metric.label}>
-              <span>{metric.label}</span>
-              <strong>{metric.value}</strong>
-              <p>{metric.note}</p>
-            </article>
-          ))}
-        </section>
+            {activePanel === "overview" && (
+              <OverviewPanel overview={overview} busyKey={busyKey} runAction={runAction} onGoto={handleNavClick} />
+            )}
 
-        {activeTab === "core" && (
-          <section className="admin-main-grid">
-            <div className="admin-main-column">
-              <InvoiceBoard
+            {activePanel === "invoices" && (
+              <InvoicesPanel
                 invoices={invoices}
-                invoiceList={invoiceList}
+                total={invoiceList?.total || 0}
                 filters={filters}
-                setFilters={setFilters}
-                onSubmit={handleFilterSubmit}
-                onSelect={(invoice) => {
-                  setSelectedInvoice(invoice);
-                  setInvoiceAction({ ...invoiceAction, invoiceId: String(invoice.id) });
-                  setCommentAction({ ...commentAction, targetType: "invoice", targetId: String(invoice.id) });
-                }}
+                onApplyFilters={applyFilters}
+                workspaces={workspaces}
+                busyKey={busyKey}
+                runAction={runAction}
                 loading={loading}
               />
-              <QueueBoard title="Manual Review Queue" invoices={overview?.manual_review_queue || []} onSelect={(invoice) => setInvoiceAction({ ...invoiceAction, invoiceId: String(invoice.id) })} />
-            </div>
-            <aside className="admin-side-column">
-              <StatusMix overview={overview} />
-              <HealthBoard overview={overview} />
-            </aside>
-          </section>
-        )}
+            )}
 
-        {activeTab === "actions" && (
-          <section className="admin-main-grid">
-            <div className="admin-main-column">
-              <article className="admin-sales-board admin-form-board">
-                <h2>Workspace Actions</h2>
-                <form className="admin-action-grid" onSubmit={handleWorkspaceBlock}>
-                  <label><span>Workspace ID</span><input inputMode="numeric" value={workspaceAction.workspaceId} onChange={(event) => setWorkspaceAction({ ...workspaceAction, workspaceId: event.target.value })} /></label>
-                  <label><span>Block state</span><select value={workspaceAction.blocked ? "blocked" : "unblocked"} onChange={(event) => setWorkspaceAction({ ...workspaceAction, blocked: event.target.value === "blocked" })}><option value="blocked">Block</option><option value="unblocked">Unblock</option></select></label>
-                  <label><span>Reason</span><input value={workspaceAction.reason} onChange={(event) => setWorkspaceAction({ ...workspaceAction, reason: event.target.value })} /></label>
-                  <button className="admin-login-button" type="submit" disabled={loading}>Apply block state</button>
-                </form>
-                <form className="admin-action-grid" onSubmit={handlePlanChange}>
-                  <label><span>Plan</span><select value={workspaceAction.planCode} onChange={(event) => setWorkspaceAction({ ...workspaceAction, planCode: event.target.value as typeof workspaceAction.planCode })}><option value="trial">Trial</option><option value="merchant">Merchant</option><option value="developer">Developer</option><option value="business">Business</option></select></label>
-                  <label><span>Days</span><input inputMode="numeric" value={workspaceAction.days} onChange={(event) => setWorkspaceAction({ ...workspaceAction, days: event.target.value })} /></label>
-                  <button className="admin-login-button" type="submit" disabled={loading}>Change plan</button>
-                </form>
-              </article>
+            {activePanel === "review" && (
+              <ReviewPanel queue={overview?.manual_review_queue || []} busyKey={busyKey} runAction={runAction} />
+            )}
 
-              <article className="admin-sales-board admin-form-board">
-                <h2>Invoice Actions</h2>
-                <form className="admin-action-grid" onSubmit={handleInvoiceReview}>
-                  <label><span>Invoice ID</span><input inputMode="numeric" value={invoiceAction.invoiceId} onChange={(event) => setInvoiceAction({ ...invoiceAction, invoiceId: event.target.value })} /></label>
-                  <label><span>Review result</span><select value={invoiceAction.result} onChange={(event) => setInvoiceAction({ ...invoiceAction, result: event.target.value as typeof invoiceAction.result })}><option value="keep_manual_review">Keep review</option><option value="mark_paid">Mark paid</option><option value="expire">Expire</option></select></label>
-                  <label><span>Comment</span><input value={invoiceAction.comment} onChange={(event) => setInvoiceAction({ ...invoiceAction, comment: event.target.value })} /></label>
-                  <button className="admin-login-button" type="submit" disabled={loading}>Submit review</button>
-                </form>
-                <form className="admin-action-grid" onSubmit={handleRefreshInvoice}>
-                  <button className="admin-ghost-button" type="submit" disabled={loading}>Refresh invoice status</button>
-                </form>
-              </article>
-            </div>
+            {activePanel === "workspaces" && (
+              <WorkspacesPanel workspaces={workspaces} busyKey={busyKey} runAction={runAction} />
+            )}
 
-            <aside className="admin-side-column">
-              <article className="admin-chart-card">
-                <div className="admin-card-head"><h3>Create Billing Checkout</h3></div>
-                <form className="admin-login-form" onSubmit={handleCreateBillingCheckout}>
-                  <label><span>Workspace ID</span><input inputMode="numeric" value={billingAction.workspaceId} onChange={(event) => setBillingAction({ ...billingAction, workspaceId: event.target.value })} /></label>
-                  <label><span>Plan</span><select value={billingAction.planCode} onChange={(event) => setBillingAction({ ...billingAction, planCode: event.target.value as typeof billingAction.planCode })}><option value="merchant">Merchant</option><option value="developer">Developer</option><option value="business">Business</option></select></label>
-                  <label><span>Network</span><select value={billingAction.payableNetwork} onChange={(event) => setBillingAction({ ...billingAction, payableNetwork: event.target.value })}><option value="TON">TON</option><option value="TON_USDT">TON USDT</option><option value="TRON">TRON</option><option value="BASE">Base</option><option value="BSC">BSC</option></select></label>
-                  <button type="submit" className="admin-login-button" disabled={loading}>Create checkout</button>
-                </form>
-                {generatedCheckoutUrl && <p className="admin-sales-summary"><a href={generatedCheckoutUrl} target="_blank" rel="noreferrer">{generatedCheckoutUrl}</a></p>}
-              </article>
+            {activePanel === "webhooks" && (
+              <WebhooksPanel deliveries={overview?.failed_webhook_queue || []} busyKey={busyKey} runAction={runAction} />
+            )}
 
-              <article className="admin-chart-card">
-                <div className="admin-card-head"><h3>Webhook / Notes</h3></div>
-                <form className="admin-login-form" onSubmit={handleResendWebhook}>
-                  <label><span>Delivery ID</span><input inputMode="numeric" value={webhookAction.deliveryId} onChange={(event) => setWebhookAction({ deliveryId: event.target.value })} /></label>
-                  <button type="submit" className="admin-login-button" disabled={loading}>Resend webhook</button>
-                </form>
-                <form className="admin-login-form" onSubmit={handleInternalComment}>
-                  <label><span>Target type</span><input value={commentAction.targetType} onChange={(event) => setCommentAction({ ...commentAction, targetType: event.target.value })} /></label>
-                  <label><span>Target ID</span><input value={commentAction.targetId} onChange={(event) => setCommentAction({ ...commentAction, targetId: event.target.value })} /></label>
-                  <label><span>Comment</span><input value={commentAction.body} onChange={(event) => setCommentAction({ ...commentAction, body: event.target.value })} /></label>
-                  <button type="submit" className="admin-login-button" disabled={loading}>Add comment</button>
-                </form>
-              </article>
-            </aside>
-          </section>
-        )}
+            {activePanel === "analytics" && (
+              <AnalyticsPanel analytics={analytics} groupBy={analyticsGroupBy} onGroupBy={(g) => void reloadAnalytics(g)} />
+            )}
 
-        {activeTab === "analytics" && <AnalyticsBoard analytics={analytics} />}
-        {activeTab === "audit" && <AuditBoard events={auditEvents} />}
-        {activeTab === "content" && <ContentBoard />}
-        {activeTab === "seo" && <SEOBoard targets={seoTargets} />}
-        {selectedInvoice && <p className="admin-sales-summary">Selected invoice #{selectedInvoice.id} / {selectedInvoice.public_id}</p>}
-      </section>
+            {activePanel === "audit" && <AuditPanel events={auditEvents} />}
+
+            {activePanel === "content" && <ContentPanel targets={seoTargets} />}
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
 
-function InvoiceBoard(props: {
-  invoices: AdminInvoice[];
-  invoiceList: AdminInvoiceListResponse | null;
-  filters: Filters;
-  setFilters: (filters: Filters) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onSelect: (invoice: AdminInvoice) => void;
-  loading: boolean;
-}) {
+/* ---------------- panels ---------------- */
+
+function PanelHeader({ title, subtitle, children }: { title: string; subtitle: string; children?: React.ReactNode }) {
   return (
-    <article className="admin-sales-board">
-      <div className="admin-sales-head">
-        <div><h2>Invoices</h2><p className="admin-sales-summary">{props.invoiceList ? `${props.invoiceList.total} total matches` : "Loading invoices"}</p></div>
-        <form className="admin-sales-filters" onSubmit={props.onSubmit}>
-          <select value={props.filters.status} onChange={(event) => props.setFilters({ ...props.filters, status: event.target.value })}><option value="all">All statuses</option><option value="awaiting_payment">Awaiting</option><option value="paid">Paid</option><option value="underpaid">Underpaid</option><option value="manual_review">Manual review</option><option value="expired">Expired</option></select>
-          <select value={props.filters.kind} onChange={(event) => props.setFilters({ ...props.filters, kind: event.target.value })}><option value="all">All kinds</option><option value="merchant">Merchant</option><option value="subscription">Subscription</option></select>
-          <input placeholder="Search seller, email, public id" value={props.filters.query} onChange={(event) => props.setFilters({ ...props.filters, query: event.target.value })} />
-          <button className="admin-ghost-button" type="submit">Apply</button>
-        </form>
+    <div className="admin-panel-head">
+      <div className="dev-portal__section-header">
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
       </div>
-      <InvoiceTable invoices={props.invoices} emptyLabel="No invoices found." loading={props.loading} onSelect={props.onSelect} />
-    </article>
-  );
-}
-
-function QueueBoard(props: { title: string; invoices: AdminInvoice[]; onSelect: (invoice: AdminInvoice) => void }) {
-  return (
-    <article className="admin-sales-board">
-      <div className="admin-sales-head"><div><h2>{props.title}</h2><p className="admin-sales-summary">{props.invoices.length} invoices need attention</p></div></div>
-      <InvoiceTable invoices={props.invoices} emptyLabel="Manual review queue is clear." loading={false} onSelect={props.onSelect} />
-    </article>
-  );
-}
-
-function InvoiceTable(props: { invoices: AdminInvoice[]; emptyLabel: string; loading: boolean; onSelect: (invoice: AdminInvoice) => void }) {
-  return (
-    <div className="admin-table-wrap">
-      <table className="admin-sales-table">
-        <thead><tr><th>Invoice</th><th>Workspace</th><th>Amount</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
-        <tbody>
-          {props.invoices.map((invoice) => (
-            <tr key={invoice.id}>
-              <td><div className="admin-table-primary"><a href={buildCheckoutUrl(invoice.public_id)} target="_blank" rel="noreferrer">{invoice.public_id}</a><span>{invoice.title}</span></div></td>
-              <td><div className="admin-table-primary"><strong>{invoice.workspace_name || `Workspace #${invoice.workspace_id}`}</strong><span>{invoice.user_email || "no email"}</span></div></td>
-              <td>{formatMoney(invoice.base_amount_usd)}</td>
-              <td><span className={statusClass(invoice.status)}>{invoice.status}</span></td>
-              <td>{formatDateTime(invoice.created_at)}</td>
-              <td><button type="button" className="admin-ghost-button" onClick={() => props.onSelect(invoice)}>Use</button></td>
-            </tr>
-          ))}
-          {!props.loading && props.invoices.length === 0 && <tr><td colSpan={6} className="admin-table-empty">{props.emptyLabel}</td></tr>}
-        </tbody>
-      </table>
+      {children ? <div className="admin-panel-head__actions">{children}</div> : null}
     </div>
   );
 }
 
-function StatusMix({ overview }: { overview: AdminOpsOverviewResponse | null }) {
+function MetricCard({ label, value, meta }: { label: string; value: string; meta: string }) {
   return (
-    <article className="admin-chart-card">
-      <div className="admin-card-head"><h3>Status Mix</h3><strong>{overview?.invoices.total || 0}</strong></div>
-      <div className="admin-status-legend">
-        {(overview?.status_breakdown || []).map((item) => (
-          <div className="admin-status-legend-row" key={item.status}><span className={`admin-status-dot status-${item.status}`} /><strong>{item.status}</strong><small>{item.count} / {formatMoney(item.usd)}</small></div>
+    <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
+      <div className="console-card-spotlight" />
+      <span className="dev-metric-label">{label}</span>
+      <strong className="dev-metric-value">{value}</strong>
+      <span className="dev-metric-meta">{meta}</span>
+    </div>
+  );
+}
+
+type ActionRunner = (key: string, fn: () => Promise<{ result: string }>) => Promise<void>;
+
+function OverviewPanel({ overview, busyKey, runAction, onGoto }: {
+  overview: AdminOpsOverviewResponse | null;
+  busyKey: string;
+  runAction: ActionRunner;
+  onGoto: (key: PanelKey) => void;
+}) {
+  if (!overview) {
+    return <div className="dev-card dev-portal__empty-large">Loading operations snapshot…</div>;
+  }
+  const totalStatus = overview.invoices.total || 1;
+  const maxNet = (overview.network_breakdown || []).reduce((m, n) => Math.max(m, Number(n.paid_usd)), 0) || 1;
+  const metricCards = [
+    { label: "Gross paid", value: formatMoney(overview.revenue.gross_paid_usd), meta: `${overview.invoices.paid} paid invoices` },
+    { label: "Open volume", value: formatMoney(overview.revenue.open_invoice_usd), meta: `${overview.invoices.manual_review} in review` },
+    { label: "Workspaces", value: overview.workspaces.total.toLocaleString("en-US"), meta: `${overview.workspaces.active_subscribers} subscribers · ${overview.workspaces.blocked} blocked` },
+    { label: "Subscriptions", value: overview.subscriptions.active.toLocaleString("en-US"), meta: `${overview.subscriptions.paid_invoices} paid checkouts` },
+    { label: "Manual review", value: String(overview.invoices.manual_review), meta: "needs attention" },
+    { label: "Underpaid", value: String(overview.invoices.underpaid), meta: "follow up required" },
+    { label: "Failed webhooks", value: String(overview.failed_webhook_queue?.length || 0), meta: "in retry queue" },
+    { label: "Bot queue", value: String((overview.notification_health.pending_total || 0) + (overview.notification_health.failed_total || 0)), meta: `${overview.notification_health.sent_24h} sent in 24h` },
+  ];
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <div className="dev-portal__hero dev-portal__hero--compact">
+        <span className="dev-api-badge dev-api-badge--post dev-api-badge--fit">Operations</span>
+        <h1>Ops overview</h1>
+        <p>Live snapshot of revenue, invoices, infrastructure health and the work queues that need a human.</p>
+      </div>
+
+      <div className="dev-metrics-grid">
+        {metricCards.map((m) => <MetricCard key={m.label} {...m} />)}
+      </div>
+
+      <div className="dev-analytics-panel">
+        <div className="dev-analytics-col console-spotlight-card" onMouseMove={handleMouseMove}>
+          <div className="console-card-spotlight" />
+          <div className="dev-portal__section-header dev-portal__section-header--margin">
+            <h3>Status mix</h3>
+            <p>{overview.invoices.total} invoices total</p>
+          </div>
+          <div className="dev-breakdown">
+            {(overview.status_breakdown || []).map((item) => {
+              const pct = Math.round((item.count / totalStatus) * 100);
+              return (
+                <div key={item.status} className="dev-breakdown__row">
+                  <div className="dev-breakdown__head">
+                    <span className={`dev-status-dot dev-status-dot--${statusTone(item.status)}`} />
+                    <span className="dev-breakdown__label">{prettyStatus(item.status)}</span>
+                    <span className="dev-breakdown__value">{item.count} · {formatMoney(item.usd)}</span>
+                  </div>
+                  <div className="dev-breakdown__track">
+                    <div className={`dev-breakdown__fill dev-breakdown__fill--${statusTone(item.status)}`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+            {(overview.status_breakdown || []).length === 0 && <div className="dev-portal__empty-state">No invoices yet.</div>}
+          </div>
+        </div>
+
+        <div className="dev-analytics-col console-spotlight-card" onMouseMove={handleMouseMove}>
+          <div className="console-card-spotlight" />
+          <div className="dev-portal__section-header dev-portal__section-header--margin">
+            <h3>Revenue by network</h3>
+            <p>Paid volume per chain</p>
+          </div>
+          <div className="dev-breakdown">
+            {(overview.network_breakdown || []).map((item) => (
+              <div key={item.network} className="dev-breakdown__row">
+                <div className="dev-breakdown__head">
+                  <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{item.network}</span>
+                  <span className="dev-breakdown__label">{item.paid_count} paid</span>
+                  <span className="dev-breakdown__value">{formatMoney(item.paid_usd)}</span>
+                </div>
+                <div className="dev-breakdown__track">
+                  <div className="dev-breakdown__fill dev-breakdown__fill--accent" style={{ width: `${Math.round((Number(item.paid_usd) / maxNet) * 100)}%` }} />
+                </div>
+              </div>
+            ))}
+            {(overview.network_breakdown || []).length === 0 && <div className="dev-portal__empty-state">No paid invoices yet.</div>}
+          </div>
+        </div>
+      </div>
+
+      <div className="dev-analytics-panel">
+        <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+          <div className="console-card-spotlight" />
+          <div className="dev-portal__section-header dev-portal__section-header--margin admin-inline-head">
+            <h3>Manual review queue</h3>
+            <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => onGoto("review")}>Open queue</button>
+          </div>
+          {(overview.manual_review_queue || []).length === 0 ? (
+            <div className="dev-portal__empty-state">Queue is clear 🎉</div>
+          ) : (
+            <div className="dev-resource-list">
+              {(overview.manual_review_queue || []).slice(0, 5).map((inv) => (
+                <div key={inv.id} className="dev-resource-card">
+                  <div className="dev-resource-card__info">
+                    <div className="dev-resource-card__title">{inv.title}</div>
+                    <div className="dev-resource-card__meta dev-resource-card__meta--row">
+                      <ToneBadge status={inv.status} />
+                      <span>{inv.workspace_name || `#${inv.workspace_id}`}</span>
+                      <span className="dev-resource-card__amount">{formatMoney(inv.base_amount_usd)}</span>
+                    </div>
+                  </div>
+                  <div className="dev-resource-card__actions">
+                    <button className="dev-btn dev-btn--secondary dev-btn--compact dev-btn--success-color" disabled={!!busyKey} onClick={() => void runAction(`mp-${inv.id}`, () => reviewAdminInvoice(getStoredAdminToken() || "", inv.id, { result: "mark_paid", comment: "approved from overview" }))}>
+                      Mark paid
+                    </button>
+                    <a className="dev-btn dev-btn--secondary dev-btn--compact" href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer">View</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+          <div className="console-card-spotlight" />
+          <div className="dev-portal__section-header dev-portal__section-header--margin">
+            <h3>Infrastructure health</h3>
+            <p>Watcher freshness & webhook retries</p>
+          </div>
+          <div className="dev-resource-list">
+            {(overview.watcher_health || []).slice(0, 6).map((w) => {
+              const stale = w.freshness_seconds > 600;
+              return (
+                <div key={`${w.poll_network}-${w.destination_address}`} className="dev-resource-card">
+                  <div className="dev-resource-card__info">
+                    <div className="dev-resource-card__title">
+                      <span className={`dev-status-dot dev-status-dot--${stale ? "danger" : "success"}`} /> {w.poll_network}
+                    </div>
+                    <div className="dev-resource-card__meta">block {w.last_block} · {Math.round(w.freshness_seconds / 60)}m ago</div>
+                  </div>
+                </div>
+              );
+            })}
+            {(overview.watcher_health || []).length === 0 && <div className="dev-portal__empty-state">No watcher data.</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceCard({ inv, workspaces, busyKey, runAction }: {
+  inv: AdminInvoice;
+  workspaces: AdminWorkspace[];
+  busyKey: string;
+  runAction: ActionRunner;
+}) {
+  const [manage, setManage] = useState(false);
+  const [note, setNote] = useState("");
+  const tok = () => getStoredAdminToken() || "";
+  const ws = workspaces.find((w) => w.workspace.id === inv.workspace_id);
+  const isBlocked = ws?.workspace.is_blocked ?? false;
+  const busy = !!busyKey;
+  return (
+    <div className="dev-card dev-card--invoice console-spotlight-card" onMouseMove={handleMouseMove}>
+      <div className="console-card-spotlight" />
+      <div className="dev-card__head">
+        <div>
+          <div className="dev-card__status-row">
+            <ToneBadge status={inv.status} />
+            <span className="dev-api-badge dev-api-badge--secondary">{inv.payable_network}</span>
+            <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{inv.kind}</span>
+          </div>
+          <h3 className="dev-card__title">{inv.title}</h3>
+          <code className="dev-card__id">{inv.public_id}</code>
+          <div className="dev-resource-card__meta admin-invoice-ws">
+            {inv.workspace_name || `Workspace #${inv.workspace_id}`}{inv.user_email ? ` · ${inv.user_email}` : ""}
+          </div>
+        </div>
+        <div className="dev-card__amount-col">
+          <div className="dev-card__amount">{formatMoney(inv.base_amount_usd)}</div>
+          <div className="dev-card__base">{inv.payable_amount} {inv.payable_network}</div>
+          <div className="dev-card__date">{formatDateTime(inv.created_at)}</div>
+        </div>
+      </div>
+
+      <div className="dev-card__actions admin-actions">
+        <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--compact dev-btn--centered">Open checkout</a>
+        <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void runAction(`rf-${inv.id}`, () => refreshAdminInvoiceStatus(tok(), inv.id))}>
+          {busyKey === `rf-${inv.id}` ? "…" : "Refresh status"}
+        </button>
+        <button className="dev-btn dev-btn--secondary dev-btn--compact dev-btn--success-color" disabled={busy} onClick={() => void runAction(`mp-${inv.id}`, () => reviewAdminInvoice(tok(), inv.id, { result: "mark_paid", comment: "approved" }))}>
+          Mark paid
+        </button>
+        <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void runAction(`exp-${inv.id}`, () => reviewAdminInvoice(tok(), inv.id, { result: "expire", comment: "expired" }))}>
+          Expire
+        </button>
+        <button className={`dev-btn dev-btn--compact ${manage ? "dev-btn--primary" : "dev-btn--secondary"}`} onClick={() => setManage((v) => !v)}>
+          {manage ? "Close" : "Manage workspace"}
+        </button>
+      </div>
+
+      {manage && (
+        <div className="admin-manage">
+          <div className="admin-manage__row">
+            <span className="admin-manage__label">Workspace #{inv.workspace_id}{isBlocked ? " · blocked" : ""}</span>
+            <button
+              className={`dev-btn dev-btn--compact ${isBlocked ? "dev-btn--secondary dev-btn--success-color" : "dev-btn--danger"}`}
+              disabled={busy}
+              onClick={() => void runAction(`blk-${inv.workspace_id}`, () => blockAdminWorkspace(tok(), inv.workspace_id, { blocked: !isBlocked, reason: isBlocked ? "unblocked from invoice" : "blocked from invoice" }))}
+            >
+              {isBlocked ? "Unblock" : "Block"}
+            </button>
+          </div>
+          <PlanChanger workspaceId={inv.workspace_id} busy={busy} runAction={runAction} />
+          <BillingCheckout workspaceId={inv.workspace_id} busy={busy} runAction={runAction} />
+          <div className="admin-manage__note">
+            <input className="dev-input" placeholder="Internal note for this invoice" value={note} onChange={(e) => setNote(e.target.value)} />
+            <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy || !note.trim()} onClick={() => void runAction(`note-${inv.id}`, async () => { const r = await createAdminInternalComment(tok(), { target_type: "invoice", target_id: String(inv.id), body: note }); setNote(""); return r; })}>
+              Add note
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlanChanger({ workspaceId, busy, runAction }: { workspaceId: number; busy: boolean; runAction: ActionRunner }) {
+  const [plan, setPlan] = useState<"trial" | "merchant" | "developer" | "business">("developer");
+  const [days, setDays] = useState("30");
+  const tok = () => getStoredAdminToken() || "";
+  return (
+    <div className="admin-manage__row admin-manage__form">
+      <span className="admin-manage__label">Change plan</span>
+      <div className="admin-manage__controls">
+        <CustomSelect value={plan} options={PLAN_OPTIONS} ariaLabel="Plan" onChange={(v) => setPlan(v as typeof plan)} />
+        <input className="dev-input admin-input--narrow" inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} placeholder="days" />
+        <button className="dev-btn dev-btn--primary dev-btn--compact" disabled={busy} onClick={() => void runAction(`plan-${workspaceId}`, () => changeAdminWorkspacePlan(tok(), workspaceId, { plan_code: plan, days: Number(days) || undefined, reason: "plan changed by admin" }))}>
+          Apply
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BillingCheckout({ workspaceId, busy, runAction }: { workspaceId: number; busy: boolean; runAction: ActionRunner }) {
+  const [plan, setPlan] = useState("merchant");
+  const [network, setNetwork] = useState("TON");
+  const [url, setUrl] = useState("");
+  const tok = () => getStoredAdminToken() || "";
+  return (
+    <div className="admin-manage__row admin-manage__form">
+      <span className="admin-manage__label">Billing checkout</span>
+      <div className="admin-manage__controls">
+        <CustomSelect value={plan} options={PLAN_OPTIONS.filter((p) => p.value !== "trial")} ariaLabel="Plan" onChange={setPlan} />
+        <CustomSelect value={network} options={NETWORK_OPTIONS} ariaLabel="Network" onChange={setNetwork} />
+        <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void runAction(`bill-${workspaceId}`, async () => {
+          const r = await createAdminBillingCheckout(tok(), workspaceId, { plan_code: plan, payable_network: network });
+          setUrl(buildCheckoutUrl(r.invoice.public_id));
+          return { result: `Checkout created for ${r.plan.name}` };
+        })}>
+          Create
+        </button>
+      </div>
+      {url && <a className="admin-manage__url" href={url} target="_blank" rel="noreferrer">{url}</a>}
+    </div>
+  );
+}
+
+function InvoicesPanel({ invoices, total, filters, onApplyFilters, workspaces, busyKey, runAction, loading }: {
+  invoices: AdminInvoice[];
+  total: number;
+  filters: Filters;
+  onApplyFilters: (f: Filters) => void;
+  workspaces: AdminWorkspace[];
+  busyKey: string;
+  runAction: ActionRunner;
+  loading: boolean;
+}) {
+  const [query, setQuery] = useState(filters.query);
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Invoices" subtitle={`${total} invoices match the current filters — act on them inline without leaving this page.`} />
+      <div className="dev-card dev-toolbar console-spotlight-card admin-toolbar" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <form
+          className="admin-toolbar__form"
+          onSubmit={(e) => { e.preventDefault(); onApplyFilters({ ...filters, query }); }}
+        >
+          <input className="dev-input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search seller, email, public id" />
+          <CustomSelect value={filters.status} options={STATUS_OPTIONS} ariaLabel="Status" onChange={(v) => onApplyFilters({ ...filters, status: v })} />
+          <CustomSelect value={filters.kind} options={KIND_OPTIONS} ariaLabel="Kind" onChange={(v) => onApplyFilters({ ...filters, kind: v })} />
+          <button className="dev-btn dev-btn--primary" type="submit" disabled={loading}>Search</button>
+        </form>
+      </div>
+
+      <div className="dev-resource-list">
+        {invoices.length === 0 ? (
+          <div className="dev-card dev-portal__empty-large">No invoices found for these filters.</div>
+        ) : invoices.map((inv) => (
+          <InvoiceCard key={inv.id} inv={inv} workspaces={workspaces} busyKey={busyKey} runAction={runAction} />
         ))}
       </div>
-    </article>
+    </div>
   );
 }
 
-function HealthBoard({ overview }: { overview: AdminOpsOverviewResponse | null }) {
+function ReviewPanel({ queue, busyKey, runAction }: { queue: AdminInvoice[]; busyKey: string; runAction: ActionRunner }) {
+  const tok = () => getStoredAdminToken() || "";
+  const [comments, setComments] = useState<Record<number, string>>({});
   return (
-    <article className="admin-chart-card">
-      <div className="admin-card-head"><h3>Health</h3><strong>{overview?.watcher_health.length || 0}</strong></div>
-      <div className="admin-status-legend">
-        {(overview?.watcher_health || []).slice(0, 6).map((watcher) => (
-          <div className="admin-status-legend-row" key={`${watcher.poll_network}-${watcher.destination_address}`}><strong>{watcher.poll_network}</strong><small>{Math.round(watcher.freshness_seconds / 60)}m stale / block {watcher.last_block}</small></div>
-        ))}
-        {(overview?.failed_webhook_queue || []).slice(0, 5).map((delivery) => (
-          <div className="admin-status-legend-row" key={delivery.id}><strong>Webhook #{delivery.id}</strong><small>{delivery.status} / {delivery.event_type}</small></div>
-        ))}
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Manual review" subtitle="Invoices flagged for a human decision. Resolve each one inline with an optional comment." />
+      {queue.length === 0 ? (
+        <div className="dev-card dev-portal__empty-large">Manual review queue is clear 🎉</div>
+      ) : (
+        <div className="dev-resource-list">
+          {queue.map((inv) => {
+            const comment = comments[inv.id] || "";
+            const busy = !!busyKey;
+            const decide = (result: "mark_paid" | "keep_manual_review" | "expire") =>
+              runAction(`rev-${inv.id}`, () => reviewAdminInvoice(tok(), inv.id, { result, comment: comment || result }));
+            return (
+              <div key={inv.id} className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="console-card-spotlight" />
+                <div className="dev-card__head">
+                  <div>
+                    <div className="dev-card__status-row">
+                      <ToneBadge status={inv.status} />
+                      <span className="dev-api-badge dev-api-badge--secondary">{inv.payable_network}</span>
+                      {inv.classification && <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{inv.classification}</span>}
+                    </div>
+                    <h3 className="dev-card__title">{inv.title}</h3>
+                    <code className="dev-card__id">{inv.public_id}</code>
+                    <div className="dev-resource-card__meta admin-invoice-ws">{inv.workspace_name || `#${inv.workspace_id}`}{inv.user_email ? ` · ${inv.user_email}` : ""}</div>
+                  </div>
+                  <div className="dev-card__amount-col">
+                    <div className="dev-card__amount">{formatMoney(inv.base_amount_usd)}</div>
+                    <div className="dev-card__base">recv {inv.payable_amount} {inv.payable_network}</div>
+                    <div className="dev-card__date">{formatDateTime(inv.created_at)}</div>
+                  </div>
+                </div>
+                {inv.tx_hash && (
+                  <div className="dev-settings-row admin-tx-row">
+                    <span className="dev-settings-row__label">tx hash</span>
+                    <code className="dev-wallet-address">{inv.tx_hash}</code>
+                  </div>
+                )}
+                <div className="admin-review-actions">
+                  <input className="dev-input" placeholder="Decision comment (optional)" value={comment} onChange={(e) => setComments((c) => ({ ...c, [inv.id]: e.target.value }))} />
+                  <div className="admin-actions">
+                    <button className="dev-btn dev-btn--primary dev-btn--compact dev-btn--success-color" disabled={busy} onClick={() => void decide("mark_paid")}>Mark paid</button>
+                    <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void decide("keep_manual_review")}>Keep in review</button>
+                    <button className="dev-btn dev-btn--danger dev-btn--compact" disabled={busy} onClick={() => void decide("expire")}>Expire</button>
+                    <a className="dev-btn dev-btn--secondary dev-btn--compact dev-btn--centered" href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer">View</a>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WorkspacesPanel({ workspaces, busyKey, runAction }: { workspaces: AdminWorkspace[]; busyKey: string; runAction: ActionRunner }) {
+  const [query, setQuery] = useState("");
+  const tok = () => getStoredAdminToken() || "";
+  const filtered = workspaces.filter((w) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (w.workspace.username || "").toLowerCase().includes(q)
+      || (w.workspace.email || "").toLowerCase().includes(q)
+      || String(w.workspace.id).includes(q);
+  });
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Workspaces" subtitle="Every merchant with usage stats. Block, change plan or issue a billing checkout inline." />
+      <div className="dev-card dev-toolbar console-spotlight-card admin-toolbar" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <input className="dev-input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filter by id, username or email" />
+        <div className="dev-toolbar__meta">{filtered.length} workspaces</div>
       </div>
-    </article>
+      {filtered.length === 0 ? (
+        <div className="dev-card dev-portal__empty-large">No workspaces.</div>
+      ) : (
+        <div className="dev-resource-list">
+          {filtered.map((w) => {
+            const ws = w.workspace;
+            const busy = !!busyKey;
+            return (
+              <div key={ws.id} className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="console-card-spotlight" />
+                <div className="dev-card__head">
+                  <div>
+                    <div className="dev-card__status-row">
+                      <span className="dev-api-badge dev-api-badge--post dev-api-badge--micro">{ws.plan_code}</span>
+                      {ws.is_blocked && <span className="dev-api-badge dev-status-badge dev-status-badge--danger dev-api-badge--micro">blocked</span>}
+                      {w.manual_review_invoices > 0 && <span className="dev-api-badge dev-status-badge dev-status-badge--warning dev-api-badge--micro">{w.manual_review_invoices} review</span>}
+                    </div>
+                    <h3 className="dev-card__title">{ws.username ? `@${ws.username}` : ws.name || `Workspace #${ws.id}`}</h3>
+                    <code className="dev-card__id">#{ws.id}{ws.email ? ` · ${ws.email}` : ""}</code>
+                  </div>
+                  <div className="dev-card__amount-col">
+                    <div className="dev-card__amount">{formatMoney(w.gross_paid_usd)}</div>
+                    <div className="dev-card__base">{w.paid_invoices}/{w.invoices_total} paid</div>
+                    <div className="dev-card__date">{w.active_api_keys} keys · {w.webhook_endpoints} hooks</div>
+                  </div>
+                </div>
+                <div className="admin-manage admin-manage--flat">
+                  <div className="admin-manage__row">
+                    <span className="admin-manage__label">Last invoice {w.last_invoice_at ? formatDateTime(w.last_invoice_at) : "never"}</span>
+                    <button
+                      className={`dev-btn dev-btn--compact ${ws.is_blocked ? "dev-btn--secondary dev-btn--success-color" : "dev-btn--danger"}`}
+                      disabled={busy}
+                      onClick={() => void runAction(`blk-${ws.id}`, () => blockAdminWorkspace(tok(), ws.id, { blocked: !ws.is_blocked, reason: ws.is_blocked ? "unblocked by admin" : "blocked by admin" }))}
+                    >
+                      {ws.is_blocked ? "Unblock" : "Block"}
+                    </button>
+                  </div>
+                  <PlanChanger workspaceId={ws.id} busy={busy} runAction={runAction} />
+                  <BillingCheckout workspaceId={ws.id} busy={busy} runAction={runAction} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
-function AnalyticsBoard({ analytics }: { analytics: AdminAnalyticsResponse | null }) {
+function WebhooksPanel({ deliveries, busyKey, runAction }: { deliveries: AdminWebhookDelivery[]; busyKey: string; runAction: ActionRunner }) {
+  const tok = () => getStoredAdminToken() || "";
   return (
-    <section className="admin-sales-board">
-      <div className="admin-sales-head"><div><h2>Analytics</h2><p className="admin-sales-summary">MRR {formatMoney(analytics?.mrr_usd)} / ARR {formatMoney(analytics?.arr_usd)} / paid volume {formatMoney(analytics?.paid_volume_usd)}</p></div></div>
-      <div className="admin-table-wrap">
-        <table className="admin-sales-table">
-          <thead><tr><th>Bucket</th><th>Created</th><th>Paid</th><th>Manual review</th><th>Underpaid</th><th>Paid volume</th></tr></thead>
-          <tbody>
-            {(analytics?.breakdown || []).map((item) => (
-              <tr key={item.bucket}><td>{item.bucket}</td><td>{item.created_invoices}</td><td>{item.paid_invoices}</td><td>{item.manual_review_invoices}</td><td>{item.underpaid_invoices}</td><td>{formatMoney(item.paid_volume_usd)}</td></tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Webhooks" subtitle="Failed and stuck webhook deliveries. Resend any of them inline." />
+      {deliveries.length === 0 ? (
+        <div className="dev-card dev-portal__empty-large">No failed webhook deliveries 🎉</div>
+      ) : (
+        <div className="dev-resource-list">
+          {deliveries.map((d) => {
+            const tone = d.status === "delivered" ? "success" : d.status === "failed" || d.status === "exhausted" ? "danger" : "warning";
+            const busy = !!busyKey;
+            return (
+              <div key={d.id} className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="console-card-spotlight" />
+                <div className="dev-card__head">
+                  <div>
+                    <div className="dev-card__status-row">
+                      <span className={`dev-api-badge dev-status-badge dev-status-badge--${tone}`}>{d.status}</span>
+                      <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{d.event_type}</span>
+                    </div>
+                    <h3 className="dev-card__title">{d.endpoint_label || d.workspace_name || `Delivery #${d.id}`}</h3>
+                    <code className="dev-card__id">{d.endpoint_url || d.target_url}</code>
+                    {d.last_error && <div className="dev-resource-card__error">{d.last_error}</div>}
+                  </div>
+                  <div className="dev-card__amount-col">
+                    <div className="dev-card__base">{d.attempts}/{d.max_attempts} attempts</div>
+                    {d.last_http_status ? <div className="dev-card__base">HTTP {d.last_http_status}</div> : null}
+                    <div className="dev-card__date">{formatDateTime(d.created_at)}</div>
+                  </div>
+                </div>
+                <div className="admin-actions">
+                  <button className="dev-btn dev-btn--primary dev-btn--compact" disabled={busy} onClick={() => void runAction(`hook-${d.id}`, () => resendAdminWebhookDelivery(tok(), d.id))}>
+                    {busyKey === `hook-${d.id}` ? "Resending…" : "Resend"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnalyticsPanel({ analytics, groupBy, onGroupBy }: {
+  analytics: AdminAnalyticsResponse | null;
+  groupBy: string;
+  onGroupBy: (g: "date" | "network" | "plan" | "mode") => void;
+}) {
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Analytics" subtitle="Revenue, conversion and reliability metrics across the platform.">
+        <div className="admin-groupby">
+          <CustomSelect value={groupBy} options={GROUP_BY_OPTIONS} ariaLabel="Group by" onChange={(v) => onGroupBy(v as "date" | "network" | "plan" | "mode")} />
+        </div>
+      </PanelHeader>
+      <div className="dev-metrics-grid">
+        <MetricCard label="MRR" value={formatMoney(analytics?.mrr_usd)} meta="monthly recurring" />
+        <MetricCard label="ARR" value={formatMoney(analytics?.arr_usd)} meta="annual run-rate" />
+        <MetricCard label="Paid volume" value={formatMoney(analytics?.paid_volume_usd)} meta={`${analytics?.paid_invoices || 0} paid invoices`} />
+        <MetricCard label="Active merchants" value={String(analytics?.active_merchants || 0)} meta={`${analytics?.created_invoices || 0} invoices created`} />
+        <MetricCard label="Manual review rate" value={analytics?.manual_review_rate ? `${analytics.manual_review_rate}` : "0"} meta="share of invoices" />
+        <MetricCard label="Failed webhook rate" value={analytics?.failed_webhook_rate ? `${analytics.failed_webhook_rate}` : "0"} meta="delivery reliability" />
+        <MetricCard label="Underpaid share" value={analytics?.underpaid_share ? `${analytics.underpaid_share}` : "0"} meta="of all invoices" />
       </div>
-    </section>
-  );
-}
-
-function AuditBoard({ events }: { events: AdminAuditEvent[] }) {
-  return (
-    <section className="admin-sales-board">
-      <div className="admin-sales-head"><div><h2>Audit</h2><p className="admin-sales-summary">{events.length} latest admin events</p></div></div>
-      <div className="admin-table-wrap">
-        <table className="admin-sales-table">
-          <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Metadata</th></tr></thead>
-          <tbody>
-            {events.map((event) => (
-              <tr key={event.id}>
-                <td>{formatDateTime(event.created_at)}</td>
-                <td>{event.actor || "system"}</td>
-                <td>{event.action}</td>
-                <td>{event.target_type}:{event.target_id}</td>
-                <td>{JSON.stringify(event.metadata || {})}</td>
-              </tr>
-            ))}
-            {events.length === 0 && <tr><td colSpan={5} className="admin-table-empty">No audit events yet.</td></tr>}
-          </tbody>
-        </table>
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Breakdown ({groupBy})</h3>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead><tr><th>Bucket</th><th>Created</th><th>Paid</th><th>Manual review</th><th>Underpaid</th><th>Paid volume</th></tr></thead>
+            <tbody>
+              {(analytics?.breakdown || []).map((item) => (
+                <tr key={item.bucket}>
+                  <td>{item.bucket}</td>
+                  <td>{item.created_invoices}</td>
+                  <td>{item.paid_invoices}</td>
+                  <td>{item.manual_review_invoices}</td>
+                  <td>{item.underpaid_invoices}</td>
+                  <td>{formatMoney(item.paid_volume_usd)}</td>
+                </tr>
+              ))}
+              {(analytics?.breakdown || []).length === 0 && <tr><td colSpan={6} className="admin-table-empty">No analytics data.</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }
 
-function ContentBoard() {
+function AuditPanel({ events }: { events: AdminAuditEvent[] }) {
   return (
-    <section className="admin-sales-board admin-form-board">
-      <h2>Content</h2>
-      <p className="admin-sales-summary">Draft and published content is managed in the expanded editor.</p>
-      <Link className="admin-login-button admin-inline-link" to="/admin/blog">Open content editor</Link>
-    </section>
-  );
-}
-
-function SEOBoard({ targets }: { targets: SEOTarget[] }) {
-  return (
-    <section className="admin-sales-board">
-      <div className="admin-sales-head"><div><h2>SEO Ops</h2><p className="admin-sales-summary">{targets.length} keyword targets</p></div></div>
-      <div className="admin-table-wrap">
-        <table className="admin-sales-table">
-          <thead><tr><th>Cluster</th><th>Target page</th><th>Publish</th><th>Index</th><th>Links</th><th>Video</th><th>Comparison</th></tr></thead>
-          <tbody>
-            {targets.map((target) => (
-              <tr key={target.id}><td>{target.keyword_cluster}</td><td>{target.target_page}</td><td>{target.publish_status}</td><td>{target.index_status}</td><td>{target.internal_links_count}</td><td>{target.video_attached ? "yes" : "no"}</td><td>{target.comparison_page_status}</td></tr>
-            ))}
-            {targets.length === 0 && <tr><td colSpan={7} className="admin-table-empty">No SEO targets yet.</td></tr>}
-          </tbody>
-        </table>
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Audit log" subtitle={`${events.length} most recent administrative actions.`} />
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Metadata</th></tr></thead>
+            <tbody>
+              {events.map((e) => (
+                <tr key={e.id}>
+                  <td>{formatDateTime(e.created_at)}</td>
+                  <td>{e.actor || "system"}</td>
+                  <td><span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{e.action}</span></td>
+                  <td>{e.target_type}:{e.target_id}</td>
+                  <td className="admin-meta-cell">{JSON.stringify(e.metadata || {})}</td>
+                </tr>
+              ))}
+              {events.length === 0 && <tr><td colSpan={5} className="admin-table-empty">No audit events yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+function ContentPanel({ targets }: { targets: SEOTarget[] }) {
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Content & SEO" subtitle="Blog editor and SEO target tracking.">
+        <Link to="/admin/blog" className="dev-btn dev-btn--primary dev-btn--compact">Open blog editor</Link>
+      </PanelHeader>
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>SEO targets</h3>
+          <p>{targets.length} keyword clusters tracked</p>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead><tr><th>Cluster</th><th>Target page</th><th>Publish</th><th>Index</th><th>Links</th><th>Video</th><th>Comparison</th></tr></thead>
+            <tbody>
+              {targets.map((t) => (
+                <tr key={t.id}>
+                  <td>{t.keyword_cluster}</td>
+                  <td>{t.target_page}</td>
+                  <td><span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{t.publish_status}</span></td>
+                  <td>{t.index_status}</td>
+                  <td>{t.internal_links_count}</td>
+                  <td>{t.video_attached ? "yes" : "no"}</td>
+                  <td>{t.comparison_page_status}</td>
+                </tr>
+              ))}
+              {targets.length === 0 && <tr><td colSpan={7} className="admin-table-empty">No SEO targets yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }

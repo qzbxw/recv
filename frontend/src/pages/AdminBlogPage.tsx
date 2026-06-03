@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import MDEditor from "@uiw/react-md-editor";
 import {
   getStoredAdminToken,
@@ -7,21 +7,71 @@ import {
   createAdminBlogPost,
   updateAdminBlogPost,
 } from "../lib/api";
+import { CustomSelect } from "../components/CustomSelect";
 import type { AdminBlogPost } from "../lib/types";
+
+const STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "published", label: "Published" },
+];
+
+const LINKING_OPTIONS = [
+  { value: "unknown", label: "Unknown" },
+  { value: "needs_links", label: "Needs links" },
+  { value: "ready", label: "Ready" },
+  { value: "strong", label: "Strong" },
+];
+
+function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+  e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+}
+
+function BlogShell({ title, subtitle, actions, error, onDismissError, children }: {
+  title: string;
+  subtitle: string;
+  actions: React.ReactNode;
+  error: string;
+  onDismissError: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <main className="dev-portal admin-blog">
+      <div className="dev-portal__backdrop dev-portal__backdrop--grid" />
+      <div className="admin-blog__shell">
+        <header className="dev-portal__header portal-animate-in admin-blog__header">
+          <div className="admin-blog__brand">
+            <Link to="/" style={{ textDecoration: "none" }}><strong>recv<span className="brand-dot">.</span></strong></Link>
+            <span className="dev-api-badge dev-api-badge--post dev-api-badge--micro">Content</span>
+          </div>
+          <div className="dev-portal__header-actions">{actions}</div>
+        </header>
+        <div className="dev-portal__body admin-blog__body">
+          <div className="dev-portal__section-header">
+            <h2>{title}</h2>
+            <p>{subtitle}</p>
+          </div>
+          {error && <div className="alert portal-animate-in" onClick={onDismissError}>{error}</div>}
+          {children}
+        </div>
+      </div>
+    </main>
+  );
+}
 
 export function AdminBlogPage() {
   const token = getStoredAdminToken();
   const [posts, setPosts] = useState<AdminBlogPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
-  // Editor state
   const [editingPost, setEditingPost] = useState<Partial<AdminBlogPost> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!token) return;
-    loadPosts();
+    void loadPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   async function loadPosts() {
@@ -44,7 +94,6 @@ export function AdminBlogPage() {
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     if (!token || !editingPost) return;
-
     setIsSaving(true);
     try {
       if (editingPost.id) {
@@ -70,280 +119,158 @@ export function AdminBlogPage() {
   }
 
   if (editingPost) {
+    const statusValue = editingPost.status || (editingPost.is_published ? "published" : "draft");
     return (
-      <main className="admin-shell">
-        <div className="admin-noise" />
-        <section className="admin-dashboard">
-          <header className="admin-topbar">
-            <div>
-              <span className="admin-eyebrow">recv Admin</span>
-              <h1>{editingPost.id ? "Edit Post" : "New Post"}</h1>
+      <BlogShell
+        error={error}
+        onDismissError={() => setError("")}
+        title={editingPost.id ? "Edit post" : "New post"}
+        subtitle="Write, optimise and publish content. Markdown supported."
+        actions={
+          <>
+            <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => setEditingPost(null)}>Back to list</button>
+            <button type="submit" form="blog-editor-form" className="dev-btn dev-btn--primary dev-btn--compact" disabled={isSaving}>{isSaving ? "Saving…" : "Save post"}</button>
+          </>
+        }
+      >
+        <form id="blog-editor-form" onSubmit={handleSave} className="dev-form portal-animate-in">
+          <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="console-card-spotlight" />
+            <div className="dev-portal__section-header dev-portal__section-header--margin"><h3>Basics</h3></div>
+            <div className="admin-blog-grid">
+              <div className="dev-input-group">
+                <label>Title</label>
+                <input className="dev-input" required value={editingPost.title || ""} onChange={(e) => updateEditingPost({ title: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Slug</label>
+                <input className="dev-input" required value={editingPost.slug || ""} onChange={(e) => updateEditingPost({ slug: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Status</label>
+                <CustomSelect value={statusValue} options={STATUS_OPTIONS} ariaLabel="Status" onChange={(v) => updateEditingPost({ status: v as "draft" | "published", is_published: v === "published" })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Locale</label>
+                <input className="dev-input" value={editingPost.locale || "en"} onChange={(e) => updateEditingPost({ locale: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Author</label>
+                <input className="dev-input" required value={editingPost.author || ""} onChange={(e) => updateEditingPost({ author: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Cover image URL</label>
+                <input className="dev-input" value={editingPost.cover_image_url || ""} onChange={(e) => updateEditingPost({ cover_image_url: e.target.value })} />
+              </div>
+              <div className="dev-input-group admin-blog-grid__wide">
+                <label>Excerpt</label>
+                <textarea className="dev-input" required value={editingPost.excerpt || ""} onChange={(e) => updateEditingPost({ excerpt: e.target.value })} />
+              </div>
             </div>
-            <div className="admin-topbar-actions">
-              <button
-                type="button"
-                className="admin-ghost-button"
-                onClick={() => setEditingPost(null)}
-              >
-                Back to list
-              </button>
+          </div>
+
+          <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="console-card-spotlight" />
+            <div className="dev-portal__section-header dev-portal__section-header--margin"><h3>SEO & linking</h3></div>
+            <div className="admin-blog-grid">
+              <div className="dev-input-group">
+                <label>Meta title</label>
+                <input className="dev-input" value={editingPost.meta_title || ""} onChange={(e) => updateEditingPost({ meta_title: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Canonical URL</label>
+                <input className="dev-input" value={editingPost.canonical_url || ""} onChange={(e) => updateEditingPost({ canonical_url: e.target.value })} />
+              </div>
+              <div className="dev-input-group admin-blog-grid__wide">
+                <label>Meta description</label>
+                <textarea className="dev-input" value={editingPost.meta_description || ""} onChange={(e) => updateEditingPost({ meta_description: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Tags (comma separated)</label>
+                <input className="dev-input" value={(editingPost.tags || []).join(", ")} onChange={(e) => updateEditingPost({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Preview token</label>
+                <input className="dev-input" value={editingPost.preview_token || ""} onChange={(e) => updateEditingPost({ preview_token: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Internal links</label>
+                <input className="dev-input" inputMode="numeric" value={editingPost.internal_links_count ?? 0} onChange={(e) => updateEditingPost({ internal_links_count: Number(e.target.value) || 0 })} />
+              </div>
+              <div className="dev-input-group">
+                <label>Linking status</label>
+                <CustomSelect value={editingPost.internal_linking_status || "unknown"} options={LINKING_OPTIONS} ariaLabel="Linking status" onChange={(v) => updateEditingPost({ internal_linking_status: v })} />
+              </div>
             </div>
-          </header>
+          </div>
 
-          <section className="admin-sales-board">
-            {error && <div className="admin-error admin-error--inline">{error}</div>}
-            
-            <form onSubmit={handleSave} className="admin-editor-form">
-              <div className="admin-editor-grid">
-              <label>
-                <span>Title</span>
-                <input
-                  required
-                  value={editingPost.title || ""}
-                  onChange={(e) => updateEditingPost({ title: e.target.value })}
-                />
-              </label>
+          <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="console-card-spotlight" />
+            <div className="dev-portal__section-header dev-portal__section-header--margin"><h3>Content</h3><p>Markdown</p></div>
+            <div data-color-mode="dark" className="admin-blog-editor">
+              <MDEditor value={editingPost.content_md || ""} onChange={(val) => updateEditingPost({ content_md: val || "" })} height={460} />
+            </div>
+          </div>
 
-              <label>
-                <span>Slug</span>
-                <input
-                  required
-                  value={editingPost.slug || ""}
-                  onChange={(e) => updateEditingPost({ slug: e.target.value })}
-                />
-              </label>
-
-              <label>
-                <span>Status</span>
-                <select
-                  value={editingPost.status || (editingPost.is_published ? "published" : "draft")}
-                  onChange={(e) => updateEditingPost({ status: e.target.value as "draft" | "published", is_published: e.target.value === "published" })}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Locale</span>
-                <input
-                  value={editingPost.locale || "en"}
-                  onChange={(e) => updateEditingPost({ locale: e.target.value })}
-                />
-              </label>
-
-              <label>
-                <span>Author</span>
-                <input
-                  required
-                  value={editingPost.author || ""}
-                  onChange={(e) => updateEditingPost({ author: e.target.value })}
-                />
-              </label>
-
-              <label>
-                <span>Cover Image URL</span>
-                <input
-                  value={editingPost.cover_image_url || ""}
-                  onChange={(e) => updateEditingPost({ cover_image_url: e.target.value })}
-                />
-              </label>
-
-              <label className="admin-editor-wide">
-                <span>Excerpt</span>
-                <textarea
-                  required
-                  value={editingPost.excerpt || ""}
-                  onChange={(e) => updateEditingPost({ excerpt: e.target.value })}
-                />
-              </label>
-
-              <label>
-                <span>Meta title</span>
-                <input
-                  value={editingPost.meta_title || ""}
-                  onChange={(e) => updateEditingPost({ meta_title: e.target.value })}
-                />
-              </label>
-
-              <label>
-                <span>Canonical URL</span>
-                <input
-                  value={editingPost.canonical_url || ""}
-                  onChange={(e) => updateEditingPost({ canonical_url: e.target.value })}
-                />
-              </label>
-
-              <label className="admin-editor-wide">
-                <span>Meta description</span>
-                <textarea
-                  value={editingPost.meta_description || ""}
-                  onChange={(e) => updateEditingPost({ meta_description: e.target.value })}
-                />
-              </label>
-
-              <label>
-                <span>Tags</span>
-                <input
-                  value={(editingPost.tags || []).join(", ")}
-                  onChange={(e) => updateEditingPost({ tags: e.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })}
-                />
-              </label>
-
-              <label>
-                <span>Preview token</span>
-                <input
-                  value={editingPost.preview_token || ""}
-                  onChange={(e) => updateEditingPost({ preview_token: e.target.value })}
-                />
-              </label>
-
-              <label>
-                <span>Internal links</span>
-                <input
-                  inputMode="numeric"
-                  value={editingPost.internal_links_count ?? 0}
-                  onChange={(e) => updateEditingPost({ internal_links_count: Number(e.target.value) || 0 })}
-                />
-              </label>
-
-              <label>
-                <span>Linking status</span>
-                <select
-                  value={editingPost.internal_linking_status || "unknown"}
-                  onChange={(e) => updateEditingPost({ internal_linking_status: e.target.value })}
-                >
-                  <option value="unknown">Unknown</option>
-                  <option value="needs_links">Needs links</option>
-                  <option value="ready">Ready</option>
-                  <option value="strong">Strong</option>
-                </select>
-              </label>
-              </div>
-
-              <div className="admin-editor-form__section" data-color-mode="dark">
-                <span className="admin-editor-form__label">Content (Markdown)</span>
-                <MDEditor
-                  value={editingPost.content_md || ""}
-                  onChange={(val) => updateEditingPost({ content_md: val || "" })}
-                  height={400}
-                />
-              </div>
-
-              <div className="admin-editor-form__footer">
-                <button
-                  type="submit"
-                  className="admin-login-button admin-login-button--compact"
-                  disabled={isSaving}
-                >
-                  {isSaving ? "Saving..." : "Save Post"}
-                </button>
-              </div>
-            </form>
-          </section>
-        </section>
-      </main>
+          <div className="admin-blog__footer">
+            <button type="button" className="dev-btn dev-btn--secondary" onClick={() => setEditingPost(null)}>Cancel</button>
+            <button type="submit" className="dev-btn dev-btn--primary" disabled={isSaving}>{isSaving ? "Saving…" : "Save post"}</button>
+          </div>
+        </form>
+      </BlogShell>
     );
   }
 
   return (
-    <main className="admin-shell">
-      <div className="admin-noise" />
-      <section className="admin-dashboard">
-        <header className="admin-topbar">
-          <div>
-            <span className="admin-eyebrow">recv Admin</span>
-            <h1>Blog Management</h1>
-          </div>
-          <div className="admin-topbar-actions">
-            <button
-              type="button"
-              className="admin-ghost-button"
-              onClick={loadPosts}
-              disabled={loading}
-            >
-              Refresh
-            </button>
-            <button
-              type="button"
-              className="admin-ghost-button"
-              onClick={() => setEditingPost({
-                title: "",
-                slug: "",
-                excerpt: "",
-                content_md: "",
-                cover_image_url: "",
-                author: "recv Team",
-                is_published: false,
-                status: "draft",
-                tags: [],
-                locale: "en",
-                internal_links_count: 0,
-                internal_linking_status: "unknown"
-              })}
-            >
-              New Post
-            </button>
-          </div>
-        </header>
-
-        {error && <div className="admin-error admin-error--inline">{error}</div>}
-
-        <section className="admin-sales-board">
-          <div className="admin-table-wrap">
-            <table className="admin-sales-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Slug</th>
-                  <th>Author</th>
-                  <th>Status</th>
-                  <th>SEO</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading && posts.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="admin-table-empty">Loading posts...</td>
-                  </tr>
-                ) : posts.length > 0 ? (
-                  posts.map((post) => (
-                    <tr key={post.id}>
-                      <td>
-                        <div className="admin-table-primary">
-                          <strong>{post.title}</strong>
-                        </div>
-                      </td>
-                      <td>{post.slug}</td>
-                      <td>{post.author}</td>
-                      <td>
-                        <span className={`admin-status-pill ${post.is_published ? "status-paid" : "status-draft"}`}>
-                          {post.status === "published" || post.is_published ? "Published" : "Draft"}
-                        </span>
-                      </td>
-                      <td>{post.locale || "en"} / {post.internal_linking_status || "unknown"} / {post.internal_links_count ?? 0} links</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="admin-ghost-button"
-                          onClick={() => setEditingPost(post)}
-                        >
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="admin-table-empty">No posts found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </section>
-    </main>
+    <BlogShell
+      error={error}
+      onDismissError={() => setError("")}
+      title="Blog management"
+      subtitle={`${posts.length} posts. Create, edit and publish content.`}
+      actions={
+        <>
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void loadPosts()} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>
+          <button
+            type="button"
+            className="dev-btn dev-btn--primary dev-btn--compact"
+            onClick={() => setEditingPost({ title: "", slug: "", excerpt: "", content_md: "", cover_image_url: "", author: "recv Team", is_published: false, status: "draft", tags: [], locale: "en", internal_links_count: 0, internal_linking_status: "unknown" })}
+          >
+            New post
+          </button>
+        </>
+      }
+    >
+      {loading && posts.length === 0 ? (
+        <div className="dev-card dev-portal__empty-large">Loading posts…</div>
+      ) : posts.length === 0 ? (
+        <div className="dev-card dev-portal__empty-large">No posts yet. Create your first one.</div>
+      ) : (
+        <div className="dev-resource-list portal-animate-in">
+          {posts.map((post) => {
+            const published = post.status === "published" || post.is_published;
+            return (
+              <div key={post.id} className="dev-card console-spotlight-card admin-blog-card" onMouseMove={handleMouseMove}>
+                <div className="console-card-spotlight" />
+                <div className="dev-card__head">
+                  <div>
+                    <div className="dev-card__status-row">
+                      <span className={`dev-api-badge dev-status-badge dev-status-badge--${published ? "success" : "warning"}`}>{published ? "Published" : "Draft"}</span>
+                      <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{post.locale || "en"}</span>
+                      <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{post.internal_linking_status || "unknown"} · {post.internal_links_count ?? 0} links</span>
+                    </div>
+                    <h3 className="dev-card__title">{post.title || "(untitled)"}</h3>
+                    <code className="dev-card__id">/{post.slug}</code>
+                    <div className="dev-resource-card__meta admin-blog-card__meta">by {post.author}{post.excerpt ? ` — ${post.excerpt}` : ""}</div>
+                  </div>
+                  <div className="dev-card__actions admin-actions">
+                    <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => setEditingPost(post)}>Edit</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </BlogShell>
   );
 }

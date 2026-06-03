@@ -45,6 +45,10 @@ export async function fetchAdminOpsOverview(token: string) {
   return request<AdminOpsOverviewResponse>("/api/admin/ops/overview", {}, token);
 }
 
+export async function fetchAdminWorkspaces(token: string, limit = 100) {
+  return request<{ items: import("../types").AdminWorkspace[] }>(`/api/admin/workspaces?limit=${limit}`, {}, token);
+}
+
 export async function fetchAdminInvoices(token: string, params: {
   page?: number;
   page_size?: number;

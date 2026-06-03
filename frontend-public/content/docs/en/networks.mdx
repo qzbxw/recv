@@ -11,36 +11,39 @@ recv is non-custodial: every invoice settles **directly to your own wallet** on 
 
 These are the values accepted for `payable_network`:
 
-| `payable_network` | Network | Wallet bucket |
-|-------------------|---------|---------------|
-| `TON` | Native TON on The Open Network | TON |
-| `TON_USDT` | USDT on The Open Network | TON |
-| `TRON` | TRON (e.g. USDT TRC-20) | TRON |
-| `BASE` | Base | EVM |
-| `BSC` | BNB Smart Chain | EVM |
+| `payable_network` | Supported assets | Wallet bucket |
+|-------------------|------------------|---------------|
+| `TON` | TON | TON |
+| `TON_USDT` | USDT | TON |
+| `TRON` | USDT | TRON |
+| `SOLANA` | SOL, USDT, USDC | SOLANA |
+| `BASE` | USDT, USDC | EVM |
+| `ARBITRUM` | USDT, USDC | EVM |
+| `BSC` | BNB, USDT | EVM |
 
 Values are case-insensitive in the request and normalized to uppercase.
 
 ### Wallet buckets
 
-`BASE` and `BSC` share a single **EVM wallet bucket** — one connected `0x…` address can serve as the destination for either of them. `TON` and `TON_USDT` share a TON wallet bucket. `TRON` uses its own bucket. To create an invoice on a given network you must have an active payout wallet in the matching bucket.
+`BASE`, `ARBITRUM`, and `BSC` share a single **EVM wallet bucket** — one connected `0x…` address can serve as the destination for those EVM networks. `TON` and `TON_USDT` share a TON wallet bucket. `TRON` and `SOLANA` use their own buckets.
 
 ## Wallet networks
 
-When connecting a payout wallet, the network is one of `TON`, `TRON`, or `EVM` (the EVM wallet covers Base and BSC via the shared bucket). Address validation per network:
+When connecting a payout wallet, the network is one of `TON`, `TRON`, `SOLANA`, or `EVM`. Address validation per network:
 
 | Network | Address rule |
 |---------|--------------|
 | `TON` | At least 32 characters. |
 | `TRON` | Starts with `T`, at least 20 characters. |
+| `SOLANA` | Base58-style Solana address, 32-44 characters. |
 | `EVM` | Starts with `0x`, exactly 42 characters. |
 
 ## Amounts and precision
 
-`base_amount_usd` is a USD decimal string with 2 decimals. recv converts it to the on-chain `payable_amount`, returned with **6 decimals** for all networks.
+`base_amount_usd` is a USD decimal string. Stablecoins are priced 1:1 with USD. Native TON, SOL, and BNB are converted at invoice creation, and invoices containing a native volatile asset use a shorter payment window.
 
 ## Payment comments / memos
 
-Some networks rely on a memo to match a transfer to an invoice. The invoice object's `payment_comment` field carries the required comment (empty when not needed). For **TON**, the `payment_uri` is a `ton://transfer/<address>?amount=<nanotons>&text=<comment>` deep link with the amount in nanotons; for **TON_USDT**, `TRON`, `BASE`, and `BSC`, `payment_uri` is the destination address and matching uses the exact decimal amount. Surface the exact payable amount prominently in your checkout.
+An invoice may include up to two `payment_options`. For native TON the option includes a required memo in `payment_comment`; for stablecoins and other native options matching uses the exact amount, network, asset, and destination address. Surface the exact option amount prominently in your checkout.
 
 > recv only supports the networks listed above. Do not assume any other chain is available.

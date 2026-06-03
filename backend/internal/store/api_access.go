@@ -86,6 +86,7 @@ type IdempotencyRecord struct {
 type WatcherCheckpoint struct {
 	PollNetwork        Network
 	PayableNetwork     Network
+	Asset              PaymentAsset
 	DestinationAddress string
 	LastBlock          int64
 	LastObservedAt     *time.Time
@@ -654,15 +655,22 @@ func (s *Store) CompleteIdempotencyRecord(ctx context.Context, id int64, statusC
 }
 
 func (s *Store) GetWatcherCheckpoint(ctx context.Context, pollNetwork Network, payableNetwork Network, address string) (WatcherCheckpoint, error) {
+	return s.GetWatcherCheckpointForAsset(ctx, pollNetwork, payableNetwork, DefaultAssetForNetwork(payableNetwork), address)
+}
+
+func (s *Store) GetWatcherCheckpointForAsset(ctx context.Context, pollNetwork Network, payableNetwork Network, asset PaymentAsset, address string) (WatcherCheckpoint, error) {
+	if asset == "" {
+		asset = DefaultAssetForNetwork(payableNetwork)
+	}
 	row := s.pool.QueryRow(ctx, `
-		SELECT poll_network, payable_network, destination_address, last_block, last_observed_at
+		SELECT poll_network, payable_network, asset, destination_address, last_block, last_observed_at
 		FROM watcher_checkpoints
-		WHERE poll_network = $1 AND payable_network = $2 AND destination_address = $3
-	`, pollNetwork, payableNetwork, address)
+		WHERE poll_network = $1 AND payable_network = $2 AND asset = $3 AND destination_address = $4
+	`, pollNetwork, payableNetwork, asset, address)
 	var item WatcherCheckpoint
-	if err := row.Scan(&item.PollNetwork, &item.PayableNetwork, &item.DestinationAddress, &item.LastBlock, &item.LastObservedAt); err != nil {
+	if err := row.Scan(&item.PollNetwork, &item.PayableNetwork, &item.Asset, &item.DestinationAddress, &item.LastBlock, &item.LastObservedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return WatcherCheckpoint{PollNetwork: pollNetwork, PayableNetwork: payableNetwork, DestinationAddress: address}, ErrNotFound
+			return WatcherCheckpoint{PollNetwork: pollNetwork, PayableNetwork: payableNetwork, Asset: asset, DestinationAddress: address}, ErrNotFound
 		}
 		return WatcherCheckpoint{}, fmt.Errorf("get watcher checkpoint: %w", err)
 	}
@@ -670,15 +678,18 @@ func (s *Store) GetWatcherCheckpoint(ctx context.Context, pollNetwork Network, p
 }
 
 func (s *Store) SaveWatcherCheckpoint(ctx context.Context, checkpoint WatcherCheckpoint) error {
+	if checkpoint.Asset == "" {
+		checkpoint.Asset = DefaultAssetForNetwork(checkpoint.PayableNetwork)
+	}
 	_, err := s.pool.Exec(ctx, `
-		INSERT INTO watcher_checkpoints (poll_network, payable_network, destination_address, last_block, last_observed_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW())
-		ON CONFLICT (poll_network, payable_network, destination_address)
+		INSERT INTO watcher_checkpoints (poll_network, payable_network, asset, destination_address, last_block, last_observed_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
+		ON CONFLICT (poll_network, payable_network, asset, destination_address)
 		DO UPDATE SET
 			last_block = GREATEST(watcher_checkpoints.last_block, EXCLUDED.last_block),
 			last_observed_at = GREATEST(COALESCE(watcher_checkpoints.last_observed_at, EXCLUDED.last_observed_at), COALESCE(EXCLUDED.last_observed_at, watcher_checkpoints.last_observed_at)),
 			updated_at = NOW()
-	`, checkpoint.PollNetwork, checkpoint.PayableNetwork, checkpoint.DestinationAddress, checkpoint.LastBlock, checkpoint.LastObservedAt)
+	`, checkpoint.PollNetwork, checkpoint.PayableNetwork, checkpoint.Asset, checkpoint.DestinationAddress, checkpoint.LastBlock, checkpoint.LastObservedAt)
 	if err != nil {
 		return fmt.Errorf("save watcher checkpoint: %w", err)
 	}

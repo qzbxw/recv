@@ -400,8 +400,9 @@ func (s *Server) handleListWallets(c *gin.Context) {
 func (s *Server) handleCreateWallet(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	var body struct {
-		Network string `json:"network"`
-		Address string `json:"address"`
+		Network     string            `json:"network"`
+		Address     string            `json:"address"`
+		Environment store.Environment `json:"environment"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -410,6 +411,10 @@ func (s *Server) handleCreateWallet(c *gin.Context) {
 
 	network := store.Network(strings.ToUpper(strings.TrimSpace(body.Network)))
 	address := strings.TrimSpace(body.Address)
+	env := body.Environment
+	if env == "" {
+		env = store.EnvironmentLive
+	}
 	if !network.IsSupportedWalletNetwork() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported wallet network"})
 		return
@@ -419,7 +424,7 @@ func (s *Server) handleCreateWallet(c *gin.Context) {
 		return
 	}
 
-	wallet, err := s.store.CreateWallet(c.Request.Context(), wc.Workspace.ID, network, address)
+	wallet, err := s.store.CreateWallet(c.Request.Context(), wc.Workspace.ID, network, address, env)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -480,10 +485,15 @@ func (s *Server) handleListInvoices(c *gin.Context) {
 func (s *Server) handleCreateInvoice(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	var body struct {
-		Title            string `json:"title"`
-		BaseAmountUSD    string `json:"base_amount_usd"`
-		PayableNetwork   string `json:"payable_network"`
-		ExpiresInMinutes int    `json:"expires_in_minutes"`
+		Title          string `json:"title"`
+		BaseAmountUSD  string `json:"base_amount_usd"`
+		PayableNetwork string `json:"payable_network"`
+		PayableAsset   string `json:"payable_asset"`
+		PaymentOptions []struct {
+			Network string `json:"network"`
+			Asset   string `json:"asset"`
+		} `json:"payment_options"`
+		ExpiresInMinutes int `json:"expires_in_minutes"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -500,6 +510,8 @@ func (s *Server) handleCreateInvoice(c *gin.Context) {
 		Title:            strings.TrimSpace(body.Title),
 		BaseAmountUSD:    baseAmount,
 		PayableNetwork:   store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork))),
+		PayableAsset:     store.NormalizePaymentAsset(body.PayableAsset),
+		PaymentOptions:   parsePaymentOptionInputs(body.PaymentOptions),
 		ExpiresInMinutes: body.ExpiresInMinutes,
 	})
 	if err != nil {
@@ -613,13 +625,14 @@ func (s *Server) handleObservedTransfers(c *gin.Context) {
 	ctx := metrics.WithSource(c.Request.Context(), "watcher_ingest")
 	var body struct {
 		Events []struct {
-			TxHash             string          `json:"tx_hash"`
-			Network            store.Network   `json:"network"`
-			DestinationAddress string          `json:"destination_address"`
-			Amount             decimal.Decimal `json:"amount"`
-			PaymentComment     string          `json:"payment_comment"`
-			ObservedAt         time.Time       `json:"observed_at"`
-			RawPayload         any             `json:"raw_payload"`
+			TxHash             string             `json:"tx_hash"`
+			Network            store.Network      `json:"network"`
+			Asset              store.PaymentAsset `json:"asset"`
+			DestinationAddress string             `json:"destination_address"`
+			Amount             decimal.Decimal    `json:"amount"`
+			PaymentComment     string             `json:"payment_comment"`
+			ObservedAt         time.Time          `json:"observed_at"`
+			RawPayload         any                `json:"raw_payload"`
 		} `json:"events"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -634,6 +647,7 @@ func (s *Server) handleObservedTransfers(c *gin.Context) {
 		transfer := store.ObservedTransfer{
 			TxHash:             event.TxHash,
 			Network:            event.Network,
+			Asset:              event.Asset,
 			DestinationAddress: event.DestinationAddress,
 			Amount:             event.Amount,
 			PaymentComment:     strings.TrimSpace(event.PaymentComment),
@@ -828,6 +842,8 @@ func publicInvoiceResponse(invoice store.Invoice) gin.H {
 		"base_amount_usd":     invoice.BaseAmountUSD.StringFixed(2),
 		"payable_amount":      invoice.PayableAmount.StringFixed(payableScale(invoice.PayableNetwork)),
 		"payable_network":     invoice.PayableNetwork,
+		"payable_asset":       invoice.PayableAsset,
+		"payment_options":     paymentOptionResponses(invoice),
 		"destination_address": invoice.DestinationAddress,
 		"payment_comment":     comment,
 		"status":              status,
@@ -852,7 +868,12 @@ func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	var body struct {
 		PayableNetwork string `json:"payable_network"`
-		PlanCode       string `json:"plan_code"`
+		PayableAsset   string `json:"payable_asset"`
+		PaymentOptions []struct {
+			Network string `json:"network"`
+			Asset   string `json:"asset"`
+		} `json:"payment_options"`
+		PlanCode string `json:"plan_code"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -864,7 +885,11 @@ func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	if strings.TrimSpace(body.PlanCode) == "" {
 		planCode = store.PlanCodeMerchant
 	}
-	invoice, err := s.invoiceService.CreatePlanInvoice(c.Request.Context(), wc.Workspace, planCode, network)
+	options := parsePaymentOptionInputs(body.PaymentOptions)
+	if len(options) == 0 {
+		options = []service.PaymentOptionInput{{Network: network, Asset: store.NormalizePaymentAsset(body.PayableAsset)}}
+	}
+	invoice, err := s.invoiceService.CreatePlanInvoiceWithPriceAndOptions(c.Request.Context(), wc.Workspace, planCode, options, nil)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -888,18 +913,78 @@ func normalizedInvoicePlanCode(invoice store.Invoice) store.PlanCode {
 }
 
 func paymentURI(invoice store.Invoice) string {
-	switch invoice.PayableNetwork {
-	case store.NetworkTON:
+	if invoice.PayableAsset == store.AssetTON {
 		comment := ""
 		if invoice.PaymentComment != nil {
 			comment = *invoice.PaymentComment
 		}
 		return "ton://transfer/" + invoice.DestinationAddress + "?amount=" + invoice.PayableAmount.Mul(decimal.NewFromInt(1_000_000_000)).StringFixed(0) + "&text=" + url.QueryEscape(comment)
-	case store.NetworkTON_USDT, store.NetworkTRON, store.NetworkBASE, store.NetworkBSC:
-		return invoice.DestinationAddress
-	default:
-		return invoice.DestinationAddress
 	}
+	return invoice.DestinationAddress
+}
+
+func paymentOptionURI(option store.PaymentOption) string {
+	if option.PaymentURI != "" {
+		return option.PaymentURI
+	}
+	if option.Asset == store.AssetTON {
+		comment := ""
+		if option.PaymentComment != nil {
+			comment = *option.PaymentComment
+		}
+		return "ton://transfer/" + option.DestinationAddress + "?amount=" + option.PayableAmount.Mul(decimal.NewFromInt(1_000_000_000)).StringFixed(0) + "&text=" + url.QueryEscape(comment)
+	}
+	return option.DestinationAddress
+}
+
+func paymentOptionResponses(invoice store.Invoice) []gin.H {
+	options := invoice.PaymentOptions
+	if len(options) == 0 {
+		options = []store.PaymentOption{{
+			InvoiceID:          invoice.ID,
+			Network:            invoice.PayableNetwork,
+			Asset:              invoice.PayableAsset,
+			PayableAmount:      invoice.PayableAmount,
+			DestinationAddress: invoice.DestinationAddress,
+			PaymentComment:     invoice.PaymentComment,
+			MatchingSuffix:     invoice.MatchingSuffix,
+			IsDefault:          true,
+		}}
+	}
+	items := make([]gin.H, 0, len(options))
+	for _, option := range options {
+		comment := ""
+		if option.PaymentComment != nil {
+			comment = *option.PaymentComment
+		}
+		items = append(items, gin.H{
+			"network":             option.Network,
+			"asset":               option.Asset,
+			"payable_amount":      option.PayableAmount.StringFixed(payableScale(option.Network)),
+			"destination_address": option.DestinationAddress,
+			"payment_comment":     comment,
+			"payment_uri":         paymentOptionURI(option),
+			"is_default":          option.IsDefault,
+		})
+	}
+	return items
+}
+
+func parsePaymentOptionInputs(body []struct {
+	Network string `json:"network"`
+	Asset   string `json:"asset"`
+}) []service.PaymentOptionInput {
+	if len(body) == 0 {
+		return nil
+	}
+	options := make([]service.PaymentOptionInput, 0, len(body))
+	for _, item := range body {
+		options = append(options, service.PaymentOptionInput{
+			Network: store.Network(strings.ToUpper(strings.TrimSpace(item.Network))),
+			Asset:   store.NormalizePaymentAsset(item.Asset),
+		})
+	}
+	return options
 }
 
 func validateWallet(network store.Network, address string) error {

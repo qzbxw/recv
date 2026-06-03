@@ -72,16 +72,24 @@ type PanelKey = "overview" | "wallets" | "invoices" | "create" | "developer" | "
 
 const WALLET_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
   { value: "TON", label: "TON" },
+  { value: "SOLANA", label: "Solana" },
   { value: "TRON", label: "TRON" },
   { value: "EVM", label: "Base/BSC wallet (EVM)" },
 ];
 
-const PAYABLE_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
-  { value: "TON", label: "TON" },
-  { value: "TON_USDT", label: "TON USDT" },
-  { value: "TRON", label: "TRON" },
-  { value: "BASE", label: "BASE" },
-  { value: "BSC", label: "BSC" },
+const PAYABLE_PAYMENT_OPTIONS: Array<{ key: string; network: Network; asset: string; label: string }> = [
+  { key: "TON:TON", network: "TON", asset: "TON", label: "TON" },
+  { key: "TON_USDT:USDT", network: "TON_USDT", asset: "USDT", label: "TON USDT" },
+  { key: "TRON:USDT", network: "TRON", asset: "USDT", label: "TRON USDT" },
+  { key: "SOLANA:SOL", network: "SOLANA", asset: "SOL", label: "SOL" },
+  { key: "SOLANA:USDT", network: "SOLANA", asset: "USDT", label: "Solana USDT" },
+  { key: "SOLANA:USDC", network: "SOLANA", asset: "USDC", label: "Solana USDC" },
+  { key: "BASE:USDT", network: "BASE", asset: "USDT", label: "Base USDT" },
+  { key: "BASE:USDC", network: "BASE", asset: "USDC", label: "Base USDC" },
+  { key: "ARBITRUM:USDT", network: "ARBITRUM", asset: "USDT", label: "Arbitrum USDT" },
+  { key: "ARBITRUM:USDC", network: "ARBITRUM", asset: "USDC", label: "Arbitrum USDC" },
+  { key: "BSC:BNB", network: "BSC", asset: "BNB", label: "BNB" },
+  { key: "BSC:USDT", network: "BSC", asset: "USDT", label: "BSC USDT" },
 ];
 
 function LiveValue({ value }: { value: string | number }) {
@@ -95,7 +103,7 @@ function LiveValue({ value }: { value: string | number }) {
 }
 
 function walletBucket(network: Network) {
-  return network === "BASE" || network === "BSC" ? "EVM" : network === "TON_USDT" ? "TON" : network;
+  return network === "BASE" || network === "BSC" || network === "ARBITRUM" ? "EVM" : network === "TON_USDT" ? "TON" : network;
 }
 
 const STATUS_TONE_CLASS: Record<string, string> = {
@@ -178,11 +186,11 @@ export function SellerConsolePage() {
 
   // Form States
   const [walletForm, setWalletForm] = useState<{ network: Network; address: string }>({ network: "TON", address: "" });
-  const [invoiceForm, setInvoiceForm] = useState({ title: "Product/Service", amount: "10.00", network: "TON" as Network, ttl: 30 });
+  const [invoiceForm, setInvoiceForm] = useState({ title: "Product/Service", amount: "10.00", network: "TON" as Network, ttl: 30, optionKeys: ["TON:TON"] });
   const [keyForm, setKeyForm] = useState({ label: "" });
   const [hookForm, setHookForm] = useState({ label: "", url: "" });
   const [latestKeySecret, setLatestKeySecret] = useState("");
-  const [billingForm, setBillingForm] = useState<{ plan: string; network: Network }>({ plan: "merchant", network: "TRON" });
+  const [billingForm, setBillingForm] = useState<{ plan: string; network: Network; optionKeys: string[] }>({ plan: "merchant", network: "TRON", optionKeys: ["TRON:USDT"] });
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [emailForm, setEmailForm] = useState("");
   const [emailNotice, setEmailNotice] = useState("");
@@ -423,6 +431,10 @@ export function SellerConsolePage() {
         title: invoiceForm.title,
         base_amount_usd: invoiceForm.amount,
         payable_network: invoiceForm.network,
+        payment_options: invoiceForm.optionKeys
+          .map(key => PAYABLE_PAYMENT_OPTIONS.find(option => option.key === key))
+          .filter(Boolean)
+          .map(option => ({ network: option!.network, asset: option!.asset })),
         expires_in_minutes: invoiceForm.ttl,
         environment,
       });
@@ -497,6 +509,10 @@ export function SellerConsolePage() {
     try {
       const inv = await createBillingCheckout(session.token, {
         payable_network: billingForm.network,
+        payment_options: billingForm.optionKeys
+          .map(key => PAYABLE_PAYMENT_OPTIONS.find(option => option.key === key))
+          .filter(Boolean)
+          .map(option => ({ network: option!.network, asset: option!.asset })),
         plan_code: billingForm.plan,
       });
       setCheckoutUrl(buildCheckoutUrl(inv.public_id));
@@ -618,10 +634,11 @@ export function SellerConsolePage() {
     { done: filteredInvoices.length > 0, body: t.overview.setupInvoice, action: t.overview.setupInvoiceAction, target: "create" as PanelKey },
   ];
   const onboardingComplete = onboardingSteps.every(s => s.done);
-  const payableNetworkOptions = PAYABLE_NETWORK_OPTIONS.map(option => ({
-    ...option,
-    disabled: !walletNetworks.has(walletBucket(option.value)),
-    hint: walletNetworks.has(walletBucket(option.value)) ? t.common.walletReady : t.common.addWalletFirst,
+  const payableNetworkOptions = PAYABLE_PAYMENT_OPTIONS.map(option => ({
+    value: option.key,
+    label: option.label,
+    disabled: !walletNetworks.has(walletBucket(option.network)),
+    hint: walletNetworks.has(walletBucket(option.network)) ? t.common.walletReady : t.common.addWalletFirst,
   }));
 
   const handleNavClick = (key: PanelKey) => {
@@ -1209,11 +1226,35 @@ export function SellerConsolePage() {
                       <div className="dev-input-group">
                         <label>{t.create.network}</label>
                         <CustomSelect
-                          value={invoiceForm.network}
+                          value={invoiceForm.optionKeys[0]}
                           options={payableNetworkOptions}
                           ariaLabel={t.create.network}
-                          onChange={(v) => setInvoiceForm(c => ({ ...c, network: v as Network }))}
+                          onChange={(v) => {
+                            const selected = PAYABLE_PAYMENT_OPTIONS.find(option => option.key === v);
+                            setInvoiceForm(c => ({
+                              ...c,
+                              network: selected?.network ?? c.network,
+                              optionKeys: [v, ...c.optionKeys.filter(key => key !== v)].slice(0, 2),
+                            }));
+                          }}
                         />
+                        <div className="dev-preset-row">
+                          {PAYABLE_PAYMENT_OPTIONS.filter(option => walletNetworks.has(walletBucket(option.network))).map(option => (
+                            <button
+                              key={option.key}
+                              type="button"
+                              className={`dev-preset-chip ${invoiceForm.optionKeys.includes(option.key) ? "is-active" : ""}`}
+                              onClick={() => setInvoiceForm(c => {
+                                const exists = c.optionKeys.includes(option.key);
+                                const next = exists ? c.optionKeys.filter(key => key !== option.key) : [...c.optionKeys, option.key].slice(-2);
+                                const fallback = next.length > 0 ? next : [option.key];
+                                return { ...c, network: option.network, optionKeys: fallback };
+                              })}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                       {Number(invoiceForm.amount) <= 0 && <p className="dev-resource-card__error">{t.create.amountInvalid}</p>}
                       <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={isCreatingInvoice || activeWalletsCount === 0 || Number(invoiceForm.amount) <= 0}>
@@ -1719,11 +1760,35 @@ export function SellerConsolePage() {
                     <div className="dev-input-group">
                       <label>{t.common.network}</label>
                       <CustomSelect
-                        value={billingForm.network}
-                        options={NETWORK_OPTIONS}
+                        value={billingForm.optionKeys[0]}
+                        options={payableNetworkOptions}
                         ariaLabel={t.common.network}
-                        onChange={v => setBillingForm(c => ({ ...c, network: v as Network }))}
+                        onChange={v => {
+                          const selected = PAYABLE_PAYMENT_OPTIONS.find(option => option.key === v);
+                          setBillingForm(c => ({
+                            ...c,
+                            network: selected?.network ?? c.network,
+                            optionKeys: [v, ...c.optionKeys.filter(key => key !== v)].slice(0, 2),
+                          }));
+                        }}
                       />
+                      <div className="dev-preset-row">
+                        {PAYABLE_PAYMENT_OPTIONS.filter(option => walletNetworks.has(walletBucket(option.network))).map(option => (
+                          <button
+                            key={option.key}
+                            type="button"
+                            className={`dev-preset-chip ${billingForm.optionKeys.includes(option.key) ? "is-active" : ""}`}
+                            onClick={() => setBillingForm(c => {
+                              const exists = c.optionKeys.includes(option.key);
+                              const next = exists ? c.optionKeys.filter(key => key !== option.key) : [...c.optionKeys, option.key].slice(-2);
+                              const fallback = next.length > 0 ? next : [option.key];
+                              return { ...c, network: option.network, optionKeys: fallback };
+                            })}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <button className="dev-btn dev-btn--primary" onClick={onUpgrade}>{t.billing.upgrade}</button>
                   </div>
@@ -1853,11 +1918,3 @@ export function SellerConsolePage() {
     </main>
   );
 }
-
-const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
-  { value: "TON", label: "TON" },
-  { value: "TON_USDT", label: "TON USDT" },
-  { value: "TRON", label: "TRON" },
-  { value: "BASE", label: "BASE" },
-  { value: "BSC", label: "BSC" },
-];
