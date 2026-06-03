@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -735,4 +736,46 @@ func adminHasRole(claims service.AdminClaims, allowed ...string) bool {
 		}
 	}
 	return false
+}
+
+func (s *Server) handleAdminGetBillingWallets(c *gin.Context) {
+	ctx := c.Request.Context()
+	item, err := s.store.GetSystemConfig(ctx, "billing_wallets")
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			c.JSON(http.StatusOK, gin.H{"wallets": map[string]string{}})
+			return
+		}
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+	var wallets map[string]string
+	if err := json.Unmarshal(item.Value, &wallets); err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"wallets": wallets})
+}
+
+func (s *Server) handleAdminUpdateBillingWallets(c *gin.Context) {
+	ctx := c.Request.Context()
+	var body struct {
+		Wallets map[string]string `json:"wallets" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
+	admin := adminFromContext(c)
+	actor := admin.Claims.Username
+	if actor == "" {
+		actor = "admin"
+	}
+
+	if err := s.store.UpsertSystemConfig(ctx, "billing_wallets", body.Wallets, false, actor); err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }

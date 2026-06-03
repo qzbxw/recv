@@ -176,6 +176,8 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	adminAPI.POST("/invoices/:id/review", server.handleAdminReviewInvoice)
 	adminAPI.POST("/invoices/:id/refresh-status", server.handleAdminRefreshInvoiceStatus)
 	adminAPI.POST("/internal-comments", server.handleAdminCreateInternalComment)
+	adminAPI.GET("/config/billing-wallets", server.handleAdminGetBillingWallets)
+	adminAPI.POST("/config/billing-wallets", server.handleAdminUpdateBillingWallets)
 
 	adminAPI.GET("/blog", server.handleAdminListBlogPosts)
 	adminAPI.POST("/blog", server.handleAdminCreateBlogPost)

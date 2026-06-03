@@ -149,3 +149,14 @@ export async function updateAdminBlogPost(token: string, id: number, payload: Pa
     body: JSON.stringify(payload),
   }, token);
 }
+
+export async function fetchAdminBillingWallets(token: string) {
+  return request<{ wallets: Record<string, string> }>("/api/admin/config/billing-wallets", {}, token);
+}
+
+export async function updateAdminBillingWallets(token: string, wallets: Record<string, string>) {
+  return request<{ success: boolean }>("/api/admin/config/billing-wallets", {
+    method: "POST",
+    body: JSON.stringify({ wallets }),
+  }, token);
+}

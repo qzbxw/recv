@@ -12,6 +12,8 @@ import {
   fetchAdminOpsOverview,
   fetchAdminSEOTargets,
   fetchAdminWorkspaces,
+  fetchAdminBillingWallets,
+  updateAdminBillingWallets,
   getStoredAdminToken,
   loginAdmin,
   logoutAdmin,
@@ -34,7 +36,7 @@ import type {
   SEOTarget,
 } from "../lib/types";
 
-type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "audit" | "content";
+type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "audit" | "content" | "settings";
 
 type Filters = { status: string; kind: string; query: string };
 const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "" };
@@ -112,6 +114,7 @@ const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
   analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
   audit: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
   content: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></svg>,
+  settings: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
   logout: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
   refresh: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>,
 };
@@ -331,6 +334,7 @@ export function AdminDashboardPage() {
         { key: "analytics", label: "Analytics" },
         { key: "audit", label: "Audit log" },
         { key: "content", label: "Content & SEO" },
+        { key: "settings", label: "Settings" },
       ],
     },
   ];
@@ -431,6 +435,8 @@ export function AdminDashboardPage() {
             {activePanel === "audit" && <AuditPanel events={auditEvents} />}
 
             {activePanel === "content" && <ContentPanel targets={seoTargets} />}
+
+            {activePanel === "settings" && <SettingsPanel token={token} setToast={setToast} setError={setError} />}
           </div>
         </div>
       </div>
@@ -1046,6 +1052,107 @@ function ContentPanel({ targets }: { targets: SEOTarget[] }) {
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsPanel({ token, setToast, setError }: { token: string; setToast: (msg: string) => void; setError: (msg: string) => void }) {
+  const [wallets, setWallets] = useState<Record<string, string>>({ TON: "", EVM: "", TRON: "" });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchAdminBillingWallets(token)
+      .then(res => {
+        setWallets({
+          TON: res.wallets.TON || "",
+          EVM: res.wallets.EVM || "",
+          TRON: res.wallets.TRON || "",
+        });
+      })
+      .catch(err => {
+        setError(err instanceof Error ? err.message : "Failed to load billing wallets");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [token, setError]);
+
+  async function handleSave(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await updateAdminBillingWallets(token, wallets);
+      setToast("Billing wallets updated successfully");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save billing wallets");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="dev-portal__section portal-animate-in">
+        <PanelHeader title="Settings" subtitle="Manage system configurations and billing wallets." />
+        <div className="dev-card"><p>Loading wallets...</p></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Settings" subtitle="Manage system configurations and billing wallets." />
+      
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Billing Wallets</h3>
+          <p>These addresses receive subscription payments for paid plans.</p>
+        </div>
+
+        <form onSubmit={handleSave} className="dev-form">
+          <div className="dev-input-group dev-input-group--margin">
+            <label>TON Wallet Address (for TON and TON USDT)</label>
+            <input
+              className="dev-input"
+              value={wallets.TON}
+              onChange={e => setWallets({ ...wallets, TON: e.target.value })}
+              placeholder="e.g. UQAS_ton_wallet_addr..."
+              required
+            />
+          </div>
+
+          <div className="dev-input-group dev-input-group--margin">
+            <label>EVM Wallet Address (for BASE USDC, BSC USDT, and EVM networks)</label>
+            <input
+              className="dev-input"
+              value={wallets.EVM}
+              onChange={e => setWallets({ ...wallets, EVM: e.target.value })}
+              placeholder="e.g. 0xDEADBEEF..."
+              required
+            />
+          </div>
+
+          <div className="dev-input-group dev-input-group--margin">
+            <label>TRON Wallet Address (for TRON USDT)</label>
+            <input
+              className="dev-input"
+              value={wallets.TRON}
+              onChange={e => setWallets({ ...wallets, TRON: e.target.value })}
+              placeholder="e.g. TX_tron_wallet_addr..."
+              required
+            />
+          </div>
+
+          <button type="submit" className="dev-btn dev-btn--primary" disabled={saving}>
+            {saving ? "Saving..." : "Save wallets"}
+          </button>
+        </form>
       </div>
     </div>
   );

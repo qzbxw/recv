@@ -38,6 +38,7 @@ type httpStore interface {
 	GetInvoiceByID(ctx context.Context, workspaceID int64, invoiceID int64) (store.Invoice, error)
 	GetInvoiceByPublicID(ctx context.Context, publicID string) (store.Invoice, error)
 	GetSystemConfig(ctx context.Context, key string) (store.SystemConfig, error)
+	UpsertSystemConfig(ctx context.Context, key string, value any, isSecret bool, updatedBy string) error
 	GetWorkspaceByID(ctx context.Context, workspaceID int64) (store.Workspace, error)
 	GetWorkspaceMemberRole(ctx context.Context, workspaceID, userID int64) (store.MemberRole, error)
 	GrantPRO(ctx context.Context, workspaceID int64, days int) (store.Workspace, error)

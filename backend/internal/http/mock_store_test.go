@@ -192,6 +192,10 @@ func (m *mockHTTPStore) GetSystemConfig(ctx context.Context, key string) (store.
 	return m.real.GetSystemConfig(ctx, key)
 }
 
+func (m *mockHTTPStore) UpsertSystemConfig(ctx context.Context, key string, value any, isSecret bool, updatedBy string) error {
+	return m.real.UpsertSystemConfig(ctx, key, value, isSecret, updatedBy)
+}
+
 func (m *mockHTTPStore) GetWorkspaceByID(ctx context.Context, workspaceID int64) (store.Workspace, error) {
 	if m.failAt == errAtGetWorkspaceByID {
 		return store.Workspace{}, m.mockErr(errAtGetWorkspaceByID)
