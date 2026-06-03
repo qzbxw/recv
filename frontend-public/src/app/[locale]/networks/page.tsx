@@ -35,6 +35,7 @@ export default async function NetworksHubPage(props: Props) {
     { name: "TON", slug: "ton", desc: locale === "ru" ? "Нативная сеть Telegram для быстрых и дешёвых переводов с поддержкой TON USDT." : "Telegram-native network for fast, low-cost transfers with TON USDT support." },
     { name: "TON USDT", slug: "ton_usdt", desc: locale === "ru" ? "Стейблкоин Tether (USDT) в сети TON для стабильных Telegram-платежей." : "Tether (USDT) stablecoin on the TON network for volatility-free Telegram payments." },
     { name: "TRON", slug: "tron", desc: locale === "ru" ? "Самая популярная сеть для USDT. Высокая ликвидность и широкое принятие." : "The most popular network for USDT payments with high liquidity and adoption." },
+    { name: "Solana", slug: "solana", desc: locale === "ru" ? "Высокоскоростная сеть с ультра-низкими комиссиями и мгновенным подтверждением." : "High-speed network with ultra-low fees and near-instant confirmations." },
     { name: "Base", slug: "base", desc: locale === "ru" ? "L2 сеть от Coinbase для надёжных EVM-совместимых платежей." : "Coinbase's L2 for reliable EVM-compatible payments with institutional backing." },
     { name: "BSC", slug: "bsc", desc: locale === "ru" ? "Binance Smart Chain с широкой поддержкой токенов и высокой ликвидностью." : "Binance Smart Chain with broad token support and high DeFi liquidity." },
   ];

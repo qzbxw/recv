@@ -222,8 +222,9 @@ const en = {
       networks: {
         title: "Networks",
         ton: "TON",
-        tron: "TRON",
         ton_usdt: "TON USDT",
+        tron: "TRON",
+        solana: "Solana",
         base: "Base",
         bsc: "BSC",
         arbitrum: "Base",
@@ -804,6 +805,84 @@ const en = {
         },
         seoLabel: "TON USDT payment gateway details",
         seo: "recv supports TON USDT payments (Tether on TON) with hosted Checkout, API invoice creation, required comment matching, blockchain watchers, and direct-to-wallet settlement for Telegram bots and Mini Apps.",
+      },
+      solana: {
+        name: "Solana",
+        fullName: "Solana Blockchain",
+        metadata: {
+          title: "Accept Solana Payments with API and Checkout",
+          description: "Use recv to accept SOL and supported SPL assets with fast checkout flows, API invoices, watcher detection, and signed webhooks.",
+        },
+        kicker: "SOLANA NETWORK",
+        hero: {
+          title: "Solana payments for fast developer-owned checkout.",
+          body: "recv brings SOL and supported SPL assets into one payment API, so web3 products can create invoices and react to confirmed transfers without custom watcher logic.",
+        },
+        snapshot: {
+          kicker: "API EVENT",
+          title: "payment.network.solana",
+          amount: "49.00 USDT",
+          items: [
+            { label: "Assets", value: "SPL USDT" },
+            { label: "Flow", value: "API" },
+            { label: "Status", value: "Detected" },
+          ],
+        },
+        assets: {
+          kicker: "SUPPORTED ASSETS",
+          title: "USDT SPL payments on Solana.",
+          body: "Solana support fits teams that need fast stablecoin payments on the Solana network.",
+          items: [
+            { name: "SPL USDT", body: "The standard stablecoin on Solana for high-speed, low-fee USD-denominated payments." },
+          ],
+        },
+        why: {
+          kicker: "WHY Solana",
+          title: "Fast payment feedback for web3 users.",
+          body: "Solana is a strong fit when your buyers already use Solana wallets and expect quick confirmation in developer tools, apps, or digital goods flows.",
+        },
+        mechanics: {
+          kicker: "CHECKOUT AND API MECHANICS",
+          title: "One invoice flow for SOL and SPL assets.",
+          steps: [
+            { title: "Create invoice", body: "Your backend creates a Solana invoice through recv API or uses hosted Checkout." },
+            { title: "Show wallet data", body: "Checkout displays network, asset, amount, address, and QR in a buyer-friendly screen." },
+            { title: "Watch transfer", body: "recv tracks native or SPL transfers and matches the payment to the invoice." },
+            { title: "Trigger backend", body: "A signed webhook tells your product when to unlock access, deliver goods, or update status." },
+          ],
+        },
+        limitations: {
+          kicker: "LIMITATIONS AND NOTES",
+          title: "Asset and wallet selection must be precise.",
+          body: "Buyers need to send the configured Solana asset on Solana. Token account behavior, wallet support, and temporary network congestion can affect the payment experience.",
+        },
+        useCases: {
+          kicker: "RELEVANT USE CASES",
+          title: "Best for web3-native products.",
+          body: "Solana is useful when payments are part of a product that already speaks to developers, creators, or crypto-native buyers.",
+          items: [
+            { name: "Developer tools", body: "Create invoices from your backend and use webhooks for automated access." },
+            { name: "Digital goods", body: "Sell keys, downloads, or licenses to Solana wallet users." },
+            { name: "Web3 apps", body: "Add a fast payment option for users already active in the Solana ecosystem." },
+          ],
+        },
+        related: {
+          kicker: "RELATED",
+          title: "Connect Solana to your backend.",
+          links: [
+            { kicker: "Product", label: "API", body: "Create invoices and receive normalized payment events.", href: "/products/api" },
+            { kicker: "Plan", label: "Developer", body: "API and webhooks for production integrations.", href: "/dev" },
+            { kicker: "Docs", label: "Integration", body: "Read the developer documentation for payment automation.", href: "/docs" },
+          ],
+        },
+        cta: {
+          title: "Add Solana payments to your product.",
+          body: "Use recv API and Checkout to accept Solana assets and let signed events drive your payment state.",
+          primary: { label: "Start integration", href: "/app/auth" },
+          secondary: { label: "Explore API", href: "/products/api" },
+        },
+        seoLabel: "Solana network payment details",
+        seo: "recv supports Solana payments with SOL and configured SPL assets, hosted Checkout, API invoice creation, blockchain watchers, signed webhooks, and developer-focused payment automation.",
       },
       base: {
         name: "Base",

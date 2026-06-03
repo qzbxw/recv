@@ -119,6 +119,7 @@ export function Header({ language }: { language: "ru" | "en" }) {
                     { name: nav.networks.ton, slug: "ton" },
                     { name: nav.networks.ton_usdt, slug: "ton_usdt" },
                     { name: nav.networks.tron, slug: "tron" },
+                    { name: nav.networks.solana, slug: "solana" },
                     { name: nav.networks.base, slug: "base" },
                     { name: nav.networks.bsc, slug: "bsc" },
                   ].map((net) => (

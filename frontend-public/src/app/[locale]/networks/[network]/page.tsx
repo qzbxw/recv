@@ -14,6 +14,7 @@ const NETWORK_SLUGS = [
   "ton",
   "tron",
   "ton_usdt",
+  "solana",
   "base",
   "bsc",
 ] as const satisfies readonly NetworkSlug[];

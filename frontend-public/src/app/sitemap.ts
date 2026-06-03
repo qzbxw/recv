@@ -37,6 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/networks/ton",
     "/networks/ton_usdt",
     "/networks/tron",
+    "/networks/solana",
     "/networks/base",
     "/networks/bsc",
     "/use-cases",

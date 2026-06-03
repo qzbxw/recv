@@ -32,6 +32,7 @@ describe("public site i18n", () => {
       "ton",
       "tron",
       "ton_usdt",
+      "solana",
       "base",
       "bsc",
       "arbitrum",

@@ -221,8 +221,9 @@ const ru = {
       networks: {
         title: "Сети",
         ton: "TON",
-        tron: "TRON",
         ton_usdt: "TON USDT",
+        tron: "TRON",
+        solana: "Solana",
         base: "Base",
         bsc: "BSC",
         arbitrum: "Base",
@@ -803,6 +804,84 @@ const ru = {
         },
         seoLabel: "Детали шлюза TON USDT",
         seo: "recv поддерживает платежи в TON USDT (Tether на TON) с готовым чекаутом, созданием инвойсов по API, сверкой по обязательным комментариям, блокчейн-ватчерами и моментальными выплатами на ваш кошелек.",
+      },
+      solana: {
+        name: "Solana",
+        fullName: "Solana Blockchain",
+        metadata: {
+          title: "Прием Solana-платежей через API и Checkout",
+          description: "Используйте recv для приема SOL и поддерживаемых SPL assets через быстрые checkout flows, API-инвойсы, watcher detection и signed webhooks.",
+        },
+        kicker: "SOLANA NETWORK",
+        hero: {
+          title: "Solana-платежи для быстрого developer-owned checkout.",
+          body: "recv добавляет SOL и поддерживаемые SPL assets в единый payment API, чтобы web3-продукты создавали инвойсы и реагировали на подтвержденные переводы без собственной watcher logic.",
+        },
+        snapshot: {
+          kicker: "API EVENT",
+          title: "payment.network.solana",
+          amount: "49.00 USDT",
+          items: [
+            { label: "Активы", value: "SPL USDT" },
+            { label: "Flow", value: "API" },
+            { label: "Статус", value: "Detected" },
+          ],
+        },
+        assets: {
+          kicker: "SUPPORTED ASSETS",
+          title: "Платежи в USDT SPL на Solana.",
+          body: "Solana подходит командам, которым нужны быстрые платежи в стейблкоинах в сети Solana.",
+          items: [
+            { name: "SPL USDT", body: "Стандартный стейблкоин в сети Solana для быстрых и дешевых долларовых платежей." },
+          ],
+        },
+        why: {
+          kicker: "WHY SOLANA",
+          title: "Быстрый payment feedback для web3 users.",
+          body: "Solana сильна там, где покупатели уже используют Solana wallets и ожидают быстрое подтверждение в developer tools, apps или digital goods flows.",
+        },
+        mechanics: {
+          kicker: "CHECKOUT AND API MECHANICS",
+          title: "Единый invoice flow для SOL и SPL assets.",
+          steps: [
+            { title: "Создание инвойса", body: "Backend создает Solana invoice через recv API или использует hosted Checkout." },
+            { title: "Показ wallet data", body: "Checkout показывает сеть, актив, сумму, адрес и QR в buyer-friendly экране." },
+            { title: "Watch transfer", body: "recv отслеживает native или SPL transfers и сопоставляет оплату с invoice." },
+            { title: "Trigger backend", body: "Signed webhook сообщает продукту, когда нужно открыть доступ, выдать товар или обновить статус." },
+          ],
+        },
+        limitations: {
+          kicker: "LIMITATIONS AND NOTES",
+          title: "Asset и wallet selection должны быть точными.",
+          body: "Покупатель должен отправить настроенный Solana asset в сети Solana. Token account behavior, поддержка кошельков и временная congestion могут влиять на платежный опыт.",
+        },
+        useCases: {
+          kicker: "RELEVANT USE CASES",
+          title: "Лучше всего для web3-native продуктов.",
+          body: "Solana полезна, когда платежи являются частью продукта для разработчиков, creators или crypto-native покупателей.",
+          items: [
+            { name: "Developer tools", body: "Создавайте инвойсы из backend и используйте webhooks для automated access." },
+            { name: "Цифровые товары", body: "Продавайте ключи, downloads или лицензии Solana wallet users." },
+            { name: "Web3 apps", body: "Добавьте быстрый payment option для пользователей Solana ecosystem." },
+          ],
+        },
+        related: {
+          kicker: "СВЯЗАННОЕ",
+          title: "Подключите Solana к вашему backend.",
+          links: [
+            { kicker: "Продукт", label: "API", body: "Создавайте инвойсы и получайте normalized payment events.", href: "/products/api" },
+            { kicker: "Тариф", label: "Developer", body: "API и webhooks для production integrations.", href: "/dev" },
+            { kicker: "Docs", label: "Integration", body: "Изучите developer docs для payment automation.", href: "/docs" },
+          ],
+        },
+        cta: {
+          title: "Добавьте Solana-платежи в продукт.",
+          body: "Используйте recv API и Checkout, чтобы принимать Solana assets и управлять payment state через signed events.",
+          primary: { label: "Начать интеграцию", href: "/app/auth" },
+          secondary: { label: "Изучить API", href: "/products/api" },
+        },
+        seoLabel: "Детали Solana-платежей",
+        seo: "recv поддерживает Solana-платежи с SOL и настроенными SPL assets, hosted Checkout, API созданием инвойсов, blockchain watchers, signed webhooks и developer-focused payment automation.",
       },
       base: {
         name: "Base",
