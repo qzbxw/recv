@@ -139,13 +139,14 @@ func (s *AdminService) Authenticate(username string, password string) (string, e
 	if err != nil {
 		return "", err
 	}
-	if result.MFARequired {
-		return "", errors.New("admin MFA is required")
-	}
 	return result.Token, nil
 }
 
 func (s *AdminService) StartLogin(ctx context.Context, username string, password string) (AdminLoginResult, error) {
+	return s.StartLoginWithSession(ctx, username, password, AdminSessionInput{})
+}
+
+func (s *AdminService) StartLoginWithSession(ctx context.Context, username string, password string, input AdminSessionInput) (AdminLoginResult, error) {
 	if !s.Enabled() {
 		return AdminLoginResult{}, errors.New("admin access is not configured")
 	}
@@ -164,32 +165,12 @@ func (s *AdminService) StartLogin(ctx context.Context, username string, password
 		return AdminLoginResult{}, errors.New("invalid admin credentials")
 	}
 
-	setupRequired := !admin.TOTPEnabled || strings.TrimSpace(admin.TOTPSecret) == ""
-	secret := admin.TOTPSecret
-	if setupRequired {
-		var genErr error
-		secret, genErr = generateTOTPSecret()
-		if genErr != nil {
-			return AdminLoginResult{}, genErr
-		}
-		if err := s.store.SetAdminTOTPSecret(ctx, admin.ID, secret, false); err != nil {
-			return AdminLoginResult{}, err
-		}
-	}
-	challenge, err := s.issueChallengeToken(admin, setupRequired)
+	result, err := s.issueAdminSession(ctx, admin, input, nil)
 	if err != nil {
 		return AdminLoginResult{}, err
 	}
 	metrics.IncAuthAttempt("admin_login", "success", "password_verified")
-	return AdminLoginResult{
-		Username:          admin.Email,
-		Email:             admin.Email,
-		MFARequired:       true,
-		TOTPSetupRequired: setupRequired,
-		TOTPSecret:        secret,
-		ChallengeToken:    challenge,
-		Roles:             admin.Roles,
-	}, nil
+	return result, nil
 }
 
 func (s *AdminService) VerifyTOTP(ctx context.Context, challengeToken string, code string, input AdminSessionInput) (AdminLoginResult, error) {
@@ -240,6 +221,15 @@ func (s *AdminService) VerifyTOTP(ctx context.Context, challengeToken string, co
 		admin.TOTPEnabled = true
 	}
 
+	result, err := s.issueAdminSession(ctx, admin, input, recoveryCodes)
+	if err != nil {
+		return AdminLoginResult{}, err
+	}
+	metrics.IncAuthAttempt("admin_mfa", "success", "verified")
+	return result, nil
+}
+
+func (s *AdminService) issueAdminSession(ctx context.Context, admin store.AdminUser, input AdminSessionInput, recoveryCodes []string) (AdminLoginResult, error) {
 	refreshToken, err := randomToken(32)
 	if err != nil {
 		return AdminLoginResult{}, err
@@ -253,7 +243,6 @@ func (s *AdminService) VerifyTOTP(ctx context.Context, challengeToken string, co
 		return AdminLoginResult{}, err
 	}
 	_ = s.store.MarkAdminLogin(ctx, admin.ID)
-	metrics.IncAuthAttempt("admin_mfa", "success", "verified")
 	return AdminLoginResult{Token: token, RefreshToken: refreshToken, Username: admin.Email, Email: admin.Email, Roles: admin.Roles, RecoveryCodes: recoveryCodes}, nil
 }
 

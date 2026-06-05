@@ -51,7 +51,7 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 		}
 	}
 
-	result, err := s.adminService.StartLogin(c.Request.Context(), username, body.Password)
+	result, err := s.adminService.StartLoginWithSession(c.Request.Context(), username, body.Password, service.AdminSessionInput{UserAgent: c.Request.UserAgent(), IPAddress: c.ClientIP()})
 	if err != nil {
 		if s.store != nil {
 			_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login_failed", "admin", username, gin.H{"ip": c.ClientIP()})
@@ -60,11 +60,7 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 		return
 	}
 	if s.store != nil {
-		action := "admin_login_password_verified"
-		if !result.MFARequired {
-			action = "admin_login"
-		}
-		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, action, "admin", username, gin.H{"ip": c.ClientIP(), "mfa_required": result.MFARequired})
+		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login", "admin", username, gin.H{"ip": c.ClientIP(), "mfa_required": false})
 	}
 
 	c.Request = c.Request.WithContext(ctx)
@@ -766,7 +762,7 @@ func (s *Server) handleAdminUpdateBillingWallets(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	admin := adminFromContext(c)
 	actor := admin.Claims.Username
 	if actor == "" {

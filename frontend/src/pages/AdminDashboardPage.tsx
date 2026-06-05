@@ -21,7 +21,6 @@ import {
   resendAdminWebhookDelivery,
   reviewAdminInvoice,
   setStoredAdminToken,
-  verifyAdminTotp,
 } from "../lib/api";
 import { CustomSelect } from "../components/CustomSelect";
 import { buildCheckoutUrl, buildCheckoutPath } from "../lib/routing";
@@ -132,7 +131,6 @@ function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
 export function AdminDashboardPage() {
   const [token, setToken] = useState(() => getStoredAdminToken() || "");
   const [credentials, setCredentials] = useState({ username: "", password: "" });
-  const [mfa, setMfa] = useState<{ challengeToken: string; code: string; setupSecret: string }>({ challengeToken: "", code: "", setupSecret: "" });
   const [activePanel, setActivePanel] = useState<PanelKey>("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -195,31 +193,11 @@ export function AdminDashboardPage() {
     setError("");
     try {
       const response = await loginAdmin(credentials);
-      if (response.mfa_required && response.challenge_token) {
-        setMfa({ challengeToken: response.challenge_token, code: "", setupSecret: response.totp_secret || "" });
-        return;
-      }
       if (!response.token) throw new Error("Admin token was not returned");
       setStoredAdminToken(response.token);
       setToken(response.token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Admin login failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleVerifyMFA(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const response = await verifyAdminTotp({ challenge_token: mfa.challengeToken, code: mfa.code });
-      setStoredAdminToken(response.token);
-      setToken(response.token);
-      setMfa({ challengeToken: "", code: "", setupSecret: "" });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Admin MFA failed");
     } finally {
       setLoading(false);
     }
@@ -282,35 +260,18 @@ export function AdminDashboardPage() {
             </div>
             <h1>Admin sign in</h1>
             <p className="dev-card__note-text">Operate merchants, invoices, billing, webhooks and content.</p>
-            {mfa.challengeToken ? (
-              <form className="dev-form" onSubmit={handleVerifyMFA}>
-                {mfa.setupSecret && (
-                  <div className="dev-input-group">
-                    <label>TOTP secret</label>
-                    <input className="dev-input" value={mfa.setupSecret} readOnly />
-                  </div>
-                )}
-                <div className="dev-input-group">
-                  <label>Authenticator code</label>
-                  <input className="dev-input" value={mfa.code} onChange={(e) => setMfa({ ...mfa, code: e.target.value })} autoComplete="one-time-code" placeholder="123456" />
-                </div>
-                {error && <div className="alert">{error}</div>}
-                <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={loading}>{loading ? "Verifying…" : "Verify"}</button>
-              </form>
-            ) : (
-              <form className="dev-form" onSubmit={handleLogin}>
-                <div className="dev-input-group">
-                  <label>Email</label>
-                  <input className="dev-input" value={credentials.username} onChange={(e) => setCredentials({ ...credentials, username: e.target.value })} autoComplete="username" />
-                </div>
-                <div className="dev-input-group">
-                  <label>Password</label>
-                  <input className="dev-input" type="password" value={credentials.password} onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} autoComplete="current-password" />
-                </div>
-                {error && <div className="alert">{error}</div>}
-                <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</button>
-              </form>
-            )}
+            <form className="dev-form" onSubmit={handleLogin}>
+              <div className="dev-input-group">
+                <label>Email</label>
+                <input className="dev-input" value={credentials.username} onChange={(e) => setCredentials({ ...credentials, username: e.target.value })} autoComplete="username" />
+              </div>
+              <div className="dev-input-group">
+                <label>Password</label>
+                <input className="dev-input" type="password" value={credentials.password} onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} autoComplete="current-password" />
+              </div>
+              {error && <div className="alert">{error}</div>}
+              <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</button>
+            </form>
           </div>
         </section>
       </main>
@@ -340,7 +301,7 @@ export function AdminDashboardPage() {
   ];
 
   return (
-    <main className={`dev-portal dev-portal--console ${isMobileMenuOpen ? "is-menu-open" : ""}`}>
+    <main className={`dev-portal dev-portal--console admin-ops ${isMobileMenuOpen ? "is-menu-open" : ""}`}>
       <div className="dev-portal__backdrop dev-portal__backdrop--grid" />
       {isMobileMenuOpen && <div className="dev-portal__nav-backdrop" onClick={() => setIsMobileMenuOpen(false)} />}
 
@@ -1032,6 +993,27 @@ function ContentPanel({ targets }: { targets: SEOTarget[] }) {
         <div className="dev-portal__section-header dev-portal__section-header--margin">
           <h3>SEO targets</h3>
           <p>{targets.length} keyword clusters tracked</p>
+        </div>
+        <div className="admin-seo-cards">
+          {targets.map((t) => (
+            <article key={t.id} className="admin-seo-card">
+              <div>
+                <span>Cluster</span>
+                <strong>{t.keyword_cluster}</strong>
+              </div>
+              <div>
+                <span>Target page</span>
+                <code>{t.target_page}</code>
+              </div>
+              <div className="admin-seo-card__meta">
+                <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{t.publish_status}</span>
+                <span>{t.index_status}</span>
+                <span>{t.internal_links_count} links</span>
+                <span>{t.video_attached ? "video" : "no video"}</span>
+              </div>
+            </article>
+          ))}
+          {targets.length === 0 && <div className="dev-portal__empty-state">No SEO targets yet.</div>}
         </div>
         <div className="admin-table-wrap">
           <table className="admin-sales-table">

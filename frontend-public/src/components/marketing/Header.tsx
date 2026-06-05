@@ -204,8 +204,9 @@ export function Header({ language }: { language: "ru" | "en" }) {
             <div className="flex flex-col gap-6 pt-8 border-t border-white/5">
               <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/docs/introduction`} className="text-xl font-bold text-white/60">{nav.docs}</Link>
               <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/blog`} className="text-xl font-bold text-white/60">{nav.blog}</Link>
-              <Link onClick={() => setIsMenuOpen(false)} href="/app/auth" className="w-full py-4 rounded-2xl bg-white text-black text-center font-bold text-lg mt-4">
+              <Link onClick={() => setIsMenuOpen(false)} href="/app/auth" className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 !text-white text-center font-bold text-lg mt-4 shadow-[0_12px_32px_rgba(124,58,237,0.4)] flex items-center justify-center gap-2">
                 {nav.console}
+                <span aria-hidden>→</span>
               </Link>
             </div>
           </div>

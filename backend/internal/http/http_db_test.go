@@ -3564,8 +3564,8 @@ func TestHandleBlockWorkspaceWithDB(t *testing.T) {
 	})
 }
 
-// TestAdminVerifyTOTPSuccessPath covers the successful TOTP verification flow.
-func TestAdminVerifyTOTPSuccessPath(t *testing.T) {
+// TestAdminPasswordLoginIssuesSession covers the current admin password login flow.
+func TestAdminPasswordLoginIssuesSession(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	ctx := context.Background()
 
@@ -3588,7 +3588,6 @@ func TestAdminVerifyTOTPSuccessPath(t *testing.T) {
 		cfg:          config.Config{AppEnv: "test"},
 	}
 
-	// Step 1: Start login
 	loginRec := httptest.NewRecorder()
 	loginRouter := gin.New()
 	loginRouter.POST("/api/admin/login", server.handleAdminLogin)
@@ -3605,30 +3604,20 @@ func TestAdminVerifyTOTPSuccessPath(t *testing.T) {
 	if err := json.Unmarshal(loginRec.Body.Bytes(), &loginResp); err != nil {
 		t.Fatalf("unmarshal login response: %v", err)
 	}
-	challengeToken, _ := loginResp["challenge_token"].(string)
-	totpSecret, _ := loginResp["totp_secret"].(string)
-	if challengeToken == "" || totpSecret == "" {
-		t.Fatalf("expected challenge_token and totp_secret, got: %+v", loginResp)
+	if token, _ := loginResp["token"].(string); token == "" {
+		t.Fatalf("expected admin access token, got: %+v", loginResp)
 	}
-
-	// Step 2: Generate TOTP code from the secret
-	code, err := computeTOTPCode(totpSecret, time.Now().UTC())
-	if err != nil {
-		t.Fatalf("computeTOTPCode: %v", err)
+	if refresh, _ := loginResp["refresh_token"].(string); refresh == "" {
+		t.Fatalf("expected admin refresh token, got: %+v", loginResp)
 	}
-
-	// Step 3: Verify TOTP
-	totpRouter := gin.New()
-	totpRouter.POST("/api/admin/login/verify-totp", server.handleAdminVerifyTOTP)
-
-	totpRec := httptest.NewRecorder()
-	totpReq := httptest.NewRequest(stdhttp.MethodPost, "/api/admin/login/verify-totp",
-		strings.NewReader(`{"challenge_token":"`+challengeToken+`","code":"`+code+`"}`))
-	totpReq.Header.Set("Content-Type", "application/json")
-	totpRouter.ServeHTTP(totpRec, totpReq)
-
-	if totpRec.Code != stdhttp.StatusOK {
-		t.Fatalf("expected 200 for TOTP verify, got %d: %s", totpRec.Code, totpRec.Body.String())
+	if mfaRequired, _ := loginResp["mfa_required"].(bool); mfaRequired {
+		t.Fatalf("expected admin login without MFA challenge, got: %+v", loginResp)
+	}
+	if challengeToken, _ := loginResp["challenge_token"].(string); challengeToken != "" {
+		t.Fatalf("did not expect challenge token in password login response, got: %+v", loginResp)
+	}
+	if len(loginRec.Result().Cookies()) == 0 {
+		t.Fatalf("expected admin refresh cookie to be set")
 	}
 }
 

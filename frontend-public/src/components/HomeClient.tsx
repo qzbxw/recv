@@ -85,11 +85,11 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
               {copy.hero.body}
             </p>
 
-            <div className="lend-reveal--3 flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
-              <div className="relative group/btn-wrap">
+            <div className="lend-reveal--3 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-14 sm:mb-24 w-full sm:w-auto">
+              <div className="relative group/btn-wrap w-full sm:w-auto">
                 {/* Expansive Glowing Aura */}
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-xl opacity-25 group-hover/btn-wrap:opacity-75 group-hover/btn-wrap:scale-110 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]" />
-                <Link className="lend-primary relative z-10 px-10 py-5 text-lg min-w-[240px] rounded-2xl group/btn flex items-center justify-center" href="/app/auth">
+                <Link className="lend-primary relative z-10 w-full sm:w-auto px-10 py-5 text-lg sm:min-w-[240px] rounded-2xl group/btn flex items-center justify-center" href="/app/auth">
                   <span className="relative z-10 flex items-center justify-center gap-3">
                     {copy.hero.primary}
                     <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">→</span>
@@ -97,7 +97,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                 </Link>
               </div>
 
-              <Link className="lend-secondary px-10 py-5 text-lg min-w-[240px] rounded-2xl group/sec flex items-center justify-center" href={`/${language}/docs`}>
+              <Link className="lend-secondary w-full sm:w-auto px-10 py-5 text-lg sm:min-w-[240px] rounded-2xl group/sec flex items-center justify-center" href={`/${language}/docs`}>
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   {copy.hero.secondary}
                   <span className="group-hover/sec:translate-x-1.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">→</span>
@@ -110,9 +110,9 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 2. BENTO GRID */}
-      <section id="infrastructure" className="py-32" ref={reveal}>
+      <section id="infrastructure" className="py-20 md:py-28 lg:py-32" ref={reveal}>
         <div className="container mx-auto px-6">
-          <div className="lend-reveal--1 mb-20 text-center lg:text-left">
+          <div className="lend-reveal--1 mb-12 md:mb-16 lg:mb-20 text-center lg:text-left">
             <span className="lend-section-kicker">{copy.bento.kicker}</span>
             <h2 className="text-4xl md:text-7xl font-bold tracking-tight mb-8">{copy.bento.title}</h2>
           </div>
@@ -129,7 +129,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                 <Link 
                   key={item.id} 
                   href={`/${language}/products/${item.id}`}
-                  className={`${gridClasses} lend-card lend-spotlight-card group p-10 flex flex-col justify-between transition-all duration-700 ease-in-out hover:scale-[1.02]`}
+                  className={`${gridClasses} lend-card lend-spotlight-card group p-7 md:p-8 lg:p-10 flex flex-col justify-between transition-all duration-700 ease-in-out hover:scale-[1.02]`}
                   onMouseMove={handleMouseMove}
                 >
                   <div className="lend-card-spotlight" />
@@ -147,8 +147,8 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                   
                   <div className="relative z-10">
                     <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 mb-6 block uppercase">{item.kicker}</span>
-                    <h3 className="text-3xl md:text-4xl font-bold mb-6 tracking-tight group-hover:text-white transition-colors">{item.title}</h3>
-                    <p className="opacity-40 text-base md:text-lg leading-relaxed max-w-[340px] group-hover:opacity-70 transition-opacity">{item.body}</p>
+                    <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 tracking-tight group-hover:text-white transition-colors">{item.title}</h3>
+                    <p className="opacity-40 text-sm md:text-base lg:text-lg leading-relaxed max-w-[340px] group-hover:opacity-70 transition-opacity">{item.body}</p>
                   </div>
 
                   <div className="lend-explore-link relative z-10 flex items-center gap-4 text-accent font-bold text-[10px] tracking-[0.2em] uppercase w-fit pb-2">
@@ -163,7 +163,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 3. NETWORKS MARQUEE */}
-      <section className="py-24 border-y border-white/5 overflow-hidden relative bg-white/[0.01]">
+      <section className="py-14 md:py-20 lg:py-24 border-y border-white/5 overflow-hidden relative bg-white/[0.01]">
         <div className="absolute inset-0 bg-radial-gradient from-accent/5 via-transparent to-transparent opacity-30 pointer-events-none" />
         <div className="lend-marquee">
           <div className="lend-marquee-track">
@@ -185,9 +185,9 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 4. REDESIGNED USE CASES (GRID) */}
-      <section id="solutions" className="py-32" ref={reveal}>
+      <section id="solutions" className="py-20 md:py-28 lg:py-32" ref={reveal}>
         <div className="container mx-auto px-6">
-          <div className="lend-reveal--1 mb-20 text-center lg:text-left">
+          <div className="lend-reveal--1 mb-12 md:mb-16 lg:mb-20 text-center lg:text-left">
             <span className="lend-section-kicker mx-auto lg:mx-0">{copy.useCases.kicker}</span>
             <h2 className="text-4xl md:text-7xl font-bold tracking-tight">{copy.useCases.title}</h2>
           </div>
@@ -197,14 +197,14 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
               <Link 
                 key={uc.id} 
                 href={`/${language}/use-cases/${uc.id}`}
-                className="lend-card lend-spotlight-card group relative p-10 md:p-14 transition-all duration-700 ease-in-out hover:scale-[1.02]"
+                className="lend-card lend-spotlight-card group relative p-7 md:p-10 lg:p-14 transition-all duration-700 ease-in-out hover:scale-[1.02]"
                 onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="lend-dogfood-glow" />
                 
                 <div className="relative z-10">
-                  <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-10 group-hover:scale-110 group-hover:border-accent/40 transition-all duration-500 shadow-2xl">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-6 md:mb-10 group-hover:scale-110 group-hover:border-accent/40 transition-all duration-500 shadow-2xl">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent">
                       {uc.id === 'tg-shops' && (
                         <>
@@ -238,9 +238,9 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                     </svg>
                   </div>
 
-                  <span className="text-[10px] font-bold tracking-[0.4em] text-white/20 mb-6 block uppercase tracking-[0.4em]">Scenario 0{idx + 1}</span>
-                  <h3 className="text-3xl md:text-5xl font-bold mb-8 tracking-tight group-hover:text-accent transition-colors !font-['Montserrat']">{uc.title}</h3>
-                  <p className="text-lg md:text-2xl opacity-40 leading-relaxed mb-12 max-w-sm group-hover:opacity-60 transition-opacity">
+                  <span className="text-[10px] font-bold tracking-[0.4em] text-white/20 mb-4 md:mb-6 block uppercase">Scenario 0{idx + 1}</span>
+                  <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-5 md:mb-8 tracking-tight group-hover:text-accent transition-colors !font-['Montserrat']">{uc.title}</h3>
+                  <p className="text-base md:text-xl lg:text-2xl opacity-40 leading-relaxed mb-8 md:mb-12 max-w-sm group-hover:opacity-60 transition-opacity">
                     {uc.body}
                   </p>
 
@@ -263,9 +263,9 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 4.5 AI / MCP */}
-      <section id="mcp" className="py-32" ref={reveal}>
+      <section id="mcp" className="py-20 md:py-28 lg:py-32" ref={reveal}>
         <div className="container mx-auto px-6">
-          <div className="lend-reveal--1 mb-16 text-center lg:text-left max-w-3xl">
+          <div className="lend-reveal--1 mb-10 md:mb-14 lg:mb-16 text-center lg:text-left max-w-3xl">
             <span className="lend-section-kicker mx-auto lg:mx-0">{copy.mcp.kicker}</span>
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-tight mt-6 mb-6">
               {copy.mcp.title}
@@ -300,9 +300,9 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 5. VISUAL DIFF (COMPARE) */}
-      <section className="py-32 overflow-hidden" ref={reveal}>
+      <section className="py-20 md:py-28 lg:py-32 overflow-hidden" ref={reveal}>
         <div className="container mx-auto px-6">
-          <div className="flex flex-col items-center mb-20 text-center lend-reveal--1">
+          <div className="flex flex-col items-center mb-12 md:mb-16 lg:mb-20 text-center lend-reveal--1">
             <span className="lend-section-kicker">{copy.compare.kicker}</span>
             <h2 className="text-4xl md:text-6xl font-bold tracking-tight max-w-3xl">{copy.compare.title}</h2>
           </div>
@@ -376,9 +376,9 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 6. PRICING */}
-      <section id="pricing" className="py-32" ref={reveal}>
+      <section id="pricing" className="py-20 md:py-28 lg:py-32" ref={reveal}>
         <div className="container mx-auto px-6">
-          <div className="lend-reveal--1 mb-20 text-center">
+          <div className="lend-reveal--1 mb-12 md:mb-16 lg:mb-20 text-center">
             <span className="lend-section-kicker justify-center">{copy.pricing.kicker}</span>
             <h2 className="text-4xl md:text-7xl font-bold tracking-tight">{copy.pricing.title}</h2>
           </div>
@@ -446,9 +446,9 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 7. FAQ */}
-      <section id="faq" className="py-32" ref={reveal}>
+      <section id="faq" className="py-20 md:py-28 lg:py-32" ref={reveal}>
         <div className="container mx-auto px-6 max-w-5xl">
-          <div className="lend-reveal--1 mb-24 text-center">
+          <div className="lend-reveal--1 mb-14 md:mb-20 lg:mb-24 text-center">
             <span className="lend-section-kicker justify-center">{copy.faq.kicker}</span>
             <h2 className="text-4xl md:text-6xl font-bold tracking-tight">{copy.faq.title}</h2>
           </div>
@@ -505,7 +505,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
 
       {/* 8. FINAL CTA */}
       <section
-        className="py-64 relative overflow-hidden lend-spotlight-card group"
+        className="py-32 md:py-48 lg:py-64 relative overflow-hidden lend-spotlight-card group"
         onMouseMove={handleMouseMove}
         ref={reveal}
       >
@@ -523,7 +523,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
 
         <div className="container mx-auto px-6 text-center relative z-10">
           <div className="lend-reveal--1 mb-16 max-w-4xl mx-auto">
-            <h2 className="text-6xl md:text-8xl font-extrabold tracking-tighter leading-[0.9] font-['Montserrat'] bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent mb-8">
+            <h2 className="text-[clamp(1.6rem,7.6vw,2.5rem)] sm:text-6xl md:text-8xl font-extrabold tracking-tight sm:tracking-tighter leading-[1.06] sm:leading-[0.9] font-['Montserrat'] bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent mb-8">
               {copy.final.title}
             </h2>
             
@@ -533,8 +533,8 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
           </div>
 
           <div className="lend-reveal--2 flex flex-col sm:flex-row justify-center items-center gap-6 mb-12">
-            <Link 
-              className="lend-primary px-16 py-6 text-xl font-bold rounded-2xl min-w-[280px] flex items-center justify-center gap-3 group/btn shadow-[0_20px_50px_rgba(124,58,237,0.3)] transition-all duration-300" 
+            <Link
+              className="lend-primary w-full sm:w-auto px-10 sm:px-16 py-5 sm:py-6 text-lg sm:text-xl font-bold rounded-2xl sm:min-w-[280px] flex items-center justify-center gap-3 group/btn shadow-[0_20px_50px_rgba(124,58,237,0.3)] transition-all duration-300"
               href="/app/auth"
             >
               {copy.final.primary}
@@ -543,8 +543,8 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
               </svg>
             </Link>
             
-            <Link 
-              className="lend-secondary px-16 py-6 text-xl font-bold rounded-2xl min-w-[280px] flex items-center justify-center gap-3 transition-all duration-300" 
+            <Link
+              className="lend-secondary w-full sm:w-auto px-10 sm:px-16 py-5 sm:py-6 text-lg sm:text-xl font-bold rounded-2xl sm:min-w-[280px] flex items-center justify-center gap-3 transition-all duration-300"
               href={`/${language}/docs`}
             >
               {copy.final.secondary}
@@ -554,7 +554,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
             </Link>
           </div>
           
-          <div className="lend-reveal--3 text-white/30 text-xs font-semibold tracking-wider uppercase flex justify-center items-center gap-6">
+          <div className="lend-reveal--3 text-white/30 text-[11px] sm:text-xs font-semibold tracking-wider uppercase flex flex-wrap justify-center items-center gap-x-4 gap-y-2 sm:gap-6 px-4">
             <span>0% TURNOVER FEES</span>
             <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
             <span>NON-CUSTODIAL</span>

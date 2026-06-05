@@ -236,7 +236,7 @@ const ru = {
       },
       docs: "Docs",
       blog: "Blog",
-      console: "Console",
+      console: "Консоль",
     },
   marketing: {
     activate: "Активировать",

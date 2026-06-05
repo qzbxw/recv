@@ -15,7 +15,7 @@ import (
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 )
 
-func TestDBAdminServiceMFAAndSessionBusinessFlow(t *testing.T) {
+func TestDBAdminServiceSessionBusinessFlow(t *testing.T) {
 	ctx := context.Background()
 	st := newAdminServiceTestStore(t, ctx)
 
@@ -43,26 +43,13 @@ func TestDBAdminServiceMFAAndSessionBusinessFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StartLogin returned error: %v", err)
 	}
-	if !login.MFARequired || !login.TOTPSetupRequired || login.TOTPSecret == "" || login.ChallengeToken == "" {
-		t.Fatalf("expected first login to require TOTP setup, got %+v", login)
+	if login.MFARequired || login.ChallengeToken != "" || login.TOTPSecret != "" {
+		t.Fatalf("expected password login to issue a session without MFA challenge, got %+v", login)
 	}
-
-	if _, err := admin.VerifyTOTP(ctx, login.ChallengeToken, "000000", AdminSessionInput{UserAgent: "test", IPAddress: "127.0.0.1"}); err == nil {
-		t.Fatal("expected invalid TOTP code to be rejected")
+	if login.Token == "" || login.RefreshToken == "" {
+		t.Fatalf("expected token and refresh token, got %+v", login)
 	}
-
-	code, err := totpCode(login.TOTPSecret, time.Now().UTC())
-	if err != nil {
-		t.Fatalf("totpCode returned error: %v", err)
-	}
-	verified, err := admin.VerifyTOTP(ctx, login.ChallengeToken, code, AdminSessionInput{UserAgent: "test", IPAddress: "127.0.0.1"})
-	if err != nil {
-		t.Fatalf("VerifyTOTP returned error: %v", err)
-	}
-	if verified.Token == "" || verified.RefreshToken == "" || len(verified.RecoveryCodes) != 10 {
-		t.Fatalf("expected token, refresh token and recovery codes, got %+v", verified)
-	}
-	claims, err := admin.ParseToken(verified.Token)
+	claims, err := admin.ParseToken(login.Token)
 	if err != nil {
 		t.Fatalf("ParseToken returned error: %v", err)
 	}
@@ -70,7 +57,7 @@ func TestDBAdminServiceMFAAndSessionBusinessFlow(t *testing.T) {
 		t.Fatalf("expected super_admin session claims, got %+v", claims)
 	}
 
-	refreshed, err := admin.Refresh(ctx, verified.RefreshToken)
+	refreshed, err := admin.Refresh(ctx, login.RefreshToken)
 	if err != nil {
 		t.Fatalf("Refresh returned error: %v", err)
 	}
@@ -82,35 +69,20 @@ func TestDBAdminServiceMFAAndSessionBusinessFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second StartLogin returned error: %v", err)
 	}
-	if !nextLogin.MFARequired || nextLogin.TOTPSetupRequired {
-		t.Fatalf("expected existing admin to require MFA without setup, got %+v", nextLogin)
-	}
-	recovered, err := admin.VerifyTOTP(ctx, nextLogin.ChallengeToken, verified.RecoveryCodes[0], AdminSessionInput{UserAgent: "test", IPAddress: "127.0.0.1"})
-	if err != nil {
-		t.Fatalf("VerifyTOTP with recovery code returned error: %v", err)
-	}
-	if recovered.Token == "" || recovered.RefreshToken == "" {
-		t.Fatalf("expected recovery code login to issue tokens, got %+v", recovered)
+	if nextLogin.Token == "" || nextLogin.RefreshToken == "" || nextLogin.MFARequired {
+		t.Fatalf("expected repeat password login to issue a session without MFA, got %+v", nextLogin)
 	}
 
-	reusedLogin, err := admin.StartLogin(ctx, "admin@example.test", "correct-password")
-	if err != nil {
-		t.Fatalf("third StartLogin returned error: %v", err)
-	}
-	if _, err := admin.VerifyTOTP(ctx, reusedLogin.ChallengeToken, verified.RecoveryCodes[0], AdminSessionInput{}); err == nil {
-		t.Fatal("expected consumed recovery code reuse to be rejected")
-	}
-
-	if err := admin.RevokeRefreshToken(ctx, recovered.RefreshToken); err != nil {
+	if err := admin.RevokeRefreshToken(ctx, nextLogin.RefreshToken); err != nil {
 		t.Fatalf("RevokeRefreshToken returned error: %v", err)
 	}
-	if _, err := admin.Refresh(ctx, recovered.RefreshToken); err == nil {
+	if _, err := admin.Refresh(ctx, nextLogin.RefreshToken); err == nil {
 		t.Fatal("expected revoked refresh token to be rejected")
 	}
 	if err := admin.RevokeSession(ctx, claims.SessionID); err != nil {
 		t.Fatalf("RevokeSession returned error: %v", err)
 	}
-	if _, err := admin.ParseToken(verified.Token); err == nil || !strings.Contains(err.Error(), "revoked") {
+	if _, err := admin.ParseToken(login.Token); err == nil || !strings.Contains(err.Error(), "revoked") {
 		t.Fatalf("expected revoked admin session token to be rejected, got %v", err)
 	}
 }
