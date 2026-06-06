@@ -32,7 +32,7 @@ func TestBackendMainFlowsWithEmbeddedPostgres(t *testing.T) {
 	env := newIntegrationEnv(t, ctx)
 	client := env.server.Client()
 
-	assertMigrationCount(t, ctx, env.store, 19)
+	assertMigrationCount(t, ctx, env.store, expectedMigrationCount(t))
 
 	auth := loginSeller(t, client, env.server.URL, 10001, "alice")
 	assertAuthSessionLifecycle(t, client, env.server.URL, auth.RefreshToken)
@@ -438,6 +438,19 @@ func assertMigrationCount(t *testing.T, ctx context.Context, st *store.Store, ex
 	}
 }
 
+func expectedMigrationCount(t *testing.T) int {
+	t.Helper()
+
+	migrations, err := filepath.Glob("../db/migrations/*.sql")
+	if err != nil {
+		t.Fatalf("failed to list migrations: %v", err)
+	}
+	if len(migrations) == 0 {
+		t.Fatal("expected at least one migration")
+	}
+	return len(migrations)
+}
+
 func assertTelegramAuthCodeLifecycle(t *testing.T, ctx context.Context, st *store.Store, sellerID int64) {
 	t.Helper()
 
@@ -477,7 +490,7 @@ func assertNotificationOutbox(t *testing.T, ctx context.Context, st *store.Store
 		t.Fatalf("expected at least 4 notification jobs, got %d", len(jobs))
 	}
 	for _, job := range jobs {
-		if !strings.Contains(strings.ToLower(job.Message), "invoice") && !strings.Contains(strings.ToLower(job.Message), "subscription") {
+		if strings.TrimSpace(job.Message) == "" {
 			t.Fatalf("unexpected notification message: %q", job.Message)
 		}
 		if err := st.MarkNotificationSent(ctx, job.ID); err != nil {

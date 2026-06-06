@@ -75,5 +75,6 @@ type httpStore interface {
 	TouchAPIKeyLastUsed(ctx context.Context, keyID int64) error
 	UpdateBlogPost(ctx context.Context, id int64, post store.BlogPost) (store.BlogPost, error)
 	UpdateWorkspaceEmail(ctx context.Context, workspaceID int64, email string) (store.Workspace, error)
+	UpdateWorkspaceLanguage(ctx context.Context, workspaceID int64, language string) (store.Workspace, error)
 	UpdateWorkspaceMemberRole(ctx context.Context, workspaceID, userID int64, role store.MemberRole) error
 }

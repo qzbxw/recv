@@ -1,0 +1,75 @@
+default_install_hook_types: [pre-commit, pre-push]
+
+repos:
+  - repo: local
+    hooks:
+      - id: backend-gofmt
+        name: backend gofmt
+        entry: bash -c 'gofmt -w "$@"'
+        language: system
+        files: ^backend/.*\.go$
+        pass_filenames: true
+        stages: [pre-commit]
+
+      - id: backend-go-test-fast
+        name: backend fast go tests
+        entry: bash -c 'cd backend && GOCACHE="${GOCACHE:-/tmp/recv-go-build}" go test ./internal/config ./internal/metrics'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: backend-go-coverage
+        name: backend coverage
+        entry: bash -c 'cd backend && GOCACHE="${GOCACHE:-/tmp/recv-go-build}" go test ./... -coverpkg=./internal/... -coverprofile=coverage.out && COVERAGE_MIN=90 sh scripts/check-coverage.sh coverage.out'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: backend-gosec
+        name: backend gosec
+        entry: bash -c 'command -v gosec >/dev/null || { echo "gosec is required: go install github.com/securego/gosec/v2/cmd/gosec@latest" >&2; exit 1; }; cd backend && GOCACHE="${GOCACHE:-/tmp/recv-go-build}" gosec ./...'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: backend-govulncheck
+        name: backend govulncheck
+        entry: bash -c 'cd backend && GOCACHE="${GOCACHE:-/tmp/recv-go-build}" go run golang.org/x/vuln/cmd/govulncheck@latest ./...'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: frontend-checks
+        name: frontend tests and build
+        entry: bash -c 'cd frontend && npm test && npm run build'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: frontend-public-checks
+        name: public frontend lint tests and build
+        entry: bash -c 'cd frontend-public && npm run lint && npm test && npm run build'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: npm-audit-frontend
+        name: frontend npm audit
+        entry: bash -c 'cd frontend && npm audit --audit-level=high'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: npm-audit-frontend-public
+        name: public frontend npm audit
+        entry: bash -c 'cd frontend-public && npm audit --audit-level=high'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: gitleaks
+        name: gitleaks secrets scan
+        entry: bash -c 'command -v gitleaks >/dev/null || { echo "gitleaks is required: https://github.com/gitleaks/gitleaks#installing" >&2; exit 1; }; gitleaks detect --source . --redact --exit-code 1'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

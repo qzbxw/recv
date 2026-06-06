@@ -32,6 +32,7 @@ const (
 	errAtSetInvoiceStatus          = "SetInvoiceStatus"
 	errAtMarkInvoicePaidManual     = "MarkInvoicePaidManual"
 	errAtUpdateWorkspaceEmail      = "UpdateWorkspaceEmail"
+	errAtUpdateWorkspaceLanguage   = "UpdateWorkspaceLanguage"
 	errAtCreateWallet              = "CreateWallet"
 	errAtCreateWorkspaceInvite     = "CreateWorkspaceInvite"
 	errAtRevokeWorkspaceInvite     = "RevokeWorkspaceInvite"
@@ -381,6 +382,13 @@ func (m *mockHTTPStore) UpdateWorkspaceEmail(ctx context.Context, workspaceID in
 		return store.Workspace{}, m.mockErr(errAtUpdateWorkspaceEmail)
 	}
 	return m.real.UpdateWorkspaceEmail(ctx, workspaceID, email)
+}
+
+func (m *mockHTTPStore) UpdateWorkspaceLanguage(ctx context.Context, workspaceID int64, language string) (store.Workspace, error) {
+	if m.failAt == errAtUpdateWorkspaceLanguage {
+		return store.Workspace{}, m.mockErr(errAtUpdateWorkspaceLanguage)
+	}
+	return m.real.UpdateWorkspaceLanguage(ctx, workspaceID, language)
 }
 
 func (m *mockHTTPStore) UpdateWorkspaceMemberRole(ctx context.Context, workspaceID, userID int64, role store.MemberRole) error {

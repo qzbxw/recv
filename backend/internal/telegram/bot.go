@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"log/slog"
 	"net/http"
@@ -235,17 +236,16 @@ func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error
 }
 
 func (b *BotWorker) handleCommand(ctx context.Context, workspace store.Workspace, message *tgMessage, command string) error {
+	c := copyFor(workspace.Language)
 	switch strings.ToLower(command) {
 	case "/start", "/menu":
 		b.resetSession(message.Chat.ID)
 		return b.renderHome(ctx, workspace, message.Chat.ID, 0)
 	case "/login":
-		msg := "🔑 Browser authentication works via Telegram verification code.\n\n" +
-			"1. Open the recv auth page in your browser.\n" +
-			"2. Enter your @username.\n" +
-			"3. Request the verification code.\n" +
-			"4. Paste the code from this chat to sign in."
-		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.recvKeyboard(nil))
+		msg := c.loginTitle + "\n\n" + c.loginSteps
+		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
 		return err
 	case "/invoice":
 		return b.renderInvoiceWalletPicker(ctx, workspace, message.Chat.ID, 0)
@@ -253,9 +253,12 @@ func (b *BotWorker) handleCommand(ctx context.Context, workspace store.Workspace
 		return b.renderWallets(ctx, workspace, message.Chat.ID, 0, "")
 	case "/upgrade":
 		return b.renderUpgrade(ctx, workspace, message.Chat.ID, 0, "")
+	case "/language", "/lang":
+		return b.renderLanguage(ctx, workspace, message.Chat.ID, 0)
 	default:
-		msg := "Unknown command. Use /invoice to create a payment link, /wallets to manage your payout addresses, or /upgrade to unlock PRO features."
-		_, err := b.sendMessage(ctx, message.Chat.ID, msg, b.recvKeyboard(nil))
+		_, err := b.sendMessage(ctx, message.Chat.ID, c.unknownCommand, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
 		return err
 	}
 }
@@ -273,6 +276,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 	session := b.session(query.Message.Chat.ID)
 	session.MenuMessageID = query.Message.MessageID
 	data := strings.TrimSpace(query.Data)
+	c := copyFor(workspace.Language)
 
 	var callbackText string
 	switch {
@@ -285,12 +289,25 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		err = b.renderInvoiceWalletPicker(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
 	case data == "screen:upgrade":
 		err = b.renderUpgrade(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "")
+	case data == "screen:language":
+		err = b.renderLanguage(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
+	case strings.HasPrefix(data, "lang:set:"):
+		language := store.NormalizeLanguage(strings.TrimPrefix(data, "lang:set:"))
+		updated, setErr := b.store.UpdateWorkspaceLanguage(ctx, workspace.ID, language)
+		if setErr != nil {
+			err = setErr
+			break
+		}
+		workspace = updated
+		callbackText = copyFor(updated.Language).toastLanguageSet
+		b.resetSession(query.Message.Chat.ID)
+		err = b.renderHome(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
 	case strings.HasPrefix(data, "wallet:set:"):
 		network := store.Network(strings.TrimPrefix(data, "wallet:set:"))
 		session.Flow = flowWalletAddress
 		session.WalletNetwork = network
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.walletAddressPrompt(network), b.recvKeyboard([][]tgInlineKeyboardButton{
-			{{Text: "Back", CallbackData: "screen:wallets"}},
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.walletAddressPrompt(c, network), b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnBack, CallbackData: "screen:wallets"}},
 		}))
 	case strings.HasPrefix(data, "wallet:disable:"):
 		walletID, parseErr := strconv.ParseInt(strings.TrimPrefix(data, "wallet:disable:"), 10, 64)
@@ -300,8 +317,8 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		}
 		err = b.store.DeactivateWallet(ctx, workspace.ID, walletID)
 		if err == nil {
-			err = b.renderWallets(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "Wallet disabled.")
-			callbackText = "Wallet disabled"
+			err = b.renderWallets(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, c.walletsDisabled)
+			callbackText = c.toastWalletDisabled
 		}
 	case strings.HasPrefix(data, "invoice:new:"):
 		walletID, parseErr := strconv.ParseInt(strings.TrimPrefix(data, "invoice:new:"), 10, 64)
@@ -326,8 +343,8 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 				CallbackData: fmt.Sprintf("invoice:network:%d:%s", wallet.ID, network),
 			}})
 		}
-		rows = append(rows, []tgInlineKeyboardButton{{Text: "Cancel", CallbackData: "invoice:cancel"}})
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceNetworkPrompt(session.DraftInvoice), b.recvKeyboard(rows))
+		rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnCancel, CallbackData: "invoice:cancel"}})
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceNetworkPrompt(c, session.DraftInvoice), b.recvKeyboard(rows))
 	case strings.HasPrefix(data, "invoice:network:"):
 		parts := strings.Split(data, ":")
 		if len(parts) != 4 {
@@ -356,8 +373,8 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			PayableNetwork: network,
 			WalletLabel:    fmt.Sprintf("%s • %s", networkButtonLabel(network), shortAddress(wallet.Address)),
 		}
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceTitlePrompt(session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
-			{{Text: "Cancel", CallbackData: "invoice:cancel"}},
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceTitlePrompt(c, session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnCancel, CallbackData: "invoice:cancel"}},
 		}))
 	case strings.HasPrefix(data, "invoice:lifetime:"):
 		minutes, parseErr := strconv.Atoi(strings.TrimPrefix(data, "invoice:lifetime:"))
@@ -373,10 +390,11 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = createErr
 			break
 		}
-		callbackText = "Upgrade checkout created"
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("recv PRO checkout created.\n\n%s\n%s %s\n30 days of unlimited invoices.", invoice.PublicID, invoice.PayableAmount.StringFixed(6), invoice.PayableNetwork), b.recvKeyboard([][]tgInlineKeyboardButton{
-			{{Text: "Open checkout", URL: b.appURL("/checkout/" + invoice.PublicID)}},
-			{{Text: "Home", CallbackData: "nav:home"}},
+		callbackText = c.toastUpgradeCreated
+		checkoutText := fmt.Sprintf(c.checkoutCreated, esc(invoice.PublicID), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)))
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, checkoutText, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnOpenCheckout, URL: b.appURL("/checkout/" + invoice.PublicID)}},
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
 		}))
 	case data == "invoice:cancel":
 		b.resetSession(query.Message.Chat.ID)
@@ -392,8 +410,10 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = markErr
 			break
 		}
-		callbackText = "Marked as paid"
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s marked as paid manually.", invoice.PublicID), b.recvKeyboard(nil))
+		callbackText = c.toastMarkedPaid
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf(c.markedPaid, esc(invoice.PublicID)), b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
 	case strings.HasPrefix(data, "invoice:keep_underpaid:"):
 		invoiceID, parseErr := strconv.ParseInt(strings.TrimPrefix(data, "invoice:keep_underpaid:"), 10, 64)
 		if parseErr != nil {
@@ -405,8 +425,10 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = getErr
 			break
 		}
-		callbackText = "Waiting for top-up"
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s kept in underpaid state. Wait for a top-up or review it later in recv.", invoice.PublicID), b.recvKeyboard(nil))
+		callbackText = c.toastWaitingTopUp
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf(c.keptUnderpaid, esc(invoice.PublicID)), b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
 	case strings.HasPrefix(data, "invoice:keep_review:"):
 		invoiceID, parseErr := strconv.ParseInt(strings.TrimPrefix(data, "invoice:keep_review:"), 10, 64)
 		if parseErr != nil {
@@ -418,27 +440,31 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = getErr
 			break
 		}
-		callbackText = "Left on review"
-		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf("Invoice %s stays on manual review.", invoice.PublicID), b.recvKeyboard(nil))
+		callbackText = c.toastLeftReview
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf(c.keptReview, esc(invoice.PublicID)), b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
 	default:
-		callbackText = "Unknown action"
+		callbackText = c.toastUnknownAction
 	}
 
 	if callbackText != "" {
 		_ = b.answerCallbackQuery(ctx, query.ID, callbackText)
 	}
 	if err != nil {
-		_ = b.answerCallbackQuery(ctx, query.ID, "Action failed")
+		_ = b.answerCallbackQuery(ctx, query.ID, c.toastActionFailed)
 	}
 	return err
 }
 
 func (b *BotWorker) handleWalletAddressInput(ctx context.Context, workspace store.Workspace, message *tgMessage, text string) error {
+	c := copyFor(workspace.Language)
 	session := b.session(message.Chat.ID)
 	address := strings.TrimSpace(text)
 	if err := validateWallet(session.WalletNetwork, address); err != nil {
-		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.walletAddressPrompt(session.WalletNetwork)+"\n\n"+err.Error(), b.recvKeyboard([][]tgInlineKeyboardButton{
-			{{Text: "Back", CallbackData: "screen:wallets"}},
+		hint := fmt.Sprintf(c.walletInvalidHint, esc(err.Error()))
+		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.walletAddressPrompt(c, session.WalletNetwork)+"\n\n"+hint, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnBack, CallbackData: "screen:wallets"}},
 		}))
 	}
 
@@ -447,48 +473,51 @@ func (b *BotWorker) handleWalletAddressInput(ctx context.Context, workspace stor
 	}
 	session.Flow = flowIdle
 	session.WalletNetwork = ""
-	return b.renderWallets(ctx, workspace, message.Chat.ID, session.MenuMessageID, "Wallet saved.")
+	return b.renderWallets(ctx, workspace, message.Chat.ID, session.MenuMessageID, c.walletsSaved)
 }
 
 func (b *BotWorker) handleInvoiceTitleInput(ctx context.Context, workspace store.Workspace, message *tgMessage, text string) error {
+	c := copyFor(workspace.Language)
 	session := b.session(message.Chat.ID)
 	title := strings.TrimSpace(text)
 	if title == "" {
-		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceTitlePrompt(session.DraftInvoice)+"\n\nTitle cannot be empty.", b.recvKeyboard([][]tgInlineKeyboardButton{
-			{{Text: "Cancel", CallbackData: "invoice:cancel"}},
+		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceTitlePrompt(c, session.DraftInvoice)+"\n\n"+c.invoiceTitleEmpty, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnCancel, CallbackData: "invoice:cancel"}},
 		}))
 	}
 	session.DraftInvoice.Title = title
 	session.Flow = flowInvoiceAmount
-	return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceAmountPrompt(session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
-		{{Text: "Cancel", CallbackData: "invoice:cancel"}},
+	return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceAmountPrompt(c, session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
+		{{Text: c.btnCancel, CallbackData: "invoice:cancel"}},
 	}))
 }
 
 func (b *BotWorker) handleInvoiceAmountInput(ctx context.Context, workspace store.Workspace, message *tgMessage, text string) error {
+	c := copyFor(workspace.Language)
 	session := b.session(message.Chat.ID)
 	amountText := strings.TrimSpace(strings.ReplaceAll(text, ",", "."))
 	amount, err := decimal.NewFromString(amountText)
 	if err != nil || !amount.IsPositive() {
-		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceAmountPrompt(session.DraftInvoice)+"\n\nSend a valid positive USD amount.", b.recvKeyboard([][]tgInlineKeyboardButton{
-			{{Text: "Cancel", CallbackData: "invoice:cancel"}},
+		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceAmountPrompt(c, session.DraftInvoice)+"\n\n"+c.invoiceAmountBad, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnCancel, CallbackData: "invoice:cancel"}},
 		}))
 	}
 	session.DraftInvoice.Amount = amount.StringFixed(2)
 	session.Flow = flowIdle
-	return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceLifetimePrompt(session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
+	return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.invoiceLifetimePrompt(c, session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
 		{
-			{Text: "15 min", CallbackData: "invoice:lifetime:15"},
-			{Text: "30 min", CallbackData: "invoice:lifetime:30"},
-			{Text: "60 min", CallbackData: "invoice:lifetime:60"},
+			{Text: "15 " + c.minuteSuffix, CallbackData: "invoice:lifetime:15"},
+			{Text: "30 " + c.minuteSuffix, CallbackData: "invoice:lifetime:30"},
+			{Text: "60 " + c.minuteSuffix, CallbackData: "invoice:lifetime:60"},
 		},
 		{
-			{Text: "Cancel", CallbackData: "invoice:cancel"},
+			{Text: c.btnCancel, CallbackData: "invoice:cancel"},
 		},
 	}))
 }
 
 func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, minutes int) error {
+	c := copyFor(workspace.Language)
 	session := b.session(chatID)
 	amount, err := decimal.NewFromString(session.DraftInvoice.Amount)
 	if err != nil {
@@ -504,20 +533,22 @@ func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Wor
 	})
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "trial limit reached") {
-			return b.renderUpgrade(ctx, workspace, chatID, messageID, "Trial limit reached. Unlock PRO to keep generating links.")
+			return b.renderUpgrade(ctx, workspace, chatID, messageID, c.invoiceTrialReached)
 		}
 		return err
 	}
 
 	b.resetSession(chatID)
 	checkoutURL := b.appURL("/checkout/" + invoice.PublicID)
-	return b.editMessage(ctx, chatID, messageID, fmt.Sprintf("Invoice %s created.\n\n%s\n%s %s\nExpires in %d min", invoice.PublicID, invoice.Title, invoice.PayableAmount.StringFixed(6), invoice.PayableNetwork, minutes), b.recvKeyboard([][]tgInlineKeyboardButton{
-		{{Text: "Open checkout", URL: checkoutURL}},
-		{{Text: "New invoice", CallbackData: "screen:invoice"}},
+	text := fmt.Sprintf(c.invoiceCreated, esc(invoice.PublicID), esc(invoice.Title), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)), minutes)
+	return b.editMessage(ctx, chatID, messageID, text, b.recvKeyboard([][]tgInlineKeyboardButton{
+		{{Text: c.btnOpenCheckout, URL: checkoutURL}},
+		{{Text: c.btnNewInvoiceShort, CallbackData: "screen:invoice"}, {Text: c.btnHome, CallbackData: "nav:home"}},
 	}))
 }
 
 func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
 	wallets, err := b.store.ListWallets(ctx, workspace.ID)
 	if err != nil {
 		return err
@@ -526,25 +557,57 @@ func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, c
 	if err != nil {
 		return err
 	}
-	latest := "No invoices yet."
+
+	lines := []string{
+		c.homeTitle,
+		"",
+		fmt.Sprintf(c.homeWorkspace, "<code>"+esc(workspaceHandle(workspace))+"</code>"),
+		fmt.Sprintf(c.homeWallets, len(wallets)),
+	}
 	if len(invoices) > 0 {
-		latest = invoices[0].Title + " · " + invoices[0].PayableAmount.StringFixed(6) + " " + string(invoices[0].PayableNetwork)
+		latest := fmt.Sprintf("%s · %s %s", invoices[0].Title, invoices[0].PayableAmount.StringFixed(6), invoices[0].PayableNetwork)
+		lines = append(lines, fmt.Sprintf(c.homeLatest, esc(latest)))
+	} else {
+		lines = append(lines, c.homeNoInvoices)
 	}
 
-	text := fmt.Sprintf(
-		"recv workspace bot\n\nWorkspace: @%s\nWallets: %d\nLatest: %s\n\nUse the buttons below, open recv, or run /login to get browser sign-in instructions.",
-		valueOrFallback(workspace.Username, workspaceTelegramLabel(workspace.OwnerTelegramID)),
-		len(wallets),
-		latest,
-	)
-	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard([][]tgInlineKeyboardButton{
+	now := time.Now()
+	if workspace.HasActiveSubscription(now) && workspace.SubscriptionEndsAt != nil {
+		lines = append(lines, "", fmt.Sprintf(c.homeProActive, workspace.SubscriptionEndsAt.Format("2006-01-02")))
+	}
+	lines = append(lines, "", c.homeTagline)
+
+	proButton := tgInlineKeyboardButton{Text: c.btnUnlockPRO, CallbackData: "screen:upgrade"}
+	if workspace.HasActiveSubscription(now) {
+		proButton = tgInlineKeyboardButton{Text: c.btnExtendPRO, CallbackData: "screen:upgrade"}
+	}
+
+	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard([][]tgInlineKeyboardButton{
 		{
-			{Text: "New invoice", CallbackData: "screen:invoice"},
-			{Text: "Wallets", CallbackData: "screen:wallets"},
+			{Text: c.btnNewInvoice, CallbackData: "screen:invoice"},
+			{Text: c.btnWallets, CallbackData: "screen:wallets"},
 		},
 		{
-			{Text: "Unlock PRO", CallbackData: "screen:upgrade"},
+			proButton,
+			{Text: c.btnLanguage, CallbackData: "screen:language"},
 		},
+	}))
+}
+
+func (b *BotWorker) renderLanguage(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
+	check := func(lang string) string {
+		if store.NormalizeLanguage(workspace.Language) == lang {
+			return " ✓"
+		}
+		return ""
+	}
+	return b.sendOrEdit(ctx, chatID, messageID, c.languageTitle, b.recvKeyboard([][]tgInlineKeyboardButton{
+		{
+			{Text: "🇬🇧 English" + check("en"), CallbackData: "lang:set:en"},
+			{Text: "🇷🇺 Русский" + check("ru"), CallbackData: "lang:set:ru"},
+		},
+		{{Text: c.btnHome, CallbackData: "nav:home"}},
 	}))
 }
 
@@ -555,50 +618,59 @@ func workspaceTelegramLabel(telegramID *int64) string {
 	return strconv.FormatInt(*telegramID, 10)
 }
 
+func workspaceHandle(workspace store.Workspace) string {
+	if strings.TrimSpace(workspace.Username) != "" {
+		return "@" + workspace.Username
+	}
+	return workspaceTelegramLabel(workspace.OwnerTelegramID)
+}
+
 func (b *BotWorker) renderWallets(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, note string) error {
+	c := copyFor(workspace.Language)
 	wallets, err := b.store.ListWallets(ctx, workspace.ID)
 	if err != nil {
 		return err
 	}
 
-	lines := []string{"Wallets"}
+	lines := []string{c.walletsTitle}
 	if note != "" {
-		lines = append(lines, "", note)
+		lines = append(lines, "", esc(note))
 	}
 	if len(wallets) == 0 {
-		lines = append(lines, "", "No active wallets yet.")
+		lines = append(lines, "", c.walletsEmpty)
 	} else {
 		for _, wallet := range wallets {
-			lines = append(lines, "", fmt.Sprintf("%s\n%s", networkButtonLabel(wallet.Network), wallet.Address))
+			lines = append(lines, "", fmt.Sprintf("<b>%s</b>\n<code>%s</code>", esc(networkButtonLabel(wallet.Network)), esc(wallet.Address)))
 		}
 	}
 
 	rows := [][]tgInlineKeyboardButton{
 		{
-			{Text: "Set TON", CallbackData: "wallet:set:TON"},
-			{Text: "Set TRON", CallbackData: "wallet:set:TRON"},
+			{Text: fmt.Sprintf(c.btnSetWallet, "TON"), CallbackData: "wallet:set:TON"},
+			{Text: fmt.Sprintf(c.btnSetWallet, "TRON"), CallbackData: "wallet:set:TRON"},
 		},
 		{
-			{Text: "Set SOLANA", CallbackData: "wallet:set:SOLANA"},
-			{Text: "Set EVM", CallbackData: "wallet:set:EVM"},
+			{Text: fmt.Sprintf(c.btnSetWallet, "SOLANA"), CallbackData: "wallet:set:SOLANA"},
+			{Text: fmt.Sprintf(c.btnSetWallet, "EVM"), CallbackData: "wallet:set:EVM"},
 		},
 	}
 	for _, wallet := range wallets {
 		rows = append(rows, []tgInlineKeyboardButton{
-			{Text: "Disable " + networkButtonLabel(wallet.Network), CallbackData: fmt.Sprintf("wallet:disable:%d", wallet.ID)},
+			{Text: fmt.Sprintf(c.btnDisable, networkButtonLabel(wallet.Network)), CallbackData: fmt.Sprintf("wallet:disable:%d", wallet.ID)},
 		})
 	}
-	rows = append(rows, []tgInlineKeyboardButton{{Text: "Home", CallbackData: "nav:home"}})
+	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnHome, CallbackData: "nav:home"}})
 	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard(rows))
 }
 
 func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
 	wallets, err := b.store.ListWallets(ctx, workspace.ID)
 	if err != nil {
 		return err
 	}
 	if len(wallets) == 0 {
-		return b.renderWallets(ctx, workspace, chatID, messageID, "Add a wallet first to create invoices.")
+		return b.renderWallets(ctx, workspace, chatID, messageID, c.walletsAddFirst)
 	}
 
 	rows := make([][]tgInlineKeyboardButton, 0, len(wallets)+1)
@@ -607,24 +679,25 @@ func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, workspace sto
 			{Text: fmt.Sprintf("%s • %s", networkButtonLabel(wallet.Network), shortAddress(wallet.Address)), CallbackData: fmt.Sprintf("invoice:new:%d", wallet.ID)},
 		})
 	}
-	rows = append(rows, []tgInlineKeyboardButton{{Text: "Home", CallbackData: "nav:home"}})
-	text := "New invoice\n\nChoose which wallet should receive the payment."
-	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard(rows))
+	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnHome, CallbackData: "nav:home"}})
+	return b.sendOrEdit(ctx, chatID, messageID, c.invoicePickWallet, b.recvKeyboard(rows))
 }
 
 func (b *BotWorker) renderUpgrade(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, note string) error {
+	c := copyFor(workspace.Language)
 	lines := []string{
-		"Unlock recv PRO",
+		c.upgradeTitle,
 		"",
-		"Unlimited invoices for 30 days.",
-		"Price: 39 USDT.",
+		c.upgradeBody,
+		fmt.Sprintf(c.upgradePrice, "39 USDT"),
 	}
 	if note != "" {
-		lines = append(lines, "", note)
+		lines = append(lines, "", esc(note))
 	}
 	if workspace.HasActiveSubscription(time.Now()) {
-		lines = append(lines, "", "Your PRO subscription is already active. You can still extend it early.")
+		lines = append(lines, "", fmt.Sprintf(c.homeProActive, workspace.SubscriptionEndsAt.Format("2006-01-02")))
 	}
+	lines = append(lines, "", c.upgradePickNet)
 
 	rows := make([][]tgInlineKeyboardButton, 0, 7)
 	for _, network := range []store.Network{store.NetworkTRON, store.NetworkSOLANA, store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC, store.NetworkTON} {
@@ -633,7 +706,7 @@ func (b *BotWorker) renderUpgrade(ctx context.Context, workspace store.Workspace
 			CallbackData: "upgrade:network:" + string(network),
 		}})
 	}
-	rows = append(rows, []tgInlineKeyboardButton{{Text: "Home", CallbackData: "nav:home"}})
+	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnHome, CallbackData: "nav:home"}})
 	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard(rows))
 }
 
@@ -668,31 +741,35 @@ func (b *BotWorker) recvKeyboard(rows [][]tgInlineKeyboardButton) *tgInlineKeybo
 	return &tgInlineKeyboardMarkup{InlineKeyboard: rows}
 }
 
-func (b *BotWorker) walletAddressPrompt(network store.Network) string {
+func (b *BotWorker) walletAddressPrompt(c botCopy, network store.Network) string {
 	switch network {
 	case store.NetworkEVM:
-		return "Set shared EVM wallet\n\nThis address is reused for Ethereum, Base, Arbitrum and BSC. Send the wallet address in your next message."
+		return c.walletPromptEVM
 	case store.NetworkSOLANA:
-		return "Set Solana wallet\n\nThis address will receive Solana stablecoin invoices. Send the wallet address in your next message."
+		return c.walletPromptSOL
 	default:
-		return fmt.Sprintf("Set %s wallet\n\nSend the wallet address in your next message.", network)
+		return fmt.Sprintf(c.walletPromptOther, esc(string(network)))
 	}
 }
 
-func (b *BotWorker) invoiceNetworkPrompt(draft botInvoiceDraft) string {
-	return fmt.Sprintf("New invoice\n\nWallet: %s\n\nChoose which network should be used for this invoice.", draft.WalletLabel)
+func (b *BotWorker) invoiceNetworkPrompt(c botCopy, draft botInvoiceDraft) string {
+	return fmt.Sprintf(c.invoicePickNetwork, esc(draft.WalletLabel))
 }
 
-func (b *BotWorker) invoiceTitlePrompt(draft botInvoiceDraft) string {
-	return fmt.Sprintf("New invoice\n\nWallet: %s\n\nStep 1/3. Send the service title in your next message.", draft.WalletLabel)
+func (b *BotWorker) invoiceTitlePrompt(c botCopy, draft botInvoiceDraft) string {
+	return fmt.Sprintf(c.invoiceStep1, esc(draft.WalletLabel))
 }
 
-func (b *BotWorker) invoiceAmountPrompt(draft botInvoiceDraft) string {
-	return fmt.Sprintf("New invoice\n\nWallet: %s\nTitle: %s\n\nStep 2/3. Send the USD amount in your next message.", draft.WalletLabel, draft.Title)
+func (b *BotWorker) invoiceAmountPrompt(c botCopy, draft botInvoiceDraft) string {
+	return fmt.Sprintf(c.invoiceStep2, esc(draft.WalletLabel), esc(draft.Title))
 }
 
-func (b *BotWorker) invoiceLifetimePrompt(draft botInvoiceDraft) string {
-	return fmt.Sprintf("New invoice\n\nWallet: %s\nTitle: %s\nAmount: %s USD\n\nStep 3/3. Choose invoice lifetime.", draft.WalletLabel, draft.Title, draft.Amount)
+func (b *BotWorker) invoiceLifetimePrompt(c botCopy, draft botInvoiceDraft) string {
+	return fmt.Sprintf(c.invoiceStep3, esc(draft.WalletLabel), esc(draft.Title), esc(draft.Amount))
+}
+
+func esc(value string) string {
+	return html.EscapeString(value)
 }
 
 func (b *BotWorker) session(chatID int64) *botSession {
@@ -761,8 +838,10 @@ func (b *BotWorker) sendOrEdit(ctx context.Context, chatID int64, messageID int6
 
 func (b *BotWorker) sendMessage(ctx context.Context, chatID int64, text string, keyboard *tgInlineKeyboardMarkup) (int64, error) {
 	payload := map[string]any{
-		"chat_id": chatID,
-		"text":    text,
+		"chat_id":                  chatID,
+		"text":                     text,
+		"parse_mode":               "HTML",
+		"disable_web_page_preview": true,
 	}
 	if keyboard != nil {
 		payload["reply_markup"] = keyboard
@@ -777,9 +856,11 @@ func (b *BotWorker) sendMessage(ctx context.Context, chatID int64, text string, 
 
 func (b *BotWorker) editMessage(ctx context.Context, chatID int64, messageID int64, text string, keyboard *tgInlineKeyboardMarkup) error {
 	payload := map[string]any{
-		"chat_id":    chatID,
-		"message_id": messageID,
-		"text":       text,
+		"chat_id":                  chatID,
+		"message_id":               messageID,
+		"text":                     text,
+		"parse_mode":               "HTML",
+		"disable_web_page_preview": true,
 	}
 	if keyboard != nil {
 		payload["reply_markup"] = keyboard

@@ -25,6 +25,76 @@ func TestNetworkHelpers(t *testing.T) {
 	if !NetworkTON_USDT.IsSupportedPayableNetwork() {
 		t.Fatal("expected TON_USDT to be a supported payable network")
 	}
+	if NetworkEVM.IsSupportedPayableNetwork() {
+		t.Fatal("expected generic EVM bucket not to be directly payable")
+	}
+}
+
+func TestPaymentAssetHelpers(t *testing.T) {
+	if got := NormalizePaymentAsset(" usdc "); got != AssetUSDC {
+		t.Fatalf("expected normalized USDC asset, got %s", got)
+	}
+
+	defaults := map[Network]PaymentAsset{
+		NetworkTON:      AssetTON,
+		NetworkSOLANA:   AssetSOL,
+		NetworkBSC:      AssetUSDT,
+		NetworkTRON:     AssetUSDT,
+		NetworkARBITRUM: AssetUSDT,
+	}
+	for network, want := range defaults {
+		if got := DefaultAssetForNetwork(network); got != want {
+			t.Fatalf("DefaultAssetForNetwork(%s) = %s; want %s", network, got, want)
+		}
+	}
+
+	supported := []struct {
+		network Network
+		asset   PaymentAsset
+	}{
+		{NetworkTON, AssetTON},
+		{NetworkTON_USDT, AssetUSDT},
+		{NetworkTRON, AssetUSDT},
+		{NetworkSOLANA, AssetSOL},
+		{NetworkSOLANA, AssetUSDT},
+		{NetworkSOLANA, AssetUSDC},
+		{NetworkBASE, AssetUSDT},
+		{NetworkBASE, AssetUSDC},
+		{NetworkARBITRUM, AssetUSDT},
+		{NetworkARBITRUM, AssetUSDC},
+		{NetworkBSC, AssetBNB},
+		{NetworkBSC, AssetUSDT},
+	}
+	for _, tc := range supported {
+		if !IsSupportedPaymentOption(tc.network, tc.asset) {
+			t.Fatalf("expected %s/%s to be supported", tc.network, tc.asset)
+		}
+	}
+
+	unsupported := []struct {
+		network Network
+		asset   PaymentAsset
+	}{
+		{NetworkTON, AssetUSDT},
+		{NetworkTRON, AssetUSDC},
+		{NetworkBASE, AssetTON},
+		{NetworkBSC, AssetUSDC},
+		{Network("DOGE"), AssetUSDT},
+	}
+	for _, tc := range unsupported {
+		if IsSupportedPaymentOption(tc.network, tc.asset) {
+			t.Fatalf("expected %s/%s to be unsupported", tc.network, tc.asset)
+		}
+	}
+
+	for _, asset := range []PaymentAsset{AssetTON, AssetSOL, AssetBNB} {
+		if !IsNativeAsset(asset) {
+			t.Fatalf("expected %s to be native", asset)
+		}
+	}
+	if IsNativeAsset(AssetUSDT) || IsNativeAsset(AssetUSDC) {
+		t.Fatal("expected stablecoin assets not to be native")
+	}
 }
 
 func TestValidateWalletAddress(t *testing.T) {
@@ -108,6 +178,32 @@ func TestWorkspaceEffectivePlan(t *testing.T) {
 	}
 	if got := workspace.EffectivePlan(now).Code; got != PlanCodeDeveloper {
 		t.Fatalf("expected effective plan developer, got %s", got)
+	}
+}
+
+func TestNormalizeLanguage(t *testing.T) {
+	cases := map[string]string{
+		"ru":      "ru",
+		" RU-RU ": "ru",
+		"ru_ru":   "ru",
+		"russian": "ru",
+		"en":      "en",
+		"":        "en",
+		"de":      "en",
+	}
+	for input, want := range cases {
+		if got := NormalizeLanguage(input); got != want {
+			t.Fatalf("NormalizeLanguage(%q) = %q; want %q", input, got, want)
+		}
+	}
+}
+
+func TestNotificationCopyFor(t *testing.T) {
+	if got := notificationCopyFor("ru").actionCountAsPaid; got != notificationCopyRU.actionCountAsPaid {
+		t.Fatal("expected russian notification copy")
+	}
+	if got := notificationCopyFor("unknown").actionCountAsPaid; got != notificationCopyEN.actionCountAsPaid {
+		t.Fatal("expected english notification copy fallback")
 	}
 }
 
@@ -429,8 +525,8 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableAmount:    expected,
 			SubscriptionDays: 30,
 		}
-		msg := buildInvoiceNotificationMessage(inv, "paid_exact", amount)
-		if !strings.Contains(msg, "Subscription activated") {
+		msg := buildInvoiceNotificationMessage("en", inv, "paid_exact", amount)
+		if !strings.Contains(msg, "is live") {
 			t.Fatalf("expected subscription message, got: %s", msg)
 		}
 	})
@@ -444,8 +540,8 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableAmount:    expected,
 			SubscriptionDays: 30,
 		}
-		msg := buildInvoiceNotificationMessage(inv, "paid_exact", amount)
-		if !strings.Contains(msg, "Subscription activated") {
+		msg := buildInvoiceNotificationMessage("en", inv, "paid_exact", amount)
+		if !strings.Contains(msg, "is live") {
 			t.Fatalf("expected subscription message for trial plan, got: %s", msg)
 		}
 	})
@@ -458,8 +554,8 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableNetwork: NetworkEVM,
 			PayableAmount:  expected,
 		}
-		msg := buildInvoiceNotificationMessage(inv, "paid_exact", amount)
-		if !strings.Contains(msg, "Payment confirmed") || !strings.Contains(msg, "INV-001") {
+		msg := buildInvoiceNotificationMessage("en", inv, "paid_exact", amount)
+		if !strings.Contains(msg, "Paid") || !strings.Contains(msg, "INV-001") {
 			t.Fatalf("unexpected message: %s", msg)
 		}
 	})
@@ -472,8 +568,8 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableNetwork: NetworkTRON,
 			PayableAmount:  expected,
 		}
-		msg := buildInvoiceNotificationMessage(inv, "underpaid_fee_window", amount)
-		if !strings.Contains(msg, "fee-related") {
+		msg := buildInvoiceNotificationMessage("en", inv, "underpaid_fee_window", amount)
+		if !strings.Contains(msg, "exchange fee") {
 			t.Fatalf("expected fee window message, got: %s", msg)
 		}
 	})
@@ -486,8 +582,8 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableNetwork: NetworkTRON,
 			PayableAmount:  expected,
 		}
-		msg := buildInvoiceNotificationMessage(inv, "underpaid", amount)
-		if !strings.Contains(msg, "Underpayment detected") {
+		msg := buildInvoiceNotificationMessage("en", inv, "underpaid", amount)
+		if !strings.Contains(msg, "Short payment") {
 			t.Fatalf("expected underpaid message, got: %s", msg)
 		}
 	})
@@ -500,8 +596,8 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableNetwork: NetworkSOLANA,
 			PayableAmount:  expected,
 		}
-		msg := buildInvoiceNotificationMessage(inv, "overpaid", decimal.RequireFromString("12.000000"))
-		if !strings.Contains(msg, "Overpayment") {
+		msg := buildInvoiceNotificationMessage("en", inv, "overpaid", decimal.RequireFromString("12.000000"))
+		if !strings.Contains(msg, "Overpaid") {
 			t.Fatalf("expected overpaid message, got: %s", msg)
 		}
 	})
@@ -514,8 +610,8 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableNetwork: NetworkBASE,
 			PayableAmount:  expected,
 		}
-		msg := buildInvoiceNotificationMessage(inv, "late_payment", amount)
-		if !strings.Contains(msg, "Late payment") {
+		msg := buildInvoiceNotificationMessage("en", inv, "late_payment", amount)
+		if !strings.Contains(msg, "Late arrival") {
 			t.Fatalf("expected manual review message, got: %s", msg)
 		}
 	})
@@ -528,7 +624,7 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableNetwork: NetworkARBITRUM,
 			PayableAmount:  expected,
 		}
-		msg := buildInvoiceNotificationMessage(inv, "expired", amount)
+		msg := buildInvoiceNotificationMessage("en", inv, "expired", amount)
 		if !strings.Contains(msg, "INV-006") {
 			t.Fatalf("expected default message with public id, got: %s", msg)
 		}
@@ -542,7 +638,7 @@ func TestBuildInvoiceNotificationPayload(t *testing.T) {
 			PublicID: "INV-U",
 			Status:   InvoiceStatusUnderpaid,
 		}
-		raw := buildInvoiceNotificationPayload(inv, "underpaid")
+		raw := buildInvoiceNotificationPayload("en", inv, "underpaid")
 		payload := string(raw)
 		if !strings.Contains(payload, "mark_paid") || !strings.Contains(payload, "keep_underpaid") {
 			t.Fatalf("expected underpaid actions, got: %s", payload)
@@ -555,7 +651,7 @@ func TestBuildInvoiceNotificationPayload(t *testing.T) {
 			PublicID: "INV-O",
 			Status:   InvoiceStatusOverpaid,
 		}
-		raw := buildInvoiceNotificationPayload(inv, "overpaid")
+		raw := buildInvoiceNotificationPayload("en", inv, "overpaid")
 		payload := string(raw)
 		if !strings.Contains(payload, "mark_paid") || !strings.Contains(payload, "keep_review") {
 			t.Fatalf("expected overpaid actions, got: %s", payload)
@@ -568,7 +664,7 @@ func TestBuildInvoiceNotificationPayload(t *testing.T) {
 			PublicID: "INV-MR",
 			Status:   InvoiceStatusManualReview,
 		}
-		raw := buildInvoiceNotificationPayload(inv, "late_payment")
+		raw := buildInvoiceNotificationPayload("en", inv, "late_payment")
 		payload := string(raw)
 		if !strings.Contains(payload, "mark_paid") || !strings.Contains(payload, "keep_review") {
 			t.Fatalf("expected manual review actions, got: %s", payload)
@@ -581,7 +677,7 @@ func TestBuildInvoiceNotificationPayload(t *testing.T) {
 			PublicID: "INV-P",
 			Status:   InvoiceStatusPaid,
 		}
-		raw := buildInvoiceNotificationPayload(inv, "paid_exact")
+		raw := buildInvoiceNotificationPayload("en", inv, "paid_exact")
 		payload := string(raw)
 		if strings.Contains(payload, "invoice_actions") {
 			t.Fatalf("expected no actions for paid invoice, got: %s", payload)

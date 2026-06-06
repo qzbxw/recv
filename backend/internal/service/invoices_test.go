@@ -57,6 +57,41 @@ func TestInvoiceServiceTONRateUSDFetchesFromUpstream(t *testing.T) {
 	}
 }
 
+func TestInvoiceServiceNativeRateUSDUsesNonTONOverride(t *testing.T) {
+	t.Setenv("SOL_USD_RATE", "123.45")
+	service := NewInvoiceService(nil, "")
+
+	rate, err := service.nativeRateUSD(context.Background(), store.AssetSOL)
+	if err != nil {
+		t.Fatalf("nativeRateUSD SOL returned error: %v", err)
+	}
+	if !rate.Equal(decimal.RequireFromString("123.45")) {
+		t.Fatalf("expected SOL rate 123.45, got %s", rate)
+	}
+}
+
+func TestInvoiceServiceNativeRateUSDFetchesBNBFromUpstream(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("ids") != "binancecoin" {
+			t.Fatalf("unexpected ids query: %s", r.URL.RawQuery)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"binancecoin":{"usd":612.34}}`))
+	}))
+	defer server.Close()
+
+	service := NewInvoiceService(nil, "")
+	service.httpClient = rewriteHTTPClient(t, server)
+
+	rate, err := service.nativeRateUSD(context.Background(), store.AssetBNB)
+	if err != nil {
+		t.Fatalf("nativeRateUSD BNB returned error: %v", err)
+	}
+	if !rate.Equal(decimal.RequireFromString("612.34")) {
+		t.Fatalf("expected BNB rate 612.34, got %s", rate)
+	}
+}
+
 func TestInvoiceServiceTONRateUSDHandlesUpstreamError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "rate limit", http.StatusTooManyRequests)
@@ -78,6 +113,34 @@ func TestInvoiceServiceCalculateTONAmountRejectsNonPositiveRate(t *testing.T) {
 	_, err := service.calculateTONAmount(context.Background(), decimal.RequireFromString("10"))
 	if err == nil || !strings.Contains(err.Error(), "invalid TON/USD rate") {
 		t.Fatalf("expected invalid rate error, got %v", err)
+	}
+}
+
+func TestRateConfig(t *testing.T) {
+	cases := []struct {
+		asset       store.PaymentAsset
+		envName     string
+		coinGeckoID string
+		payloadKey  string
+		metricName  string
+	}{
+		{store.AssetTON, "TON_USD_RATE", "the-open-network", "the-open-network", "ton_rate"},
+		{store.AssetSOL, "SOL_USD_RATE", "solana", "solana", "sol_rate"},
+		{store.AssetBNB, "BNB_USD_RATE", "binancecoin", "binancecoin", "bnb_rate"},
+	}
+	for _, tc := range cases {
+		envName, coinGeckoID, payloadKey, metricName, err := rateConfig(tc.asset)
+		if err != nil {
+			t.Fatalf("rateConfig(%s): %v", tc.asset, err)
+		}
+		if envName != tc.envName || coinGeckoID != tc.coinGeckoID || payloadKey != tc.payloadKey || metricName != tc.metricName {
+			t.Fatalf("rateConfig(%s) = (%q,%q,%q,%q); want (%q,%q,%q,%q)",
+				tc.asset, envName, coinGeckoID, payloadKey, metricName, tc.envName, tc.coinGeckoID, tc.payloadKey, tc.metricName)
+		}
+	}
+
+	if _, _, _, _, err := rateConfig(store.AssetUSDT); err == nil {
+		t.Fatal("expected stablecoin asset to reject native rate config")
 	}
 }
 

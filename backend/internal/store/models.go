@@ -231,12 +231,26 @@ type Workspace struct {
 	Username           string     `json:"username"`
 	Email              string     `json:"email"`
 	DefaultNetwork     Network    `json:"default_network"`
+	Language           string     `json:"language"`
 	PlanCode           PlanCode   `json:"plan_code"`
 	SubscriptionEndsAt *time.Time `json:"subscription_ends_at"`
 	FreeInvoicesUsed   int        `json:"free_invoices_used"`
 	IsBlocked          bool       `json:"is_blocked"`
 	TelegramLinkedAt   *time.Time `json:"telegram_linked_at"`
 	CreatedAt          time.Time  `json:"created_at"`
+}
+
+// SupportedLanguages lists the interface languages shared by the web app and bot.
+var SupportedLanguages = []string{"en", "ru"}
+
+// NormalizeLanguage maps arbitrary input to a supported language code, defaulting to English.
+func NormalizeLanguage(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "ru", "ru-ru", "ru_ru", "russian":
+		return "ru"
+	default:
+		return "en"
+	}
 }
 
 func (w Workspace) HasActiveSubscription(now time.Time) bool {

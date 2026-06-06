@@ -21,6 +21,7 @@ export type Workspace = {
   email?: string;
   name: string;
   slug: string;
+  language?: "en" | "ru";
   default_network: Network;
   plan_code: "trial" | "merchant" | "developer" | "business";
   subscription_ends_at: string | null;

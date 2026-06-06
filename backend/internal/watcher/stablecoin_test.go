@@ -41,6 +41,27 @@ func TestStablecoinForNetwork(t *testing.T) {
 	}
 }
 
+func TestStablecoinForOption(t *testing.T) {
+	cases := []struct {
+		network store.Network
+		asset   store.PaymentAsset
+		symbol  string
+	}{
+		{store.NetworkSOLANA, store.AssetUSDC, "USDC"},
+		{store.NetworkBASE, store.AssetUSDC, "USDC"},
+		{store.NetworkARBITRUM, store.AssetUSDT, "USDT"},
+		{store.NetworkBSC, store.AssetUSDT, "USDT"},
+	}
+	for _, tc := range cases {
+		if got := stablecoinForOption(tc.network, tc.asset); got.Symbol != tc.symbol {
+			t.Fatalf("stablecoinForOption(%s,%s) symbol=%q; want %q", tc.network, tc.asset, got.Symbol, tc.symbol)
+		}
+	}
+	if got := stablecoinForOption(store.NetworkTON, store.AssetTON); got.Symbol != "" {
+		t.Fatalf("expected native TON to have no stablecoin spec, got %+v", got)
+	}
+}
+
 func TestPollSolanaStablecoinNoMint(t *testing.T) {
 	// Passing a network that has no SolanaMint should return an error immediately
 	w := &Watcher{
@@ -508,6 +529,300 @@ func TestPollSolanaStablecoinBoundaries(t *testing.T) {
 		})
 		if err != nil {
 			t.Fatalf("pollSolanaStablecoin returned error: %v", err)
+		}
+		if len(transfers) != 0 {
+			t.Fatalf("expected failed/non-positive Solana candidates to be skipped, got %+v", transfers)
+		}
+	})
+}
+
+func TestPollBSCNative(t *testing.T) {
+	const walletAddress = "0x1111111111111111111111111111111111111111"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var payload struct {
+			Method string `json:"method"`
+			Params []any  `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&payload)
+
+		switch payload.Method {
+		case "eth_blockNumber":
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": "0x66"})
+		case "eth_getBlockByNumber":
+			blockNumber, _ := payload.Params[0].(string)
+			result := map[string]any{
+				"timestamp": "0x65f4f100",
+				"transactions": []map[string]any{
+					{"hash": blockNumber + "-match", "to": walletAddress, "value": "0xde0b6b3a7640000"},
+					{"hash": blockNumber + "-other", "to": "0x2222222222222222222222222222222222222222", "value": "0xde0b6b3a7640000"},
+					{"hash": blockNumber + "-zero", "to": walletAddress, "value": "0x0"},
+					{"hash": blockNumber + "-bad", "to": walletAddress, "value": "0xzz"},
+				},
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": result})
+		default:
+			t.Fatalf("unexpected rpc method: %s", payload.Method)
+		}
+	}))
+	defer server.Close()
+
+	w := &Watcher{
+		cfg: config.Config{
+			BSCRPCURL:             server.URL,
+			EVMConfirmationDepth:  1,
+			WatcherBackfillBlocks: 1,
+		},
+		httpClient: &http.Client{Timeout: time.Second},
+		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+
+	transfers, err := w.pollBSCNative(context.Background(), store.WatchedWallet{
+		PollNetwork:    store.NetworkBSC,
+		PayableNetwork: store.NetworkBSC,
+		Asset:          store.AssetBNB,
+		Address:        walletAddress,
+	})
+	if err != nil {
+		t.Fatalf("pollBSCNative returned error: %v", err)
+	}
+	if len(transfers) != 2 {
+		t.Fatalf("expected 2 matching BNB transfers, got %d: %+v", len(transfers), transfers)
+	}
+	for _, transfer := range transfers {
+		if transfer.Network != store.NetworkBSC || transfer.Asset != store.AssetBNB {
+			t.Fatalf("unexpected network/asset: %+v", transfer)
+		}
+		if transfer.DestinationAddress != walletAddress {
+			t.Fatalf("unexpected destination address: %s", transfer.DestinationAddress)
+		}
+		if !transfer.Amount.Equal(decimal.RequireFromString("1.000000")) {
+			t.Fatalf("unexpected amount: %s", transfer.Amount)
+		}
+	}
+}
+
+func TestPollBSCNativeBoundaries(t *testing.T) {
+	t.Run("missing rpc url", func(t *testing.T) {
+		w := &Watcher{httpClient: &http.Client{Timeout: time.Second}}
+		_, err := w.pollBSCNative(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkBSC,
+			Asset:          store.AssetBNB,
+			Address:        "0x1111111111111111111111111111111111111111",
+		})
+		if err == nil || !strings.Contains(err.Error(), "rpc url is not configured") {
+			t.Fatalf("expected missing rpc url error, got %v", err)
+		}
+	})
+
+	t.Run("invalid latest block", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": "not-hex"})
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg:        config.Config{BSCRPCURL: server.URL},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		_, err := w.pollBSCNative(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkBSC,
+			Asset:          store.AssetBNB,
+			Address:        "0x1111111111111111111111111111111111111111",
+		})
+		if err == nil || !strings.Contains(err.Error(), "parse latest bsc block") {
+			t.Fatalf("expected invalid latest block error, got %v", err)
+		}
+	})
+
+	t.Run("unsafe latest block returns no transfers", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": "0x1"})
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg: config.Config{
+				BSCRPCURL:            server.URL,
+				EVMConfirmationDepth: 5,
+			},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		transfers, err := w.pollBSCNative(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkBSC,
+			Asset:          store.AssetBNB,
+			Address:        "0x1111111111111111111111111111111111111111",
+		})
+		if err != nil {
+			t.Fatalf("expected unsafe block range without error, got %v", err)
+		}
+		if transfers != nil {
+			t.Fatalf("expected nil transfers, got %+v", transfers)
+		}
+	})
+}
+
+func TestPollSolanaNative(t *testing.T) {
+	const walletAddress = "owner-sol"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var payload struct {
+			Method string `json:"method"`
+			Params []any  `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&payload)
+
+		switch payload.Method {
+		case "getSignaturesForAddress":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"jsonrpc": "2.0",
+				"id":      1,
+				"result": []map[string]any{
+					{"signature": "sig-sol-1", "blockTime": 1710000000},
+				},
+			})
+		case "getTransaction":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"jsonrpc": "2.0",
+				"id":      1,
+				"result": map[string]any{
+					"blockTime": 1710000001,
+					"transaction": map[string]any{
+						"message": map[string]any{
+							"accountKeys": []map[string]any{
+								{"pubkey": "payer"},
+								{"pubkey": walletAddress},
+								{"pubkey": walletAddress},
+							},
+						},
+					},
+					"meta": map[string]any{
+						"preBalances":  []int64{9000000000, 1000000000, 5000000000},
+						"postBalances": []int64{8000000000, 3500000000, 4000000000},
+					},
+				},
+			})
+		default:
+			t.Fatalf("unexpected rpc method: %s", payload.Method)
+		}
+	}))
+	defer server.Close()
+
+	w := &Watcher{
+		cfg:        config.Config{SolanaRPCURL: server.URL},
+		httpClient: &http.Client{Timeout: time.Second},
+		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+
+	transfers, err := w.pollSolanaNative(context.Background(), store.WatchedWallet{
+		PollNetwork:    store.NetworkSOLANA,
+		PayableNetwork: store.NetworkSOLANA,
+		Asset:          store.AssetSOL,
+		Address:        walletAddress,
+	})
+	if err != nil {
+		t.Fatalf("pollSolanaNative returned error: %v", err)
+	}
+	if len(transfers) != 1 {
+		t.Fatalf("expected 1 matching SOL transfer, got %d: %+v", len(transfers), transfers)
+	}
+	if transfers[0].TxHash != "sig-sol-1" {
+		t.Fatalf("unexpected tx hash: %s", transfers[0].TxHash)
+	}
+	if transfers[0].Network != store.NetworkSOLANA || transfers[0].Asset != store.AssetSOL {
+		t.Fatalf("unexpected network/asset: %+v", transfers[0])
+	}
+	if !transfers[0].Amount.Equal(decimal.RequireFromString("2.500000")) {
+		t.Fatalf("unexpected amount: %s", transfers[0].Amount)
+	}
+}
+
+func TestPollSolanaNativeBoundaries(t *testing.T) {
+	t.Run("signature rpc error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"jsonrpc": "2.0",
+				"id":      1,
+				"error":   map[string]any{"message": "signature lookup failed"},
+			})
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg:        config.Config{SolanaRPCURL: server.URL},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		_, err := w.pollSolanaNative(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkSOLANA,
+			Asset:          store.AssetSOL,
+			Address:        "owner-sol",
+		})
+		if err == nil || !strings.Contains(err.Error(), "signature lookup failed") {
+			t.Fatalf("expected signature rpc error, got %v", err)
+		}
+	})
+
+	t.Run("transaction failures and non-positive diffs are skipped", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var payload struct {
+				Method string `json:"method"`
+				Params []any  `json:"params"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&payload)
+
+			switch payload.Method {
+			case "getSignaturesForAddress":
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"jsonrpc": "2.0",
+					"id":      1,
+					"result":  []map[string]any{{"signature": "bad-tx"}, {"signature": "no-gain", "blockTime": 1710000000}},
+				})
+			case "getTransaction":
+				if payload.Params[0] == "bad-tx" {
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"jsonrpc": "2.0",
+						"id":      1,
+						"error":   map[string]any{"message": "tx fetch failed"},
+					})
+					return
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"jsonrpc": "2.0",
+					"id":      1,
+					"result": map[string]any{
+						"transaction": map[string]any{
+							"message": map[string]any{
+								"accountKeys": []map[string]any{
+									{"pubkey": "owner-sol"},
+									{"pubkey": "owner-sol"},
+								},
+							},
+						},
+						"meta": map[string]any{
+							"preBalances":  []int64{5000000000},
+							"postBalances": []int64{4000000000},
+						},
+					},
+				})
+			default:
+				t.Fatalf("unexpected method %s", payload.Method)
+			}
+		}))
+		defer server.Close()
+
+		w := &Watcher{
+			cfg:        config.Config{SolanaRPCURL: server.URL},
+			httpClient: &http.Client{Timeout: time.Second},
+			logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		}
+		transfers, err := w.pollSolanaNative(context.Background(), store.WatchedWallet{
+			PayableNetwork: store.NetworkSOLANA,
+			Asset:          store.AssetSOL,
+			Address:        "owner-sol",
+		})
+		if err != nil {
+			t.Fatalf("pollSolanaNative returned error: %v", err)
 		}
 		if len(transfers) != 0 {
 			t.Fatalf("expected failed/non-positive Solana candidates to be skipped, got %+v", transfers)

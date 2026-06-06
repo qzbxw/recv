@@ -97,6 +97,33 @@ func TestCORSMiddlewareHandlesPreflight(t *testing.T) {
 	}
 }
 
+func TestNewServerRegistersCoreMiddlewareAndHealthRoute(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := NewServer(config.Config{AppEnv: "development"}, nil, nil, nil, nil, nil)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(stdhttp.MethodGet, "/healthz", nil)
+	router.ServeHTTP(rec, req)
+	if rec.Code != stdhttp.StatusOK {
+		t.Fatalf("expected health route 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal health response: %v", err)
+	}
+	if body["ok"] != true || body["service"] == "" {
+		t.Fatalf("unexpected health response: %#v", body)
+	}
+
+	preflight := httptest.NewRecorder()
+	options := httptest.NewRequest(stdhttp.MethodOptions, "/api/me", nil)
+	router.ServeHTTP(preflight, options)
+	if preflight.Code != stdhttp.StatusNoContent {
+		t.Fatalf("expected CORS preflight 204, got %d", preflight.Code)
+	}
+}
+
 func TestAdminLoginAndMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -247,6 +274,19 @@ func TestHelperUtilities(t *testing.T) {
 	}
 	if got := inferredNetworkFromPath("/internal/watchers/ton"); got != store.NetworkTON {
 		t.Fatalf("expected ton, got %s", got)
+	}
+	if got := parsePaymentOptionInputs(nil); got != nil {
+		t.Fatalf("expected nil payment options for empty input, got %#v", got)
+	}
+	options := parsePaymentOptionInputs([]struct {
+		Network string `json:"network"`
+		Asset   string `json:"asset"`
+	}{
+		{Network: " base ", Asset: " usdc "},
+		{Network: "solana", Asset: "sol"},
+	})
+	if len(options) != 2 || options[0].Network != store.NetworkBASE || options[0].Asset != store.AssetUSDC || options[1].Network != store.NetworkSOLANA || options[1].Asset != store.AssetSOL {
+		t.Fatalf("unexpected parsed payment options: %#v", options)
 	}
 	if got := monthWindowStart(time.Date(2026, time.March, 24, 17, 30, 0, 0, time.FixedZone("UTC+3", 3*3600))); !got.Equal(time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC)) {
 		t.Fatalf("unexpected month window start: %s", got)

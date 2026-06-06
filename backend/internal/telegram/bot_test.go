@@ -146,13 +146,14 @@ func TestBotWorkerHelpers(t *testing.T) {
 		t.Fatalf("expected action rows and checkout row, got %#v", notificationKeyboard.InlineKeyboard)
 	}
 
-	if got := worker.walletAddressPrompt(store.NetworkEVM); !strings.Contains(got, "shared EVM wallet") {
+	c := copyFor("en")
+	if got := worker.walletAddressPrompt(c, store.NetworkEVM); !strings.Contains(got, "EVM wallet") {
 		t.Fatalf("unexpected EVM prompt: %q", got)
 	}
-	if got := worker.invoiceAmountPrompt(botInvoiceDraft{WalletLabel: "Main", Title: "Pro Plan"}); !strings.Contains(got, "Step 2/3") {
+	if got := worker.invoiceAmountPrompt(c, botInvoiceDraft{WalletLabel: "Main", Title: "Pro Plan"}); !strings.Contains(got, "step 2 of 3") {
 		t.Fatalf("unexpected amount prompt: %q", got)
 	}
-	if got := worker.invoiceLifetimePrompt(botInvoiceDraft{WalletLabel: "Main", Title: "Pro Plan", Amount: "39"}); !strings.Contains(got, "39 USD") {
+	if got := worker.invoiceLifetimePrompt(c, botInvoiceDraft{WalletLabel: "Main", Title: "Pro Plan", Amount: "39"}); !strings.Contains(got, "39 USD") {
 		t.Fatalf("unexpected lifetime prompt: %q", got)
 	}
 
@@ -175,6 +176,15 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if got := valueOrFallback("   ", "fallback"); got != "fallback" {
 		t.Fatalf("expected fallback, got %q", got)
 	}
+	if got := valueOrFallback(" value ", "fallback"); got != " value " {
+		t.Fatalf("expected original non-empty value, got %q", got)
+	}
+	if got := workspaceHandle(store.Workspace{Username: "seller"}); got != "@seller" {
+		t.Fatalf("unexpected workspace handle: %q", got)
+	}
+	if got := workspaceHandle(store.Workspace{}); got != "unlinked" {
+		t.Fatalf("expected unlinked workspace handle, got %q", got)
+	}
 	if networks := payableNetworksForWallet(store.NetworkEVM); len(networks) != 4 {
 		t.Fatalf("expected 4 payable networks for EVM wallet, got %#v", networks)
 	}
@@ -187,11 +197,69 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if got := networkButtonLabel(store.NetworkBASE); got != "BASE / USDT" {
 		t.Fatalf("unexpected network label: %q", got)
 	}
-	if got := worker.walletAddressPrompt(store.NetworkSOLANA); got == "" {
+	if got := worker.walletAddressPrompt(c, store.NetworkSOLANA); got == "" {
 		t.Fatal("expected non-empty SOLANA wallet address prompt")
 	}
-	if got := worker.walletAddressPrompt(store.NetworkTRON); got == "" {
+	if got := worker.walletAddressPrompt(c, store.NetworkTRON); got == "" {
 		t.Fatal("expected non-empty TRON wallet address prompt")
+	}
+}
+
+func TestBotWorkerRenderLanguageUsesStableCallbacks(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		language     string
+		wantSelected string
+	}{
+		{name: "english", language: "en", wantSelected: "lang:set:en"},
+		{name: "russian", language: "ru", wantSelected: "lang:set:ru"},
+		{name: "unknown defaults english", language: "de", wantSelected: "lang:set:en"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var markup tgInlineKeyboardMarkup
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if !strings.HasSuffix(r.URL.Path, "/sendMessage") {
+					http.NotFound(w, r)
+					return
+				}
+				var payload struct {
+					ReplyMarkup tgInlineKeyboardMarkup `json:"reply_markup"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+					t.Fatalf("decode telegram payload: %v", err)
+				}
+				markup = payload.ReplyMarkup
+				_, _ = w.Write([]byte(`{"ok":true,"result":{"message_id":123}}`))
+			}))
+			defer server.Close()
+
+			worker := &BotWorker{
+				token:      "bot-token",
+				httpClient: rewriteTelegramHTTPClient(t, server),
+				sessions:   map[int64]*botSession{},
+			}
+			if err := worker.renderLanguage(context.Background(), store.Workspace{Language: tc.language}, 900, 0); err != nil {
+				t.Fatalf("renderLanguage: %v", err)
+			}
+			if len(markup.InlineKeyboard) < 2 || len(markup.InlineKeyboard[0]) != 2 {
+				t.Fatalf("expected language row and navigation row, got %#v", markup.InlineKeyboard)
+			}
+
+			callbacks := map[string]tgInlineKeyboardButton{}
+			for _, row := range markup.InlineKeyboard {
+				for _, button := range row {
+					callbacks[button.CallbackData] = button
+				}
+			}
+			for _, callback := range []string{"lang:set:en", "lang:set:ru", "nav:home"} {
+				if _, ok := callbacks[callback]; !ok {
+					t.Fatalf("expected callback %q in markup %#v", callback, markup.InlineKeyboard)
+				}
+			}
+			if !strings.Contains(callbacks[tc.wantSelected].Text, "✓") {
+				t.Fatalf("expected %s button to be selected, got %#v", tc.wantSelected, callbacks[tc.wantSelected])
+			}
+		})
 	}
 }
 
@@ -995,7 +1063,7 @@ func TestBotWorkerConversationCreatesInvoiceAndKeepsBoundaries(t *testing.T) {
 		t.Fatalf("expected invoice creation to reset session, got %+v", worker.session(chatID))
 	}
 
-	if !requests.sawText("Title cannot be empty.") || !requests.sawText("Send a valid positive USD amount.") || !requests.sawText("Invoice "+invoices[0].PublicID+" created.") {
+	if !requests.sawText("A title can't be empty") || !requests.sawText("That's not a valid amount") || !requests.sawText("Invoice "+invoices[0].PublicID+" is live") {
 		t.Fatalf("expected validation and success messages to be sent, got %#v", requests.texts)
 	}
 	merchantInvoiceID := invoices[0].ID

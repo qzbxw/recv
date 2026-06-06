@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha1"
+	"crypto/sha1" // #nosec G505 -- TOTP/HOTP requires HMAC-SHA1 per RFC 6238.
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base32"
@@ -464,7 +464,11 @@ func totpCode(secret string, t time.Time) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	counter := uint64(t.Unix() / 30)
+	unixTime := t.Unix()
+	if unixTime < 0 {
+		return "", errors.New("TOTP time is before Unix epoch")
+	}
+	counter := uint64(unixTime / 30)
 	var msg [8]byte
 	binary.BigEndian.PutUint64(msg[:], counter)
 	mac := hmac.New(sha1.New, decoded)

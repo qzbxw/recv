@@ -119,6 +119,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api.Use(server.authMiddleware())
 	api.GET("/me", server.handleMe)
 	api.POST("/me/contact-email", server.handleUpdateContactEmail)
+	api.POST("/me/language", server.handleUpdateLanguage)
 	api.POST("/events", server.handleProductEvent)
 	api.GET("/developer/usage", server.handleDeveloperUsage)
 	api.GET("/developer/api-keys", server.handleListAPIKeys)
@@ -387,6 +388,26 @@ func (s *Server) handleUpdateContactEmail(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"workspace": workspace})
+}
+
+func (s *Server) handleUpdateLanguage(c *gin.Context) {
+	wc := workspaceFromContext(c)
+	var body struct {
+		Language string `json:"language"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid language payload"})
+		return
+	}
+
+	language := store.NormalizeLanguage(body.Language)
+	workspace, err := s.store.UpdateWorkspaceLanguage(c.Request.Context(), wc.Workspace.ID, language)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"workspace": workspace, "language": workspace.Language})
 }
 
 func (s *Server) handleListWallets(c *gin.Context) {
@@ -1025,7 +1046,7 @@ func setRefreshCookie(c *gin.Context, name string, value string, appEnv string) 
 		return
 	}
 	secure := appEnv != "development"
-	http.SetCookie(c.Writer, &http.Cookie{
+	http.SetCookie(c.Writer, &http.Cookie{ // #nosec G124 -- development uses local HTTP; production keeps Secure enabled.
 		Name:     name,
 		Value:    value,
 		Path:     "/",
@@ -1038,7 +1059,7 @@ func setRefreshCookie(c *gin.Context, name string, value string, appEnv string) 
 
 func clearRefreshCookie(c *gin.Context, name string, appEnv string) {
 	secure := appEnv != "development"
-	http.SetCookie(c.Writer, &http.Cookie{
+	http.SetCookie(c.Writer, &http.Cookie{ // #nosec G124 -- development uses local HTTP; production keeps Secure enabled.
 		Name:     name,
 		Value:    "",
 		Path:     "/",

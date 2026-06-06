@@ -47,3 +47,10 @@ export async function updateContactEmail(token: string, payload: { email: string
     body: JSON.stringify(payload),
   }, token);
 }
+
+export async function updateLanguage(token: string, payload: { language: "en" | "ru" }) {
+  return request<{ workspace: Workspace; language: "en" | "ru" }>("/api/me/language", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}

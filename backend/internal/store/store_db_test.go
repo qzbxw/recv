@@ -83,6 +83,38 @@ func TestUpdateWorkspaceEmail(t *testing.T) {
 	}
 }
 
+func TestUpdateWorkspaceLanguage(t *testing.T) {
+	ctx := context.Background()
+	st := newStoreDBTestStore(t, ctx)
+
+	workspace, err := st.UpsertWorkspaceByTelegram(ctx, 70003, "languagetestuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+
+	updated, err := st.UpdateWorkspaceLanguage(ctx, workspace.ID, " RU_ru ")
+	if err != nil {
+		t.Fatalf("UpdateWorkspaceLanguage: %v", err)
+	}
+	if updated.Language != "ru" {
+		t.Fatalf("expected normalized ru language, got %q", updated.Language)
+	}
+
+	fallback, err := st.UpdateWorkspaceLanguage(ctx, workspace.ID, "de")
+	if err != nil {
+		t.Fatalf("UpdateWorkspaceLanguage fallback: %v", err)
+	}
+	if fallback.Language != "en" {
+		t.Fatalf("expected fallback en language, got %q", fallback.Language)
+	}
+
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, err := st.UpdateWorkspaceLanguage(canceled, workspace.ID, "ru"); err == nil {
+		t.Fatal("expected canceled context to return an error")
+	}
+}
+
 // TestCountInvoicesCreated verifies counting with zero and non-zero counts.
 func TestCountInvoicesCreated(t *testing.T) {
 	ctx := context.Background()
@@ -131,6 +163,72 @@ func TestCountInvoicesCreated(t *testing.T) {
 	}
 	if count != 1 {
 		t.Fatalf("expected 1 invoice, got %d", count)
+	}
+}
+
+func TestCreateInvoiceWithMultiplePaymentOptions(t *testing.T) {
+	ctx := context.Background()
+	st := newStoreDBTestStore(t, ctx)
+
+	workspace, err := st.UpsertWorkspaceByTelegram(ctx, 70004, "multioptionuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+	comment := "RECV-MULTI"
+	suffix := decimal.RequireFromString("0.000123")
+	invoice, err := st.CreateInvoice(ctx, CreateInvoiceParams{
+		WorkspaceID:        workspace.ID,
+		Kind:               InvoiceKindMerchant,
+		Title:              "Multi Option",
+		BaseAmountUSD:      decimal.RequireFromString("12"),
+		PayableNetwork:     NetworkBASE,
+		DestinationAddress: "0x8888888888888888888888888888888888888888",
+		PayableAmount:      decimal.RequireFromString("12.000123"),
+		PublicID:           "MULTIOPT001",
+		Mode:               "live",
+		ExpiresAt:          time.Now().Add(time.Hour),
+		PaymentOptions: []CreatePaymentOptionParams{
+			{
+				Network:            NetworkBASE,
+				Asset:              AssetUSDC,
+				PayableAmount:      decimal.RequireFromString("12.000123"),
+				DestinationAddress: "0x8888888888888888888888888888888888888888",
+				MatchingSuffix:     &suffix,
+				PaymentURI:         "ethereum:0x8888888888888888888888888888888888888888",
+			},
+			{
+				Network:            NetworkTON,
+				Asset:              AssetTON,
+				PayableAmount:      decimal.RequireFromString("3.000000"),
+				DestinationAddress: "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn",
+				PaymentComment:     &comment,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateInvoice: %v", err)
+	}
+	if invoice.PayableNetwork != NetworkBASE || invoice.PayableAsset != AssetUSDC {
+		t.Fatalf("expected first option to be applied as default, got %+v", invoice)
+	}
+	if len(invoice.PaymentOptions) != 2 {
+		t.Fatalf("expected two payment options on created invoice, got %#v", invoice.PaymentOptions)
+	}
+
+	options, err := st.ListPaymentOptionsForInvoice(ctx, invoice.ID)
+	if err != nil {
+		t.Fatalf("ListPaymentOptionsForInvoice: %v", err)
+	}
+	if len(options) != 2 {
+		t.Fatalf("expected two scanned payment options, got %#v", options)
+	}
+
+	loaded, err := st.GetInvoiceByID(ctx, workspace.ID, invoice.ID)
+	if err != nil {
+		t.Fatalf("GetInvoiceByID: %v", err)
+	}
+	if loaded.PayableNetwork != NetworkBASE || len(loaded.PaymentOptions) != 2 {
+		t.Fatalf("expected loaded invoice to include applied payment options, got %+v", loaded)
 	}
 }
 
@@ -712,6 +810,30 @@ func TestReviewAdminInvoiceFlows(t *testing.T) {
 		}
 	})
 
+	t.Run("mark_paid applies post payment effects", func(t *testing.T) {
+		if _, err := st.CreateWebhookEndpoint(ctx, workspace.ID, "review-paid-hook", "https://example.com/review-paid", "whsec_review", "live"); err != nil {
+			t.Fatalf("CreateWebhookEndpoint: %v", err)
+		}
+		inv := makeManualReviewInvoice("REVIEW004")
+		updated, result, err := st.ReviewAdminInvoice(ctx, inv.ID, "mark_paid", "", "admin")
+		if err != nil {
+			t.Fatalf("ReviewAdminInvoice mark_paid: %v", err)
+		}
+		if updated.Status != InvoiceStatusPaid || updated.PaidAt == nil || updated.FinalizedAt == nil {
+			t.Fatalf("expected paid finalized invoice, got %+v", updated)
+		}
+		if result == "" {
+			t.Fatal("expected non-empty result message")
+		}
+		deliveries, err := st.ListWebhookDeliveries(ctx, workspace.ID, 10)
+		if err != nil {
+			t.Fatalf("ListWebhookDeliveries after mark_paid: %v", err)
+		}
+		if len(deliveries) == 0 {
+			t.Fatal("expected mark_paid to enqueue a webhook delivery")
+		}
+	})
+
 	t.Run("review non-existent invoice returns error", func(t *testing.T) {
 		_, _, err := st.ReviewAdminInvoice(ctx, 99999999, "mark_paid", "", "admin")
 		if err == nil {
@@ -1082,12 +1204,72 @@ func TestGetAdminAnalyticsEdgeCases(t *testing.T) {
 	ctx := context.Background()
 	st := newStoreDBTestStore(t, ctx)
 
+	workspace, err := st.UpsertWorkspaceByTelegram(ctx, 74001, "analyticsuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+	if _, err := st.SetWorkspacePlan(ctx, workspace.ID, PlanCodeDeveloper, 30, nil); err != nil {
+		t.Fatalf("SetWorkspacePlan: %v", err)
+	}
+	wallet, err := st.CreateWallet(ctx, workspace.ID, NetworkEVM, "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	if err != nil {
+		t.Fatalf("CreateWallet: %v", err)
+	}
+	endpoint, err := st.CreateWebhookEndpoint(ctx, workspace.ID, "analytics-hook", "https://example.com/analytics", "whsec_analytics", "live")
+	if err != nil {
+		t.Fatalf("CreateWebhookEndpoint: %v", err)
+	}
+	now := time.Now().UTC()
+	for _, tc := range []struct {
+		publicID string
+		status   InvoiceStatus
+		amount   string
+	}{
+		{publicID: "ANALYTICS001", status: InvoiceStatusPaid, amount: "10"},
+		{publicID: "ANALYTICS002", status: InvoiceStatusManualReview, amount: "20"},
+		{publicID: "ANALYTICS003", status: InvoiceStatusUnderpaid, amount: "30"},
+	} {
+		inv, err := st.CreateInvoice(ctx, CreateInvoiceParams{
+			WorkspaceID:        workspace.ID,
+			Kind:               InvoiceKindMerchant,
+			PlanCode:           PlanCodeMerchant,
+			Title:              tc.publicID,
+			BaseAmountUSD:      decimal.RequireFromString(tc.amount),
+			PayableNetwork:     NetworkBASE,
+			DestinationAddress: wallet.Address,
+			PayableAmount:      decimal.RequireFromString(tc.amount),
+			PublicID:           tc.publicID,
+			Mode:               "live",
+			ExpiresAt:          now.Add(time.Hour),
+		})
+		if err != nil {
+			t.Fatalf("CreateInvoice %s: %v", tc.publicID, err)
+		}
+		if _, err := st.RawPool().Exec(ctx, `
+			UPDATE invoices
+			SET status=$2::invoice_status, paid_at=CASE WHEN $2::invoice_status = 'paid' THEN $3 ELSE paid_at END
+			WHERE id=$1
+		`, inv.ID, string(tc.status), now); err != nil {
+			t.Fatalf("set invoice status %s: %v", tc.publicID, err)
+		}
+	}
+	for _, status := range []string{"failed", "sent"} {
+		if _, err := st.RawPool().Exec(ctx, `
+			INSERT INTO webhook_deliveries (endpoint_id, workspace_id, event_type, payload, max_attempts, event_id, status, created_at)
+			VALUES ($1, $2, 'invoice.paid', '{}'::jsonb, 3, $3, $4, $5)
+		`, endpoint.ID, workspace.ID, "evt_analytics_"+status, status, now); err != nil {
+			t.Fatalf("insert webhook delivery %s: %v", status, err)
+		}
+	}
+
 	// Test with zero values (should use defaults)
 	result, err := st.GetAdminAnalytics(ctx, time.Time{}, time.Time{}, "")
 	if err != nil {
 		t.Fatalf("GetAdminAnalytics with zero values: %v", err)
 	}
-	_ = result
+	if result.PaidInvoices == 0 || result.CreatedInvoices < 3 || result.FailedWebhookRate.IsZero() || len(result.Breakdown) == 0 {
+		t.Fatalf("expected seeded analytics, got %+v", result)
+	}
 
 	// Test with different groupBy values
 	for _, groupBy := range []string{"network", "plan", "mode", "date"} {
@@ -1095,7 +1277,9 @@ func TestGetAdminAnalyticsEdgeCases(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GetAdminAnalytics with groupBy=%s: %v", groupBy, err)
 		}
-		_ = result
+		if len(result.Breakdown) == 0 {
+			t.Fatalf("expected breakdown for groupBy=%s", groupBy)
+		}
 	}
 }
 
@@ -1619,6 +1803,16 @@ func TestWebhookDeliveryOperations(t *testing.T) {
 	`, endpoint.ID, workspace.ID, payload).Scan(&deliveryID); err != nil {
 		t.Fatalf("insert delivery: %v", err)
 	}
+
+	t.Run("ListWebhookDeliveries returns inserted delivery", func(t *testing.T) {
+		deliveries, err := st.ListWebhookDeliveries(ctx, workspace.ID, 10)
+		if err != nil {
+			t.Fatalf("ListWebhookDeliveries: %v", err)
+		}
+		if len(deliveries) != 1 || deliveries[0].ID != deliveryID || deliveries[0].EventID != "evt_dlv_ops" {
+			t.Fatalf("unexpected deliveries: %#v", deliveries)
+		}
+	})
 
 	t.Run("ClaimWebhookDeliveries claims pending delivery", func(t *testing.T) {
 		claimed, err := st.ClaimWebhookDeliveries(ctx, 1)
@@ -2989,12 +3183,57 @@ func TestGetAdminOverviewSuccess(t *testing.T) {
 	ctx := context.Background()
 	st := newStoreDBTestStore(t, ctx)
 
+	workspace, err := st.UpsertWorkspaceByTelegram(ctx, 72020, "overviewuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+	wallet, err := st.CreateWallet(ctx, workspace.ID, NetworkEVM, "0x7777777777777777777777777777777777777777")
+	if err != nil {
+		t.Fatalf("CreateWallet: %v", err)
+	}
+	if _, err := st.CreateAPIKey(ctx, workspace.ID, "overview-key", "live_overview_", "overview_hash", []string{"invoices:read"}, "live"); err != nil {
+		t.Fatalf("CreateAPIKey: %v", err)
+	}
+	if _, err := st.CreateWebhookEndpoint(ctx, workspace.ID, "overview-hook", "https://example.com/overview", "whsec_overview", "live"); err != nil {
+		t.Fatalf("CreateWebhookEndpoint: %v", err)
+	}
+	paidAt := time.Now().UTC()
+	invoice, err := st.CreateInvoice(ctx, CreateInvoiceParams{
+		WorkspaceID:        workspace.ID,
+		Kind:               InvoiceKindMerchant,
+		Title:              "Overview Paid",
+		BaseAmountUSD:      decimal.RequireFromString("42"),
+		PayableNetwork:     NetworkBASE,
+		DestinationAddress: wallet.Address,
+		PayableAmount:      decimal.RequireFromString("42.000001"),
+		PublicID:           "OVERVIEW001",
+		Mode:               "live",
+		ExpiresAt:          paidAt.Add(time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("CreateInvoice: %v", err)
+	}
+	if _, err := st.RawPool().Exec(ctx, `
+		UPDATE invoices
+		SET status='paid', paid_at=$2, received_amount=payable_amount, finalized_at=$2
+		WHERE id=$1
+	`, invoice.ID, paidAt); err != nil {
+		t.Fatalf("mark overview invoice paid: %v", err)
+	}
+
 	overview, err := st.GetAdminOverview(ctx)
 	if err != nil {
 		t.Fatalf("GetAdminOverview: %v", err)
 	}
 	if overview.GeneratedAt.IsZero() {
 		t.Fatal("expected GeneratedAt to be set")
+	}
+	if overview.Totals.PaidTotal == 0 || overview.Totals.WorkspacesTotal == 0 {
+		t.Fatalf("expected seeded totals, got %+v", overview.Totals)
+	}
+	if len(overview.DailySales) == 0 || len(overview.NetworkBreakdown) == 0 || len(overview.StatusBreakdown) == 0 || len(overview.PlanBreakdown) == 0 || len(overview.RecentSales) == 0 {
+		t.Fatalf("expected overview breakdowns to be populated, got daily=%d network=%d status=%d plan=%d recent=%d",
+			len(overview.DailySales), len(overview.NetworkBreakdown), len(overview.StatusBreakdown), len(overview.PlanBreakdown), len(overview.RecentSales))
 	}
 }
 
@@ -3619,5 +3858,52 @@ func TestRecordProductEventPaths(t *testing.T) {
 		Source:    "web",
 	}); err != nil {
 		t.Fatalf("RecordProductEvent without workspace: %v", err)
+	}
+
+	if err := st.RecordProductEvent(ctx, ProductEventInput{
+		EventName: "   ",
+		Source:    "web",
+	}); err != nil {
+		t.Fatalf("RecordProductEvent blank event should no-op: %v", err)
+	}
+
+	wallet, err := st.CreateWallet(ctx, workspace.ID, NetworkEVM, "0x9999999999999999999999999999999999999999")
+	if err != nil {
+		t.Fatalf("CreateWallet: %v", err)
+	}
+	invoice, err := st.CreateInvoice(ctx, CreateInvoiceParams{
+		WorkspaceID:        workspace.ID,
+		Kind:               InvoiceKindMerchant,
+		Title:              "Event Invoice",
+		BaseAmountUSD:      decimal.RequireFromString("18"),
+		PayableNetwork:     NetworkBASE,
+		DestinationAddress: wallet.Address,
+		PayableAmount:      decimal.RequireFromString("18.000001"),
+		PublicID:           "EVENTINV001",
+		Mode:               "live",
+		ExpiresAt:          time.Now().Add(time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("CreateInvoice: %v", err)
+	}
+	if err := st.RecordProductEvent(ctx, ProductEventInput{
+		InvoicePublicID: invoice.PublicID,
+		EventName:       "checkout_opened",
+		Source:          "checkout",
+		Properties:      json.RawMessage(`{bad`),
+	}); err != nil {
+		t.Fatalf("RecordProductEvent with invoice public id: %v", err)
+	}
+
+	var linkedCount int
+	if err := st.RawPool().QueryRow(ctx, `
+		SELECT COUNT(1)
+		FROM product_events
+		WHERE workspace_id = $1 AND invoice_id = $2 AND event_name = 'checkout_opened' AND properties = '{}'::jsonb
+	`, workspace.ID, invoice.ID).Scan(&linkedCount); err != nil {
+		t.Fatalf("count linked product event: %v", err)
+	}
+	if linkedCount != 1 {
+		t.Fatalf("expected one product event linked to invoice with fallback properties, got %d", linkedCount)
 	}
 }

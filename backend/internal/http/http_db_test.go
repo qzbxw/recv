@@ -4809,6 +4809,160 @@ func TestHandleMeCanceledContextWithDB(t *testing.T) {
 	}
 }
 
+func TestHandleUpdateLanguageWithDB(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	ctx := context.Background()
+
+	telegramID := int64(97950 + time.Now().UnixNano()%1000)
+	workspace, err := sharedHTTPTestStore.UpsertWorkspaceByTelegram(ctx, telegramID, "languser"+strconv.FormatInt(telegramID, 10))
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+
+	server := &Server{store: sharedHTTPTestStore}
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Next()
+	})
+	router.POST("/api/me/language", server.handleUpdateLanguage)
+
+	t.Run("normalizes and persists supported language", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(stdhttp.MethodPost, "/api/me/language", strings.NewReader(`{"language":" RU "}`))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(rec, req)
+		if rec.Code != stdhttp.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		}
+		var body struct {
+			Language  string          `json:"language"`
+			Workspace store.Workspace `json:"workspace"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("json.Unmarshal: %v", err)
+		}
+		if body.Language != "ru" || body.Workspace.Language != "ru" {
+			t.Fatalf("expected response language ru, got language=%q workspace=%q", body.Language, body.Workspace.Language)
+		}
+
+		updated, err := sharedHTTPTestStore.GetWorkspaceByID(ctx, workspace.ID)
+		if err != nil {
+			t.Fatalf("GetWorkspaceByID: %v", err)
+		}
+		if updated.Language != "ru" {
+			t.Fatalf("expected persisted language ru, got %q", updated.Language)
+		}
+	})
+
+	t.Run("falls back to default for unknown language", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(stdhttp.MethodPost, "/api/me/language", strings.NewReader(`{"language":"de"}`))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(rec, req)
+		if rec.Code != stdhttp.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		}
+		var body struct {
+			Language string `json:"language"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("json.Unmarshal: %v", err)
+		}
+		if body.Language != "en" {
+			t.Fatalf("expected fallback language en, got %q", body.Language)
+		}
+	})
+
+	t.Run("rejects malformed json", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(stdhttp.MethodPost, "/api/me/language", strings.NewReader(`{bad`))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(rec, req)
+		if rec.Code != stdhttp.StatusBadRequest {
+			t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+		}
+	})
+}
+
+func TestAdminBillingWalletHandlersWithDB(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	ctx := context.Background()
+
+	key := "billing_wallets"
+	_, _ = sharedHTTPTestStore.RawPool().Exec(ctx, `DELETE FROM system_config WHERE key=$1`, key)
+
+	adminService := service.NewAdminService("billingadmin", "pass", "billing-wallet-secret", time.Hour)
+	token, err := adminService.Authenticate("billingadmin", "pass")
+	if err != nil {
+		t.Fatalf("Authenticate admin: %v", err)
+	}
+	claims, err := adminService.ParseToken(token)
+	if err != nil {
+		t.Fatalf("ParseToken: %v", err)
+	}
+	server := &Server{store: sharedHTTPTestStore, adminService: adminService}
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("admin_ctx", adminContext{Claims: claims})
+		c.Next()
+	})
+	router.GET("/api/admin/billing/wallets", server.handleAdminGetBillingWallets)
+	router.PUT("/api/admin/billing/wallets", server.handleAdminUpdateBillingWallets)
+
+	t.Run("missing config returns empty wallet map", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, httptest.NewRequest(stdhttp.MethodGet, "/api/admin/billing/wallets", nil))
+		if rec.Code != stdhttp.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		}
+		var body struct {
+			Wallets map[string]string `json:"wallets"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("json.Unmarshal: %v", err)
+		}
+		if len(body.Wallets) != 0 {
+			t.Fatalf("expected empty wallets map, got %#v", body.Wallets)
+		}
+	})
+
+	t.Run("bad update payload is rejected", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(stdhttp.MethodPut, "/api/admin/billing/wallets", strings.NewReader(`{"wallets":null}`))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(rec, req)
+		if rec.Code != stdhttp.StatusBadRequest {
+			t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+		}
+	})
+
+	t.Run("update stores wallets and get returns them", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(stdhttp.MethodPut, "/api/admin/billing/wallets", strings.NewReader(`{"wallets":{"TON":"ton-address","EVM":"0x1111111111111111111111111111111111111111"}}`))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(rec, req)
+		if rec.Code != stdhttp.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		}
+
+		getRec := httptest.NewRecorder()
+		router.ServeHTTP(getRec, httptest.NewRequest(stdhttp.MethodGet, "/api/admin/billing/wallets", nil))
+		if getRec.Code != stdhttp.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", getRec.Code, getRec.Body.String())
+		}
+		var body struct {
+			Wallets map[string]string `json:"wallets"`
+		}
+		if err := json.Unmarshal(getRec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("json.Unmarshal: %v", err)
+		}
+		if body.Wallets["TON"] != "ton-address" || body.Wallets["EVM"] == "" {
+			t.Fatalf("unexpected wallets response: %#v", body.Wallets)
+		}
+	})
+}
+
 // TestAPICreateInvoiceCreateFailWithDB covers the CreateInvoice error path in handleAPICreateInvoice.
 func TestAPICreateInvoiceCreateFailWithDB(t *testing.T) {
 	gin.SetMode(gin.TestMode)

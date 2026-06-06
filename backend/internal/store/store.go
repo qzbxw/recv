@@ -32,6 +32,7 @@ const workspaceSelectColumns = `
 	COALESCE(username, ''),
 	COALESCE(email, ''),
 	default_network,
+	COALESCE(language, 'en'),
 	plan_code,
 	subscription_ends_at,
 	free_invoices_used,
@@ -151,6 +152,7 @@ func (s *Store) ListWorkspacesForUser(ctx context.Context, userID int64) ([]Work
 			COALESCE(w.username, ''),
 			COALESCE(w.email, ''),
 			w.default_network,
+			COALESCE(w.language, 'en'),
 			w.plan_code,
 			w.subscription_ends_at,
 			w.free_invoices_used,
@@ -339,6 +341,23 @@ func (s *Store) UpdateWorkspaceEmail(ctx context.Context, workspaceID int64, ema
 		return Workspace{}, err
 	}
 	metrics.IncResourceOperation("workspace_email", "update", "success")
+	return workspace, nil
+}
+
+func (s *Store) UpdateWorkspaceLanguage(ctx context.Context, workspaceID int64, language string) (Workspace, error) {
+	language = NormalizeLanguage(language)
+	row := s.pool.QueryRow(ctx, `
+		UPDATE workspaces
+		SET language = $2
+		WHERE id = $1
+		RETURNING `+workspaceSelectColumns+`
+	`, workspaceID, language)
+	workspace, err := scanWorkspace(row)
+	if err != nil {
+		metrics.IncResourceOperation("workspace_language", "update", "failure")
+		return Workspace{}, err
+	}
+	metrics.IncResourceOperation("workspace_language", "update", "success")
 	return workspace, nil
 }
 
@@ -1185,14 +1204,15 @@ func (s *Store) CompleteInvoicePayment(ctx context.Context, invoiceID int64, pre
 	}
 
 	var telegramID sql.NullInt64
-	if err := tx.QueryRow(ctx, `SELECT owner_telegram_id FROM workspaces WHERE id = $1`, invoice.WorkspaceID).Scan(&telegramID); err != nil {
+	var workspaceLanguage string
+	if err := tx.QueryRow(ctx, `SELECT owner_telegram_id, COALESCE(language, 'en') FROM workspaces WHERE id = $1`, invoice.WorkspaceID).Scan(&telegramID, &workspaceLanguage); err != nil {
 		return Invoice{}, fmt.Errorf("load workspace telegram id: %w", err)
 	}
 
 	shouldNotify := previousStatus != invoice.Status || invoice.Status == InvoiceStatusUnderpaid
 	if telegramID.Valid && shouldNotify {
-		message := buildInvoiceNotificationMessage(invoice, classification, observedAmount)
-		payload := buildInvoiceNotificationPayload(invoice, classification)
+		message := buildInvoiceNotificationMessage(workspaceLanguage, invoice, classification, observedAmount)
+		payload := buildInvoiceNotificationPayload(workspaceLanguage, invoice, classification)
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO notification_outbox (workspace_id, recipient_telegram_id, message, payload)
 			VALUES ($1, $2, $3, $4)
@@ -1346,6 +1366,7 @@ func scanWorkspace(row pgx.Row) (Workspace, error) {
 		&workspace.Username,
 		&workspace.Email,
 		&workspace.DefaultNetwork,
+		&workspace.Language,
 		&workspace.PlanCode,
 		&workspace.SubscriptionEndsAt,
 		&workspace.FreeInvoicesUsed,
@@ -1626,7 +1647,8 @@ func insertInvoiceTransitionTx(ctx context.Context, tx pgx.Tx, invoice Invoice, 
 	return id, nil
 }
 
-func buildInvoiceNotificationMessage(invoice Invoice, classification string, observedAmount decimal.Decimal) string {
+func buildInvoiceNotificationMessage(language string, invoice Invoice, classification string, observedAmount decimal.Decimal) string {
+	copy := notificationCopyFor(language)
 	received := observedAmount.StringFixed(payableScale(invoice.PayableNetwork))
 	expected := invoice.PayableAmount.StringFixed(payableScale(invoice.PayableNetwork))
 
@@ -1636,38 +1658,39 @@ func buildInvoiceNotificationMessage(invoice Invoice, classification string, obs
 			planCode = PlanCodeMerchant
 		}
 		plan := ResolvePlan(planCode)
-		return fmt.Sprintf("✅ Subscription activated: %s. Received %s %s. Valid for %d days.", plan.MarketingLabel, received, invoice.PayableNetwork, invoice.SubscriptionDays)
+		return fmt.Sprintf(copy.subscriptionActivated, plan.MarketingLabel, received, invoice.PayableNetwork, invoice.SubscriptionDays)
 	}
 
 	switch invoice.Status {
 	case InvoiceStatusPaid:
-		return fmt.Sprintf("✅ Payment confirmed for invoice %s. Received %s %s.", invoice.PublicID, received, invoice.PayableNetwork)
+		return fmt.Sprintf(copy.paymentConfirmed, invoice.PublicID, received, invoice.PayableNetwork)
 	case InvoiceStatusUnderpaid:
 		if classification == "underpaid_fee_window" {
-			return fmt.Sprintf("⚠️ Partial payment (likely fee-related): invoice %s received %s %s, expected %s %s. Please review and decide whether to accept.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
+			return fmt.Sprintf(copy.partialPayment, invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
 		}
-		return fmt.Sprintf("⚠️ Underpayment detected: invoice %s received %s %s (expected %s %s). Manual review required.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
+		return fmt.Sprintf(copy.underpaid, invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
 	case InvoiceStatusOverpaid:
-		return fmt.Sprintf("⚠️ Overpayment detected: invoice %s received %s %s, expected %s %s.", invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
+		return fmt.Sprintf(copy.overpaid, invoice.PublicID, received, invoice.PayableNetwork, expected, invoice.PayableNetwork)
 	case InvoiceStatusManualReview:
-		return fmt.Sprintf("⏳ Late payment: invoice %s received %s %s after expiration. Status set to Manual Review.", invoice.PublicID, received, invoice.PayableNetwork)
+		return fmt.Sprintf(copy.latePayment, invoice.PublicID, received, invoice.PayableNetwork)
 	default:
-		return fmt.Sprintf("🔔 Invoice %s status updated to %s.", invoice.PublicID, invoice.Status)
+		return fmt.Sprintf(copy.statusUpdated, invoice.PublicID, invoice.Status)
 	}
 }
 
-func buildInvoiceNotificationPayload(invoice Invoice, classification string) json.RawMessage {
+func buildInvoiceNotificationPayload(language string, invoice Invoice, classification string) json.RawMessage {
+	copy := notificationCopyFor(language)
 	actions := make([]map[string]string, 0, 2)
 	switch invoice.Status {
 	case InvoiceStatusUnderpaid:
 		actions = append(actions,
-			map[string]string{"kind": "callback", "text": "Count as paid", "data": fmt.Sprintf("invoice:mark_paid:%d", invoice.ID)},
-			map[string]string{"kind": "callback", "text": "Wait for top-up", "data": fmt.Sprintf("invoice:keep_underpaid:%d", invoice.ID)},
+			map[string]string{"kind": "callback", "text": copy.actionCountAsPaid, "data": fmt.Sprintf("invoice:mark_paid:%d", invoice.ID)},
+			map[string]string{"kind": "callback", "text": copy.actionWaitTopUp, "data": fmt.Sprintf("invoice:keep_underpaid:%d", invoice.ID)},
 		)
 	case InvoiceStatusOverpaid, InvoiceStatusManualReview:
 		actions = append(actions,
-			map[string]string{"kind": "callback", "text": "Count as paid", "data": fmt.Sprintf("invoice:mark_paid:%d", invoice.ID)},
-			map[string]string{"kind": "callback", "text": "Keep review", "data": fmt.Sprintf("invoice:keep_review:%d", invoice.ID)},
+			map[string]string{"kind": "callback", "text": copy.actionCountAsPaid, "data": fmt.Sprintf("invoice:mark_paid:%d", invoice.ID)},
+			map[string]string{"kind": "callback", "text": copy.actionKeepReview, "data": fmt.Sprintf("invoice:keep_review:%d", invoice.ID)},
 		)
 	}
 	if len(actions) == 0 {

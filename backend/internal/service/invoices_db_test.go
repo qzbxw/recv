@@ -67,6 +67,36 @@ func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
 		}
 	})
 
+	t.Run("createInvoiceWithDestination creates invoice without stored wallet", func(t *testing.T) {
+		inv, err := svc.createInvoiceWithDestination(ctx, store.CreateInvoiceParams{
+			WorkspaceID:        workspace.ID,
+			Title:              "Direct Destination",
+			BaseAmountUSD:      decimal.RequireFromString("15"),
+			PayableNetwork:     store.NetworkTRON,
+			DestinationAddress: "TYNY19wFMM24dJN4ciyuGZDNzzQHVcaMPd",
+			Mode:               "live",
+		}, 45)
+		if err != nil {
+			t.Fatalf("createInvoiceWithDestination: %v", err)
+		}
+		if inv.PublicID == "" || inv.DestinationAddress == "" || inv.MatchingSuffix == nil {
+			t.Fatalf("expected direct destination invoice with suffix, got %+v", inv)
+		}
+		if inv.PayableNetwork != store.NetworkTRON || inv.PayableAsset != store.AssetUSDT {
+			t.Fatalf("unexpected payment option defaults: %s/%s", inv.PayableNetwork, inv.PayableAsset)
+		}
+	})
+
+	t.Run("generateUniqueSuffix uses default asset for network", func(t *testing.T) {
+		suffix, err := svc.generateUniqueSuffix(ctx, "TYNY19wFMM24dJN4ciyuGZDNzzQHVcaMPd", store.NetworkTRON)
+		if err != nil {
+			t.Fatalf("generateUniqueSuffix: %v", err)
+		}
+		if !suffix.IsPositive() || suffix.GreaterThan(decimal.RequireFromString("0.010000")) {
+			t.Fatalf("unexpected suffix: %s", suffix)
+		}
+	})
+
 	t.Run("CreateInvoice on BASE exercises generateUniqueSuffix", func(t *testing.T) {
 		// BASE uses EVM wallet bucket, so we need an EVM wallet
 		baseWallet, err := st.CreateWallet(ctx, workspace.ID, store.NetworkEVM, "0x2222222222222222222222222222222222222222")

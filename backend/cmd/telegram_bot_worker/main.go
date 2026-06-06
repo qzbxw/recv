@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"log/slog"
 	"os"
@@ -18,24 +19,52 @@ import (
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-
-	cfg, err := config.Load()
-	if err != nil {
+	if err := runTelegramBotWorker(ctx, realBotWorkerDeps()); err != nil {
 		log.Fatal(err)
 	}
+}
 
-	st, err := store.New(ctx, cfg.DatabaseURL)
-	if err != nil {
-		log.Fatal(err)
+func realBotWorkerDeps() botWorkerDeps {
+	return botWorkerDeps{
+		loadConfig: config.Load,
+		openStore:  store.New,
+		startMetrics: func(ctx context.Context, addr string, logger *slog.Logger) {
+			metrics.StartServer(ctx, addr, logger)
+		},
+		runWorker: func(worker *telegram.BotWorker, ctx context.Context) error {
+			return worker.Run(ctx)
+		},
 	}
-	defer st.Close()
+}
+
+type botWorkerDeps struct {
+	loadConfig   func() (config.Config, error)
+	openStore    func(context.Context, string) (*store.Store, error)
+	startMetrics func(context.Context, string, *slog.Logger)
+	runWorker    func(*telegram.BotWorker, context.Context) error
+}
+
+func runTelegramBotWorker(ctx context.Context, deps botWorkerDeps) error {
+	cfg, err := deps.loadConfig()
+	if err != nil {
+		return err
+	}
+
+	st, err := deps.openStore(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	if st != nil {
+		defer st.Close()
+	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	metrics.Init("bot", cfg.AppEnv)
 	invoiceService := service.NewInvoiceService(st, cfg.TonUSDOverride)
-	metrics.StartServer(ctx, ":"+cfg.MetricsPort, logger)
+	deps.startMetrics(ctx, ":"+cfg.MetricsPort, logger)
 	worker := telegram.NewBotWorker(st, invoiceService, cfg.TelegramBotToken, cfg.PublicAppURL, logger)
-	if err := worker.Run(ctx); err != nil && err != context.Canceled {
-		log.Fatal(err)
+	if err := deps.runWorker(worker, ctx); err != nil && !errors.Is(err, context.Canceled) {
+		return err
 	}
+	return nil
 }

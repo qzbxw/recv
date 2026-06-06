@@ -33,6 +33,7 @@ import {
   setStoredToken,
   switchWorkspace,
   updateContactEmail,
+  updateLanguage,
   updateTeamMemberRole,
 } from "../lib/api";
 import { ApiError, formatApiError } from "../lib/errors";
@@ -269,6 +270,9 @@ export function SellerConsolePage() {
         webhooks: hooks.items ?? [],
       });
       setEmailForm(me.workspace.email || "");
+      if (me.workspace.language && me.workspace.language !== language) {
+        setLanguage(me.workspace.language);
+      }
     } catch (err) {
       if (!options?.silent) {
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
@@ -501,6 +505,14 @@ export function SellerConsolePage() {
       await updateContactEmail(session.token, { email: emailForm });
       setEmailNotice(t.settings.emailSaved);
       void loadSession(session.token, { silent: true });
+    } catch (err) { setError(formatApiError(err)); }
+  }
+
+  async function onSetLanguage(next: "en" | "ru") {
+    setLanguage(next);
+    if (!session) return;
+    try {
+      await updateLanguage(session.token, { language: next });
     } catch (err) { setError(formatApiError(err)); }
   }
 
@@ -1899,8 +1911,8 @@ export function SellerConsolePage() {
                   <div className="dev-input-group">
                     <label>{t.settings.language}</label>
                     <div className="dev-form__grid">
-                      <button className={`dev-btn ${language === 'ru' ? 'dev-btn--primary' : 'dev-btn--secondary'}`} onClick={() => setLanguage('ru')}>RU</button>
-                      <button className={`dev-btn ${language === 'en' ? 'dev-btn--primary' : 'dev-btn--secondary'}`} onClick={() => setLanguage('en')}>EN</button>
+                      <button className={`dev-btn ${language === 'ru' ? 'dev-btn--primary' : 'dev-btn--secondary'}`} onClick={() => void onSetLanguage('ru')}>RU</button>
+                      <button className={`dev-btn ${language === 'en' ? 'dev-btn--primary' : 'dev-btn--secondary'}`} onClick={() => void onSetLanguage('en')}>EN</button>
                     </div>
                   </div>
 

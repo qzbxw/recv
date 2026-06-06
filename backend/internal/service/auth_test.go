@@ -178,6 +178,52 @@ func TestAuthServiceResolveTelegramIdentityAllowsInsecureDevFallback(t *testing.
 	}
 }
 
+func TestAuthServiceResolveTelegramIdentityPrefersSignedPayloads(t *testing.T) {
+	service := NewAuthService(nil, "jwt-secret", "bot-token", true, 24*time.Hour)
+	initData := signedInitDataQueryString(t, "bot-token", url.Values{
+		"auth_date": []string{strconv.FormatInt(time.Now().UTC().Unix(), 10)},
+		"user":      []string{`{"id":123,"username":"inituser"}`},
+	})
+	id, username, err := service.resolveTelegramIdentity(TelegramAuthInput{
+		InitData:   initData,
+		TelegramID: 999,
+		Username:   "fallback",
+	})
+	if err != nil {
+		t.Fatalf("resolveTelegramIdentity init data: %v", err)
+	}
+	if id != 123 || username != "inituser" {
+		t.Fatalf("expected init data identity, got id=%d username=%q", id, username)
+	}
+
+	widgetData := signedWidgetDataQueryString(t, "bot-token", url.Values{
+		"id":        []string{"456"},
+		"username":  []string{"widgetuser"},
+		"auth_date": []string{strconv.FormatInt(time.Now().UTC().Unix(), 10)},
+	})
+	id, username, err = service.resolveTelegramIdentity(TelegramAuthInput{WidgetData: widgetData})
+	if err != nil {
+		t.Fatalf("resolveTelegramIdentity widget data: %v", err)
+	}
+	if id != 456 || username != "widgetuser" {
+		t.Fatalf("expected widget data identity, got id=%d username=%q", id, username)
+	}
+}
+
+func TestTelegramExpectedHashIsDeterministic(t *testing.T) {
+	first, err := telegramExpectedHash("bot-token", "auth_date=1700000000\nuser={}")
+	if err != nil {
+		t.Fatalf("telegramExpectedHash first: %v", err)
+	}
+	second, err := telegramExpectedHash("bot-token", "auth_date=1700000000\nuser={}")
+	if err != nil {
+		t.Fatalf("telegramExpectedHash second: %v", err)
+	}
+	if first == "" || first != second {
+		t.Fatalf("expected deterministic non-empty hash, got %q and %q", first, second)
+	}
+}
+
 func TestNormalizeTelegramUsername(t *testing.T) {
 	username, err := normalizeTelegramUsername(" @Alice_Test ")
 	if err != nil {
