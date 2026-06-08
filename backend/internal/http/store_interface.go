@@ -49,6 +49,7 @@ type httpStore interface {
 	ListAdminWatchers(ctx context.Context) ([]store.AdminWatcherRecord, error)
 	ListAdminWorkspaces(ctx context.Context, limit int) ([]store.AdminWorkspaceRecord, error)
 	ListBlogPosts(ctx context.Context, page, pageSize int, onlyPublished bool) ([]store.BlogPost, int, error)
+	ListPublishedBlogPosts(ctx context.Context, page, pageSize int, locale string) ([]store.BlogPost, int, error)
 	ListInvoices(ctx context.Context, workspaceID int64, filter store.ListInvoicesFilter) ([]store.Invoice, int, error)
 	ListSEOTargets(ctx context.Context) ([]store.SEOTarget, error)
 	ListWallets(ctx context.Context, workspaceID int64) ([]store.Wallet, error)

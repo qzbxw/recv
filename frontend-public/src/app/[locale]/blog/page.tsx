@@ -1,16 +1,7 @@
 import { Metadata } from "next";
 import { BlogIndexClient, type BlogPostSummary } from "@/components/blog/BlogIndexClient";
-
-export const metadata: Metadata = {
-  title: "Blog | recv",
-  description: "Insights, technical deep-dives, and updates on crypto payments infrastructure.",
-  openGraph: {
-    title: "Blog | recv",
-    description: "Insights, technical deep-dives, and updates on crypto payments infrastructure.",
-  },
-};
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080";
+import { getPublishedBlogPosts } from "@/lib/blog";
+import { languageAlternates } from "@/lib/seo";
 
 const FALLBACK_POSTS: Record<"en" | "ru", BlogPostSummary[]> = {
   en: [
@@ -33,25 +24,30 @@ const FALLBACK_POSTS: Record<"en" | "ru", BlogPostSummary[]> = {
   ],
 };
 
-async function getPosts(): Promise<BlogPostSummary[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/public/blog`, { 
-      next: { revalidate: 60 } // Revalidate every minute
-    });
-    if (!res.ok) {
-      return [];
-    }
-    const data = (await res.json()) as { items?: BlogPostSummary[] };
-    return data.items || [];
-  } catch {
-    return [];
-  }
+export async function generateMetadata(props: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await props.params;
+  const language = locale === "ru" ? "ru" : "en";
+  const description =
+    language === "ru"
+      ? "Технические разборы и обновления инфраструктуры криптоплатежей recv."
+      : "Insights, technical deep-dives, and updates on crypto payments infrastructure.";
+  return {
+    title: language === "ru" ? "Блог | recv" : "Blog | recv",
+    description,
+    alternates: {
+      canonical: `/${language}/blog`,
+      languages: languageAlternates("/blog"),
+    },
+    openGraph: { title: language === "ru" ? "Блог | recv" : "Blog | recv", description },
+  };
 }
 
 export default async function BlogIndex(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
   const language = locale === "ru" ? "ru" : "en";
-  const posts = (await getPosts()).filter((post) => post.slug) || [];
+  const posts = (await getPublishedBlogPosts(language)).filter((post) => post.slug) as BlogPostSummary[];
   const visiblePosts = posts.length > 0 ? posts : FALLBACK_POSTS[language];
 
   return <BlogIndexClient language={language} posts={visiblePosts} />;

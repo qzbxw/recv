@@ -6,7 +6,7 @@
 *   **watcher:** Blockchain watcher worker that monitors the blockchain networks (TRON, SOLANA, BASE, ARBITRUM) for incoming crypto payments.
 *   **bot:** Telegram bot worker for notifications and interactions via Telegram.
 *   **frontend (Vite SPA):** React/Vite application under `/app/*` for seller console, checkout, admin, developer portal, and app-local API docs views.
-*   **frontend-public (Next public/SEO):** Next.js application for public-facing localized marketing, blog, legal/privacy/terms, robots, sitemap, and canonical metadata.
+*   **frontend-public (Next public/SEO):** Next.js application for localized marketing, blog, docs, legal pages, robots, sitemap index and child maps, LLM context files, RSS, and canonical metadata.
 *   **nginx/gateway:** Reverse proxy mapping URLs to the correct internal service (`frontend`, `frontend-public`, or `api`).
 *   **docker compose:** Orchestrates all services, providing different files for development (`docker-compose.dev.yml`) and production (`docker-compose.yml`).
 *   **migrations:** Database schema migrations located in `backend/internal/db/migrations`.

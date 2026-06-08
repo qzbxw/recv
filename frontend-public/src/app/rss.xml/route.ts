@@ -1,31 +1,6 @@
-function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://recv.money").replace(/\/+$/, "");
-}
+import { getPublishedBlogPosts } from "@/lib/blog";
+import { renderBlogRss, rssResponse } from "@/lib/rss";
 
 export async function GET() {
-  const baseUrl = siteUrl();
-  const updated = new Date().toISOString();
-  const body = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>recv Updates</title>
-    <link>${baseUrl}/en/blog</link>
-    <description>recv product, API, and crypto payments infrastructure updates.</description>
-    <lastBuildDate>${updated}</lastBuildDate>
-    <item>
-      <title>recv documentation</title>
-      <link>${baseUrl}/en/docs</link>
-      <guid>${baseUrl}/en/docs</guid>
-      <pubDate>${updated}</pubDate>
-      <description>API documentation and integration guidance for recv.</description>
-    </item>
-  </channel>
-</rss>`;
-
-  return new Response(body, {
-    headers: {
-      "Content-Type": "application/rss+xml; charset=utf-8",
-      "Cache-Control": "public, s-maxage=3600",
-    },
-  });
+  return rssResponse(renderBlogRss("en", await getPublishedBlogPosts("en")));
 }

@@ -169,6 +169,55 @@ func (s *Store) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPubli
 	return posts, total, nil
 }
 
+func (s *Store) ListPublishedBlogPosts(ctx context.Context, page, pageSize int, locale string) ([]BlogPost, int, error) {
+	where := ` WHERE (status = 'published' OR is_published = TRUE)`
+	args := []any{}
+	if locale != "" {
+		where += ` AND locale = $1`
+		args = append(args, locale)
+	}
+
+	var total int
+	if err := s.pool.QueryRow(ctx, `SELECT COUNT(1) FROM blog_posts`+where, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count published blog posts: %w", err)
+	}
+
+	pagePlaceholder := len(args) + 1
+	offsetPlaceholder := len(args) + 2
+	query := fmt.Sprintf(
+		`SELECT %s FROM blog_posts%s ORDER BY updated_at DESC LIMIT $%d OFFSET $%d`,
+		blogPostSelectColumns,
+		where,
+		pagePlaceholder,
+		offsetPlaceholder,
+	)
+
+	offset := (page - 1) * pageSize
+	if offset < 0 {
+		offset = 0
+	}
+	args = append(args, pageSize, offset)
+
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list published blog posts: %w", err)
+	}
+	defer rows.Close()
+
+	var posts []BlogPost
+	for rows.Next() {
+		post, err := scanBlogPost(rows)
+		if err != nil {
+			return nil, 0, err
+		}
+		posts = append(posts, post)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return posts, total, nil
+}
+
 func normalizeBlogPostForWrite(post BlogPost) BlogPost {
 	if post.Status == "" {
 		if post.IsPublished {

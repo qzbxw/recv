@@ -1,8 +1,5 @@
 import { MetadataRoute } from "next";
-
-function publicSiteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://recv.money").replace(/\/+$/, "");
-}
+import { publicSiteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = publicSiteUrl();
@@ -10,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/internal/", "/app/"],
+      disallow: ["/app/", "/api/", "/v1/", "/internal/"],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   };

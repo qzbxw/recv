@@ -47,9 +47,11 @@ function isGradientWord(raw: string) {
 export function StaticMarketingPage({
   locale: rawLocale,
   copy,
+  path,
 }: {
   locale: string;
   copy: StaticMarketingPageCopy;
+  path: string;
 }) {
   const locale = normalizeLocale(rawLocale);
   const siteCopy = getCopy(locale);
@@ -67,7 +69,7 @@ export function StaticMarketingPage({
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: siteCopy.marketing.breadcrumbs.home, item: `${baseUrl}/${locale}` },
-      { "@type": "ListItem", position: 2, name: copy.title, item: `${baseUrl}/${locale}` },
+      { "@type": "ListItem", position: 2, name: copy.title, item: `${baseUrl}/${locale}${path}` },
     ],
   };
 

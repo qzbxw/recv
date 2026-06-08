@@ -63,7 +63,9 @@ function initials(name?: string | null) {
 
 export function BlogPostClient({ language, post }: { language: "en" | "ru"; post: BlogPost }) {
   const reveal = useReveal();
-  const authorSlug = (post.author || "recv Core Team").toLowerCase().replace(/\s+/g, "-");
+  const authorSlug = !post.author || post.author === "recv Core Team"
+    ? "recv-core"
+    : post.author.toLowerCase().trim().replace(/\s+/g, "-");
 
   return (
     <MarketingLayout language={language}>

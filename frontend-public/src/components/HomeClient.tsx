@@ -24,8 +24,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
     "@type": "Organization",
     "name": "recv",
     "url": "https://recv.money",
-    "logo": "https://recv.money/opengraph-image",
-    "sameAs": ["https://twitter.com/recv_xyz", "https://github.com/recv-xyz"]
+    "logo": "https://recv.money/logo.png"
   };
 
   const faqSchema = {

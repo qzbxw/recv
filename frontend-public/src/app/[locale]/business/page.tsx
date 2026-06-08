@@ -1,5 +1,6 @@
 import { PlanPage } from "@/components/PlanPageClient";
 import { Metadata } from "next";
+import { languageAlternates } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -12,6 +13,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     description: "Extended API limits, team access, and priority support for businesses with high payment volume.",
     alternates: {
       canonical: `/${locale}/business`,
+      languages: languageAlternates("/business"),
     },
     openGraph: {
       title: "recv Business",

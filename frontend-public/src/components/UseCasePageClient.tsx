@@ -151,11 +151,6 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
     operatingSystem: "Web",
     description: copy.metadata.description,
     featureList: copy.features,
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      ratingCount: "128",
-    },
     offers: {
       "@type": "Offer",
       price: "0",

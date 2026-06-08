@@ -14,5 +14,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { locale } = await params;
-  return <StaticMarketingPage locale={locale} copy={STATIC_PAGE_COPY.about[normalizeLocale(locale)]} />;
+  return <StaticMarketingPage locale={locale} path="/about" copy={STATIC_PAGE_COPY.about[normalizeLocale(locale)]} />;
 }

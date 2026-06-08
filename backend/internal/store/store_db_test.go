@@ -2170,6 +2170,21 @@ func TestStoreBlogOperations(t *testing.T) {
 		}
 	})
 
+	t.Run("ListPublishedBlogPosts filters by locale", func(t *testing.T) {
+		posts, total, err := st.ListPublishedBlogPosts(ctx, 1, 10, "en")
+		if err != nil {
+			t.Fatalf("ListPublishedBlogPosts: %v", err)
+		}
+		if total == 0 || len(posts) == 0 {
+			t.Fatal("expected published English posts")
+		}
+		for _, p := range posts {
+			if p.Locale != "en" {
+				t.Fatalf("expected locale en, got %q", p.Locale)
+			}
+		}
+	})
+
 	t.Run("DeleteBlogPost deletes successfully", func(t *testing.T) {
 		if err := st.DeleteBlogPost(ctx, post.ID); err != nil {
 			t.Fatalf("DeleteBlogPost: %v", err)

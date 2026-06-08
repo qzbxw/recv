@@ -2970,6 +2970,45 @@ func TestPublicBlogHandlersWithDB(t *testing.T) {
 		}
 	})
 
+	t.Run("handlePublicGetBlogPost enforces locale", func(t *testing.T) {
+		router := gin.New()
+		router.GET("/blog/:slug", server.handlePublicGetBlogPost)
+
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, httptest.NewRequest(stdhttp.MethodGet, "/blog/test-public-post?locale=ru", nil))
+		if rec.Code != stdhttp.StatusNotFound {
+			t.Fatalf("expected 404 for locale mismatch, got %d: %s", rec.Code, rec.Body.String())
+		}
+	})
+
+	t.Run("handlePublicListBlogPosts rejects invalid locale", func(t *testing.T) {
+		router := gin.New()
+		router.GET("/blog", server.handlePublicListBlogPosts)
+
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, httptest.NewRequest(stdhttp.MethodGet, "/blog?locale=de", nil))
+		if rec.Code != stdhttp.StatusBadRequest {
+			t.Fatalf("expected 400 for invalid locale, got %d: %s", rec.Code, rec.Body.String())
+		}
+	})
+
+	t.Run("handlePublicBlogSitemap returns compact published entries", func(t *testing.T) {
+		router := gin.New()
+		router.GET("/blog/sitemap", server.handlePublicBlogSitemap)
+
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, httptest.NewRequest(stdhttp.MethodGet, "/blog/sitemap?page=1&page_size=10", nil))
+		if rec.Code != stdhttp.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		}
+		if !strings.Contains(rec.Body.String(), `"slug":"test-public-post"`) {
+			t.Fatalf("expected sitemap entry, got %s", rec.Body.String())
+		}
+		if strings.Contains(rec.Body.String(), `"content_md"`) {
+			t.Fatalf("sitemap response must not include article bodies: %s", rec.Body.String())
+		}
+	})
+
 	t.Run("handlePublicGetBlogPost returns 404 for missing post", func(t *testing.T) {
 		router := gin.New()
 		router.GET("/blog/:slug", server.handlePublicGetBlogPost)

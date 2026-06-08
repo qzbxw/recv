@@ -253,6 +253,10 @@ func (m *mockHTTPStore) ListBlogPosts(ctx context.Context, page, pageSize int, o
 	return m.real.ListBlogPosts(ctx, page, pageSize, onlyPublished)
 }
 
+func (m *mockHTTPStore) ListPublishedBlogPosts(ctx context.Context, page, pageSize int, locale string) ([]store.BlogPost, int, error) {
+	return m.real.ListPublishedBlogPosts(ctx, page, pageSize, locale)
+}
+
 func (m *mockHTTPStore) ListInvoices(ctx context.Context, workspaceID int64, filter store.ListInvoicesFilter) ([]store.Invoice, int, error) {
 	return m.real.ListInvoices(ctx, workspaceID, filter)
 }

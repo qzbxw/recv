@@ -424,12 +424,7 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
     },
-    "featureList": product.bento.items.map(i => i.title).join(", "),
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "128"
-    }
+    "featureList": product.bento.items.map(i => i.title).join(", ")
   };
 
   return (
@@ -947,4 +942,3 @@ function McpConfigSection({
     </section>
   );
 }
-

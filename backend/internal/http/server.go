@@ -187,6 +187,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 
 	publicBlog := router.Group("/api/public/blog")
 	publicBlog.GET("", server.handlePublicListBlogPosts)
+	publicBlog.GET("/sitemap", server.handlePublicBlogSitemap)
 	publicBlog.GET("/:slug", server.handlePublicGetBlogPost)
 
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

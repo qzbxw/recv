@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { UseCasePageClient } from "@/components/UseCasePageClient";
+import { languageAlternates } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ usecase: string; locale: string }>;
@@ -35,6 +36,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     description,
     alternates: {
       canonical: `/${locale}/use-cases/${usecase}`,
+      languages: languageAlternates(`/use-cases/${usecase}`),
     },
     openGraph: {
       title,
@@ -42,7 +44,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       type: "website",
       images: [
         {
-          url: "/og-image.png",
+          url: `/${locale}/opengraph-image`,
           width: 1200,
           height: 630,
           alt: title,
@@ -53,7 +55,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og-image.png"],
+      images: [`/${locale}/opengraph-image`],
     },
   };
 }

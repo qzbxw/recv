@@ -16,14 +16,22 @@ export async function GET() {
     
     // Ensure the host is correct in the OpenAPI spec if needed
     // For now, we just proxy it
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        "X-Robots-Tag": "noindex",
+      },
+    });
   } catch (error) {
     console.error("Failed to fetch OpenAPI spec from backend:", error);
     
     // Fallback: if backend is unreachable, we could serve a static copy or an error
     return NextResponse.json(
       { error: "OpenAPI specification currently unavailable" },
-      { status: 503 }
+      {
+        status: 503,
+        headers: { "X-Robots-Tag": "noindex" },
+      }
     );
   }
 }

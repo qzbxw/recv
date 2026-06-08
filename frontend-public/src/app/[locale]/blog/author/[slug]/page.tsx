@@ -5,13 +5,14 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { JsonLd } from "@/components/JsonLd";
 import Link from "next/link";
 import { PUBLIC_MARKETING_COPY } from "@/i18n";
+import { languageAlternates } from "@/lib/seo";
 
 const AUTHORS = {
   "recv-core": {
     name: "recv Core Team",
     bio: "The engineering team behind recv protocol. Focused on building high-performance, non-custodial crypto infrastructure.",
     role: "Engineering & Product",
-    avatar: "/logo.jpg"
+    avatar: "/logo.png"
   }
 };
 
@@ -30,6 +31,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     description: data.bio,
     alternates: {
       canonical: `/${locale}/blog/author/${slug}`,
+      languages: languageAlternates(`/blog/author/${slug}`),
     },
   };
 }
