@@ -8,7 +8,7 @@ function docsSection(baseUrl: string) {
       const doc = getDocBySlug(slugParts, "en");
       const title = String(doc?.data.title || slug);
       const description = String(doc?.data.description || "").trim();
-      return `- [${title}](${baseUrl}/en/docs/${slug})${description ? `: ${description}` : ""}`;
+      return `- [${title}](${baseUrl}/en/docs/raw/${slug})${description ? `: ${description}` : ""}`;
     })
     .join("\n");
 }
@@ -45,6 +45,7 @@ ${docsSection(baseUrl)}
 ## Machine-readable resources
 - [OpenAPI specification](${baseUrl}/openapi.json): Current REST API schema.
 - [Full LLM documentation](${baseUrl}/llms-full.txt): Combined English product and developer documentation.
+- [Human-readable documentation](${baseUrl}/en/docs/introduction): Rendered documentation entry point.
 - [RSS feed](${baseUrl}/en/rss.xml): English product and engineering updates.
 - [Sitemap index](${baseUrl}/sitemap.xml): Canonical indexable pages.
 

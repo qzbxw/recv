@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import robots from "@/app/robots";
+import { robotsBody } from "@/app/robots.txt/route";
 import {
   documentationEntries,
   isNonSelfCanonical,
@@ -22,14 +22,11 @@ afterEach(() => {
 describe("SEO generation", () => {
   it("opens public crawling while excluding private application surfaces", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://example.com/";
-    expect(robots()).toEqual({
-      rules: {
-        userAgent: "*",
-        allow: "/",
-        disallow: ["/app/", "/api/", "/v1/", "/internal/"],
-      },
-      sitemap: "https://example.com/sitemap.xml",
-    });
+    const body = robotsBody();
+    expect(body).toContain("Content-Signal: search=yes, ai-input=yes, ai-train=yes");
+    expect(body).toContain("User-agent: ClaudeBot\nAllow: /");
+    expect(body).toContain("Disallow: /app/");
+    expect(body).toContain("Sitemap: https://example.com/sitemap.xml");
   });
 
   it("renders localized public pages with reciprocal hreflang links", () => {

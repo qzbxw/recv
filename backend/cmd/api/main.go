@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "recv/backend/docs"
 	"recv/backend/internal/config"
 	httpapi "recv/backend/internal/http"
 	"recv/backend/internal/metrics"

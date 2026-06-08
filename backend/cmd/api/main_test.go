@@ -9,6 +9,8 @@ import (
 
 	"recv/backend/internal/config"
 	"recv/backend/internal/store"
+
+	"github.com/swaggo/swag"
 )
 
 func TestRunAPISuccessAndServerClosed(t *testing.T) {
@@ -47,6 +49,16 @@ func TestRealAPIDepsAreConfigured(t *testing.T) {
 	deps := realAPIDeps()
 	if deps.loadConfig == nil || deps.openStore == nil || deps.startMetrics == nil || deps.listenAndServe == nil || deps.shutdown == nil {
 		t.Fatalf("expected all real API deps to be configured: %+v", deps)
+	}
+}
+
+func TestSwaggerDocumentationIsRegistered(t *testing.T) {
+	document, err := swag.ReadDoc()
+	if err != nil {
+		t.Fatalf("read registered Swagger document: %v", err)
+	}
+	if document == "" {
+		t.Fatal("expected registered Swagger document")
 	}
 }
 
