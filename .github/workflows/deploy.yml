@@ -17,6 +17,34 @@ jobs:
     name: Deploy production
     runs-on: ubuntu-latest
     steps:
+      - name: Prepare SSH private key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -eu
+          key_path="$RUNNER_TEMP/recv_deploy_key"
+          umask 077
+
+          if printf '%s' "$DEPLOY_SSH_KEY" | grep -q -- 'BEGIN .*PRIVATE KEY'; then
+            printf '%b\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > "$key_path"
+          else
+            printf '%s' "$DEPLOY_SSH_KEY" | tr -d '\r\n ' |
+              base64 --decode > "$key_path" 2>/dev/null || {
+                echo "::error::DEPLOY_SSH_KEY must contain a private OpenSSH/PEM key or its base64 encoding."
+                exit 1
+              }
+          fi
+
+          if ! grep -q -- 'BEGIN .*PRIVATE KEY' "$key_path"; then
+            echo "::error::DEPLOY_SSH_KEY is not a private key. Store the contents of id_ed25519, not id_ed25519.pub."
+            exit 1
+          fi
+
+          if ! ssh-keygen -y -P "" -f "$key_path" >/dev/null 2>&1; then
+            echo "::error::DEPLOY_SSH_KEY is invalid or passphrase-protected. Use an unencrypted deployment private key."
+            exit 1
+          fi
+
       - name: Deploy exact commit over SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -24,7 +52,7 @@ jobs:
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          key_path: ${{ runner.temp }}/recv_deploy_key
           envs: DEPLOY_SHA
           script_stop: true
           command_timeout: 30m
