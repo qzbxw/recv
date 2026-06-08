@@ -92,7 +92,7 @@ func runAPI(ctx context.Context, deps apiDeps) error {
 
 	go func() {
 		<-ctx.Done()
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 		defer cancel()
 		_ = deps.shutdown(server, shutdownCtx)
 	}()

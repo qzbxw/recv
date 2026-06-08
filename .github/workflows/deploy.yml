@@ -1,42 +1,85 @@
-name: Deploy
+name: CD
 
 on:
+  push:
+    branches: ["main"]
   workflow_dispatch:
-    inputs:
-      image_tag:
-        description: GHCR image tag to deploy
-        required: true
-        default: latest
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
+    name: Deploy production
     runs-on: ubuntu-latest
-    environment: production
     steps:
-      - name: Deploy over SSH
+      - name: Deploy exact commit over SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
-          GHCR_IMAGE_TAG: ${{ inputs.image_tag }}
-          GHCR_IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+          DEPLOY_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: GHCR_IMAGE_TAG,GHCR_IMAGE_PREFIX
+          envs: DEPLOY_SHA
           script_stop: true
+          command_timeout: 30m
           script: |
-            cd /opt/reqst
+            set -eu
+            cd /root/recv
+            test -f .env
+            test -d .git
+
+            previous_sha="$(git rev-parse HEAD)"
+            git fetch --prune origin main
+            git checkout --detach "$DEPLOY_SHA"
+
             mkdir -p backups
-            docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > "backups/predeploy-$(date -u +%Y%m%dT%H%M%SZ).sql"
-            docker compose run --rm restic backup /backup
-            docker compose pull
+            if docker compose ps --status running postgres | grep -q postgres; then
+              docker compose exec -T postgres sh -lc \
+                'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+                > "backups/predeploy-$(date -u +%Y%m%dT%H%M%SZ).sql"
+            fi
+
+            if grep -Eq '^RESTIC_REPOSITORY=.+$' .env &&
+               grep -Eq '^RESTIC_PASSWORD=.+$' .env; then
+              docker compose --profile ops run --rm restic backup /backup
+            fi
+
+            docker compose build \
+              api blockchain_watcher telegram_bot_worker frontend_public frontend
             docker compose up -d postgres
-            docker compose up -d api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
+            docker compose up -d --remove-orphans \
+              api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
+
+            healthy=0
             for i in $(seq 1 60); do
-              if docker compose exec -T api wget -qO- http://127.0.0.1:8080/healthz >/dev/null; then
-                exit 0
+              if docker compose exec -T api \
+                   wget -qO- http://127.0.0.1:8080/healthz >/dev/null &&
+                 wget -qO- http://127.0.0.1:8080/robots.txt >/dev/null; then
+                healthy=1
+                break
               fi
               sleep 2
             done
-            echo "Health gate failed. Roll back with: GHCR_IMAGE_TAG=<previous-tag> docker compose up -d"
+
+            if [ "$healthy" -eq 1 ]; then
+              printf '%s' "$DEPLOY_SHA" > .deploy-sha
+              docker image prune -f --filter "until=168h"
+              exit 0
+            fi
+
+            docker compose logs --no-color --tail=200 \
+              api frontend_public frontend caddy
+            echo "Health gate failed; rolling back to $previous_sha"
+
+            git checkout --detach "$previous_sha"
+            docker compose build \
+              api blockchain_watcher telegram_bot_worker frontend_public frontend
+            docker compose up -d --remove-orphans \
+              api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
             exit 1

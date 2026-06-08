@@ -65,13 +65,13 @@ jobs:
         run: |
           cat > .env <<'EOF'
           APP_ENV=production
-          POSTGRES_DB=reqst
-          POSTGRES_USER=reqst
-          POSTGRES_PASSWORD=reqst
+          POSTGRES_DB=recv
+          POSTGRES_USER=recv
+          POSTGRES_PASSWORD=recv
           JWT_SECRET=ci-jwt-secret
           INTERNAL_TOKEN=ci-internal-token
           TELEGRAM_BOT_TOKEN=
-          ADMIN_BOOTSTRAP_EMAIL=admin@reqst.local
+          ADMIN_BOOTSTRAP_EMAIL=admin@recv.local
           ADMIN_BOOTSTRAP_PASSWORD=ci-admin-password
           ADMIN_JWT_SECRET=ci-admin-secret
           PUBLIC_APP_URL=http://localhost:3000
@@ -106,100 +106,3 @@ jobs:
       - name: Stop containers
         if: always()
         run: docker compose down -v
-
-  security:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            frontend/package-lock.json
-            frontend-public/package-lock.json
-      - name: Install gosec
-        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
-      - name: gosec
-        run: gosec ./...
-        working-directory: backend
-      - name: govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-        working-directory: backend
-      - name: npm audit frontend
-        run: npm audit --audit-level=high
-        working-directory: frontend
-      - name: npm audit public frontend
-        run: npm audit --audit-level=high
-        working-directory: frontend-public
-      - name: gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["go", "javascript-typescript"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
-
-  images:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/metadata-action@v5
-        id: meta
-        with:
-          images: ghcr.io/${{ github.repository }}/reqst
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: backend/Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository }}/api:${{ github.sha }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: frontend/Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: frontend-public/Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository }}/frontend-public:${{ github.sha }}

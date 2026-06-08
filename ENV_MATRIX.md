@@ -45,3 +45,18 @@ The required environment variables vary based on the deployment environment: `de
 | `NEXT_PUBLIC_SITE_URL` | Canonical public origin used by Next metadata routes (`robots.ts`, `sitemap.ts`, canonical metadata). Do not include a path. | `http://localhost:3000` | Staging origin | `https://recv.money` |
 | `NEXT_PUBLIC_API_URL` | Public origin used by Next server components to call API routes. Code appends `/api/...`; do not include `/api`. | `http://localhost:3000` | Staging origin | `https://recv.money` |
 | `VITE_API_BASE_URL` | Public origin used by Vite app API client. Code appends `/api/...` and `/v1/...`; do not include `/api`. | `http://localhost:3000` | Staging origin | `https://recv.money` |
+
+## Production CD secrets
+
+The `CD` GitHub Actions workflow deploys every push to `main` independently of
+the CI workflow. Configure these repository-level Actions secrets:
+
+| Secret | Description |
+| :--- | :--- |
+| `DEPLOY_HOST` | Production server hostname or IP. |
+| `DEPLOY_USER` | SSH user allowed to run Docker Compose. |
+| `DEPLOY_SSH_KEY` | Private SSH key for the deployment user. |
+
+The server checkout is `/root/recv`; it must contain the Git repository and the
+production `.env`. Images are built on the server from the exact pushed commit,
+so no registry credentials are required.
