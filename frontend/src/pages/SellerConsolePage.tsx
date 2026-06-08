@@ -652,6 +652,10 @@ export function SellerConsolePage() {
     disabled: !walletNetworks.has(walletBucket(option.network)),
     hint: walletNetworks.has(walletBucket(option.network)) ? t.common.walletReady : t.common.addWalletFirst,
   }));
+  const billingNetworkOptions = PAYABLE_PAYMENT_OPTIONS.map(option => ({
+    value: option.key,
+    label: option.label,
+  }));
 
   const handleNavClick = (key: PanelKey) => {
     setActivePanel(key);
@@ -1773,7 +1777,7 @@ export function SellerConsolePage() {
                       <label>{t.common.network}</label>
                       <CustomSelect
                         value={billingForm.optionKeys[0]}
-                        options={payableNetworkOptions}
+                        options={billingNetworkOptions}
                         ariaLabel={t.common.network}
                         onChange={v => {
                           const selected = PAYABLE_PAYMENT_OPTIONS.find(option => option.key === v);
@@ -1785,7 +1789,7 @@ export function SellerConsolePage() {
                         }}
                       />
                       <div className="dev-preset-row">
-                        {PAYABLE_PAYMENT_OPTIONS.filter(option => walletNetworks.has(walletBucket(option.network))).map(option => (
+                        {PAYABLE_PAYMENT_OPTIONS.map(option => (
                           <button
                             key={option.key}
                             type="button"

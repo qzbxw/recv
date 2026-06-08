@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { fetchPublicInvoice, trackPublicEvent } from "../lib/api";
-import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel } from "../lib/status";
+import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel, getInvoiceStatusMeta } from "../lib/status";
 import type { Invoice } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { CHECKOUT_COPY as COPY } from "../i18n";
@@ -81,6 +81,18 @@ const Icons = {
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  ),
+  Wallet: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 7V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-2" />
+      <path d="M21 12a2 2 0 00-2-2h-4a2 2 0 000 4h4a2 2 0 002-2z" />
+    </svg>
+  ),
+  Scan: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2" />
+      <line x1="3" y1="12" x2="21" y2="12" />
     </svg>
   ),
 };
@@ -290,195 +302,198 @@ export function CheckoutPage() {
     }
   }
 
-  return (
-    <main className="shell checkout-shell checkout-shell--wide">
-      <div className="ambient ambient-left" />
-      <div className="ambient ambient-right" />
+  const statusTone = invoice ? getInvoiceStatusMeta(invoice.status).tone : "neutral";
+  const netLabel = invoice
+    ? `${activePayment?.payable_asset || invoice.payable_asset || ""} ${formatNetworkLabel(activePayment?.payable_network || invoice.payable_network)}`.trim()
+    : "";
+  const bigAmount = activePayment?.payable_amount || invoice?.payable_amount || "";
+  const addressValue = activePayment?.destination_address || invoice?.destination_address || "";
+  const commentValue = activePayment?.payment_comment || invoice?.payment_comment || "";
+  const paymentUri = activePayment?.payment_uri || invoice?.payment_uri || "";
+  const finalBody = isPaid
+    ? text.paidBody
+    : isExpired
+      ? text.expiredBody
+      : isOverpaid
+        ? text.overpaidBody
+        : isManualReview
+          ? text.manualReviewBody
+          : text.warning;
+  const finalTone = isPaid ? "success" : isExpired ? "danger" : isOverpaid || isManualReview ? "review" : "warning";
 
-      <header className="topbar topbar--checkout">
-        <div className="topbar-brand topbar-brand--minimal">
-          <strong>recv</strong>
-        </div>
-        <div className="lend-language topbar-language" role="group" aria-label="language">
-          <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>
-            RU
-          </button>
-          <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>
-            EN
-          </button>
+  return (
+    <main className="co-page">
+      <div className="co-aura co-aura--1" />
+      <div className="co-aura co-aura--2" />
+
+      <header className="co-top">
+        <a className="co-brand" href="/">recv</a>
+        <div className="co-lang" role="group" aria-label="language">
+          <button type="button" className={language === "ru" ? "is-active" : ""} onClick={() => setLanguage("ru")}>RU</button>
+          <button type="button" className={language === "en" ? "is-active" : ""} onClick={() => setLanguage("en")}>EN</button>
         </div>
       </header>
 
-      <section className={`checkout-card checkout-card--lux checkout-card--${checkoutVariant}`}>
-        {error ? <div className="alert" role="status">{error} <button type="button" className="ghost-button compact-button" onClick={() => setRetryNonce((value) => value + 1)}>{text.retry}</button></div> : null}
-        {!invoice ? <p className="muted">{text.loading}</p> : null}
+      <section className={`co-card co-card--${checkoutVariant}`}>
+        {error ? (
+          <div className="co-alert" role="status">
+            <span>{error}</span>
+            <button type="button" onClick={() => setRetryNonce((value) => value + 1)}>{text.retry}</button>
+          </div>
+        ) : null}
 
-        {invoice ? (
-          <>
-            <div className={`checkout-flow portal-animate-in ${isPaid ? "is-paid" : ""} ${isExpired ? "is-expired" : ""}`}>
-              <section className="checkout-story">
-                <div className="receipt-hero receipt-hero--streamlined">
-                  <div className="receipt-copy">
-                    <div className="receipt-heading">
-                      <span className={`status-pill receipt-status status-${invoice.status}`}>
-                        {isPaid && <Icons.Check />}
-                        {isExpired && <Icons.Alert />}
-                        {formatInvoiceStatus(invoice.status, language)}
-                      </span>
-                    </div>
-                    <h1>{title}</h1>
-                    
-                    {!isPaid && !isExpired && (
-                      <div className={isExpiringSoon ? "receipt-timer receipt-timer--urgent" : "receipt-timer"}>
-                        <strong>{timeLeft}</strong>
-                        {isExpiringSoon ? <em>{text.expiresSoon}</em> : null}
-                      </div>
-                    )}
-
-                    <div className={`receipt-warning-callout ${isPaid ? "is-success" : isExpired ? "is-error" : ""}`}>
-                      {isPaid ? <Icons.Check /> : isExpired ? <Icons.Alert /> : <Icons.Alert />}
-                      <p className="hero-copy">
-                        {isPaid ? text.paidBody : isExpired ? text.expiredBody : isUnderpaid ? text.underpaidBody : isOverpaid ? text.overpaidBody : isManualReview ? text.manualReviewBody : text.warning}
-                      </p>
-                    </div>
-
-                    {isUnderpaid || isOverpaid || isManualReview ? (
-                      <div className="checkout-state-note">
-                        <strong>{text.underpaidReceived}: {invoice.received_amount || "0"} {formatNetworkLabel(invoice.payable_network)}</strong>
-                        {isUnderpaid && remainingAmount ? <small>{text.underpaidRemaining}: {remainingAmount} {formatNetworkLabel(invoice.payable_network)}</small> : null}
-                        {invoice.review_reason ? <small>{invoice.review_reason.replaceAll("_", " ")}</small> : null}
-                      </div>
-                    ) : null}
-
-                    <div className="receipt-docmeta">
-                      <div>
-                        <span>{text.invoiceId}</span>
-                        <strong>{invoice.public_id}</strong>
-                      </div>
-                      <div>
-                        <span>{isPaid ? text.status : text.expiresAt}</span>
-                        <strong>{isPaid ? statusLabel : formatDateTime(invoice.expires_at, language)}</strong>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <section className={`payment-sheet payment-sheet--receipt ${isFinalState ? "is-disabled" : ""}`}>
-                  <div className="payment-sheet-header">
-                    <span className="payment-sheet-kicker">{text.paymentDetails}</span>
-                  </div>
-                  <div className="payment-essentials">
-                    {(activePayment?.payment_comment || invoice.payment_comment) ? (
-                      <div className="payload-callout payload-callout--critical">
-                        <div className="payload-head">
-                          <div className="payload-info">
-                            <div className="payload-title-row">
-                              <Icons.Alert />
-                              <span>{text.payloadTitle}</span>
-                            </div>
-                            <p>{text.payloadHint}</p>
-                          </div>
-                          {canCopyDetails && (
-                            <button type="button" className={`field-copy field-copy--named ${copiedField === "comment" ? "is-copied" : ""}`} onClick={() => void copyValue("comment", activePayment?.payment_comment || invoice.payment_comment || "")} aria-label={text.copyComment}>
-                              <Icons.Copy />
-                              {copiedField === "comment" ? text.copied : text.copyComment}
-                            </button>
-                          )}
-                        </div>
-                        <div className="payment-field payment-field--alert">
-                          <div>
-                            <label>{text.comment}</label>
-                            <code>{activePayment?.payment_comment || invoice.payment_comment}</code>
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {paymentRows
-                      .filter((row) => row.key !== "amount")
-                      .map((row) => (
-                        <button key={row.key} type="button" className={`payment-field ${canCopyDetails ? "payment-field--button" : ""}`} onClick={() => canCopyDetails && void copyValue(row.key, row.value)} disabled={!canCopyDetails}>
-                          <div>
-                            <label>{row.label}</label>
-                            <code>{row.value}</code>
-                            <small>{row.secondary}</small>
-                          </div>
-                          {canCopyDetails && (
-                            <span className="field-copy field-copy--named" aria-label={row.copyLabel}>
-                              <Icons.Copy />
-                              {copiedField === row.key ? text.copied : row.copyLabel}
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                  </div>
-                </section>
-              </section>
-
-              <aside className="payment-rail">
-                <div className={`amount-totem amount-totem--receipt amount-totem--rail ${isPaid ? "is-success" : isExpired ? "is-error" : ""}`}>
-                  <span>{text.amount}</span>
-                  <strong>{activePayment?.payable_amount || invoice.payable_amount}</strong>
-                  <div className="network-badge">
-                    <b>{activePayment?.payable_asset || invoice.payable_asset || ""} {formatNetworkLabel(activePayment?.payable_network || invoice.payable_network)}</b>
-                    <small>{text.networkOnly}</small>
-                  </div>
-                  {invoice.payment_options && invoice.payment_options.length > 1 ? (
-                    <div className="dev-preset-row">
-                      {invoice.payment_options.map((option, index) => (
-                        <button
-                          key={`${option.network}-${option.asset}`}
-                          type="button"
-                          className={`dev-preset-chip ${selectedOptionIndex === index ? "is-active" : ""}`}
-                          onClick={() => setSelectedOptionIndex(index)}
-                        >
-                          {option.asset} · {formatNetworkLabel(option.network)}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  {canCopyDetails && (
-                    <div className="exact-amount-warning">
-                      <Icons.Alert />
-                      <p>{text.exactAmountWarning}</p>
-                    </div>
-                  )}
-                  {canCopyDetails && (
-                    <button type="button" className={`ghost-button compact-button payment-rail-action ${copiedField === "amount" ? "is-copied" : ""}`} onClick={() => void copyValue("amount", activePayment?.payable_amount || invoice.payable_amount)}>
-                      <Icons.Copy />
-                      {copiedField === "amount" ? text.copied : text.copyAmount}
-                    </button>
-                  )}
-                  {canCopyDetails && (activePayment?.payment_uri || invoice.payment_uri) ? (
-                    <a className="ghost-button compact-button payment-rail-action" href={activePayment?.payment_uri || invoice.payment_uri}>
-                      {text.openWallet}
-                    </a>
-                  ) : null}
-                </div>
-
-                <aside className="qr-stage qr-stage--receipt">
-                  <div className="qr-shell qr-shell--receipt">
-                    <div className={`qr-frame qr-frame--receipt ${isPaid ? "qr-frame--success" : isExpired ? "qr-frame--expired" : ""}`}>
-                      {qrDataUrl ? <img className="qr-image qr-image--lux" src={qrDataUrl} alt="Invoice QR" /> : <p className="muted">{text.qrLoading}</p>}
-                    </div>
-                  </div>
-                  {canCopyDetails ? <p className="qr-caption">{text.scanHint}</p> : null}
-                </aside>
-              </aside>
+        {!invoice ? (
+          <div className="co-loading"><span className="co-spinner" />{text.loading}</div>
+        ) : isFinalState ? (
+          <div className={`co-final co-final--${finalTone}`}>
+            <div className="co-final__icon">{isPaid ? <Icons.Check /> : <Icons.Alert />}</div>
+            <h1 className="co-final__title">{statusLabel}</h1>
+            <div className="co-final__amount">{bigAmount}</div>
+            <p className="co-final__body">{finalBody}</p>
+            {isOverpaid || isManualReview ? (
+              <div className="co-final__note">
+                <strong>{text.underpaidReceived}: {invoice.received_amount || "0"} {formatNetworkLabel(invoice.payable_network)}</strong>
+                {invoice.review_reason ? <small>{invoice.review_reason.replaceAll("_", " ")}</small> : null}
+              </div>
+            ) : null}
+            <div className="co-final__meta">
+              <div>
+                <span>{text.invoiceId}</span>
+                <strong>{invoice.public_id}</strong>
+              </div>
+              <div>
+                <span>{isPaid ? text.status : text.expiresAt}</span>
+                <strong>{isPaid ? statusLabel : formatDateTime(invoice.expires_at, language)}</strong>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="co-pay">
+            <div className="co-head">
+              <div className="co-statusrow">
+                <span className={`co-pill co-pill--${statusTone}`}>
+                  {isUnderpaid ? <Icons.Alert /> : null}
+                  {statusLabel}
+                </span>
+                <span className="co-id"><b>{text.invoiceId}</b> {invoice.public_id}</span>
+              </div>
+              <h1 className="co-title">{title}</h1>
             </div>
 
-            <footer className="checkout-footer">
-              <a className="checkout-footer-promo" href="/">
-                <div className="promo-brand">
-                  <span>{text.footerPoweredBy}</span>
-                  <strong>recv</strong>
+            <div className="co-amount">
+              <span className="co-amount__label">{text.amount}</span>
+              <div className="co-amount__value">{bigAmount}</div>
+              <span className="co-amount__net">
+                <b>{netLabel}</b>
+                <span>{text.networkOnly}</span>
+              </span>
+              {isUnderpaid ? (
+                <div className="co-amount__note">
+                  <span>{text.underpaidReceived}: <b>{invoice.received_amount || "0"} {formatNetworkLabel(invoice.payable_network)}</b></span>
+                  {remainingAmount ? <span>{text.underpaidRemaining}: <b>{remainingAmount} {formatNetworkLabel(invoice.payable_network)}</b></span> : null}
                 </div>
-                <span className="promo-cta">{text.footerCTA}</span>
-              </a>
-            </footer>
-          </>
-        ) : null}
+              ) : null}
+            </div>
+
+            {invoice.payment_options && invoice.payment_options.length > 1 ? (
+              <div className="co-options">
+                {invoice.payment_options.map((option, index) => (
+                  <button
+                    key={`${option.network}-${option.asset}`}
+                    type="button"
+                    className={`co-chip ${selectedOptionIndex === index ? "is-active" : ""}`}
+                    onClick={() => setSelectedOptionIndex(index)}
+                  >
+                    {option.asset} · {formatNetworkLabel(option.network)}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            <div className={`co-timer ${isExpiringSoon ? "is-urgent" : ""}`}>
+              <Icons.Clock />
+              <span className="co-timer__val">{timeLeft}</span>
+              {isExpiringSoon ? <span className="co-timer__hint">{text.expiresSoon}</span> : null}
+            </div>
+
+            <div className="co-qr">
+              <div className="co-qr__frame">
+                {qrDataUrl ? <img src={qrDataUrl} alt="Invoice QR" /> : <span className="co-qr__ph">{text.qrLoading}</span>}
+              </div>
+              <p className="co-qr__hint">{text.scanHint}</p>
+            </div>
+
+            <div className="co-actions">
+              <button
+                type="button"
+                className={`co-btn co-btn--primary ${copiedField === "amount" ? "is-copied" : ""}`}
+                onClick={() => void copyValue("amount", bigAmount)}
+              >
+                <Icons.Copy />
+                {copiedField === "amount" ? text.copied : text.copyAmount}
+              </button>
+              {paymentUri ? (
+                <a className="co-btn co-btn--ghost" href={paymentUri}>
+                  <Icons.Wallet />
+                  {text.openWallet}
+                </a>
+              ) : null}
+            </div>
+
+            <div className="co-warn">
+              <Icons.Alert />
+              <p>{text.exactAmountWarning}</p>
+            </div>
+
+            <div className="co-details">
+              <span className="co-details__kicker"><Icons.Scan /> {text.paymentDetails}</span>
+
+              {commentValue ? (
+                <button
+                  type="button"
+                  className={`co-field co-field--required ${copiedField === "comment" ? "is-active" : ""}`}
+                  onClick={() => void copyValue("comment", commentValue)}
+                >
+                  <div className="co-field__body">
+                    <span className="co-field__label">{text.payloadTitle}</span>
+                    <span className="co-field__value">{commentValue}</span>
+                    <span className="co-field__sub">{text.payloadHint}</span>
+                  </div>
+                  <span className={`co-copy ${copiedField === "comment" ? "is-copied" : ""}`}>
+                    <Icons.Copy />
+                    {copiedField === "comment" ? text.copied : text.copyComment}
+                  </span>
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                className="co-field"
+                onClick={() => void copyValue("address", addressValue)}
+              >
+                <div className="co-field__body">
+                  <span className="co-field__label">{text.wallet}</span>
+                  <span className="co-field__value">{addressValue}</span>
+                </div>
+                <span className={`co-copy ${copiedField === "address" ? "is-copied" : ""}`}>
+                  <Icons.Copy />
+                  {copiedField === "address" ? text.copied : text.copyAddress}
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
       </section>
+
+      {invoice ? (
+        <footer className="co-foot">
+          <a href="/">
+            <span>{text.footerPoweredBy}</span>
+            <strong>recv</strong>
+          </a>
+          <a href="/" className="co-foot__cta">{text.footerCTA}</a>
+        </footer>
+      ) : null}
     </main>
   );
 }
