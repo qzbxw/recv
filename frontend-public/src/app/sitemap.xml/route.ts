@@ -28,11 +28,11 @@ export async function GET() {
     );
     if (response.ok) {
       const data = (await response.json()) as BlogSitemapResponse;
-      blogPages = Math.max(1, Math.ceil((data.total ?? 0) / SITEMAP_PAGE_SIZE));
+      blogPages = Math.ceil((data.total ?? 0) / SITEMAP_PAGE_SIZE);
       blogLastModified = data.updated_at;
     }
   } catch {
-    blogPages = 1;
+    blogPages = 0;
   }
 
   const sitemaps = [
