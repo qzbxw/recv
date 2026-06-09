@@ -5,6 +5,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { usePathname } from "next/navigation";
 import { AttributionCapture } from "../AttributionCapture";
+import { LocaleAlternatesProvider } from "./localeAlternates";
 
 export function useReveal() {
   const refs = useRef<(HTMLElement | null)[]>([]);
@@ -68,21 +69,23 @@ export function MarketingLayout({
   }, [canonicalUrl, baseUrl]);
 
   return (
-    <div className="lend-page min-h-screen bg-black text-white selection:bg-purple-500/30">
-      <Suspense fallback={null}>
-        <AttributionCapture />
-      </Suspense>
-      <div className="lend-backdrop lend-backdrop--grid" />
-      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--left" />
-      <div className="lend-backdrop lend-backdrop--glow lend-backdrop--right" />
+    <LocaleAlternatesProvider>
+      <div className="lend-page min-h-screen bg-black text-white selection:bg-purple-500/30">
+        <Suspense fallback={null}>
+          <AttributionCapture />
+        </Suspense>
+        <div className="lend-backdrop lend-backdrop--grid" />
+        <div className="lend-backdrop lend-backdrop--glow lend-backdrop--left" />
+        <div className="lend-backdrop lend-backdrop--glow lend-backdrop--right" />
 
-      <Header language={language} />
-      
-      <main className="lend-shell relative z-10 pt-40 min-h-[calc(100vh-200px)]">
-        {children}
-      </main>
+        <Header language={language} />
 
-      <Footer language={language} />
-    </div>
+        <main className="lend-shell relative z-10 pt-40 min-h-[calc(100vh-200px)]">
+          {children}
+        </main>
+
+        <Footer language={language} />
+      </div>
+    </LocaleAlternatesProvider>
   );
 }

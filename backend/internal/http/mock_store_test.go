@@ -173,8 +173,12 @@ func (m *mockHTTPStore) GetAdminOverview(ctx context.Context) (store.AdminOvervi
 	return m.real.GetAdminOverview(ctx)
 }
 
-func (m *mockHTTPStore) GetBlogPostBySlug(ctx context.Context, slug string) (store.BlogPost, error) {
-	return m.real.GetBlogPostBySlug(ctx, slug)
+func (m *mockHTTPStore) GetBlogPostBySlug(ctx context.Context, slug string, locale string) (store.BlogPost, error) {
+	return m.real.GetBlogPostBySlug(ctx, slug, locale)
+}
+
+func (m *mockHTTPStore) ListPublishedBlogLocalesBySlug(ctx context.Context, slug string) ([]string, error) {
+	return m.real.ListPublishedBlogLocalesBySlug(ctx, slug)
 }
 
 func (m *mockHTTPStore) GetIdempotencyRecord(ctx context.Context, workspaceID int64, apiKeyID int64, method string, path string, key string) (store.IdempotencyRecord, error) {

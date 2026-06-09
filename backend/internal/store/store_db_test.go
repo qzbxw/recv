@@ -2132,7 +2132,7 @@ func TestStoreBlogOperations(t *testing.T) {
 	})
 
 	t.Run("GetBlogPostBySlug returns post", func(t *testing.T) {
-		fetched, err := st.GetBlogPostBySlug(ctx, "blog-ops-updated")
+		fetched, err := st.GetBlogPostBySlug(ctx, "blog-ops-updated", "")
 		if err != nil {
 			t.Fatalf("GetBlogPostBySlug: %v", err)
 		}
@@ -2142,7 +2142,7 @@ func TestStoreBlogOperations(t *testing.T) {
 	})
 
 	t.Run("GetBlogPostBySlug returns ErrNotFound for non-existent", func(t *testing.T) {
-		_, err := st.GetBlogPostBySlug(ctx, "nonexistent-slug-xyz")
+		_, err := st.GetBlogPostBySlug(ctx, "nonexistent-slug-xyz", "")
 		if !errors.Is(err, ErrNotFound) {
 			t.Fatalf("expected ErrNotFound, got %v", err)
 		}

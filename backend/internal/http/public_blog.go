@@ -51,7 +51,7 @@ func (s *Server) handlePublicGetBlogPost(c *gin.Context) {
 		return
 	}
 
-	post, err := s.store.GetBlogPostBySlug(c.Request.Context(), slug)
+	post, err := s.store.GetBlogPostBySlug(c.Request.Context(), slug, locale)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "blog post not found"})
@@ -65,9 +65,9 @@ func (s *Server) handlePublicGetBlogPost(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "blog post not found"})
 		return
 	}
-	if locale != "" && post.Locale != locale {
-		c.JSON(http.StatusNotFound, gin.H{"error": "blog post not found"})
-		return
+
+	if locales, lerr := s.store.ListPublishedBlogLocalesBySlug(c.Request.Context(), slug); lerr == nil {
+		post.AvailableLocales = locales
 	}
 
 	c.JSON(http.StatusOK, post)

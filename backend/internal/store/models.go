@@ -390,4 +390,7 @@ type BlogPost struct {
 	PublishedAt           *time.Time `json:"published_at"`
 	CreatedAt             time.Time  `json:"created_at"`
 	UpdatedAt             time.Time  `json:"updated_at"`
+	// AvailableLocales is not persisted; it is populated on read to expose which
+	// locale translations of this slug are published.
+	AvailableLocales []string `json:"available_locales,omitempty"`
 }

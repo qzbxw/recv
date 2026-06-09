@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useMemo, useState, FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import MDEditor from "@uiw/react-md-editor";
 import {
@@ -21,6 +21,35 @@ const LINKING_OPTIONS = [
   { value: "ready", label: "Ready" },
   { value: "strong", label: "Strong" },
 ];
+
+// Locales an article can be translated into. A "translation" is simply another
+// post row sharing the same slug with a different locale.
+const LOCALES = ["en", "ru"] as const;
+type Locale = (typeof LOCALES)[number];
+
+function localeOf(post: Partial<AdminBlogPost>): string {
+  return post.locale || "en";
+}
+
+function blankTranslation(base: Partial<AdminBlogPost>, locale: string): Partial<AdminBlogPost> {
+  return {
+    title: "",
+    slug: base.slug || "",
+    excerpt: "",
+    content_md: "",
+    cover_image_url: base.cover_image_url || "",
+    author: base.author || "recv Team",
+    is_published: false,
+    status: "draft",
+    tags: base.tags || [],
+    locale,
+    meta_title: "",
+    meta_description: "",
+    canonical_url: "",
+    internal_links_count: 0,
+    internal_linking_status: "unknown",
+  };
+}
 
 function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
   const rect = e.currentTarget.getBoundingClientRect();
@@ -67,6 +96,17 @@ export function AdminBlogPage() {
   const [error, setError] = useState("");
   const [editingPost, setEditingPost] = useState<Partial<AdminBlogPost> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Group rows by slug: each group is one article with its locale translations.
+  const groups = useMemo(() => {
+    const map = new Map<string, AdminBlogPost[]>();
+    for (const post of posts) {
+      const arr = map.get(post.slug) ?? [];
+      arr.push(post);
+      map.set(post.slug, arr);
+    }
+    return Array.from(map.values());
+  }, [posts]);
 
   useEffect(() => {
     if (!token) return;
@@ -120,6 +160,18 @@ export function AdminBlogPage() {
 
   if (editingPost) {
     const statusValue = editingPost.status || (editingPost.is_published ? "published" : "draft");
+    const currentLocale = localeOf(editingPost);
+    const siblings = editingPost.slug
+      ? posts.filter((p) => p.slug === editingPost.slug)
+      : [];
+    const siblingByLocale = new Map(siblings.map((p) => [localeOf(p), p]));
+
+    function switchTranslation(locale: string) {
+      if (locale === currentLocale) return;
+      const existing = siblingByLocale.get(locale);
+      setEditingPost(existing ?? blankTranslation(editingPost!, locale));
+    }
+
     return (
       <BlogShell
         error={error}
@@ -134,6 +186,36 @@ export function AdminBlogPage() {
         }
       >
         <form id="blog-editor-form" onSubmit={handleSave} className="dev-form portal-animate-in">
+          <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="console-card-spotlight" />
+            <div className="dev-portal__section-header dev-portal__section-header--margin">
+              <h3>Translations</h3>
+              <p>One article, one slug, multiple locales. Switch a language to edit or create its translation.</p>
+            </div>
+            <div className="admin-blog-locales">
+              {LOCALES.map((loc) => {
+                const exists = siblingByLocale.has(loc) || currentLocale === loc;
+                const isCurrent = currentLocale === loc;
+                return (
+                  <button
+                    key={loc}
+                    type="button"
+                    className={`admin-blog-locale-tab${isCurrent ? " admin-blog-locale-tab--active" : ""}${!exists ? " admin-blog-locale-tab--missing" : ""}`}
+                    onClick={() => switchTranslation(loc)}
+                    disabled={isCurrent}
+                    title={exists ? `Edit ${loc.toUpperCase()} version` : `Add ${loc.toUpperCase()} translation`}
+                  >
+                    <span className="admin-blog-locale-tab__code">{loc.toUpperCase()}</span>
+                    <span className="admin-blog-locale-tab__state">{exists ? (isCurrent ? "editing" : "edit") : "+ add"}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {!editingPost.slug && (
+              <p className="admin-blog-locales__hint">Set a slug first, then you can add translations that share it.</p>
+            )}
+          </div>
+
           <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
             <div className="console-card-spotlight" />
             <div className="dev-portal__section-header dev-portal__section-header--margin"><h3>Basics</h3></div>
@@ -152,7 +234,7 @@ export function AdminBlogPage() {
               </div>
               <div className="dev-input-group">
                 <label>Locale</label>
-                <input className="dev-input" value={editingPost.locale || "en"} onChange={(e) => updateEditingPost({ locale: e.target.value })} />
+                <CustomSelect value={currentLocale} options={LOCALES.map((l) => ({ value: l, label: l.toUpperCase() }))} ariaLabel="Locale" onChange={(v) => updateEditingPost({ locale: v })} />
               </div>
               <div className="dev-input-group">
                 <label>Author</label>
@@ -226,7 +308,7 @@ export function AdminBlogPage() {
       error={error}
       onDismissError={() => setError("")}
       title="Blog management"
-      subtitle={`${posts.length} posts. Create, edit and publish content.`}
+      subtitle={`${groups.length} articles · ${posts.length} translations. Create, edit and publish content.`}
       actions={
         <>
           <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void loadPosts()} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>
@@ -246,24 +328,42 @@ export function AdminBlogPage() {
         <div className="dev-card dev-portal__empty-large">No posts yet. Create your first one.</div>
       ) : (
         <div className="dev-resource-list portal-animate-in">
-          {posts.map((post) => {
-            const published = post.status === "published" || post.is_published;
+          {groups.map((group) => {
+            const primary = group.find((p) => localeOf(p) === "en") ?? group[0];
+            const byLocale = new Map(group.map((p) => [localeOf(p), p]));
+            const published = primary.status === "published" || primary.is_published;
             return (
-              <div key={post.id} className="dev-card console-spotlight-card admin-blog-card" onMouseMove={handleMouseMove}>
+              <div key={primary.slug} className="dev-card console-spotlight-card admin-blog-card" onMouseMove={handleMouseMove}>
                 <div className="console-card-spotlight" />
                 <div className="dev-card__head">
                   <div>
                     <div className="dev-card__status-row">
                       <span className={`dev-api-badge dev-status-badge dev-status-badge--${published ? "success" : "warning"}`}>{published ? "Published" : "Draft"}</span>
-                      <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{post.locale || "en"}</span>
-                      <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{post.internal_linking_status || "unknown"} · {post.internal_links_count ?? 0} links</span>
+                      <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{primary.internal_linking_status || "unknown"} · {primary.internal_links_count ?? 0} links</span>
                     </div>
-                    <h3 className="dev-card__title">{post.title || "(untitled)"}</h3>
-                    <code className="dev-card__id">/{post.slug}</code>
-                    <div className="dev-resource-card__meta admin-blog-card__meta">by {post.author}{post.excerpt ? ` — ${post.excerpt}` : ""}</div>
+                    <h3 className="dev-card__title">{primary.title || "(untitled)"}</h3>
+                    <code className="dev-card__id">/{primary.slug}</code>
+                    <div className="dev-resource-card__meta admin-blog-card__meta">by {primary.author}{primary.excerpt ? ` — ${primary.excerpt}` : ""}</div>
+                    <div className="admin-blog-locales admin-blog-locales--compact">
+                      {LOCALES.map((loc) => {
+                        const existing = byLocale.get(loc);
+                        return (
+                          <button
+                            key={loc}
+                            type="button"
+                            className={`admin-blog-locale-tab${existing ? "" : " admin-blog-locale-tab--missing"}`}
+                            onClick={() => setEditingPost(existing ?? blankTranslation(primary, loc))}
+                            title={existing ? `Edit ${loc.toUpperCase()} version` : `Add ${loc.toUpperCase()} translation`}
+                          >
+                            <span className="admin-blog-locale-tab__code">{loc.toUpperCase()}</span>
+                            <span className="admin-blog-locale-tab__state">{existing ? "edit" : "+ add"}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div className="dev-card__actions admin-actions">
-                    <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => setEditingPost(post)}>Edit</button>
+                    <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => setEditingPost(primary)}>Edit</button>
                   </div>
                 </div>
               </div>

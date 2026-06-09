@@ -12,6 +12,7 @@ export type PublicBlogPost = {
   locale: "en" | "ru";
   published_at: string;
   updated_at?: string | null;
+  available_locales?: string[] | null;
 };
 
 export async function getPublishedBlogPosts(locale: "en" | "ru", pageSize = 100) {

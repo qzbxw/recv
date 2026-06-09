@@ -119,13 +119,51 @@ func (s *Store) DeleteBlogPost(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *Store) GetBlogPostBySlug(ctx context.Context, slug string) (BlogPost, error) {
+// GetBlogPostBySlug returns the post for the given slug. When locale is
+// non-empty the lookup is scoped to that locale's translation; otherwise the
+// English translation is preferred, falling back to any available locale.
+func (s *Store) GetBlogPostBySlug(ctx context.Context, slug, locale string) (BlogPost, error) {
+	if locale != "" {
+		row := s.pool.QueryRow(ctx, `
+			SELECT `+blogPostSelectColumns+`
+			FROM blog_posts
+			WHERE slug = $1 AND locale = $2
+		`, slug, locale)
+		return scanBlogPost(row)
+	}
 	row := s.pool.QueryRow(ctx, `
 		SELECT `+blogPostSelectColumns+`
 		FROM blog_posts
 		WHERE slug = $1
+		ORDER BY (locale = 'en') DESC, id ASC
+		LIMIT 1
 	`, slug)
 	return scanBlogPost(row)
+}
+
+// ListPublishedBlogLocalesBySlug returns the distinct locales for which a
+// published translation of the given slug exists.
+func (s *Store) ListPublishedBlogLocalesBySlug(ctx context.Context, slug string) ([]string, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT DISTINCT locale
+		FROM blog_posts
+		WHERE slug = $1 AND (status = 'published' OR is_published = TRUE)
+		ORDER BY locale
+	`, slug)
+	if err != nil {
+		return nil, fmt.Errorf("list blog post locales: %w", err)
+	}
+	defer rows.Close()
+
+	var locales []string
+	for rows.Next() {
+		var locale string
+		if err := rows.Scan(&locale); err != nil {
+			return nil, err
+		}
+		locales = append(locales, locale)
+	}
+	return locales, rows.Err()
 }
 
 func (s *Store) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPublished bool) ([]BlogPost, int, error) {

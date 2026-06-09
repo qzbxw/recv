@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import { useRegisterLocaleAlternates } from "@/components/marketing/localeAlternates";
 
 export type BlogPost = {
   slug: string;
@@ -16,6 +17,7 @@ export type BlogPost = {
   published_at: string;
   updated_at?: string | null;
   content_md: string;
+  available_locales?: string[] | null;
 };
 
 const mdComponents: Components = {
@@ -66,6 +68,14 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
   const authorSlug = !post.author || post.author === "recv Core Team"
     ? "recv-core"
     : post.author.toLowerCase().trim().replace(/\s+/g, "-");
+
+  // Tell the header's language switcher where each locale lives: the translated
+  // post if it exists, otherwise that locale's blog index (never the landing).
+  const available = post.available_locales ?? [language];
+  useRegisterLocaleAlternates({
+    en: available.includes("en") ? `/en/blog/${post.slug}` : "/en/blog",
+    ru: available.includes("ru") ? `/ru/blog/${post.slug}` : "/ru/blog",
+  });
 
   return (
     <MarketingLayout language={language}>

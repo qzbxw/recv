@@ -3,13 +3,30 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X, Zap, CreditCard, Code, Globe, Bot } from "lucide-react";
 import { getCopy } from "@/lib/copy";
+import { useLocaleAlternates } from "./localeAlternates";
+
+/** Swap the leading /en or /ru segment of the current path to the target locale. */
+function swapLocaleInPath(pathname: string | null, target: "en" | "ru") {
+  if (!pathname) return `/${target}`;
+  const segments = pathname.split("/");
+  if (segments[1] === "en" || segments[1] === "ru") {
+    segments[1] = target;
+    return segments.join("/") || `/${target}`;
+  }
+  return `/${target}`;
+}
 
 export function Header({ language }: { language: "ru" | "en" }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const copy = getCopy(language);
+  const pathname = usePathname();
+  const localeAlternates = useLocaleAlternates();
+  const localeHref = (target: "en" | "ru") =>
+    localeAlternates?.[target] ?? swapLocaleInPath(pathname, target);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -164,8 +181,8 @@ export function Header({ language }: { language: "ru" | "en" }) {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
-              <Link href="/ru" className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "ru" ? "lang-btn-active" : "lang-btn-inactive"}`}>RU</Link>
-              <Link href="/en" className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "en" ? "lang-btn-active" : "lang-btn-inactive"}`}>EN</Link>
+              <Link href={localeHref("ru")} className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "ru" ? "lang-btn-active" : "lang-btn-inactive"}`}>RU</Link>
+              <Link href={localeHref("en")} className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "en" ? "lang-btn-active" : "lang-btn-inactive"}`}>EN</Link>
             </div>
             
             <Link href="/app/auth" className="hidden sm:flex header-console-btn transition-all">
