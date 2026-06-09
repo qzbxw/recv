@@ -83,12 +83,6 @@ const Icons = {
       <line x1="12" y1="16" x2="12.01" y2="16" />
     </svg>
   ),
-  Wallet: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 7V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-2" />
-      <path d="M21 12a2 2 0 00-2-2h-4a2 2 0 000 4h4a2 2 0 002-2z" />
-    </svg>
-  ),
   Scan: () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2" />
@@ -309,7 +303,6 @@ export function CheckoutPage() {
   const bigAmount = activePayment?.payable_amount || invoice?.payable_amount || "";
   const addressValue = activePayment?.destination_address || invoice?.destination_address || "";
   const commentValue = activePayment?.payment_comment || invoice?.payment_comment || "";
-  const paymentUri = activePayment?.payment_uri || invoice?.payment_uri || "";
   const finalBody = isPaid
     ? text.paidBody
     : isExpired
@@ -432,12 +425,6 @@ export function CheckoutPage() {
                 <Icons.Copy />
                 {copiedField === "amount" ? text.copied : text.copyAmount}
               </button>
-              {paymentUri ? (
-                <a className="co-btn co-btn--ghost" href={paymentUri}>
-                  <Icons.Wallet />
-                  {text.openWallet}
-                </a>
-              ) : null}
             </div>
 
             <div className="co-warn">

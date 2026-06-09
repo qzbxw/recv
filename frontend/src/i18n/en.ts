@@ -383,7 +383,6 @@ function verify(payload, signature, secret) {
     copyAmount: "Copy exact amount",
     copied: "Copied",
     retry: "Retry",
-    openWallet: "Open wallet",
     warning: "Send the EXACT amount. If you transfer from an exchange (Binance/Bybit), add the exchange withdrawal fee, otherwise the payment will go to manual review.",
     exactAmountWarning: "Send the EXACT amount. If you transfer from an exchange (Binance/Bybit), add the exchange withdrawal fee, otherwise the payment will go to manual review.",
     payloadTitle: "Required Comment",
