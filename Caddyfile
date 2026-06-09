@@ -1,4 +1,4 @@
-http://recv.money, www.recv.money {
+http://www.recv.money, www.recv.money {
 	redir https://recv.money{uri} 308
 }
 
