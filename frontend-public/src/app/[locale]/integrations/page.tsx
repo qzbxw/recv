@@ -9,7 +9,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);
   const copy = STATIC_PAGE_COPY.integrations[locale];
-  return { title: `${copy.title} | recv`, description: copy.body, alternates: { canonical: `/${locale}/integrations`, languages: { en: "/en/integrations", ru: "/ru/integrations", "x-default": "/en/integrations" } } };
+  return {
+    title: `${copy.title} | recv`,
+    description: copy.body,
+    keywords: locale === "ru"
+      ? "recv API интеграция, crypto webhook, recv checkout, REST API крипто платежи, подписанные вебхуки"
+      : "recv API integration, crypto webhook, recv checkout integration, REST API crypto payments, signed webhooks",
+    alternates: { canonical: `/${locale}/integrations`, languages: { en: "/en/integrations", ru: "/ru/integrations", "x-default": "/en/integrations" } },
+  };
 }
 
 export default async function Page({ params }: Props) {

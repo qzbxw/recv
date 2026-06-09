@@ -48,6 +48,10 @@ export const PUBLIC_ROUTES = [
   "/compare/nowpayments",
   "/compare/recv-vs-manual",
   "/compare/recv-vs-custodial",
+  "/compare/coinbase-commerce",
+  "/compare/bitpay",
+  "/compare/coingate",
+  "/compare/cryptomus",
 ] as const;
 
 export function publicSiteUrl() {

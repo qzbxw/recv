@@ -9,7 +9,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);
   const copy = STATIC_PAGE_COPY.about[locale];
-  return { title: `${copy.title} | recv`, description: copy.body, alternates: { canonical: `/${locale}/about`, languages: { en: "/en/about", ru: "/ru/about", "x-default": "/en/about" } } };
+  return {
+    title: `${copy.title} | recv`,
+    description: copy.body,
+    keywords: locale === "ru"
+      ? "recv команда, о recv, крипто процессинг компания, non-custodial инфраструктура"
+      : "about recv, recv team, crypto processing company, non-custodial payment infrastructure",
+    alternates: { canonical: `/${locale}/about`, languages: { en: "/en/about", ru: "/ru/about", "x-default": "/en/about" } },
+  };
 }
 
 export default async function Page({ params }: Props) {

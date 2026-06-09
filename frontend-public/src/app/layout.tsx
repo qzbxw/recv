@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
+import { Manrope, Montserrat } from "next/font/google";
 import "./tailwind.css";
 import "./globals.css";
+
+const manrope = Manrope({
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+  variable: "--font-manrope",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const montserrat = Montserrat({
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+  variable: "--font-montserrat",
+  weight: ["600", "700", "800", "900"],
+});
 
 const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://recv.money").replace(/\/+$/, "");
 
@@ -33,6 +48,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  other: {
+    "theme-color": "#7c3aed",
+  },
 };
 
 export default function RootLayout({
@@ -41,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${manrope.variable} ${montserrat.variable}`}>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );

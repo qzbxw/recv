@@ -19,6 +19,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       canonical: `/${locale}/compare`,
       languages: { en: "/en/compare", ru: "/ru/compare", "x-default": "/en/compare" },
     },
+    keywords: locale === "ru"
+      ? "сравнение крипто шлюзов, альтернатива NowPayments, альтернатива BitPay, альтернатива Coinbase Commerce, recv vs конкуренты, non-custodial платёжный шлюз"
+      : "crypto payment gateway comparison, NowPayments alternative, BitPay alternative, Coinbase Commerce alternative, recv vs competitors, non-custodial payment gateway",
     openGraph: {
       title: copy.marketing.compareHub.title,
       description: copy.marketing.compareHub.description,

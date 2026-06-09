@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { PUBLIC_MARKETING_COPY } from "@/i18n";
-
-export const runtime = "edge";
+import fs from "fs";
+import path from "path";
 
 export const alt = "recv | Crypto Payments Infrastructure";
 export const size = {
@@ -15,64 +15,50 @@ export default async function Image({ params }: { params: { locale: string } }) 
   const { locale } = params;
   const copy = PUBLIC_MARKETING_COPY[locale === "ru" ? "ru" : "en"];
 
+  const logoData = await fs.promises.readFile(
+    path.join(process.cwd(), "public", "logo-transparent.png"),
+  );
+  const logoSrc = `data:image/png;base64,${logoData.toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
         style={{
           background: "#050505",
+          backgroundImage: "radial-gradient(circle at 15% 50%, rgba(124,58,237,0.4), transparent 50%)",
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "space-between",
+          padding: "80px 100px",
           fontFamily: "sans-serif",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: "20px",
-          }}
-        >
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logoSrc} width={90} height={90} alt="" style={{ marginBottom: 36 }} />
           <div
             style={{
-              width: "100px",
-              height: "100px",
-              background: "#0066FF",
-              borderRadius: "20px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "60px",
+              fontSize: "72px",
               color: "white",
-              fontWeight: "bold",
+              fontWeight: 800,
+              lineHeight: 1,
+              marginBottom: "16px",
             }}
           >
-            R
+            recv
           </div>
-        </div>
-        <div
-          style={{
-            fontSize: "60px",
-            color: "white",
-            fontWeight: "bold",
-            marginBottom: "10px",
-          }}
-        >
-          recv
-        </div>
-        <div
-          style={{
-            fontSize: "30px",
-            color: "rgba(255, 255, 255, 0.6)",
-            textAlign: "center",
-            maxWidth: "800px",
-          }}
-        >
-          {copy.ogSubtitle}
+          <div
+            style={{
+              fontSize: "28px",
+              color: "rgba(255, 255, 255, 0.6)",
+              maxWidth: "620px",
+              lineHeight: 1.4,
+            }}
+          >
+            {copy.ogSubtitle}
+          </div>
         </div>
       </div>
     ),

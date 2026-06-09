@@ -1494,6 +1494,10 @@ const en = {
         { title: "recv vs Manual Verification", slug: "recv-vs-manual", body: "Discover how automation eliminates human error and scales your operations." },
         { title: "recv vs Custodial Gateways", slug: "recv-vs-custodial", body: "Why non-custodial infrastructure is safer and more cost-effective for your business." },
         { title: "recv vs NowPayments", slug: "nowpayments", body: "A direct comparison of fees, control, and integration flexibility." },
+        { title: "recv vs Coinbase Commerce", slug: "coinbase-commerce", body: "Non-custodial direct payouts vs Coinbase's hosted balance model." },
+        { title: "recv vs BitPay", slug: "bitpay", body: "Compare fixed subscriptions to BitPay's percentage-based fee structure." },
+        { title: "recv vs CoinGate", slug: "coingate", body: "Developer-first protocol vs CoinGate's merchant-focused platform." },
+        { title: "recv vs Cryptomus", slug: "cryptomus", body: "Atomic on-chain payouts versus Cryptomus internal wallet management." },
       ]
     },
     comparePages: {
@@ -1563,6 +1567,98 @@ const en = {
             title: "Integration",
             competitor: "Proprietary API and standard plugins. Focus on generic e-commerce platforms.",
             recv: "Developer-first protocol. Optimized for high-throughput SaaS, Telegram Mini Apps, and custom builds."
+          }
+        ]
+      },
+      "coinbase-commerce": {
+        name: "Coinbase Commerce",
+        title: "recv vs Coinbase Commerce: Non-Custodial vs Hosted Balance",
+        description: "Coinbase Commerce holds your funds in a hosted account. recv sends every payment directly to your own wallet the moment it confirms on-chain — no withdrawal requests, no third-party risk.",
+        kicker: "CUSTODY",
+        points: [
+          {
+            title: "Fund Custody",
+            competitor: "Coinbase holds balances on your behalf. Withdrawals require manual requests and are subject to Coinbase policy and potential account freezes.",
+            recv: "Pure non-custodial. Every confirmed payment goes straight to your wallet address. recv never touches your funds."
+          },
+          {
+            title: "Fee Model",
+            competitor: "1% transaction fee on all payments. At scale, this becomes a significant recurring cost tied directly to your revenue.",
+            recv: "0% turnover fee. Flat monthly subscription only. Your gross margin stays intact regardless of payment volume."
+          },
+          {
+            title: "Network Flexibility",
+            competitor: "Limited to networks supported by Coinbase. No TON, limited TRON support, no Telegram-native payment flows.",
+            recv: "Seven networks including TON, TRON, Solana, Base, Arbitrum, and BSC — with first-class Telegram Mini App support."
+          }
+        ]
+      },
+      "bitpay": {
+        name: "BitPay",
+        title: "recv vs BitPay: Fixed Subscription vs Percentage Fees",
+        description: "BitPay charges 1% on every transaction. recv replaces that with a flat monthly subscription and 0% on volume — predictable costs that don't scale against you.",
+        kicker: "FEES",
+        points: [
+          {
+            title: "Cost Structure",
+            competitor: "1% transaction fee plus network settlement costs. High-volume merchants pay thousands per month in pure commissions.",
+            recv: "Fixed monthly subscription. Zero percentage fees. Costs are completely decoupled from your transaction volume."
+          },
+          {
+            title: "Settlement Speed",
+            competitor: "BitPay settles on a daily or weekly cycle to a bank account or internal wallet, adding delay and conversion risk.",
+            recv: "Atomic on-chain settlement. Funds arrive in your wallet on the same block as the customer payment."
+          },
+          {
+            title: "Developer Experience",
+            competitor: "Enterprise-focused API with strict compliance requirements, KYB processes, and limited API-only access tiers.",
+            recv: "Open API with webhooks, no-KYC onboarding, and full programmatic control. Production-ready in minutes."
+          }
+        ]
+      },
+      "coingate": {
+        name: "CoinGate",
+        title: "recv vs CoinGate: Direct Payouts vs Conversion-First Model",
+        description: "CoinGate converts crypto to fiat before settlement. recv delivers the exact crypto asset your customer paid — directly to your wallet, with zero conversion slippage.",
+        kicker: "SETTLEMENT",
+        points: [
+          {
+            title: "Settlement Asset",
+            competitor: "CoinGate defaults to fiat conversion, introducing FX risk and additional processing steps before you receive funds.",
+            recv: "Native crypto settlement. You receive exactly what was paid — USDT stays USDT, TON stays TON, in your wallet."
+          },
+          {
+            title: "Commission",
+            competitor: "1% transaction fee plus spread on conversion. True cost can exceed 2% when conversion rates are included.",
+            recv: "0% commission on transactions. Only a flat monthly subscription regardless of how much you process."
+          },
+          {
+            title: "Customization",
+            competitor: "Standard hosted checkout pages. Limited control over payment UI, branding, and customer flow.",
+            recv: "Full API access, hosted checkout with your branding, or raw webhook-driven flows — your choice at every step."
+          }
+        ]
+      },
+      "cryptomus": {
+        name: "Cryptomus",
+        title: "recv vs Cryptomus: On-Chain Payouts vs Internal Wallet",
+        description: "Cryptomus routes payments through an internal balance before payout. recv is non-custodial by design — your wallet receives funds directly on-chain, no internal ledger involved.",
+        kicker: "ARCHITECTURE",
+        points: [
+          {
+            title: "Payout Architecture",
+            competitor: "Cryptomus maintains an internal wallet. You must request withdrawals, which adds latency and counterparty dependency.",
+            recv: "No internal wallet. Every payment confirms directly on-chain to your address. recv is invisible in the money flow."
+          },
+          {
+            title: "Fee Transparency",
+            competitor: "0.4–1% transaction fees depending on plan. Fees compound at high volume and are charged before funds reach you.",
+            recv: "Zero transaction fees. Flat subscription. You see exactly what the customer sends, minus only the network gas fee."
+          },
+          {
+            title: "Telegram Integration",
+            competitor: "Basic Telegram bot integrations. Not designed for Telegram Mini App payment flows or high-frequency bot-driven commerce.",
+            recv: "Built for Telegram. TON and TON USDT support, Mini App-compatible checkout, and Telegram alert notifications out of the box."
           }
         ]
       }

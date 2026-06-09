@@ -1,10 +1,17 @@
 import { ImageResponse } from "next/og";
+import fs from "fs";
+import path from "path";
 
 export const alt = "recv — Crypto Payment Gateway";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OpengraphImage() {
+export default async function OpengraphImage() {
+  const logoData = await fs.promises.readFile(
+    path.join(process.cwd(), "public", "logo-transparent.png"),
+  );
+  const logoSrc = `data:image/png;base64,${logoData.toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
@@ -22,13 +29,15 @@ export default function OpengraphImage() {
           fontFamily: "sans-serif",
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logoSrc} width={80} height={80} alt="" style={{ marginBottom: 32 }} />
         <div
           style={{
             fontSize: 40,
             letterSpacing: 8,
             textTransform: "uppercase",
             color: "#a78bfa",
-            marginBottom: 24,
+            marginBottom: 20,
           }}
         >
           recv.money

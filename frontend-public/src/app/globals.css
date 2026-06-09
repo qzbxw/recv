@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800;900&family=Unbounded:wght@700;800;900&display=swap");
-
 *,
 *::before,
 *::after {
@@ -8,7 +6,7 @@
 
 :root {
   color-scheme: dark;
-  font-family: "Manrope", sans-serif;
+  font-family: var(--font-manrope), sans-serif;
   --bg: #000000;
   --ink: #ffffff;
   --muted: #94a3b8;
@@ -187,7 +185,7 @@
 }
 
 .dev-portal__brand {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -274,7 +272,7 @@
 }
 
 .dev-portal__hero h1 {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   line-height: 1.1;
   letter-spacing: -0.04em;
@@ -303,7 +301,7 @@
 }
 
 .dev-portal__section-header h2 {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: 1.8rem;
   letter-spacing: -0.03em;
   margin: 0;
@@ -487,7 +485,7 @@
 .dev-widget__value {
   font-size: 1.75rem;
   font-weight: 700;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.02em;
 }
 
@@ -635,7 +633,7 @@
 .dev-promo-card h3 {
   margin: 0 0 0.5rem;
   font-size: 1.5rem;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
 }
 
 .dev-promo-card p {
@@ -1030,7 +1028,7 @@
   border: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
-.dev-portal__locked-state h3 { font-size: 1.75rem; margin: 0; font-family: "Montserrat", sans-serif; }
+.dev-portal__locked-state h3 { font-size: 1.75rem; margin: 0; font-family: var(--font-montserrat), sans-serif; }
 .dev-portal__locked-state p { color: var(--muted); max-width: 400px; margin: 0; }
 
 .admin-shell {
@@ -1129,7 +1127,7 @@
 .admin-sales-head h2,
 .admin-card-head h3 {
   margin: 0;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.04em;
 }
 
@@ -3259,7 +3257,7 @@ code {
 }
 
 .promo-brand strong {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.02em;
   color: var(--ink);
   font-weight: 700;
@@ -4423,7 +4421,7 @@ html {
 .lend-core strong,
 .lend-floater strong,
 .lend-step h3 {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.03em;
 }
 
@@ -5040,7 +5038,7 @@ html {
 }
 
 .lend-dogfood-item h3 {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: 1.5rem;
   margin: 1rem 0;
   letter-spacing: -0.02em;
@@ -5192,7 +5190,7 @@ html {
 }
 
 .lend-price-amount {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: 4.5rem;
   font-weight: 700;
   line-height: 1;
@@ -5624,7 +5622,7 @@ html {
 
 .legal-lead h2 {
   margin: 0 0 0.8rem;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.04em;
 }
 
@@ -5655,7 +5653,7 @@ html {
 
 .legal-note h2 {
   margin: 0 0 0.65rem;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.05em;
 }
 
@@ -5695,7 +5693,7 @@ html {
   place-items: center;
   background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
   color: #1a0d04;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-weight: 700;
   box-shadow: 0 16px 34px rgba(139, 92, 246, 0.22);
 }
@@ -6306,7 +6304,7 @@ html {
   background: rgba(139, 92, 246, 0.06);
   border: 1px solid rgba(139, 92, 246, 0.12);
   color: #c4b5fd;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -6449,7 +6447,7 @@ html {
 }
 
 .lend-faq-question {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(1.1rem, 2vw, 1.35rem);
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
@@ -6654,7 +6652,7 @@ html {
 
 .lend-panel-heading h2 {
   margin: 0.85rem 0 0;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.06em;
   font-size: clamp(1.7rem, 3vw, 2.2rem);
 }
@@ -6763,7 +6761,7 @@ html {
 }
 
 .lend-demo-receipt strong {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(2rem, 4vw, 2.8rem);
   letter-spacing: -0.06em;
 }
@@ -6834,7 +6832,7 @@ html {
 .lend-panel-card strong {
   display: block;
   margin: 0.45rem 0 0.35rem;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: 1.04rem;
   letter-spacing: -0.04em;
 }
@@ -7269,7 +7267,7 @@ html {
 
 .product-hero__copy h1 {
   margin: 1rem 0 1.2rem;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(3.2rem, 7vw, 6.4rem);
   line-height: 0.95;
   letter-spacing: -0.08em;
@@ -7334,7 +7332,7 @@ html {
 
 .product-stat strong {
   color: #fff;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(1.7rem, 3vw, 2.45rem);
   letter-spacing: -0.05em;
 }
@@ -7426,7 +7424,7 @@ html {
 .product-deep-card h3 {
   margin: 0;
   color: #fff;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.04em;
 }
 
@@ -7468,7 +7466,7 @@ html {
   grid-column: 1 / -1;
   margin: 0;
   color: #fff;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
 }
 
 .product-status {
@@ -7661,7 +7659,7 @@ html {
   display: block;
   margin-top: 0.25rem;
   color: #fff;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(2rem, 5vw, 3.4rem);
   letter-spacing: -0.06em;
 }
@@ -7893,7 +7891,7 @@ html {
 
 .auth-portal__copy h1 {
   margin: 0 0 0.7rem;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(2rem, 5vw, 4rem);
   line-height: 0.95;
   letter-spacing: -0.06em;
@@ -9681,7 +9679,7 @@ html {
   font-size: 2.4rem;
   margin: 0.8rem 0 0;
   color: #f7f0e7;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-weight: 700;
 }
 
@@ -9857,7 +9855,7 @@ html {
   font-size: clamp(5rem, 15vw, 10rem);
   margin: 0.5rem 0;
   letter-spacing: -0.06em;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-weight: 800;
   color: #fff;
   line-height: 0.9;
@@ -10123,7 +10121,7 @@ html {
 .use-case-hero__surface h2 {
   margin: 0 0 1.5rem;
   color: #fff;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(1.35rem, 2vw, 1.85rem);
   letter-spacing: 0;
   line-height: 1.15;
@@ -10138,7 +10136,7 @@ html {
   border-radius: var(--radius-md);
   background: rgba(139, 92, 246, 0.1);
   color: #fff;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
 }
@@ -10198,7 +10196,7 @@ html {
 .use-case-related-link strong {
   margin: 0;
   color: #fff;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: 0;
 }
 
@@ -10954,7 +10952,7 @@ html {
   font-size: 0.75rem;
   font-weight: 800;
   color: rgba(124, 58, 237, 0.7);
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   line-height: 1.6;
 }
 

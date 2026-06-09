@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { ChevronDown, Menu, X, Zap, CreditCard, Code, Globe, Bot } from "lucide-react";
 import { getCopy } from "@/lib/copy";
@@ -34,8 +35,9 @@ export function Header({ language }: { language: "ru" | "en" }) {
         isScrolled ? "bg-black/80 backdrop-blur-xl border-b border-white/5 py-3" : "bg-transparent py-5"
       }`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <Link href={`/${language}`} className="text-2xl font-black tracking-tighter text-white hover:opacity-80 transition-opacity">
-            recv<span className="text-purple-500">.</span>
+          <Link href={`/${language}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+            <Image src="/logo-transparent.png" alt="recv" width={32} height={32} priority />
+            <span className="text-2xl font-black tracking-tighter text-white">recv<span className="text-purple-500">.</span></span>
           </Link>
 
           {/* Desktop Navigation */}

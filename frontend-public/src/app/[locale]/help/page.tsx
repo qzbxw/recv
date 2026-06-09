@@ -9,7 +9,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);
   const copy = STATIC_PAGE_COPY.help[locale];
-  return { title: `${copy.title} | recv`, description: copy.body, alternates: { canonical: `/${locale}/help`, languages: { en: "/en/help", ru: "/ru/help", "x-default": "/en/help" } } };
+  return {
+    title: `${copy.title} | recv`,
+    description: copy.body,
+    keywords: locale === "ru"
+      ? "recv помощь, крипто платежи FAQ, настройка recv, recv API документация, recv поддержка"
+      : "recv help, crypto payments FAQ, recv setup guide, recv API documentation, recv support",
+    alternates: { canonical: `/${locale}/help`, languages: { en: "/en/help", ru: "/ru/help", "x-default": "/en/help" } },
+  };
 }
 
 export default async function Page({ params }: Props) {

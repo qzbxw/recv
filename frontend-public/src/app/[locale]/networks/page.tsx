@@ -19,6 +19,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       canonical: `/${locale}/networks`,
       languages: { en: "/en/networks", ru: "/ru/networks", "x-default": "/en/networks" },
     },
+    keywords: locale === "ru"
+      ? "крипто сети, TON платежи, TRON USDT, Solana платежи, Base платежи, Arbitrum USDT, BSC платежи, блокчейн интеграция"
+      : "crypto payment networks, TON payments, TRON USDT, Solana payments, Base payments, Arbitrum USDT, BSC payments, blockchain integration",
     openGraph: {
       title: copy.marketing.networksHub.title,
       description: copy.marketing.networksHub.description,

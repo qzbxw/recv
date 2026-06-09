@@ -9,7 +9,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);
   const copy = STATIC_PAGE_COPY.security[locale];
-  return { title: `${copy.title} | recv`, description: copy.body, alternates: { canonical: `/${locale}/security`, languages: { en: "/en/security", ru: "/ru/security", "x-default": "/en/security" } } };
+  return {
+    title: `${copy.title} | recv`,
+    description: copy.body,
+    keywords: locale === "ru"
+      ? "безопасность крипто платежей, non-custodial безопасность, HMAC вебхуки, on-chain подтверждение, recv безопасность"
+      : "crypto payment security, non-custodial security, HMAC webhooks, on-chain confirmation, recv security",
+    alternates: { canonical: `/${locale}/security`, languages: { en: "/en/security", ru: "/ru/security", "x-default": "/en/security" } },
+  };
 }
 
 export default async function Page({ params }: Props) {
