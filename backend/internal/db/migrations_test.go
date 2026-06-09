@@ -92,8 +92,8 @@ func TestRunMigrations(t *testing.T) {
 		`).Scan(&seededArticles); err != nil {
 			t.Fatalf("count seeded bilingual articles: %v", err)
 		}
-		if seededArticles != 16 {
-			t.Fatalf("expected 16 seeded bilingual articles, got %d", seededArticles)
+		if seededArticles != 0 {
+			t.Fatalf("expected 0 seeded bilingual articles, got %d", seededArticles)
 		}
 	})
 

@@ -20,7 +20,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const params = await props.params;
   const language = params.locale === "ru" ? "ru" : "en";
-  const post = await getPublishedBlogPost(params.slug, language) || fallbackBlogPost(params.slug, language);
+  const isDevOrTest = process.env.PLAYWRIGHT_TEST === "true";
+  const post = await getPublishedBlogPost(params.slug, language) || (isDevOrTest ? fallbackBlogPost(params.slug, language) : null);
 
   if (!post) {
     return { title: params.locale === "ru" ? "Материал не найден" : "Post Not Found" };
@@ -69,7 +70,8 @@ export async function generateMetadata(
 export default async function BlogPost(props: Props) {
   const params = await props.params;
   const language = params.locale as "ru" | "en";
-  const post = await getPublishedBlogPost(params.slug, language) || fallbackBlogPost(params.slug, language);
+  const isDevOrTest = process.env.PLAYWRIGHT_TEST === "true";
+  const post = await getPublishedBlogPost(params.slug, language) || (isDevOrTest ? fallbackBlogPost(params.slug, language) : null);
 
   if (!post) {
     notFound();

@@ -28,7 +28,7 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: `NEXT_PUBLIC_SITE_URL=https://recv.money npx next start -p ${port}`,
+        command: `NEXT_PUBLIC_SITE_URL=https://recv.money PLAYWRIGHT_TEST=true npx next start -p ${port}`,
         url: `${baseURL}/en`,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

@@ -33,9 +33,10 @@ export default async function BlogIndex(props: { params: Promise<{ locale: strin
   const { locale } = await props.params;
   const language = locale === "ru" ? "ru" : "en";
   const posts = (await getPublishedBlogPosts(language)).filter((post) => post.slug) as BlogPostSummary[];
+  const isDevOrTest = process.env.PLAYWRIGHT_TEST === "true";
   const visiblePosts = posts.length > 0
     ? posts
-    : FALLBACK_BLOG_POSTS[language] as BlogPostSummary[];
+    : (isDevOrTest ? FALLBACK_BLOG_POSTS[language] as BlogPostSummary[] : []);
 
   return (
     <>

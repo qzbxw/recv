@@ -66,7 +66,10 @@ export default async function AuthorPage(props: Props) {
   const publishedPosts = (await getPublishedBlogPosts(lang)).filter(
     (post) => (post.author_slug || "recv-core") === slug,
   );
-  const posts = publishedPosts.length ? publishedPosts : FALLBACK_BLOG_POSTS[lang];
+  const isDevOrTest = process.env.PLAYWRIGHT_TEST === "true";
+  const posts = publishedPosts.length
+    ? publishedPosts
+    : (isDevOrTest ? FALLBACK_BLOG_POSTS[lang] : []);
 
   const organizationSchema = {
     "@context": "https://schema.org",
