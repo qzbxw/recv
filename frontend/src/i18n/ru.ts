@@ -717,6 +717,7 @@ function verify(payload, signature, secret) {
       add: "Добавить эндпоинт",
       url: "URL эндпоинта",
       secret: "Секрет подписи",
+      rotate: "Сменить секрет",
       verification: "Проверка подписи",
       verificationDesc: "Каждый вебхук содержит заголовок X-recv-Signature. Используйте HMAC SHA-256 для проверки подлинности.",
     },

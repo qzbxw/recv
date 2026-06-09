@@ -6,7 +6,7 @@ import type {
   Invoice,
   WebhookDelivery,
   WebhookDeliveryListResponse,
-  WebhookEndpoint,
+  WebhookEndpointWithSecret,
   WebhookListResponse,
 } from "../types";
 import { request } from "./core";
@@ -39,14 +39,14 @@ export async function fetchWebhookEndpoints(token: string) {
 }
 
 export async function createWebhookEndpoint(token: string, payload: { label: string; url: string; environment?: Environment }) {
-  return request<{ webhook: WebhookEndpoint }>("/api/developer/webhooks", {
+  return request<{ webhook: WebhookEndpointWithSecret }>("/api/developer/webhooks", {
     method: "POST",
     body: JSON.stringify(payload),
   }, token);
 }
 
 export async function rotateWebhookEndpointSecret(token: string, endpointId: number) {
-  return request<{ webhook: WebhookEndpoint }>(`/api/developer/webhooks/${endpointId}/rotate-secret`, {
+  return request<{ webhook: WebhookEndpointWithSecret }>(`/api/developer/webhooks/${endpointId}/rotate-secret`, {
     method: "POST",
     body: JSON.stringify({}),
   }, token);

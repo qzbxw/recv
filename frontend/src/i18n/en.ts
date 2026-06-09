@@ -718,6 +718,7 @@ function verify(payload, signature, secret) {
       add: "Add Endpoint",
       url: "Endpoint URL",
       secret: "Signing Secret",
+      rotate: "Rotate secret",
       verification: "Signature Verification",
       verificationDesc: "Each webhook contains an X-recv-Signature header. Use HMAC SHA-256 to verify the payload.",
     },

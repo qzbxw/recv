@@ -16,6 +16,7 @@ import {
   getApiBase,
   getStoredToken,
   resendWebhookDelivery,
+  rotateWebhookEndpointSecret,
   simulateTestPayment,
 } from "../lib/api";
 import { ApiError, formatApiError, mapApiError } from "../lib/errors";
@@ -65,6 +66,7 @@ export function DeveloperPortalPage() {
 
   // Form states
   const [latestSecret, setLatestSecret] = useState("");
+  const [latestWebhookSecret, setLatestWebhookSecret] = useState("");
   const [copiedId, setCopiedId] = useState("");
   const [billingPlan, setBillingPlan] = useState<string>("developer");
   const [billingNetwork, setBillingNetwork] = useState<Network>("TRON");
@@ -155,8 +157,18 @@ export function DeveloperPortalPage() {
     e.preventDefault();
     if (!token) return;
     try {
-      await createWebhookEndpoint(token, { label: hookForm.label, url: hookForm.url, environment: hookForm.environment });
+      const res = await createWebhookEndpoint(token, { label: hookForm.label, url: hookForm.url, environment: hookForm.environment });
+      setLatestWebhookSecret(res.webhook.secret);
       setHookForm({ label: "", url: "", environment: "test" });
+      await loadPortal(token);
+    } catch (err) { setError(formatApiError(err)); }
+  };
+
+  const handleRotateWebhook = async (id: number) => {
+    if (!token) return;
+    try {
+      const res = await rotateWebhookEndpointSecret(token, id);
+      setLatestWebhookSecret(res.webhook.secret);
       await loadPortal(token);
     } catch (err) { setError(formatApiError(err)); }
   };
@@ -605,6 +617,18 @@ export function DeveloperPortalPage() {
                   </form>
                 </div>
 
+                {latestWebhookSecret && (
+                  <div className="alert alert--warning">
+                    <div>
+                      <strong>{t.keys.warning}</strong>
+                      <code className="alert__code">{latestWebhookSecret}</code>
+                    </div>
+                    <button className="dev-code-box__copy" onClick={() => handleCopy(latestWebhookSecret, "latest-webhook")}>
+                      {copiedId === "latest-webhook" ? t.common.copied : t.common.copy}
+                    </button>
+                  </div>
+                )}
+
                 <div className="dev-resource-list">
                   {webhooks.map(hook => (
                     <div key={hook.id} className="dev-resource-card dev-resource-card--column">
@@ -614,16 +638,10 @@ export function DeveloperPortalPage() {
                           <code className="dev-resource-card__url">{hook.url}</code>
                           <div className="dev-resource-card__meta-extra">{t.common.environment}: {hook.environment}</div>
                         </div>
-                        <button className="dev-btn dev-btn--danger" onClick={() => handleDeleteWebhook(hook.id)}>{t.common.delete}</button>
-                      </div>
-                      <div className="dev-card dev-card--secret-box">
-                        <div>
-                          <span className="dev-card__secret-label">{t.webhooks.secret}</span>
-                          <code className="dev-card__secret-code">{hook.secret}</code>
+                        <div className="dev-resource-card__actions">
+                          <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => handleRotateWebhook(hook.id)}>{t.webhooks.rotate}</button>
+                          <button className="dev-btn dev-btn--danger" onClick={() => handleDeleteWebhook(hook.id)}>{t.common.delete}</button>
                         </div>
-                        <button className="dev-code-box__copy" onClick={() => handleCopy(hook.secret, `hook-${hook.id}`)}>
-                          {copiedId === `hook-${hook.id}` ? t.common.copied : t.common.copy}
-                        </button>
                       </div>
                     </div>
                   ))}

@@ -191,6 +191,7 @@ export function SellerConsolePage() {
   const [keyForm, setKeyForm] = useState({ label: "" });
   const [hookForm, setHookForm] = useState({ label: "", url: "" });
   const [latestKeySecret, setLatestKeySecret] = useState("");
+  const [latestWebhookSecret, setLatestWebhookSecret] = useState("");
   const [billingForm, setBillingForm] = useState<{ plan: string; network: Network; optionKeys: string[] }>({ plan: "merchant", network: "TRON", optionKeys: ["TRON:USDT"] });
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [emailForm, setEmailForm] = useState("");
@@ -400,7 +401,8 @@ export function SellerConsolePage() {
   async function onRotateHook(id: number) {
     if (!session) return;
     try {
-      await rotateWebhookEndpointSecret(session.token, id);
+      const res = await rotateWebhookEndpointSecret(session.token, id);
+      setLatestWebhookSecret(res.webhook.secret);
       void loadSession(session.token, { silent: true });
     } catch (err) { setError(formatApiError(err)); }
   }
@@ -484,7 +486,8 @@ export function SellerConsolePage() {
     e.preventDefault();
     if (!session) return;
     try {
-      await createWebhookEndpoint(session.token, { ...hookForm, environment });
+      const res = await createWebhookEndpoint(session.token, { ...hookForm, environment });
+      setLatestWebhookSecret(res.webhook.secret);
       setHookForm({ label: "", url: "" });
       void loadSession(session.token, { silent: true });
     } catch (err) { setError(formatApiError(err)); }
@@ -1460,6 +1463,18 @@ export function SellerConsolePage() {
                         </div>
                       </form>
 
+                      {latestWebhookSecret && (
+                        <div className="alert alert--warning">
+                          <div>
+                            <strong>{t.developer.warning}</strong>
+                            <code className="alert__code">{latestWebhookSecret}</code>
+                          </div>
+                          <button className="dev-code-box__copy" onClick={() => handleCopy(latestWebhookSecret, "latest-webhook")}>
+                            {copiedId === "latest-webhook" ? t.common.copied : t.common.copy}
+                          </button>
+                        </div>
+                      )}
+
                       <div className="dev-resource-list dev-resource-list--margin">
                         {filteredHooks.length === 0 ? (
                           <div className="dev-portal__empty-state">{t.developer.noEndpoints}</div>
@@ -1474,17 +1489,6 @@ export function SellerConsolePage() {
                                 <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void onRotateHook(hook.id)}>{t.developer.rotate}</button>
                                 <button className="dev-btn dev-btn--danger dev-btn--compact" onClick={() => void onDeleteHook(hook.id)}>{t.common.delete}</button>
                               </div>
-                            </div>
-                            <div className="dev-card dev-card--secret-box console-spotlight-card" onMouseMove={handleMouseMove}>
-                              <div className="console-card-spotlight" />
-                              <div className="console-dogfood-glow" />
-                              <div>
-                                <span className="dev-card__secret-label">{t.developer.hookSecret}</span>
-                                <code className="dev-card__secret-code">{hook.secret}</code>
-                              </div>
-                              <button className="dev-code-box__copy" onClick={() => handleCopy(hook.secret, `hook-${hook.id}`)}>
-                                {copiedId === `hook-${hook.id}` ? t.common.copied : t.common.copy}
-                              </button>
                             </div>
                           </div>
                         ))}

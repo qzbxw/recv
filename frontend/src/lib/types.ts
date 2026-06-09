@@ -193,12 +193,16 @@ export type WebhookEndpoint = {
   workspace_id: number;
   label: string;
   url: string;
-  secret: string;
+  secret?: string;
   environment: Environment;
   is_active: boolean;
   last_delivery_at: string | null;
   last_success_at: string | null;
   created_at: string;
+};
+
+export type WebhookEndpointWithSecret = WebhookEndpoint & {
+  secret: string;
 };
 
 export type WalletListResponse = {
