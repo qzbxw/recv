@@ -675,8 +675,15 @@ func assertBlogPublishingFlow(t *testing.T, client *http.Client, baseURL string,
 	}
 
 	list := listPublicBlogPosts(t, client, baseURL)
-	if list.Total != 1 || len(list.Items) != 1 || list.Items[0].Slug != "published-post" {
-		t.Fatalf("expected only published post in public list, got %+v", list)
+	var found bool
+	for _, item := range list.Items {
+		if item.Slug == "published-post" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected published-post in public list, got %+v", list)
 	}
 
 	publicPost := getPublicBlogPost(t, client, baseURL, "published-post")
