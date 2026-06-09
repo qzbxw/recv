@@ -97,24 +97,26 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
         </header>
 
         {post.cover_image_url && (
-          <div className="container mx-auto px-6 max-w-4xl mb-12 lend-reveal--1" ref={reveal}>
-            <img src={post.cover_image_url} alt={post.title} className="w-full rounded-3xl border border-white/10" />
+          <div className="container mx-auto px-6 max-w-4xl mb-12" ref={reveal}>
+            <img src={post.cover_image_url} alt={post.title} className="lend-reveal--1 w-full rounded-3xl border border-white/10" />
           </div>
         )}
 
         {/* BODY */}
-        <div className="container mx-auto px-6 max-w-3xl pb-24 lend-reveal--1" ref={reveal}>
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{post.content_md}</ReactMarkdown>
+        <div className="container mx-auto px-6 max-w-3xl pb-24" ref={reveal}>
+          <div className="lend-reveal--1">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{post.content_md}</ReactMarkdown>
 
-          <div className="mt-16 pt-10 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <Link href={`/${language}/blog`} className="lend-secondary px-6 py-3 rounded-xl group/back flex items-center gap-2">
-              <span className="group-hover/back:-translate-x-1 transition-transform duration-500">←</span>
-              {language === "ru" ? "Все материалы" : "All articles"}
-            </Link>
-            <Link href="/app/auth" className="lend-primary px-8 py-3 rounded-xl flex items-center gap-2 group/cta">
-              {language === "ru" ? "Начать с recv" : "Start with recv"}
-              <span className="group-hover/cta:translate-x-1.5 transition-transform duration-500">→</span>
-            </Link>
+            <div className="mt-16 pt-10 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <Link href={`/${language}/blog`} className="lend-secondary px-6 py-3 rounded-xl group/back flex items-center gap-2">
+                <span className="group-hover/back:-translate-x-1 transition-transform duration-500">←</span>
+                {language === "ru" ? "Все материалы" : "All articles"}
+              </Link>
+              <Link href="/app/auth" className="lend-primary px-8 py-3 rounded-xl flex items-center gap-2 group/cta">
+                {language === "ru" ? "Начать с recv" : "Start with recv"}
+                <span className="group-hover/cta:translate-x-1.5 transition-transform duration-500">→</span>
+              </Link>
+            </div>
           </div>
         </div>
       </article>
