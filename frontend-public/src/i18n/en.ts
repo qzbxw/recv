@@ -7,7 +7,7 @@ const en = {
         "Engineered for Telegram Shops, SaaS Billing, and Digital Commerce.",
       primary: "Launch Console",
       secondary: "View Docs",
-      badges: ["Direct-to-Wallet", "0% Turnover Fees", "Non-Custodial API", "No KYC Required"],
+      badges: ["Direct-to-Wallet", "0% Turnover Fees", "Non-Custodial API", "Signed Webhooks"],
     },
     heroPanel: {
       eyebrow: "Infrastructure",
@@ -283,11 +283,11 @@ const en = {
         items: [
           {
             legacy: "Manual wallet address copying leads to errors and lost funds.",
-            recv: "QR-native flow and one-tap deep linking ensures 100% accuracy."
+            recv: "QR-native flow and wallet deep links reduce address-copying errors."
           },
           {
             legacy: "Customers get stuck on 'waiting' screens for minutes.",
-            recv: "Sub-second mempool monitoring provides instant visual feedback."
+            recv: "Live invoice status provides feedback as supported networks are observed."
           },
           {
             legacy: "Underpayments cause support nightmares and order loss.",
@@ -309,11 +309,11 @@ const en = {
       deepDive: [
         {
           title: "Intelligent Underpayment Resolution",
-          body: "Underpayments are the #1 cause of support tickets in crypto. recv solves this by detecting the partial amount, instantly updating the checkout UI with the remaining balance, and allowing the customer to complete the transaction without starting over. No more lost orders, no more manual refunds."
+          body: "recv classifies underpayments and can show the remaining balance so the customer can complete payment without creating a new order. Merchant policy still determines fulfillment and refunds."
         },
         {
           title: "Native Telegram Integration",
-          body: "Our checkout UI is built with a mobile-first philosophy, making it a perfect fit for Telegram-native commerce. It loads instantly inside Telegram Web Apps or mobile browsers, leveraging deep-link acceleration to guide buyers directly into their preferred wallet apps for swift confirmation."
+          body: "Our checkout UI is designed for mobile browsers and Telegram Mini Apps. Wallet deep links can guide buyers to a compatible wallet while confirmation timing remains dependent on the selected network."
         },
         {
           title: "Cross-Chain Unified UI",
@@ -321,10 +321,10 @@ const en = {
         }
       ],
       stats: [
-        { value: "1.2s", label: "Avg Detection" },
+        { value: "5", label: "Core Networks" },
         { value: "0%", label: "Turnover Fee" },
-        { value: "99.9%", label: "Node Uptime" },
-        { value: "<5ms", label: "UI Latency" }
+        { value: "2", label: "Locales" },
+        { value: "HMAC", label: "Webhook Signing" }
       ],
       finalTitle: "Ready to optimize your checkout conversion?",
       seo: "recv Checkout is a non-custodial payment gateway engineered for high-conversion cryptocurrency processing. Designed to eliminate friction in digital commerce, the UI supports direct-to-wallet transactions across TON, TRON (TRC-20), Base, and BSC-compatible networks. Core functionality includes dynamic exchange rate calculation, deep linking to major mobile wallets, and intelligent underpayment resolution to recover partial transactions. By bypassing intermediary custodians, merchants retain full control of their liquidity while providing customers with a seamless, multi-chain payment experience without turnover fees."
@@ -332,7 +332,7 @@ const en = {
     apiProduct: {
       metadata: {
         title: "Unified Blockchain API | Webhooks & Monitoring for TON, TRON, EVM",
-        description: "High-performance crypto infrastructure for developers. One API for TON, TRC-20, Base and BSC with 100% webhook delivery and HMAC security.",
+        description: "Crypto payment infrastructure for developers. One API for TON, TRC-20, Base and BSC with retryable webhook delivery and HMAC signatures.",
         keywords: "crypto payment api, blockchain monitoring api, webhooks for crypto, TON developer api, TRON trc20 api, automated crypto payments, unified blockchain api"
       },
       kicker: "DEVELOPER FIRST",
@@ -348,15 +348,15 @@ const en = {
         items: [
           {
             legacy: "Managing multiple RPC nodes and brittle explorers.",
-            recv: "One unified API for 7+ chains with standardized JSON."
+            recv: "One unified API for supported networks with standardized JSON."
           },
           {
             legacy: "Webhooks that fail without retry logic or signatures.",
-            recv: "Guaranteed delivery with exponential backoff and HMAC."
+            recv: "Queued retries with plan-specific limits and HMAC signatures."
           },
           {
             legacy: "Duplicate processing of the same transaction.",
-            recv: "Built-in idempotency keys for exactly-once execution."
+            recv: "Idempotency controls help prevent duplicate processing."
           }
         ]
       },
@@ -373,8 +373,8 @@ const en = {
       },
       deepDive: [
         {
-          title: "Guaranteed Webhook Delivery",
-          body: "Our webhook engine uses a persistent queue. If your server is down, we retry with exponential backoff for up to 24 hours. Every payload is cryptographically signed, ensuring that your backend only processes verified events and never misses a confirmation."
+          title: "Retryable Webhook Delivery",
+          body: "Our webhook engine uses a persistent queue and plan-specific retry budgets. Every payload is signed with HMAC; your backend must verify the signature and timestamp, acknowledge quickly, and process events idempotently."
         },
         {
           title: "Unified Chain Abstraction",
@@ -382,17 +382,17 @@ const en = {
         },
         {
           title: "High-Performance Watchers",
-          body: "Our infrastructure bypasses public RPC bottlenecks by utilizing a private cluster of dedicated nodes. This allows us to detect mempool events faster than 95% of standard block explorers, giving your application a truly real-time, reactive feel."
+          body: "recv observes supported networks and updates invoice status after detection and required confirmations. Timing depends on the selected network and the availability of its RPC infrastructure."
         }
       ],
       stats: [
-        { value: "50ms", label: "API Response" },
-        { value: "100%", label: "Webhook Delivery" },
-        { value: "7+", label: "Chains" },
-        { value: "128-bit", label: "Encryption" }
+        { value: "REST", label: "API Protocol" },
+        { value: "HMAC", label: "Webhook Signing" },
+        { value: "Retry", label: "Delivery Queue" },
+        { value: "Keys", label: "Idempotency" }
       ],
       finalTitle: "Build your next-gen payment flow today.",
-      seo: "The recv Unified API provides robust infrastructure for developers integrating blockchain payments into B2B software, gaming platforms, and business applications. Instead of managing disparate RPC nodes, development teams utilize a single RESTful interface to interact with multiple protocols including TRON, TON, and Base. The system prioritizes transactional integrity via native idempotency keys to prevent duplicate processing, while the webhook engine ensures guaranteed delivery utilizing exponential backoff and HMAC-SHA256 payload signatures for secure, asynchronous event monitoring."
+      seo: "The recv Unified API provides infrastructure for integrating blockchain payments into B2B software, gaming platforms, and business applications. Development teams use one REST interface for supported networks, idempotency controls for duplicate processing, and retryable webhook delivery with HMAC-SHA256 signatures."
     },
     invoicingProduct: {
       metadata: {
@@ -563,7 +563,7 @@ const en = {
       title: "Universal Blockchain Connectivity",
       description: "We bridge the gap between businesses and decentralized liquidity. recv supports all major protocols with a single integration.",
       kicker: "NETWORKS",
-      explanation: "All networks operate on a direct-to-wallet basis. We never touch your funds, ensuring maximum security and zero counterparty risk."
+      explanation: "All supported networks operate on a direct-to-wallet basis. recv does not hold merchant funds; merchants remain responsible for wallet security and operations."
     },
     networkPages: {
       ton: {
@@ -1222,7 +1222,7 @@ const en = {
         name: "SaaS Billing",
         metadata: {
           title: "Crypto Billing Infrastructure for SaaS Platforms",
-          description: "Integrate reliable crypto billing for SaaS subscriptions. Support for TON, TRON, and EVM with 100% webhook delivery and HMAC security.",
+          description: "Integrate crypto billing for SaaS subscriptions with TON, TRON, and EVM payment options, retryable webhooks, and HMAC signatures.",
         },
         kicker: "SAAS INFRASTRUCTURE",
         hero: {
@@ -1256,7 +1256,7 @@ const en = {
           product: {
             label: "Product",
             title: "API & Webhooks",
-            body: "Idempotent invoice creation and guaranteed event delivery for production-grade billing systems.",
+            body: "Idempotent invoice creation and a retry queue for billing-system events.",
             href: "/products/api",
             linkLabel: "Read API Docs",
           },
@@ -1488,7 +1488,7 @@ const en = {
     },
     compareHub: {
       title: "The Smarter Way to Process Crypto",
-      description: "Compare recv to manual verification and custodial gateways: direct-to-wallet settlement, zero turnover fees, signed webhooks, and seven supported networks.",
+      description: "Compare recv to manual verification and custodial gateways: direct-to-wallet settlement, zero turnover fees, signed webhooks, and supported payment networks.",
       kicker: "COMPARE",
       items: [
         { title: "recv vs Manual Verification", slug: "recv-vs-manual", body: "Discover how automation eliminates human error and scales your operations." },
@@ -1510,24 +1510,24 @@ const en = {
           {
             title: "Scalability",
             competitor: "Impossible to scale. Every transaction requires manual verification and manual accounting.",
-            recv: "Fully automated. Handle thousands of invoices simultaneously with real-time monitoring and webhooks."
+            recv: "Automated invoice tracking and webhooks reduce per-payment manual work."
           },
           {
             title: "Accuracy",
             competitor: "High risk of human error. Typos in wallet addresses, missed payments, or wrong network transfers.",
-            recv: "Zero errors. Automated matching of exact amounts and unique payment identifiers."
+            recv: "Automated matching reduces manual attribution errors while exception states remain reviewable."
           },
           {
             title: "Customer UX",
             competitor: "Slow and frustrating. Customers wait hours for manual confirmation and product delivery.",
-            recv: "Instant gratification. Real-time detection leads to immediate order fulfillment."
+            recv: "Verified invoice status can trigger automated fulfillment according to merchant policy."
           }
         ]
       },
       "recv-vs-custodial": {
         name: "Custodial Gateways",
         title: "recv vs Custodial Gateways: Non-Custodial Advantage",
-        description: "Why pay 1-3% commission and risk your funds? Compare recv's non-custodial infrastructure with traditional payment processors.",
+        description: "Compare recv's direct-to-wallet infrastructure and subscription pricing with custodial payment processors.",
         kicker: "SOVEREIGNTY",
         points: [
           {
@@ -1537,7 +1537,7 @@ const en = {
           },
           {
             title: "Fee Structure",
-            competitor: "Variable fees (1% to 3%). Your costs grow as your business scales, eating into margins.",
+            competitor: "Pricing may include percentage-based, settlement, or conversion charges; current terms must be checked with the provider.",
             recv: "Fixed subscription. Zero turnover fees. Predictable costs regardless of your volume."
           },
           {
@@ -1560,7 +1560,7 @@ const en = {
           },
           {
             title: "Commission",
-            competitor: "Starts at 0.5% + network fees. High volume means high absolute costs.",
+            competitor: "Pricing and network charges follow the provider's current published terms.",
             recv: "0% commission. Only pay your fixed subscription and standard network gas fees."
           },
           {
@@ -1573,46 +1573,46 @@ const en = {
       "coinbase-commerce": {
         name: "Coinbase Commerce",
         title: "recv vs Coinbase Commerce: Non-Custodial vs Hosted Balance",
-        description: "Coinbase Commerce holds your funds in a hosted account. recv sends every payment directly to your own wallet the moment it confirms on-chain — no withdrawal requests, no third-party risk.",
+        description: "Compare recv's direct-to-wallet flow with Coinbase Commerce using the providers' current custody, settlement, network, and pricing documentation.",
         kicker: "CUSTODY",
         points: [
           {
             title: "Fund Custody",
-            competitor: "Coinbase holds balances on your behalf. Withdrawals require manual requests and are subject to Coinbase policy and potential account freezes.",
+            competitor: "Custody and settlement behavior follows the current Coinbase Commerce product configuration and terms.",
             recv: "Pure non-custodial. Every confirmed payment goes straight to your wallet address. recv never touches your funds."
           },
           {
             title: "Fee Model",
-            competitor: "1% transaction fee on all payments. At scale, this becomes a significant recurring cost tied directly to your revenue.",
+            competitor: "Transaction pricing follows Coinbase Commerce's current published terms.",
             recv: "0% turnover fee. Flat monthly subscription only. Your gross margin stays intact regardless of payment volume."
           },
           {
             title: "Network Flexibility",
-            competitor: "Limited to networks supported by Coinbase. No TON, limited TRON support, no Telegram-native payment flows.",
-            recv: "Seven networks including TON, TRON, Solana, Base, Arbitrum, and BSC — with first-class Telegram Mini App support."
+            competitor: "Available networks and assets follow the current Coinbase Commerce documentation.",
+            recv: "recv documents its supported network and asset combinations and provides checkout suitable for Telegram Mini Apps."
           }
         ]
       },
       "bitpay": {
         name: "BitPay",
         title: "recv vs BitPay: Fixed Subscription vs Percentage Fees",
-        description: "BitPay charges 1% on every transaction. recv replaces that with a flat monthly subscription and 0% on volume — predictable costs that don't scale against you.",
+        description: "Compare recv subscription pricing and direct settlement with BitPay using current official pricing and settlement documentation.",
         kicker: "FEES",
         points: [
           {
             title: "Cost Structure",
-            competitor: "1% transaction fee plus network settlement costs. High-volume merchants pay thousands per month in pure commissions.",
+            competitor: "Transaction and settlement pricing follows BitPay's current published terms.",
             recv: "Fixed monthly subscription. Zero percentage fees. Costs are completely decoupled from your transaction volume."
           },
           {
             title: "Settlement Speed",
-            competitor: "BitPay settles on a daily or weekly cycle to a bank account or internal wallet, adding delay and conversion risk.",
+            competitor: "Settlement methods and timing follow the merchant's BitPay configuration and current terms.",
             recv: "Atomic on-chain settlement. Funds arrive in your wallet on the same block as the customer payment."
           },
           {
             title: "Developer Experience",
             competitor: "Enterprise-focused API with strict compliance requirements, KYB processes, and limited API-only access tiers.",
-            recv: "Open API with webhooks, no-KYC onboarding, and full programmatic control. Production-ready in minutes."
+            recv: "API access, signed webhooks, and programmatic invoice controls; merchants remain responsible for applicable compliance requirements."
           }
         ]
       },
@@ -1731,8 +1731,8 @@ const en = {
         { value: "Standard", label: "Support" },
       ],
       features: [
-        { title: "Webhook Delivery", body: "Guaranteed delivery with automated retries and HMAC signatures." },
-        { title: "Real-time Monitoring", body: "Real-time transaction monitoring. Detect payments instantly." },
+        { title: "Webhook Delivery", body: "Queued delivery with automated retries and HMAC signatures." },
+        { title: "Real-time Monitoring", body: "Transaction monitoring updates invoice state as supported networks are observed." },
         { title: "Unified API v1", body: "A single interface for native TON, TON_USDT, TRON, Base, and BSC." },
         { title: "Idempotency", body: "Built-in protection against duplicate transactions at the API level." },
       ],

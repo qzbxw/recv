@@ -13,3 +13,8 @@ backend/bin
 frontend/dist
 frontend/vite.config.js
 frontend/vite.config.d.ts
+frontend-public/.lighthouseci/
+frontend-public/output/
+frontend-public/C:*
+/Универсальные SEO требования для разработки сайта (1).docx
+/Универсальные SEO требования для разработки сайта (1).docx:Zone.Identifier

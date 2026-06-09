@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -12,8 +9,7 @@ import {
   Webhook,
   Zap,
 } from "lucide-react";
-import { MarketingLayout, useReveal } from "./marketing/MarketingLayout";
-import { useUI } from "./UIProvider";
+import { MarketingLayout } from "./marketing/MarketingLayout";
 import { JsonLd } from "./JsonLd";
 import { getCopy, Locale } from "@/i18n";
 import "./marketing/plans/plans.css";
@@ -367,23 +363,13 @@ function isGradientWord(raw: string) {
   return GRADIENT_WORDS.has(clean);
 }
 
-export function ProductPageClient({ variant }: { variant: ProductVariant }) {
-  const { language } = useUI();
+export function ProductPageClient({ variant, language }: { variant: ProductVariant; language: "ru" | "en" }) {
   const fullCopy = getCopy(language);
   const product = getProduct(fullCopy, variant);
   const text = productContent[language][variant];
   const commonText = productContent[language];
-  const reveal = useReveal();
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [variant]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -433,7 +419,7 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
       <JsonLd schema={applicationSchema} />
 
       {/* Hero Section */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -478,14 +464,13 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 md:py-16" ref={reveal}>
+      <section className="py-12 md:py-16" data-reveal>
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lend-reveal--2">
             {product.stats.map((stat) => (
               <article
                 key={stat.label}
                 className="lend-card lend-spotlight-card group relative text-center flex flex-col items-center justify-center p-8 transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <span className="relative z-10 text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase mb-2 block">{stat.label}</span>
@@ -497,7 +482,7 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
       </section>
 
       {/* Overview Section */}
-      <section className="py-20 md:py-28" ref={reveal}>
+      <section className="py-20 md:py-28" data-reveal>
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto flex flex-col items-center mb-16 md:mb-24">
             <div className="lend-section-copy lend-reveal--1">
@@ -507,16 +492,16 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
             </div>
           </div>
           <div className="lend-reveal--2">
-            {variant === "checkoutProduct" && <CheckoutDetails text={text as CheckoutText} handleMouseMove={handleMouseMove} />}
-            {variant === "apiProduct" && <ApiDetails text={text as ApiText} handleMouseMove={handleMouseMove} />}
-            {variant === "invoicingProduct" && <InvoicingDetails text={text as InvoicingText} handleMouseMove={handleMouseMove} />}
-            {variant === "mcpProduct" && <McpDetails text={text as McpText} handleMouseMove={handleMouseMove} />}
+            {variant === "checkoutProduct" && <CheckoutDetails text={text as CheckoutText} />}
+            {variant === "apiProduct" && <ApiDetails text={text as ApiText} />}
+            {variant === "invoicingProduct" && <InvoicingDetails text={text as InvoicingText} />}
+            {variant === "mcpProduct" && <McpDetails text={text as McpText} />}
           </div>
         </div>
       </section>
 
       {/* Comparison Section */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6 max-w-4xl">
           <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
             <span className="lend-section-kicker justify-center mx-auto">{product.comparison.title}</span>
@@ -529,7 +514,6 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
               <article
                 key={item.legacy}
                 className="lend-card lend-spotlight-card group relative flex flex-col md:flex-row gap-6 md:gap-12 p-8 md:p-10 transition-all duration-500 hover:scale-[1.005]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="flex-1 relative z-10">
@@ -547,7 +531,7 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
       </section>
 
       {/* Capabilities Section */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
             <span className="lend-section-kicker justify-center mx-auto">{language === "ru" ? "ВОЗМОЖНОСТИ" : "CAPABILITIES"}</span>
@@ -558,7 +542,6 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
               <article
                 key={item.title}
                 className="lend-card lend-spotlight-card group relative p-8 flex flex-col min-h-[220px] transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10">
@@ -572,18 +555,17 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
         </div>
       </section>
 
-      {variant === "apiProduct" && <ApiCodeSection text={text as ApiText} reveal={reveal} handleMouseMove={handleMouseMove} />}
-      {variant === "mcpProduct" && <McpConfigSection text={text as McpText} reveal={reveal} handleMouseMove={handleMouseMove} />}
+      {variant === "apiProduct" && <ApiCodeSection text={text as ApiText} />}
+      {variant === "mcpProduct" && <McpConfigSection text={text as McpText} />}
 
       {/* Deep Dive Cards */}
-      <section className="py-20 md:py-28" ref={reveal}>
+      <section className="py-20 md:py-28" data-reveal>
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lend-reveal--2">
             {product.deepDive.map((item, index) => (
               <article
                 key={item.title}
                 className="lend-card lend-spotlight-card group relative p-8 flex flex-col transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10">
@@ -598,7 +580,7 @@ export function ProductPageClient({ variant }: { variant: ProductVariant }) {
       </section>
 
       {/* Final CTA */}
-      <section className="py-32 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+      <section className="py-32 relative overflow-hidden lend-spotlight-card group" data-reveal>
         <div className="lend-card-spotlight opacity-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
 
@@ -691,7 +673,7 @@ function SecondaryCtas({
   );
 }
 
-function CheckoutDetails({ text, handleMouseMove }: { text: CheckoutText; handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void }) {
+function CheckoutDetails({ text }: { text: CheckoutText }) {
   return (
     <div className="space-y-20">
       {/* Horizontal Flow */}
@@ -711,7 +693,7 @@ function CheckoutDetails({ text, handleMouseMove }: { text: CheckoutText; handle
 
       <div className="max-w-3xl mx-auto pt-10">
         {/* Payment States */}
-        <div className="lend-card lend-spotlight-card group relative p-8 md:p-10 transition-all duration-500" onMouseMove={handleMouseMove}>
+        <div className="lend-card lend-spotlight-card group relative p-8 md:p-10 transition-all duration-500">
           <div className="lend-card-spotlight" />
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-8">
@@ -743,7 +725,7 @@ function CheckoutDetails({ text, handleMouseMove }: { text: CheckoutText; handle
   );
 }
 
-function ApiDetails({ text }: { text: ApiText; handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void }) {
+function ApiDetails({ text }: { text: ApiText }) {
   const icons = [Code2, Webhook, KeyRound, ShieldCheck, RefreshCw];
 
   return (
@@ -770,7 +752,7 @@ function ApiDetails({ text }: { text: ApiText; handleMouseMove: (e: React.MouseE
   );
 }
 
-function InvoicingDetails({ text, handleMouseMove }: { text: InvoicingText; handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void }) {
+function InvoicingDetails({ text }: { text: InvoicingText }) {
   return (
     <div className="space-y-20">
       {/* Horizontal Lifecycle */}
@@ -789,7 +771,7 @@ function InvoicingDetails({ text, handleMouseMove }: { text: InvoicingText; hand
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto pt-10">
-        <article className="lend-card lend-spotlight-card group relative p-8 border-white/10" onMouseMove={handleMouseMove}>
+        <article className="lend-card lend-spotlight-card group relative p-8 border-white/10">
           <div className="lend-card-spotlight" />
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-6">
@@ -806,7 +788,7 @@ function InvoicingDetails({ text, handleMouseMove }: { text: InvoicingText; hand
             </ul>
           </div>
         </article>
-        <article className="lend-card lend-spotlight-card group relative p-8 border-white/10" onMouseMove={handleMouseMove}>
+        <article className="lend-card lend-spotlight-card group relative p-8 border-white/10">
           <div className="lend-card-spotlight" />
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-6">
@@ -830,22 +812,18 @@ function InvoicingDetails({ text, handleMouseMove }: { text: InvoicingText; hand
 
 function ApiCodeSection({
   text,
-  reveal,
-  handleMouseMove,
 }: {
   text: ApiText;
-  reveal: (el: HTMLElement | null) => void;
-  handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   return (
-    <section className="py-20 md:py-28" ref={reveal}>
+    <section className="py-20 md:py-28" data-reveal>
       <div className="container mx-auto px-6">
         <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
           <span className="lend-section-kicker justify-center mx-auto">API</span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-3">{text.codeTitle}</h2>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lend-reveal--2">
-          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10" onMouseMove={handleMouseMove}>
+          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10">
             <div className="lend-card-spotlight" />
             <div className="relative z-10">
               <div className="bg-white/[0.03] px-5 py-3 border-b border-white/[0.06] flex justify-between items-center">
@@ -857,7 +835,7 @@ function ApiCodeSection({
               </pre>
             </div>
           </article>
-          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10" onMouseMove={handleMouseMove}>
+          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10">
             <div className="lend-card-spotlight" />
             <div className="relative z-10">
               <div className="bg-white/[0.03] px-5 py-3 border-b border-white/[0.06] flex justify-between items-center">
@@ -877,10 +855,8 @@ function ApiCodeSection({
 
 function McpDetails({
   text,
-  handleMouseMove,
 }: {
   text: McpText;
-  handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   return (
     <div className="space-y-12">
@@ -892,7 +868,6 @@ function McpDetails({
           <article
             key={tool.name}
             className="lend-card lend-spotlight-card group relative p-6 transition-all duration-500 hover:scale-[1.02] border-white/10"
-            onMouseMove={handleMouseMove}
           >
             <div className="lend-card-spotlight" />
             <div className="relative z-10 flex flex-col h-full justify-between">
@@ -910,22 +885,18 @@ function McpDetails({
 
 function McpConfigSection({
   text,
-  reveal,
-  handleMouseMove,
 }: {
   text: McpText;
-  reveal: (el: HTMLElement | null) => void;
-  handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   return (
-    <section className="py-20 md:py-28" ref={reveal}>
+    <section className="py-20 md:py-28" data-reveal>
       <div className="container mx-auto px-6">
         <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
           <span className="lend-section-kicker justify-center mx-auto">MCP CONFIG</span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-3">{text.configTitle}</h2>
         </div>
         <div className="max-w-3xl mx-auto lend-reveal--2">
-          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10" onMouseMove={handleMouseMove}>
+          <article className="lend-card lend-spotlight-card group relative p-0 overflow-hidden border-white/10">
             <div className="lend-card-spotlight" />
             <div className="relative z-10">
               <div className="bg-white/[0.03] px-5 py-3 border-b border-white/[0.06] flex justify-between items-center">

@@ -22,6 +22,13 @@ type httpStore interface {
 	CreateAPIKey(ctx context.Context, workspaceID int64, label string, prefix string, tokenHash string, scopes []string, mode string) (store.APIKey, error)
 	CreateAdminInternalComment(ctx context.Context, targetType string, targetID string, body string, author string) (store.AdminInternalComment, error)
 	CreateBlogPost(ctx context.Context, post store.BlogPost) (store.BlogPost, error)
+	CreateMedia(ctx context.Context, m store.Media) (store.Media, error)
+	GetMediaByID(ctx context.Context, id int64) (store.Media, error)
+	GetMediaByFileNames(ctx context.Context, fileNames []string) (map[string]store.Media, error)
+	ListMedia(ctx context.Context, page, pageSize int) ([]store.Media, int, error)
+	UpdateMediaAlt(ctx context.Context, id int64, altText string) (store.Media, error)
+	DeleteMedia(ctx context.Context, id int64) error
+	CountMediaReferences(ctx context.Context, mediaURL string) (int, error)
 	CreateIdempotencyRecord(ctx context.Context, workspaceID int64, apiKeyID int64, method string, path string, key string, requestHash string) (store.IdempotencyRecord, error)
 	CreateWallet(ctx context.Context, workspaceID int64, network store.Network, address string, env ...store.Environment) (store.Wallet, error)
 	CreateWebhookEndpoint(ctx context.Context, workspaceID int64, label string, endpointURL string, secret string, environment string) (store.WebhookEndpoint, error)
@@ -33,8 +40,10 @@ type httpStore interface {
 	GetAdminAnalytics(ctx context.Context, from time.Time, to time.Time, groupBy string) (store.AdminAnalytics, error)
 	GetAdminNotificationHealth(ctx context.Context) (store.AdminNotificationHealth, error)
 	GetAdminOverview(ctx context.Context) (store.AdminOverview, error)
+	GetWebVitalsReport(ctx context.Context, from time.Time, to time.Time) (store.WebVitalsReport, error)
 	GetBlogPostBySlug(ctx context.Context, slug string, locale string) (store.BlogPost, error)
 	ListPublishedBlogLocalesBySlug(ctx context.Context, slug string) ([]string, error)
+	ListPublishedBlogLocalesBySlugs(ctx context.Context, slugs []string) (map[string][]string, error)
 	GetIdempotencyRecord(ctx context.Context, workspaceID int64, apiKeyID int64, method string, path string, key string) (store.IdempotencyRecord, error)
 	GetInvoiceByID(ctx context.Context, workspaceID int64, invoiceID int64) (store.Invoice, error)
 	GetInvoiceByPublicID(ctx context.Context, publicID string) (store.Invoice, error)
@@ -51,8 +60,10 @@ type httpStore interface {
 	ListAdminWorkspaces(ctx context.Context, limit int) ([]store.AdminWorkspaceRecord, error)
 	ListBlogPosts(ctx context.Context, page, pageSize int, onlyPublished bool) ([]store.BlogPost, int, error)
 	ListPublishedBlogPosts(ctx context.Context, page, pageSize int, locale string) ([]store.BlogPost, int, error)
+	ListPublishedBlogSitemapPosts(ctx context.Context, page, pageSize int, locale string) ([]store.BlogPost, int, error)
 	ListInvoices(ctx context.Context, workspaceID int64, filter store.ListInvoicesFilter) ([]store.Invoice, int, error)
 	ListSEOTargets(ctx context.Context) ([]store.SEOTarget, error)
+	ListSEORedirects(ctx context.Context) ([]store.SEORedirect, error)
 	ListWallets(ctx context.Context, workspaceID int64) ([]store.Wallet, error)
 	ListWebhookDeliveries(ctx context.Context, workspaceID int64, limit int) ([]store.WebhookDelivery, error)
 	ListWebhookEndpoints(ctx context.Context, workspaceID int64) ([]store.WebhookEndpoint, error)
@@ -63,6 +74,11 @@ type httpStore interface {
 	RecordAPIRequest(ctx context.Context, workspaceID int64, keyID int64, method string, path string, statusCode int) error
 	RecordAdminAuditEvent(ctx context.Context, actor string, action string, targetType string, targetID string, metadata any) error
 	RecordProductEvent(ctx context.Context, input store.ProductEventInput) error
+	RecordWebVital(ctx context.Context, vital store.WebVital) error
+	CreateSEORedirect(ctx context.Context, redirect store.SEORedirect) (store.SEORedirect, error)
+	UpdateSEORedirect(ctx context.Context, id int64, redirect store.SEORedirect) (store.SEORedirect, error)
+	DeleteSEORedirect(ctx context.Context, id int64) error
+	ResolveSEORedirect(ctx context.Context, sourcePath string) (store.SEORedirect, error)
 	RefreshAdminInvoiceStatus(ctx context.Context, invoiceID int64) (store.Invoice, string, error)
 	RemoveWorkspaceMember(ctx context.Context, workspaceID, userID int64) error
 	ResendAdminWebhookDelivery(ctx context.Context, deliveryID int64) (store.WebhookDelivery, error)

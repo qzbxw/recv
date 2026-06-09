@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { HubPageClient } from "@/components/HubPageClient";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { JsonLd } from "@/components/JsonLd";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -14,7 +15,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     title: `${copy.marketing.productsHub.title} | recv`,
-    description: copy.marketing.productsHub.description,
+    description: metadataDescription(locale, copy.marketing.productsHub.description),
     keywords: locale === "ru"
       ? "крипто-чекаут, API платежей, выставление счётов, крипто-инвойсинг"
       : "crypto checkout, payment api, crypto invoicing, webhook payments",
@@ -24,7 +25,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     openGraph: {
       title: copy.marketing.productsHub.title,
-      description: copy.marketing.productsHub.description,
+      images: socialImages(locale, copy.marketing.productsHub.title, locale === "ru" ? "Продукты" : "Products"),
+      description: metadataDescription(locale, copy.marketing.productsHub.description),
     },
   };
 }
@@ -84,6 +86,7 @@ export default async function ProductsHubPage(props: Props) {
       <JsonLd schema={siteListSchema} />
       <HubPageClient
         language={locale}
+        path="/products"
         kicker={hub.kicker}
         title={hub.title}
         description={hub.description}

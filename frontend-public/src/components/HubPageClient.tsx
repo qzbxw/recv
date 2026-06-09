@@ -1,7 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
 export type HubCard = {
   title: string;
@@ -23,6 +22,7 @@ export type HubPageProps = {
   finalPrimary: string;
   finalSecondaryLabel: string;
   finalSecondaryHref: string;
+  path: string;
 };
 
 // Keywords that get gradient treatment in hub hero titles
@@ -38,22 +38,22 @@ function isGradient(word: string) {
 
 export function HubPageClient({
   language, kicker, title, description, cards,
-  finalTitle, finalBody, finalPrimary, finalSecondaryLabel, finalSecondaryHref,
+  finalTitle, finalBody, finalPrimary, finalSecondaryLabel, finalSecondaryHref, path,
 }: HubPageProps) {
-  const reveal = useReveal();
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   const gridCols = cards.length % 3 === 0 ? "lg:grid-cols-3" : "lg:grid-cols-2";
 
   return (
     <MarketingLayout language={language}>
+      <BreadcrumbJsonLd
+        items={[
+          { name: language === "ru" ? "Главная" : "Home", href: `/${language}` },
+          { name: kicker, href: `/${language}${path}` },
+        ]}
+      />
       {/* HERO */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -91,7 +91,7 @@ export function HubPageClient({
       </section>
 
       {/* CARDS GRID */}
-      <section className="py-20 md:py-28" ref={reveal}>
+      <section className="py-20 md:py-28" data-reveal>
         <div className="container mx-auto px-6">
           <div className={`grid grid-cols-1 md:grid-cols-2 ${gridCols} gap-6 lend-reveal--2`}>
             {cards.map((card, idx) => (
@@ -99,7 +99,6 @@ export function HubPageClient({
                 key={card.slug}
                 href={card.href}
                 className="lend-card lend-spotlight-card group relative p-10 flex flex-col justify-between min-h-[280px] transition-all duration-700 ease-in-out hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="lend-dogfood-glow" />
@@ -113,7 +112,7 @@ export function HubPageClient({
                   <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 mb-6 block uppercase">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
-                  <h3 className="text-xl md:text-2xl font-bold mb-4 tracking-tight group-hover:text-white transition-colors">{card.title}</h3>
+                  <h2 className="text-xl md:text-2xl font-bold mb-4 tracking-tight group-hover:text-white transition-colors">{card.title}</h2>
                   <p className="opacity-50 text-sm md:text-base leading-relaxed group-hover:opacity-75 transition-opacity flex-1">{card.body}</p>
                   <span className="mt-8 text-xs font-bold tracking-[0.15em] uppercase text-accent/50 group-hover:text-accent transition-colors flex items-center gap-2">
                     {card.linkLabel ?? (language === "ru" ? "Подробнее" : "Learn more")}
@@ -127,7 +126,7 @@ export function HubPageClient({
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-28 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+      <section className="py-28 relative overflow-hidden lend-spotlight-card group" data-reveal>
         <div className="lend-card-spotlight opacity-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
         <div className="container mx-auto px-6 text-center relative z-10 max-w-3xl">

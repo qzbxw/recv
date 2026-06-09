@@ -1,9 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { PUBLIC_MARKETING_COPY } from "@/i18n";
-import { useUI } from "@/components/UIProvider";
 
 function StatusDot({ color = "green" }: { color?: "green" | "yellow" | "red" }) {
   const colors = {
@@ -29,10 +26,8 @@ function StatusBadge({ label, color = "green" }: { label: string; color?: "green
   );
 }
 
-export function StatusPageClient() {
-  const { language } = useUI();
+export function StatusPageClient({ language }: { language: "ru" | "en" }) {
   const copy = PUBLIC_MARKETING_COPY[language];
-  const reveal = useReveal();
 
   const services = [
     { name: copy.statusHub.coreApi, status: copy.statusHub.operational, color: "green" as const },
@@ -49,16 +44,11 @@ export function StatusPageClient() {
     { name: "BSC", href: `/${language}/networks/bsc`, status: copy.statusHub.operational, color: "green" as const },
   ];
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   return (
     <MarketingLayout language={language}>
       {/* HERO */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-emerald-500/15 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -87,7 +77,7 @@ export function StatusPageClient() {
       </section>
 
       {/* CORE SERVICES */}
-      <section className="py-12 md:py-20" ref={reveal}>
+      <section className="py-12 md:py-20" data-reveal>
         <div className="container mx-auto px-6 max-w-3xl">
           <h2 className="lend-reveal--1 text-[10px] font-bold tracking-[0.35em] uppercase text-white/30 mb-6 pl-1">
             {copy.statusHub.services}
@@ -98,7 +88,6 @@ export function StatusPageClient() {
                 key={svc.name}
                 className="lend-card lend-spotlight-card group relative flex items-center justify-between p-5 md:p-6 transition-all duration-500 hover:scale-[1.01]"
                 style={{ animationDelay: `${idx * 0.08}s` }}
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <span className="relative z-10 font-semibold text-white/85 text-sm md:text-base">{svc.name}</span>
@@ -110,7 +99,7 @@ export function StatusPageClient() {
       </section>
 
       {/* NETWORK STATUS */}
-      <section className="pb-20 md:pb-28" ref={reveal}>
+      <section className="pb-20 md:pb-28" data-reveal>
         <div className="container mx-auto px-6 max-w-3xl">
           <h2 className="lend-reveal--1 text-[10px] font-bold tracking-[0.35em] uppercase text-white/30 mb-6 pl-1">
             {copy.statusHub.networks}
@@ -122,7 +111,6 @@ export function StatusPageClient() {
                 href={net.href}
                 className="lend-card lend-spotlight-card group relative flex items-center justify-between p-5 transition-all duration-500 hover:scale-[1.02]"
                 style={{ animationDelay: `${idx * 0.06}s` }}
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10 flex items-center gap-3">
@@ -137,7 +125,7 @@ export function StatusPageClient() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-28 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+      <section className="py-28 relative overflow-hidden lend-spotlight-card group" data-reveal>
         <div className="lend-card-spotlight opacity-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/10 rounded-full blur-[200px] opacity-30 pointer-events-none animate-pulse" />
         <div className="container mx-auto px-6 text-center relative z-10 max-w-2xl">

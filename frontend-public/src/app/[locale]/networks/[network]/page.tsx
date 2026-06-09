@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { NetworkDetailClient, type NetworkDetailPageCopy } from "@/components/NetworkDetailClient";
 import { getCopy, normalizeLocale } from "@/i18n";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ network: string; locale: string }>;
@@ -43,7 +44,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     title: `${page.metadata.title} | recv`,
-    description: page.metadata.description,
+    description: metadataDescription(locale, page.metadata.description),
     alternates: {
       canonical: `/${locale}/networks/${network}`,
       languages: {
@@ -54,7 +55,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     openGraph: {
       title: page.metadata.title,
-      description: page.metadata.description,
+      images: socialImages(locale, page.metadata.title, locale === "ru" ? "Сеть" : "Network"),
+      description: metadataDescription(locale, page.metadata.description),
     },
   };
 }

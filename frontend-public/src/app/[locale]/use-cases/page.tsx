@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { HubPageClient } from "@/components/HubPageClient";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { JsonLd } from "@/components/JsonLd";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -13,8 +14,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const copy = getCopy(locale);
 
   return {
-    title: `${copy.marketing.useCasesHub.title} | recv`,
-    description: copy.marketing.useCasesHub.description,
+    title: locale === "ru" ? "Кейсы криптоплатежей для бизнеса | recv" : "Crypto Payment Use Cases for Business | recv",
+    description: metadataDescription(locale, copy.marketing.useCasesHub.description),
     keywords: locale === "ru"
       ? "кейсы использования, Telegram крипто-шоп, SaaS биллинг криптовалюты, цифровые товары"
       : "crypto payment use cases, telegram shop crypto, saas crypto billing, digital goods payments",
@@ -24,7 +25,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     openGraph: {
       title: copy.marketing.useCasesHub.title,
-      description: copy.marketing.useCasesHub.description,
+      images: socialImages(locale, copy.marketing.useCasesHub.title, locale === "ru" ? "Сценарии" : "Use cases"),
+      description: metadataDescription(locale, copy.marketing.useCasesHub.description),
     },
   };
 }
@@ -92,6 +94,7 @@ export default async function UseCasesHubPage(props: Props) {
       <JsonLd schema={siteListSchema} />
       <HubPageClient
         language={locale}
+        path="/use-cases"
         kicker={hub.kicker}
         title={hub.title}
         description={hub.description}

@@ -120,6 +120,34 @@ func (m *mockHTTPStore) CreateBlogPost(ctx context.Context, post store.BlogPost)
 	return m.real.CreateBlogPost(ctx, post)
 }
 
+func (m *mockHTTPStore) CreateMedia(ctx context.Context, media store.Media) (store.Media, error) {
+	return m.real.CreateMedia(ctx, media)
+}
+
+func (m *mockHTTPStore) GetMediaByID(ctx context.Context, id int64) (store.Media, error) {
+	return m.real.GetMediaByID(ctx, id)
+}
+
+func (m *mockHTTPStore) GetMediaByFileNames(ctx context.Context, fileNames []string) (map[string]store.Media, error) {
+	return m.real.GetMediaByFileNames(ctx, fileNames)
+}
+
+func (m *mockHTTPStore) ListMedia(ctx context.Context, page, pageSize int) ([]store.Media, int, error) {
+	return m.real.ListMedia(ctx, page, pageSize)
+}
+
+func (m *mockHTTPStore) UpdateMediaAlt(ctx context.Context, id int64, altText string) (store.Media, error) {
+	return m.real.UpdateMediaAlt(ctx, id, altText)
+}
+
+func (m *mockHTTPStore) DeleteMedia(ctx context.Context, id int64) error {
+	return m.real.DeleteMedia(ctx, id)
+}
+
+func (m *mockHTTPStore) CountMediaReferences(ctx context.Context, mediaURL string) (int, error) {
+	return m.real.CountMediaReferences(ctx, mediaURL)
+}
+
 func (m *mockHTTPStore) CreateIdempotencyRecord(ctx context.Context, workspaceID int64, apiKeyID int64, method string, path string, key string, requestHash string) (store.IdempotencyRecord, error) {
 	return m.real.CreateIdempotencyRecord(ctx, workspaceID, apiKeyID, method, path, key, requestHash)
 }
@@ -158,6 +186,10 @@ func (m *mockHTTPStore) GetAPIKeyByTokenHash(ctx context.Context, tokenHash stri
 	return m.real.GetAPIKeyByTokenHash(ctx, tokenHash)
 }
 
+func (m *mockHTTPStore) GetWebVitalsReport(ctx context.Context, from time.Time, to time.Time) (store.WebVitalsReport, error) {
+	return m.real.GetWebVitalsReport(ctx, from, to)
+}
+
 func (m *mockHTTPStore) GetAdminAnalytics(ctx context.Context, from time.Time, to time.Time, groupBy string) (store.AdminAnalytics, error) {
 	return m.real.GetAdminAnalytics(ctx, from, to, groupBy)
 }
@@ -181,6 +213,14 @@ func (m *mockHTTPStore) ListPublishedBlogLocalesBySlug(ctx context.Context, slug
 	return m.real.ListPublishedBlogLocalesBySlug(ctx, slug)
 }
 
+func (m *mockHTTPStore) ListPublishedBlogLocalesBySlugs(ctx context.Context, slugs []string) (map[string][]string, error) {
+	return m.real.ListPublishedBlogLocalesBySlugs(ctx, slugs)
+}
+
+func (m *mockHTTPStore) ListPublishedBlogSitemapPosts(ctx context.Context, page, pageSize int, locale string) ([]store.BlogPost, int, error) {
+	return m.real.ListPublishedBlogSitemapPosts(ctx, page, pageSize, locale)
+}
+
 func (m *mockHTTPStore) GetIdempotencyRecord(ctx context.Context, workspaceID int64, apiKeyID int64, method string, path string, key string) (store.IdempotencyRecord, error) {
 	return m.real.GetIdempotencyRecord(ctx, workspaceID, apiKeyID, method, path, key)
 }
@@ -199,6 +239,26 @@ func (m *mockHTTPStore) GetSystemConfig(ctx context.Context, key string) (store.
 
 func (m *mockHTTPStore) UpsertSystemConfig(ctx context.Context, key string, value any, isSecret bool, updatedBy string) error {
 	return m.real.UpsertSystemConfig(ctx, key, value, isSecret, updatedBy)
+}
+
+func (m *mockHTTPStore) ListSEORedirects(ctx context.Context) ([]store.SEORedirect, error) {
+	return m.real.ListSEORedirects(ctx)
+}
+
+func (m *mockHTTPStore) CreateSEORedirect(ctx context.Context, redirect store.SEORedirect) (store.SEORedirect, error) {
+	return m.real.CreateSEORedirect(ctx, redirect)
+}
+
+func (m *mockHTTPStore) UpdateSEORedirect(ctx context.Context, id int64, redirect store.SEORedirect) (store.SEORedirect, error) {
+	return m.real.UpdateSEORedirect(ctx, id, redirect)
+}
+
+func (m *mockHTTPStore) DeleteSEORedirect(ctx context.Context, id int64) error {
+	return m.real.DeleteSEORedirect(ctx, id)
+}
+
+func (m *mockHTTPStore) ResolveSEORedirect(ctx context.Context, sourcePath string) (store.SEORedirect, error) {
+	return m.real.ResolveSEORedirect(ctx, sourcePath)
 }
 
 func (m *mockHTTPStore) GetWorkspaceByID(ctx context.Context, workspaceID int64) (store.Workspace, error) {
@@ -319,6 +379,10 @@ func (m *mockHTTPStore) RecordAdminAuditEvent(ctx context.Context, actor string,
 
 func (m *mockHTTPStore) RecordProductEvent(ctx context.Context, input store.ProductEventInput) error {
 	return m.real.RecordProductEvent(ctx, input)
+}
+
+func (m *mockHTTPStore) RecordWebVital(ctx context.Context, vital store.WebVital) error {
+	return m.real.RecordWebVital(ctx, vital)
 }
 
 func (m *mockHTTPStore) RefreshAdminInvoiceStatus(ctx context.Context, invoiceID int64) (store.Invoice, string, error) {

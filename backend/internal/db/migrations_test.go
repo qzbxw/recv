@@ -72,6 +72,29 @@ func TestRunMigrations(t *testing.T) {
 		if count == 0 {
 			t.Fatal("expected at least one migration to be applied")
 		}
+
+		var seededArticles int
+		if err := pool.QueryRow(ctx, `
+			SELECT COUNT(*)
+			FROM blog_posts
+			WHERE author_slug = 'recv-core'
+			  AND status = 'published'
+			  AND slug IN (
+			    'accept-usdt-payments-on-website',
+			    'non-custodial-payment-gateway',
+			    'trc20-payment-api',
+			    'ton-telegram-payments',
+			    'verify-webhook-signatures',
+			    'custodial-vs-direct-to-wallet',
+			    'multi-chain-crypto-invoices',
+			    'late-underpaid-overpaid-crypto-payments'
+			  )
+		`).Scan(&seededArticles); err != nil {
+			t.Fatalf("count seeded bilingual articles: %v", err)
+		}
+		if seededArticles != 16 {
+			t.Fatalf("expected 16 seeded bilingual articles, got %d", seededArticles)
+		}
 	})
 
 	t.Run("second run is idempotent", func(t *testing.T) {

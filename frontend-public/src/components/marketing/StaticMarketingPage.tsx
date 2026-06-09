@@ -1,7 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { MarketingLayout, useReveal } from "./MarketingLayout";
+import { MarketingLayout } from "./MarketingLayout";
 import { JsonLd } from "../JsonLd";
 import { getCopy, normalizeLocale } from "@/i18n";
 
@@ -55,13 +53,7 @@ export function StaticMarketingPage({
 }) {
   const locale = normalizeLocale(rawLocale);
   const siteCopy = getCopy(locale);
-  const reveal = useReveal();
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://recv.money").replace(/\/+$/, "");
   const breadcrumbSchema = {
@@ -81,7 +73,7 @@ export function StaticMarketingPage({
       <JsonLd schema={breadcrumbSchema} />
 
       {/* HERO */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -135,14 +127,13 @@ export function StaticMarketingPage({
       </section>
 
       {/* POINTS GRID */}
-      <section className="py-24 md:py-32" ref={reveal}>
+      <section className="py-24 md:py-32" data-reveal>
         <div className="container mx-auto px-6">
           <div className={`grid grid-cols-1 md:grid-cols-2 ${gridCols} gap-6 lend-reveal--2`}>
             {points.map((point, idx) => (
               <article
                 key={point.title}
                 className="lend-card lend-spotlight-card group relative p-10 flex flex-col justify-between min-h-[280px] transition-all duration-700 ease-in-out hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="lend-dogfood-glow" />
@@ -155,7 +146,7 @@ export function StaticMarketingPage({
                   <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 mb-6 block uppercase">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
-                  <h3 className="text-2xl md:text-3xl font-bold mb-5 tracking-tight group-hover:text-white transition-colors">{point.title}</h3>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-5 tracking-tight group-hover:text-white transition-colors">{point.title}</h2>
                   <p className="opacity-50 text-base leading-relaxed group-hover:opacity-75 transition-opacity">{point.body}</p>
                 </div>
               </article>
@@ -165,7 +156,7 @@ export function StaticMarketingPage({
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-32 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+      <section className="py-32 relative overflow-hidden lend-spotlight-card group" data-reveal>
         <div className="lend-card-spotlight opacity-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
 

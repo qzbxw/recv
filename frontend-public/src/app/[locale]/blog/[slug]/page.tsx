@@ -2,46 +2,16 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { BlogPostClient } from "@/components/blog/BlogPostClient";
-import { getPublishedBlogPost, type PublicBlogPost } from "@/lib/blog";
-import { isNonSelfCanonical } from "@/lib/seo";
-
-const FALLBACK_POSTS: Record<"en" | "ru", Record<string, PublicBlogPost>> = {
-  en: {
-    "non-custodial-crypto-checkout": {
-      slug: "non-custodial-crypto-checkout",
-      title: "How non-custodial crypto checkout works",
-      excerpt: "A practical overview of direct-to-wallet invoices, payment detection, and webhook-based fulfillment.",
-      author: "recv Core Team",
-      cover_image_url: null,
-      published_at: "2026-03-13T00:00:00.000Z",
-      updated_at: "2026-03-13T00:00:00.000Z",
-      canonical_url: null,
-      locale: "en",
-      content_md: "## Direct settlement\n\nrecv creates payment instructions while funds settle directly to the merchant wallet.\n\n## Detection and fulfillment\n\nThe watcher observes supported networks, matches transfers to invoices, and emits signed webhooks for fulfillment.",
-    },
-  },
-  ru: {
-    "non-custodial-crypto-checkout": {
-      slug: "non-custodial-crypto-checkout",
-      title: "Как работает non-custodial crypto checkout",
-      excerpt: "Практичный обзор direct-to-wallet инвойсов, детекции платежей и webhook-выдачи.",
-      author: "recv Core Team",
-      cover_image_url: null,
-      published_at: "2026-03-13T00:00:00.000Z",
-      updated_at: "2026-03-13T00:00:00.000Z",
-      canonical_url: null,
-      locale: "ru",
-      content_md: "## Прямое зачисление\n\nrecv создает платежные инструкции, а средства приходят напрямую на кошелек продавца.\n\n## Детекция и выдача\n\nWatcher наблюдает поддерживаемые сети, сопоставляет переводы с инвойсами и отправляет подписанные webhooks для выдачи.",
-    },
-  },
-} as const;
+import { getPublishedBlogPost } from "@/lib/blog";
+import { fallbackBlogPost } from "@/lib/blog-articles";
+import { isNonSelfCanonical, publicSiteUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>;
 };
 
 function authorSlug(author?: string | null) {
-  if (!author || author === "recv Core Team") return "recv-core";
+  if (!author || author === "Recv Core Team" || author === "recv Core Team") return "recv-core";
   return author.toLowerCase().trim().replace(/\s+/g, "-");
 }
 
@@ -50,25 +20,48 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const params = await props.params;
   const language = params.locale === "ru" ? "ru" : "en";
-  const post = await getPublishedBlogPost(params.slug, language) || FALLBACK_POSTS[language][params.slug as keyof typeof FALLBACK_POSTS[typeof language]];
+  const post = await getPublishedBlogPost(params.slug, language) || fallbackBlogPost(params.slug, language);
 
   if (!post) {
     return { title: params.locale === "ru" ? "Материал не найден" : "Post Not Found" };
   }
   const selfPath = `/${language}/blog/${params.slug}`;
   const hasDifferentCanonical = isNonSelfCanonical(post.canonical_url, selfPath);
+  const available = post.available_locales ?? [language];
+  const languages = Object.fromEntries(
+    available.map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
+  );
+  if (available.includes("en")) {
+    languages["x-default"] = `/en/blog/${post.slug}`;
+  }
+  const socialImage = `/og/blog/${language}/${post.slug}`;
 
   return {
-    title: `${post.title} | recv Blog`,
-    description: post.excerpt || "Read the latest updates and engineering insights from recv.",
+    title: post.meta_title || post.title,
+    description: post.meta_description || post.excerpt || "Read the latest updates and engineering insights from recv.",
     alternates: {
       canonical: post.canonical_url || selfPath,
+      languages,
     },
-    robots: hasDifferentCanonical ? { index: false, follow: true } : undefined,
+    robots: hasDifferentCanonical
+      ? { index: false, follow: true }
+      : {
+          index: post.robots_index ?? true,
+          follow: post.robots_follow ?? true,
+        },
     openGraph: {
-      title: post.title,
-      description: post.excerpt ?? undefined,
-      images: post.cover_image_url ? [post.cover_image_url] : [],
+      type: "article",
+      title: post.og_title || post.meta_title || post.title,
+      description: post.og_description || post.meta_description || post.excerpt || undefined,
+      url: post.canonical_url || selfPath,
+      locale: language === "ru" ? "ru_RU" : "en_US",
+      images: [{ url: socialImage, width: 1200, height: 630, alt: post.og_title || post.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.og_title || post.meta_title || post.title,
+      description: post.og_description || post.meta_description || post.excerpt || undefined,
+      images: [{ url: socialImage, width: 1200, height: 630, alt: post.og_title || post.title }],
     },
   };
 }
@@ -76,32 +69,73 @@ export async function generateMetadata(
 export default async function BlogPost(props: Props) {
   const params = await props.params;
   const language = params.locale as "ru" | "en";
-  const post = await getPublishedBlogPost(params.slug, language) || FALLBACK_POSTS[language][params.slug as keyof typeof FALLBACK_POSTS[typeof language]];
+  const post = await getPublishedBlogPost(params.slug, language) || fallbackBlogPost(params.slug, language);
 
   if (!post) {
     notFound();
   }
+  const baseUrl = publicSiteUrl();
+  const canonical = post.canonical_url || `${baseUrl}/${language}/blog/${post.slug}`;
+  const authorURL = `${baseUrl}/${language}/blog/author/${post.author_slug || authorSlug(post.author)}`;
+  const socialImage = `${baseUrl}/og/blog/${language}/${post.slug}`;
 
   const blogPostSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "headline": post.title,
-    "description": post.excerpt,
-    "image": post.cover_image_url ? [post.cover_image_url] : [],
+    "headline": post.h1 || post.title,
+    "description": post.meta_description || post.excerpt,
+    "image": [socialImage],
     "datePublished": post.published_at,
     "dateModified": post.updated_at || post.published_at,
     "inLanguage": language,
-    "mainEntityOfPage": post.canonical_url || `https://recv.money/${language}/blog/${post.slug}`,
-    "author": [{
-      "@type": "Person",
-      "name": post.author || "recv Core Team",
-      "url": `https://recv.money/${language}/blog/author/${authorSlug(post.author)}`
-    }]
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": canonical,
+    },
+    "author": {
+      "@type": "Organization",
+      "name": post.author || "Recv Core Team",
+      "url": authorURL,
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "recv",
+      "url": baseUrl,
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${baseUrl}/logo.png`,
+      },
+    },
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": language === "ru" ? "Главная" : "Home",
+        "item": `${baseUrl}/${language}`,
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": language === "ru" ? "Блог" : "Blog",
+        "item": `${baseUrl}/${language}/blog`,
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": post.title,
+        "item": canonical,
+      },
+    ],
   };
 
   return (
     <>
       <JsonLd schema={blogPostSchema} />
+      <JsonLd schema={breadcrumbSchema} />
       <BlogPostClient language={language} post={post} />
     </>
   );

@@ -41,7 +41,7 @@ export const COMPARE_FAQ: Record<string, { en: FaqItem[]; ru: FaqItem[] }> = {
       },
       {
         q: "How do recv's fees compare to custodial gateways?",
-        a: "Custodial gateways typically charge 1–3% of turnover, so your costs grow with your revenue. recv uses a fixed subscription with zero turnover fees, which keeps costs predictable as you scale.",
+        a: "Custodial gateways may use percentage-based or settlement pricing. recv uses a fixed subscription with zero turnover fees, so its platform cost does not increase with payment volume.",
       },
       {
         q: "Does recv require KYC like custodial processors?",
@@ -55,7 +55,7 @@ export const COMPARE_FAQ: Record<string, { en: FaqItem[]; ru: FaqItem[] }> = {
       },
       {
         q: "Как комиссии recv соотносятся с кастодиальными шлюзами?",
-        a: "Кастодиальные шлюзы обычно берут 1–3% с оборота, и ваши расходы растут вместе с выручкой. recv использует фиксированную подписку с нулевой комиссией с оборота — расходы предсказуемы при любом объёме.",
+        a: "Кастодиальные шлюзы могут использовать процентную или settlement-модель. recv использует фиксированную подписку с нулевой комиссией с оборота, поэтому стоимость платформы не растёт вместе с платёжным объёмом.",
       },
       {
         q: "Требует ли recv KYC, как кастодиальные процессоры?",

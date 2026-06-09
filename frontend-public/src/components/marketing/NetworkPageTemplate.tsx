@@ -1,6 +1,4 @@
-"use client";
-
-import { MarketingLayout, useReveal } from "./MarketingLayout";
+import { MarketingLayout } from "./MarketingLayout";
 import Link from "next/link";
 import { PUBLIC_MARKETING_COPY } from "@/i18n";
 
@@ -18,20 +16,12 @@ export function NetworkPageTemplate({
   language: "ru" | "en";
   network: NetworkInfo;
 }) {
-  const reveal = useReveal();
   const copy = PUBLIC_MARKETING_COPY[language];
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-  };
 
   return (
     <MarketingLayout language={language}>
-      <section className="lend-hero lend-hero--centered" ref={reveal}>
+      <section className="lend-hero lend-hero--centered is-revealed">
         <div className="lend-hero-copy">
           <span className="lend-section-kicker lend-reveal--1">
             {copy.networks.kicker}
@@ -49,10 +39,10 @@ export function NetworkPageTemplate({
         </div>
       </section>
 
-      <section className="lend-stacked-section" ref={reveal}>
+      <section className="lend-stacked-section" data-reveal>
         <div className="lend-overview-grid lend-reveal--2">
           {network.features.map((feature, i) => (
-            <article key={i} className="lend-card lend-spotlight-card" onMouseMove={handleMouseMove}>
+            <article key={i} className="lend-card lend-spotlight-card">
               <div className="lend-card-spotlight" />
               <h3>{feature.title}</h3>
               <p>{feature.body}</p>

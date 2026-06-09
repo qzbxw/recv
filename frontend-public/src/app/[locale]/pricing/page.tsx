@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { PricingClient } from "@/components/PricingClient";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -21,9 +22,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: locale === "ru"
       ? "Тарифы крипто-платёжного шлюза — 0% с оборота | recv"
       : "Crypto Payment Gateway Pricing — 0% Turnover Fees | recv",
-    description: locale === "ru"
+    description: metadataDescription(locale, locale === "ru"
       ? "Тарифы recv для non-custodial криптоплатежей: Trial, Merchant, Developer и Business. 0% комиссии на всех планах."
-      : "recv pricing for non-custodial crypto payments: Trial, Merchant, Developer, and Business. 0% commission on all plans.",
+      : "recv pricing for non-custodial crypto payments: Trial, Merchant, Developer, and Business. 0% commission on all plans."),
     keywords: locale === "ru"
       ? "тарифы крипто-шлюз, non-custodial, 0% комиссия, криптоплатежи цены"
       : "crypto payment gateway pricing, non-custodial, zero fees, crypto payment plans",
@@ -37,6 +38,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     openGraph: {
       title: locale === "ru" ? "Тарифы | recv" : "Pricing | recv",
+      images: socialImages(locale, locale === "ru" ? "Тарифы | recv" : "Pricing | recv", locale === "ru" ? "Тарифы" : "Pricing"),
       description: locale === "ru"
         ? "Non-custodial крипто-платежи. 0% комиссии с оборота."
         : "Non-custodial crypto payments. 0% turnover fees.",

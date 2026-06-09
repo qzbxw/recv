@@ -1,7 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
 // ─── Types (mirror the i18n copy shape) ──────────────────────────────────────
 
@@ -38,20 +37,21 @@ function localizedHref(locale: string, href: string) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function NetworkDetailClient({ locale, page }: Props) {
-  const reveal = useReveal();
+export function NetworkDetailClient({ locale, network, page }: Props) {
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   return (
     <MarketingLayout language={locale as "en" | "ru"}>
+      <BreadcrumbJsonLd
+        items={[
+          { name: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },
+          { name: locale === "ru" ? "Сети" : "Networks", href: `/${locale}/networks` },
+          { name: page.name, href: `/${locale}/networks/${network}` },
+        ]}
+      />
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden" ref={reveal}>
+      <section className="relative overflow-hidden" data-reveal>
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
           <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[140%] h-[140%] bg-radial-gradient from-accent/15 via-transparent to-transparent blur-[150px] opacity-40 animate-pulse" />
         </div>
@@ -95,7 +95,6 @@ export function NetworkDetailClient({ locale, page }: Props) {
             <div className="lend-reveal--3">
               <div
                 className="lend-card lend-spotlight-card relative p-8 rounded-3xl"
-                onMouseMove={handleMouseMove}
                 aria-label={page.snapshot.title}
               >
                 <div className="lend-card-spotlight" />
@@ -121,7 +120,7 @@ export function NetworkDetailClient({ locale, page }: Props) {
       </section>
 
       {/* ── SUPPORTED ASSETS ── */}
-      <section className="py-20 md:py-28" ref={reveal}>
+      <section className="py-20 md:py-28" data-reveal>
         <div className="container mx-auto px-6">
           <div className="max-w-xl mb-14">
             <span className="lend-reveal--1 lend-section-kicker">{page.assets.kicker}</span>
@@ -133,7 +132,6 @@ export function NetworkDetailClient({ locale, page }: Props) {
               <article
                 key={asset.name}
                 className="lend-card lend-spotlight-card group relative p-8 transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10">
@@ -148,11 +146,11 @@ export function NetworkDetailClient({ locale, page }: Props) {
       </section>
 
       {/* ── WHY + LIMITATIONS ── */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lend-reveal--2">
             {/* Why */}
-            <div className="lend-card lend-spotlight-card group relative p-10 transition-all duration-500 hover:scale-[1.01]" onMouseMove={handleMouseMove}>
+            <div className="lend-card lend-spotlight-card group relative p-10 transition-all duration-500 hover:scale-[1.01]">
               <div className="lend-card-spotlight" />
               <div className="relative z-10">
                 <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 uppercase mb-5 block">{page.why.kicker}</span>
@@ -162,7 +160,7 @@ export function NetworkDetailClient({ locale, page }: Props) {
             </div>
 
             {/* Limitations */}
-            <div className="lend-card lend-spotlight-card group relative p-10 transition-all duration-500 hover:scale-[1.01]" onMouseMove={handleMouseMove}>
+            <div className="lend-card lend-spotlight-card group relative p-10 transition-all duration-500 hover:scale-[1.01]">
               <div className="lend-card-spotlight" />
               <div className="relative z-10">
                 <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 uppercase mb-5 block">{page.limitations.kicker}</span>
@@ -175,7 +173,7 @@ export function NetworkDetailClient({ locale, page }: Props) {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="max-w-xl mb-16">
             <span className="lend-reveal--1 lend-section-kicker">{page.mechanics.kicker}</span>
@@ -186,7 +184,7 @@ export function NetworkDetailClient({ locale, page }: Props) {
             <div className="absolute left-[calc(1.5rem+1px)] top-8 bottom-8 w-px bg-gradient-to-b from-accent/30 via-accent/10 to-transparent md:left-8 hidden md:block" />
             <div className="flex flex-col gap-6">
               {page.mechanics.steps.map((step, idx) => (
-                <article key={step.title} className="lend-card lend-spotlight-card group relative flex gap-6 md:gap-8 p-8 transition-all duration-500 hover:scale-[1.01]" onMouseMove={handleMouseMove}>
+                <article key={step.title} className="lend-card lend-spotlight-card group relative flex gap-6 md:gap-8 p-8 transition-all duration-500 hover:scale-[1.01]">
                   <div className="lend-card-spotlight" />
                   <div className="relative z-10 flex gap-6 md:gap-8 w-full">
                     <div className="shrink-0 flex items-start">
@@ -207,7 +205,7 @@ export function NetworkDetailClient({ locale, page }: Props) {
       </section>
 
       {/* ── USE CASES ── */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="max-w-xl mb-14">
             <span className="lend-reveal--1 lend-section-kicker">{page.useCases.kicker}</span>
@@ -219,7 +217,6 @@ export function NetworkDetailClient({ locale, page }: Props) {
               <article
                 key={item.name}
                 className="lend-card lend-spotlight-card group relative p-8 transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10">
@@ -234,7 +231,7 @@ export function NetworkDetailClient({ locale, page }: Props) {
       </section>
 
       {/* ── RELATED ── */}
-      <section className="py-20 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="max-w-xl mb-12">
             <span className="lend-reveal--1 lend-section-kicker">{page.related.kicker}</span>
@@ -246,7 +243,6 @@ export function NetworkDetailClient({ locale, page }: Props) {
                 key={link.href}
                 href={localizedHref(locale, link.href)}
                 className="lend-card lend-spotlight-card group relative p-8 flex flex-col gap-3 transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10 flex flex-col gap-3">
@@ -265,7 +261,7 @@ export function NetworkDetailClient({ locale, page }: Props) {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section className="py-32 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+      <section className="py-32 relative overflow-hidden lend-spotlight-card group" data-reveal>
         <div className="lend-card-spotlight opacity-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
         <div className="container mx-auto px-6 text-center relative z-10 max-w-3xl">

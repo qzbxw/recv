@@ -1,6 +1,6 @@
 import { LegalPage } from "@/components/LegalPageClient";
 import { Metadata } from "next";
-import { languageAlternates } from "@/lib/seo";
+import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 
 export async function generateMetadata(props: {
   params: Promise<{ locale: string }>;
@@ -8,9 +8,9 @@ export async function generateMetadata(props: {
   const { locale } = await props.params;
   const language = locale === "ru" ? "ru" : "en";
   const title = language === "ru" ? "Политика конфиденциальности | recv" : "Privacy Policy | recv";
-  const description = language === "ru"
+  const description = metadataDescription(language, language === "ru"
     ? "Политика конфиденциальности и обработки данных recv."
-    : "Privacy policy and data processing agreement for recv.";
+    : "Privacy policy and data processing agreement for recv.");
   return {
     title,
     description,
@@ -18,10 +18,11 @@ export async function generateMetadata(props: {
       canonical: `/${language}/privacy`,
       languages: languageAlternates("/privacy"),
     },
-    openGraph: { title, description },
+    openGraph: { title, description, images: socialImages(language, title, language === "ru" ? "Документы" : "Legal") },
   };
 }
 
-export default function Page() {
-  return <LegalPage variant="privacy" />;
+export default async function Page(props: { params: Promise<{ locale: string }> }) {
+  const { locale } = await props.params;
+  return <LegalPage variant="privacy" language={locale === "ru" ? "ru" : "en"} />;
 }

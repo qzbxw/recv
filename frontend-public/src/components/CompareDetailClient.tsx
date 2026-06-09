@@ -1,7 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
 export type ComparePoint = {
   readonly title: string;
@@ -31,20 +30,21 @@ export type CompareDetailPageProps = {
 };
 
 export function CompareDetailClient({
-  locale, data, faq, heroPrimary, heroSecondary, docsLabel,
+  locale, competitor, data, faq, heroPrimary, heroSecondary, docsLabel,
 }: CompareDetailPageProps) {
-  const reveal = useReveal();
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   return (
     <MarketingLayout language={locale as "en" | "ru"}>
+      <BreadcrumbJsonLd
+        items={[
+          { name: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },
+          { name: locale === "ru" ? "Сравнение" : "Compare", href: `/${locale}/compare` },
+          { name: `vs ${data.name}`, href: `/${locale}/compare/${competitor}` },
+        ]}
+      />
       {/* ── HERO ── */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -77,7 +77,7 @@ export function CompareDetailClient({
       </section>
 
       {/* ── COMPARISON TABLE ── */}
-      <section className="py-20 md:py-28" ref={reveal}>
+      <section className="py-20 md:py-28" data-reveal>
         <div className="container mx-auto px-6 max-w-5xl">
           {/* Column headers */}
           <div className="grid grid-cols-[1fr_1fr_1fr] gap-4 mb-6 lend-reveal--1 px-6 md:px-8">
@@ -91,7 +91,6 @@ export function CompareDetailClient({
               <article
                 key={point.title}
                 className="lend-card lend-spotlight-card group relative transition-all duration-500 hover:scale-[1.005]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10 grid grid-cols-1 md:grid-cols-[1.2fr_1.5fr_1.5fr] gap-0 md:gap-6">
@@ -99,7 +98,7 @@ export function CompareDetailClient({
                   <div className="p-5 md:p-6 md:border-r border-white/[0.06] flex items-center">
                     <div>
                       <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-accent/50 block mb-1">{String(idx + 1).padStart(2, "0")}</span>
-                      <h3 className="font-bold text-sm md:text-base group-hover:text-white transition-colors">{point.title}</h3>
+                      <h2 className="font-bold text-sm md:text-base group-hover:text-white transition-colors">{point.title}</h2>
                     </div>
                   </div>
                   {/* Competitor */}
@@ -121,7 +120,7 @@ export function CompareDetailClient({
 
       {/* ── FAQ ── */}
       {faq.length > 0 && (
-        <section className="py-20 border-t border-white/[0.04]" ref={reveal}>
+        <section className="py-20 border-t border-white/[0.04]" data-reveal>
           <div className="container mx-auto px-6 max-w-3xl">
             <div className="mb-14">
               <span className="lend-reveal--1 lend-section-kicker">{locale === "ru" ? "FAQ" : "FAQ"}</span>
@@ -134,7 +133,6 @@ export function CompareDetailClient({
                 <article
                   key={idx}
                   className="lend-card lend-spotlight-card group relative p-8 transition-all duration-500 hover:scale-[1.01]"
-                  onMouseMove={handleMouseMove}
                 >
                   <div className="lend-card-spotlight" />
                   <div className="relative z-10">
@@ -149,7 +147,7 @@ export function CompareDetailClient({
       )}
 
       {/* ── FINAL CTA ── */}
-      <section className="py-32 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+      <section className="py-32 relative overflow-hidden lend-spotlight-card group" data-reveal>
         <div className="lend-card-spotlight opacity-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
         <div className="container mx-auto px-6 text-center relative z-10 max-w-3xl">

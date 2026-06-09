@@ -10,11 +10,15 @@ import type {
   AdminOpsOverviewResponse,
   AdminOverviewResponse,
   Invoice,
+  AdminMedia,
+  AdminMediaListResponse,
   SEOTarget,
+  SEORedirect,
   Workspace,
   WebhookDelivery,
+  WebVitalsReport,
 } from "../types";
-import { request } from "./core";
+import { getApiBase, request } from "./core";
 
 export async function loginAdmin(payload: { username: string; password: string }) {
   return request<{ token?: string; username?: string; email?: string; roles?: string[]; mfa_required?: boolean; totp_setup_required?: boolean; totp_secret?: string; challenge_token?: string; recovery_codes?: string[] }>("/api/admin/login", {
@@ -124,12 +128,38 @@ export async function fetchAdminAnalytics(token: string, params: { from?: string
   return request<AdminAnalyticsResponse>(`/api/admin/analytics${suffix}`, {}, token);
 }
 
+export async function fetchAdminWebVitals(token: string) {
+  return request<WebVitalsReport>("/api/admin/analytics/web-vitals", {}, token);
+}
+
 export async function fetchAdminAuditEvents(token: string) {
   return request<{ items: AdminAuditEvent[] }>("/api/admin/audit-events", {}, token);
 }
 
 export async function fetchAdminSEOTargets(token: string) {
   return request<{ items: SEOTarget[] }>("/api/admin/seo-targets", {}, token);
+}
+
+export async function fetchAdminSEORedirects(token: string) {
+  return request<{ items: SEORedirect[] }>("/api/admin/seo/redirects", {}, token);
+}
+
+export async function createAdminSEORedirect(token: string, payload: {
+  source_path: string;
+  target_url: string;
+  status_code: 301 | 302 | 308;
+  is_active: boolean;
+}) {
+  return request<SEORedirect>("/api/admin/seo/redirects", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function deleteAdminSEORedirect(token: string, id: number) {
+  return request<void>(`/api/admin/seo/redirects/${id}`, {
+    method: "DELETE",
+  }, token);
 }
 
 export async function fetchAdminBlogPosts(token: string) {
@@ -158,5 +188,41 @@ export async function updateAdminBillingWallets(token: string, wallets: Record<s
   return request<{ success: boolean }>("/api/admin/config/billing-wallets", {
     method: "POST",
     body: JSON.stringify({ wallets }),
+  }, token);
+}
+
+export async function fetchAdminMedia(token: string, page = 1, pageSize = 100) {
+  return request<AdminMediaListResponse>(`/api/admin/media?page=${page}&page_size=${pageSize}`, {}, token);
+}
+
+// Multipart upload: Content-Type must be left to the browser so the
+// boundary is set, hence plain fetch instead of the JSON request helper.
+export async function uploadAdminMedia(token: string, file: File, altText: string) {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("alt_text", altText);
+  const response = await fetch(`${getApiBase()}/api/admin/media`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
+    body,
+  });
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(data?.error || `Upload failed (${response.status})`);
+  }
+  return (await response.json()) as AdminMedia;
+}
+
+export async function updateAdminMediaAlt(token: string, id: number, altText: string) {
+  return request<AdminMedia>(`/api/admin/media/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ alt_text: altText }),
+  }, token);
+}
+
+export async function deleteAdminMedia(token: string, id: number) {
+  return request<{ status: string }>(`/api/admin/media/${id}`, {
+    method: "DELETE",
   }, token);
 }

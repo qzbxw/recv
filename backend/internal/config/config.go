@@ -47,6 +47,7 @@ type Config struct {
 	PostHogKey             string
 	PostHogHost            string
 	SentryDSNBackend       string
+	MediaDir               string
 }
 
 func Load() (Config, error) {
@@ -80,6 +81,7 @@ func Load() (Config, error) {
 		PostHogKey:             os.Getenv("POSTHOG_KEY"),
 		PostHogHost:            envOrDefault("POSTHOG_HOST", "https://app.posthog.com"),
 		SentryDSNBackend:       os.Getenv("SENTRY_DSN_BACKEND"),
+		MediaDir:               envOrDefault("MEDIA_DIR", "./data/media"),
 	}
 	cfg.MetricsPort = envOrDefault("METRICS_PORT", defaultMetricsPort(cfg.AppRuntime))
 

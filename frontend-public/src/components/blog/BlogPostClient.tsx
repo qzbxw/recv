@@ -2,21 +2,32 @@
 
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
-import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { useReveal } from "@/components/marketing/useReveal";
 import { useRegisterLocaleAlternates } from "@/components/marketing/localeAlternates";
+import { StructuredContent, TableOfContents, extractToc, extractFaq, type StructuredNode } from "./StructuredContent";
+import { JsonLd } from "@/components/JsonLd";
 
 export type BlogPost = {
   slug: string;
   title: string;
+  h1?: string | null;
   excerpt?: string | null;
   author?: string | null;
   cover_image_url?: string | null;
+  cover_image_alt?: string | null;
+  cover_image_width?: number;
+  cover_image_height?: number;
+  author_slug?: string | null;
   published_at: string;
   updated_at?: string | null;
   content_md: string;
+  content_json?: Record<string, unknown> | null;
+  content_version?: number;
   available_locales?: string[] | null;
 };
 
@@ -65,9 +76,9 @@ function initials(name?: string | null) {
 
 export function BlogPostClient({ language, post }: { language: "en" | "ru"; post: BlogPost }) {
   const reveal = useReveal();
-  const authorSlug = !post.author || post.author === "recv Core Team"
+  const authorSlug = post.author_slug || (!post.author || post.author === "Recv Core Team"
     ? "recv-core"
-    : post.author.toLowerCase().trim().replace(/\s+/g, "-");
+    : post.author.toLowerCase().trim().replace(/\s+/g, "-"));
 
   // Tell the header's language switcher where each locale lives: the translated
   // post if it exists, otherwise that locale's blog index (never the landing).
@@ -77,8 +88,28 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
     ru: available.includes("ru") ? `/ru/blog/${post.slug}` : "/ru/blog",
   });
 
+  // Structured (TipTap v2) documents replace Markdown rendering entirely.
+  const structuredDoc =
+    (post.content_version ?? 1) >= 2 && post.content_json && (post.content_json as StructuredNode).type === "doc"
+      ? (post.content_json as StructuredNode)
+      : null;
+  // FAQ answers are rendered fully visible, so FAQPage markup is justified.
+  const faqEntries = structuredDoc ? extractFaq(structuredDoc) : [];
+  const faqSchema = faqEntries.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqEntries.map((entry) => ({
+          "@type": "Question",
+          name: entry.question,
+          acceptedAnswer: { "@type": "Answer", text: entry.answer },
+        })),
+      }
+    : null;
+
   return (
     <MarketingLayout language={language}>
+      {faqSchema && <JsonLd schema={faqSchema} />}
       <article className="relative pt-28 md:pt-32">
         {/* HERO */}
         <header className="relative overflow-hidden pb-12" ref={reveal}>
@@ -88,10 +119,12 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
               <Link href={`/${language}`} className="hover:text-accent transition-colors">{language === "ru" ? "Главная" : "Home"}</Link>
               <span className="text-white/15">/</span>
               <Link href={`/${language}/blog`} className="hover:text-accent transition-colors">{language === "ru" ? "Блог" : "Blog"}</Link>
+              <span className="text-white/15">/</span>
+              <span className="text-accent/70 truncate">{post.title}</span>
             </nav>
 
             <h1 className="lend-reveal--2 text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[1.05] mb-8 text-white">
-              {post.title}
+              {post.h1 || post.title}
             </h1>
 
             <div className="lend-reveal--3 flex items-center gap-4">
@@ -100,7 +133,11 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
               </Link>
               <div className="flex flex-col">
                 <Link href={`/${language}/blog/author/${authorSlug}`} className="font-semibold text-white/85 hover:text-accent transition-colors">{post.author || "recv Core Team"}</Link>
-                <time dateTime={post.published_at} className="text-white/35 text-sm">{formatDate(post.published_at, language)}</time>
+                <span className="text-white/45 text-sm">{language === "ru" ? "Редакция и инженеры recv" : "recv editorial and engineering team"}</span>
+                <span className="text-white/35 text-sm">
+                  <time dateTime={post.published_at}>{formatDate(post.published_at, language)}</time>
+                  {post.updated_at && post.updated_at !== post.published_at ? ` · ${language === "ru" ? "обновлено" : "updated"} ${formatDate(post.updated_at, language)}` : ""}
+                </span>
               </div>
             </div>
           </div>
@@ -108,14 +145,33 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
 
         {post.cover_image_url && (
           <div className="container mx-auto px-6 max-w-4xl mb-12" ref={reveal}>
-            <img src={post.cover_image_url} alt={post.title} className="lend-reveal--1 w-full rounded-3xl border border-white/10" />
+            {post.cover_image_width && post.cover_image_height ? (
+              <Image
+                src={post.cover_image_url}
+                alt={post.cover_image_alt || post.h1 || post.title}
+                width={post.cover_image_width}
+                height={post.cover_image_height}
+                priority
+                sizes="(max-width: 896px) 100vw, 896px"
+                className="lend-reveal--1 w-full h-auto rounded-3xl border border-white/10"
+              />
+            ) : (
+              <img src={post.cover_image_url} alt={post.cover_image_alt || post.h1 || post.title} loading="eager" className="lend-reveal--1 w-full rounded-3xl border border-white/10" />
+            )}
           </div>
         )}
 
         {/* BODY */}
         <div className="container mx-auto px-6 max-w-3xl pb-24" ref={reveal}>
           <div className="lend-reveal--1">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{post.content_md}</ReactMarkdown>
+            {structuredDoc ? (
+              <>
+                <TableOfContents entries={extractToc(structuredDoc)} language={language} />
+                <StructuredContent doc={structuredDoc} language={language} />
+              </>
+            ) : (
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{post.content_md}</ReactMarkdown>
+            )}
 
             <div className="mt-16 pt-10 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
               <Link href={`/${language}/blog`} className="lend-secondary px-6 py-3 rounded-xl group/back flex items-center gap-2">

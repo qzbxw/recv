@@ -56,6 +56,33 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Public SEO and UI e2e
+        run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_SITE_URL: https://recv.money
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend-public/package-lock.json
+      - run: npm ci
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      - name: Lighthouse CI
+        run: npx --yes @lhci/cli@0.15.x autorun
+        env:
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
 
   docker:
     runs-on: ubuntu-latest
@@ -84,22 +111,24 @@ jobs:
         run: docker compose build
       - name: Build development containers
         run: docker compose -f docker-compose.dev.yml build
+      - name: Validate Caddy configuration
+        run: docker run --rm -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.8-alpine caddy validate --config /etc/caddy/Caddyfile
       - name: Start production smoke stack
-        run: docker compose up -d postgres api frontend_public frontend
+        run: docker compose up -d postgres api frontend_public frontend caddy
       - name: Smoke routes
         run: |
           for i in $(seq 1 60); do
-            if curl -fsS http://localhost:3000/en >/dev/null; then
+            if curl -fsS http://localhost:8080/en >/dev/null; then
               break
             fi
             sleep 2
           done
-          curl -fsSI http://localhost:3000/ | grep -E "30[78]"
-          curl -fsS http://localhost:3000/en >/dev/null
-          curl -fsS http://localhost:3000/app/ >/dev/null
-          curl -fsS http://localhost:3000/docs/index.html >/dev/null
-          curl -sS -o /tmp/v1_me.out -w "%{http_code}" http://localhost:3000/v1/me | grep -E "401|403"
-          curl -sS -o /tmp/admin_login.out -w "%{http_code}" -H "Content-Type: application/json" -d '{"username":"admin","password":"admin"}' http://localhost:3000/api/admin/login | grep -E "401|403"
+          curl -fsSI http://localhost:8080/ | grep -E "30[78]"
+          curl -fsS http://localhost:8080/en >/dev/null
+          curl -fsS http://localhost:8080/app/ >/dev/null
+          curl -fsS http://localhost:8080/docs/index.html >/dev/null
+          curl -sS -o /tmp/v1_me.out -w "%{http_code}" http://localhost:8080/v1/me | grep -E "401|403"
+          curl -sS -o /tmp/admin_login.out -w "%{http_code}" -H "Content-Type: application/json" -d '{"username":"admin","password":"admin"}' http://localhost:8080/api/admin/login | grep -E "401|403"
       - name: Dump docker logs
         if: failure()
         run: docker compose logs --no-color

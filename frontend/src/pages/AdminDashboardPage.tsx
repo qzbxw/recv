@@ -7,13 +7,17 @@ import {
   createAdminBillingCheckout,
   createAdminInternalComment,
   fetchAdminAnalytics,
+  fetchAdminWebVitals,
   fetchAdminAuditEvents,
   fetchAdminInvoices,
   fetchAdminOpsOverview,
   fetchAdminSEOTargets,
+  fetchAdminSEORedirects,
   fetchAdminWorkspaces,
   fetchAdminBillingWallets,
   updateAdminBillingWallets,
+  createAdminSEORedirect,
+  deleteAdminSEORedirect,
   getStoredAdminToken,
   loginAdmin,
   logoutAdmin,
@@ -33,6 +37,8 @@ import type {
   AdminWebhookDelivery,
   AdminWorkspace,
   SEOTarget,
+  SEORedirect,
+  WebVitalsReport,
 } from "../lib/types";
 
 type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "audit" | "content" | "settings";
@@ -137,8 +143,10 @@ export function AdminDashboardPage() {
   const [overview, setOverview] = useState<AdminOpsOverviewResponse | null>(null);
   const [invoiceList, setInvoiceList] = useState<AdminInvoiceListResponse | null>(null);
   const [analytics, setAnalytics] = useState<AdminAnalyticsResponse | null>(null);
+  const [webVitals, setWebVitals] = useState<WebVitalsReport | null>(null);
   const [auditEvents, setAuditEvents] = useState<AdminAuditEvent[]>([]);
   const [seoTargets, setSeoTargets] = useState<SEOTarget[]>([]);
+  const [seoRedirects, setSeoRedirects] = useState<SEORedirect[]>([]);
   const [workspaces, setWorkspaces] = useState<AdminWorkspace[]>([]);
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -155,20 +163,24 @@ export function AdminDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [nextOverview, nextInvoices, nextAnalytics, nextAuditEvents, nextSEO, nextWorkspaces] = await Promise.all([
+      const [nextOverview, nextInvoices, nextAnalytics, nextVitals, nextAuditEvents, nextSEO, nextWorkspaces, nextRedirects] = await Promise.all([
         fetchAdminOpsOverview(activeToken),
         fetchAdminInvoices(activeToken, { page: 1, page_size: 50, ...nextFilters }),
         fetchAdminAnalytics(activeToken, { group_by: analyticsGroupBy }),
+        fetchAdminWebVitals(activeToken).catch(() => null),
         fetchAdminAuditEvents(activeToken),
         fetchAdminSEOTargets(activeToken),
         fetchAdminWorkspaces(activeToken).catch(() => ({ items: [] })),
+        fetchAdminSEORedirects(activeToken).catch(() => ({ items: [] })),
       ]);
       setOverview(nextOverview);
       setInvoiceList(nextInvoices);
       setAnalytics(nextAnalytics);
+      setWebVitals(nextVitals);
       setAuditEvents(nextAuditEvents.items || []);
       setSeoTargets(nextSEO.items || []);
       setWorkspaces(nextWorkspaces.items || []);
+      setSeoRedirects(nextRedirects.items || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load admin dashboard");
     } finally {
@@ -390,12 +402,21 @@ export function AdminDashboardPage() {
             )}
 
             {activePanel === "analytics" && (
-              <AnalyticsPanel analytics={analytics} groupBy={analyticsGroupBy} onGroupBy={(g) => void reloadAnalytics(g)} />
+              <AnalyticsPanel analytics={analytics} webVitals={webVitals} groupBy={analyticsGroupBy} onGroupBy={(g) => void reloadAnalytics(g)} />
             )}
 
             {activePanel === "audit" && <AuditPanel events={auditEvents} />}
 
-            {activePanel === "content" && <ContentPanel targets={seoTargets} />}
+            {activePanel === "content" && (
+              <ContentPanel
+                targets={seoTargets}
+                redirects={seoRedirects}
+                token={token}
+                onChanged={() => loadDashboard(token, filters)}
+                setToast={setToast}
+                setError={setError}
+              />
+            )}
 
             {activePanel === "settings" && <SettingsPanel token={token} setToast={setToast} setError={setError} />}
           </div>
@@ -905,11 +926,18 @@ function WebhooksPanel({ deliveries, busyKey, runAction }: { deliveries: AdminWe
   );
 }
 
-function AnalyticsPanel({ analytics, groupBy, onGroupBy }: {
+function AnalyticsPanel({ analytics, webVitals, groupBy, onGroupBy }: {
   analytics: AdminAnalyticsResponse | null;
+  webVitals: WebVitalsReport | null;
   groupBy: string;
   onGroupBy: (g: "date" | "network" | "plan" | "mode") => void;
 }) {
+  const vital = (name: "LCP" | "INP" | "CLS") => webVitals?.metrics.find((metric) => metric.metric_name === name);
+  const formatVital = (name: "LCP" | "INP" | "CLS") => {
+    const metric = vital(name);
+    if (!metric) return "No data";
+    return name === "CLS" ? metric.p75.toFixed(3) : `${Math.round(metric.p75)} ms`;
+  };
   return (
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Analytics" subtitle="Revenue, conversion and reliability metrics across the platform.">
@@ -925,6 +953,24 @@ function AnalyticsPanel({ analytics, groupBy, onGroupBy }: {
         <MetricCard label="Manual review rate" value={analytics?.manual_review_rate ? `${analytics.manual_review_rate}` : "0"} meta="share of invoices" />
         <MetricCard label="Failed webhook rate" value={analytics?.failed_webhook_rate ? `${analytics.failed_webhook_rate}` : "0"} meta="delivery reliability" />
         <MetricCard label="Underpaid share" value={analytics?.underpaid_share ? `${analytics.underpaid_share}` : "0"} meta="of all invoices" />
+      </div>
+      <div className="dev-portal__section-header dev-portal__section-header--margin">
+        <h3>Core Web Vitals p75</h3>
+        <span className="dev-card__note-text">Anonymous field data, rolling 28 days</span>
+      </div>
+      <div className="dev-metrics-grid">
+        {(["LCP", "INP", "CLS"] as const).map((name) => {
+          const metric = vital(name);
+          const target = name === "LCP" ? "target ≤ 2500 ms" : name === "INP" ? "target ≤ 200 ms" : "target ≤ 0.1";
+          return (
+            <MetricCard
+              key={name}
+              label={`${name} p75`}
+              value={formatVital(name)}
+              meta={`${target}${metric ? ` · ${metric.samples} samples · ${metric.good ? "good" : "needs work"}` : ""}`}
+            />
+          );
+        })}
       </div>
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
@@ -982,7 +1028,58 @@ function AuditPanel({ events }: { events: AdminAuditEvent[] }) {
   );
 }
 
-function ContentPanel({ targets }: { targets: SEOTarget[] }) {
+function ContentPanel({
+  targets,
+  redirects,
+  token,
+  onChanged,
+  setToast,
+  setError,
+}: {
+  targets: SEOTarget[];
+  redirects: SEORedirect[];
+  token: string;
+  onChanged: () => Promise<void>;
+  setToast: (message: string) => void;
+  setError: (message: string) => void;
+}) {
+  const [redirectDraft, setRedirectDraft] = useState({
+    source_path: "",
+    target_url: "",
+    status_code: 301 as 301 | 302 | 308,
+  });
+  const [savingRedirect, setSavingRedirect] = useState(false);
+
+  async function handleCreateRedirect(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSavingRedirect(true);
+    setError("");
+    try {
+      await createAdminSEORedirect(token, {
+        ...redirectDraft,
+        is_active: true,
+      });
+      setRedirectDraft({ source_path: "", target_url: "", status_code: 301 });
+      setToast("Redirect created");
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create redirect");
+    } finally {
+      setSavingRedirect(false);
+    }
+  }
+
+  async function handleDeleteRedirect(id: number) {
+    setError("");
+    try {
+      await deleteAdminSEORedirect(token, id);
+      setToast("Redirect deleted");
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete redirect");
+    }
+  }
+
   return (
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Content & SEO" subtitle="Blog editor and SEO target tracking.">
@@ -1031,6 +1128,54 @@ function ContentPanel({ targets }: { targets: SEOTarget[] }) {
                 </tr>
               ))}
               {targets.length === 0 && <tr><td colSpan={7} className="admin-table-empty">No SEO targets yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Managed redirects</h3>
+          <p>Exact-path 301, 302, and 308 redirects with server-side cycle protection.</p>
+        </div>
+        <form onSubmit={handleCreateRedirect} className="dev-form">
+          <div className="admin-blog-grid">
+            <div className="dev-input-group">
+              <label>Source path</label>
+              <input className="dev-input" required placeholder="/en/old-page" value={redirectDraft.source_path} onChange={(event) => setRedirectDraft({ ...redirectDraft, source_path: event.target.value })} />
+            </div>
+            <div className="dev-input-group">
+              <label>Target URL</label>
+              <input className="dev-input" required placeholder="/en/new-page" value={redirectDraft.target_url} onChange={(event) => setRedirectDraft({ ...redirectDraft, target_url: event.target.value })} />
+            </div>
+            <div className="dev-input-group">
+              <label>Status</label>
+              <select className="dev-input" value={redirectDraft.status_code} onChange={(event) => setRedirectDraft({ ...redirectDraft, status_code: Number(event.target.value) as 301 | 302 | 308 })}>
+                <option value={301}>301 Permanent</option>
+                <option value={302}>302 Temporary</option>
+                <option value={308}>308 Permanent</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="dev-btn dev-btn--primary" disabled={savingRedirect}>
+            {savingRedirect ? "Saving..." : "Add redirect"}
+          </button>
+        </form>
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead><tr><th>Source</th><th>Target</th><th>Status</th><th>State</th><th>Updated</th><th /></tr></thead>
+            <tbody>
+              {redirects.map((redirect) => (
+                <tr key={redirect.id}>
+                  <td><code>{redirect.source_path}</code></td>
+                  <td><code>{redirect.target_url}</code></td>
+                  <td>{redirect.status_code}</td>
+                  <td>{redirect.is_active ? "active" : "disabled"}</td>
+                  <td>{formatDateTime(redirect.updated_at)}</td>
+                  <td><button type="button" className="dev-btn dev-btn--danger dev-btn--compact" onClick={() => void handleDeleteRedirect(redirect.id)}>Delete</button></td>
+                </tr>
+              ))}
+              {redirects.length === 0 && <tr><td colSpan={6} className="admin-table-empty">No managed redirects.</td></tr>}
             </tbody>
           </table>
         </div>

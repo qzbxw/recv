@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { StaticMarketingPage } from "@/components/marketing/StaticMarketingPage";
 import { STATIC_PAGE_COPY } from "@/lib/static-pages";
 import { normalizeLocale } from "@/i18n";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -11,11 +12,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const copy = STATIC_PAGE_COPY.customers[locale];
   return {
     title: `${copy.title} | recv`,
-    description: copy.body,
+    description: metadataDescription(locale, copy.body),
     keywords: locale === "ru"
       ? "кто использует recv, крипто платежи для SaaS, Telegram магазины, цифровые товары крипто оплата, платные сообщества"
       : "who uses recv, crypto payments for SaaS, Telegram shops crypto, digital goods crypto payment, paid communities crypto",
     alternates: { canonical: `/${locale}/customers`, languages: { en: "/en/customers", ru: "/ru/customers", "x-default": "/en/customers" } },
+    openGraph: { images: socialImages(locale, copy.title, locale === "ru" ? "Клиенты" : "Customers") },
   };
 }
 

@@ -1,7 +1,7 @@
 import { ProductPageClient } from "@/components/ProductPageClient";
 import { Metadata } from "next";
 import { getCopy } from "@/i18n";
-import { languageAlternates } from "@/lib/seo";
+import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -10,10 +10,11 @@ type Props = {
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { locale } = await props.params;
   const copy = getCopy(locale).marketing.invoicingProduct;
+  const description = metadataDescription(locale === "ru" ? "ru" : "en", copy.metadata.description);
   
   return {
     title: copy.metadata.title,
-    description: copy.metadata.description,
+    description,
     keywords: copy.metadata.keywords,
     alternates: {
       canonical: `/${locale}/products/invoicing`,
@@ -21,29 +22,23 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     openGraph: {
       title: copy.metadata.title,
-      description: copy.metadata.description,
+      description,
       url: `/${locale}/products/invoicing`,
       siteName: "recv",
       locale: locale,
       type: "website",
-      images: [
-        {
-          url: `/${locale}/opengraph-image`,
-          width: 1200,
-          height: 630,
-          alt: "recv Crypto Invoicing",
-        },
-      ],
+      images: socialImages(locale, copy.metadata.title, locale === "ru" ? "Продукт" : "Product"),
     },
     twitter: {
       card: "summary_large_image",
       title: copy.metadata.title,
-      description: copy.metadata.description,
-      images: [`/${locale}/opengraph-image`],
+      description,
+      images: socialImages(locale, copy.metadata.title, locale === "ru" ? "Продукт" : "Product"),
     },
   };
 }
 
-export default function Page() {
-  return <ProductPageClient variant="invoicingProduct" />;
+export default async function Page(props: Props) {
+  const { locale } = await props.params;
+  return <ProductPageClient variant="invoicingProduct" language={locale === "ru" ? "ru" : "en"} />;
 }

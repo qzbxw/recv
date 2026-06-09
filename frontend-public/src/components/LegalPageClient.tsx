@@ -1,8 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { useUI } from "./UIProvider";
-import { MarketingLayout, useReveal } from "./marketing/MarketingLayout";
+import { MarketingLayout } from "./marketing/MarketingLayout";
 import { PUBLIC_LEGAL_COPY as COPY } from "@/i18n";
 
 type LegalVariant = "privacy" | "terms";
@@ -45,15 +42,13 @@ const LEGAL_PROFILE = {
 legalCopy.privacy.en.sections = legalCopy.privacy.ru.sections;
 legalCopy.terms.en.sections = legalCopy.terms.ru.sections;
 
-export function LegalPage({ variant }: { variant: LegalVariant }) {
-  const { language } = useUI();
+export function LegalPage({ variant, language }: { variant: LegalVariant; language: "ru" | "en" }) {
   const copy = legalCopy[variant][language];
-  const reveal = useReveal();
 
   return (
     <MarketingLayout language={language}>
       {/* HERO */}
-      <section className="relative overflow-hidden pb-12" ref={reveal}>
+      <section className="relative overflow-hidden pb-12 is-revealed">
         <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-full bg-radial-gradient from-accent/12 via-transparent to-transparent blur-[120px] opacity-40 pointer-events-none" />
         <div className="container mx-auto px-6 relative z-10 max-w-3xl">
           <span className="lend-reveal--1 lend-section-kicker">{copy.kicker}</span>
@@ -81,7 +76,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
       </section>
 
       {/* NOTICE */}
-      <section className="pb-16" ref={reveal}>
+      <section className="pb-16" data-reveal>
         <div className="container mx-auto px-6 max-w-3xl">
           <div className="lend-reveal--1 rounded-3xl border border-accent/15 bg-accent/[0.03] p-8 md:p-10">
             <h2 className="text-xl md:text-2xl font-bold mb-4 text-white">{copy.draftTitle}</h2>
@@ -96,7 +91,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
       </section>
 
       {/* SECTIONS */}
-      <section className="pb-24" ref={reveal}>
+      <section className="pb-24" data-reveal>
         <div className="container mx-auto px-6 max-w-3xl flex flex-col gap-5 lend-reveal--2">
           {copy.sections.map((section, index) => (
             <article key={section.title} className="lend-card relative p-8 md:p-10 group hover:border-accent/20 transition-colors duration-500">
@@ -122,7 +117,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
       </section>
 
       {/* FOOTER NOTE */}
-      <section className="pb-32" ref={reveal}>
+      <section className="pb-32" data-reveal>
         <div className="container mx-auto px-6 max-w-3xl text-center">
           <p className="text-sm text-white/40 mb-8">{copy.footerNote}</p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm">

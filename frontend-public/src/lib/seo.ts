@@ -7,6 +7,8 @@ import { getAllDocSlugs } from "@/lib/docs";
 export const SITE_NAME = "recv";
 export const DEFAULT_SITE_URL = "https://recv.money";
 export const SITEMAP_PAGE_SIZE = 50_000;
+const DESCRIPTION_MIN_LENGTH = 120;
+const DESCRIPTION_MAX_LENGTH = 160;
 
 export const PUBLIC_ROUTES = [
   "",
@@ -62,6 +64,34 @@ export function publicSiteUrl() {
   ).replace(/\/+$/, "");
 }
 
+export function robotsBody() {
+  return `# Content signals (search, AI input, AI training) are all allowed.
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /api/
+Disallow: /v1/
+Disallow: /internal/
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+Sitemap: ${publicSiteUrl()}/sitemap.xml
+`;
+}
+
 export function backendApiUrl() {
   return (
     process.env.BACKEND_INTERNAL_URL ||
@@ -74,12 +104,52 @@ export function localizedUrl(locale: Locale, route = "") {
   return `${publicSiteUrl()}/${locale}${route}`;
 }
 
+// Per-URL 1200×630 social card rendered by /og. Returned entries are used
+// for both openGraph.images and twitter.images; metadataBase makes the
+// relative URL absolute in the emitted tags.
+export function socialImages(locale: string, title: string, kicker?: string) {
+  const params = new URLSearchParams({ locale: locale === "ru" ? "ru" : "en", title: title.replace(/\s+/g, " ").trim().slice(0, 90) });
+  const trimmedKicker = kicker?.replace(/\s+/g, " ").trim().slice(0, 48);
+  if (trimmedKicker) params.set("kicker", trimmedKicker);
+  return [
+    {
+      url: `/og?${params.toString()}`,
+      width: 1200,
+      height: 630,
+      alt: title,
+    },
+  ];
+}
+
 export function languageAlternates(route = "") {
   return {
     en: `/en${route}`,
     ru: `/ru${route}`,
     "x-default": `/en${route}`,
   };
+}
+
+export function metadataDescription(
+  locale: Locale,
+  value: string,
+  fallback?: string,
+) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length >= DESCRIPTION_MIN_LENGTH && normalized.length <= DESCRIPTION_MAX_LENGTH) {
+    return normalized;
+  }
+
+  const suffix = fallback?.trim() || (locale === "ru"
+    ? "Узнайте, как recv помогает принимать криптоплатежи напрямую на ваши кошельки, автоматизировать checkout и отслеживать статусы."
+    : "Learn how recv helps you accept crypto payments directly to your wallets, automate checkout, and track payment status.");
+  const combined = `${normalized.replace(/[.!?]+$/, "")}. ${suffix}`.replace(/\s+/g, " ").trim();
+  if (combined.length <= DESCRIPTION_MAX_LENGTH) {
+    return combined;
+  }
+
+  const candidate = combined.slice(0, DESCRIPTION_MAX_LENGTH);
+  const boundary = candidate.lastIndexOf(" ");
+  return `${candidate.slice(0, boundary > DESCRIPTION_MIN_LENGTH ? boundary : DESCRIPTION_MAX_LENGTH - 1).replace(/[,:;.\s]+$/, "")}.`;
 }
 
 export function isNonSelfCanonical(
@@ -105,12 +175,13 @@ export type SitemapEntry = {
   alternates?: Partial<Record<Locale | "x-default", string>>;
 };
 
-export function publicPageEntries(): SitemapEntry[] {
+export function publicPageEntries(locale?: Locale): SitemapEntry[] {
   const baseUrl = publicSiteUrl();
+  const locales = locale ? [locale] : LOCALES;
 
-  return LOCALES.flatMap((locale) =>
+  return locales.flatMap((entryLocale) =>
     PUBLIC_ROUTES.map((route) => ({
-      url: `${baseUrl}/${locale}${route}`,
+      url: `${baseUrl}/${entryLocale}${route}`,
       alternates: {
         en: `${baseUrl}/en${route}`,
         ru: `${baseUrl}/ru${route}`,
@@ -120,11 +191,12 @@ export function publicPageEntries(): SitemapEntry[] {
   );
 }
 
-export function documentationEntries(): SitemapEntry[] {
+export function documentationEntries(locale?: Locale): SitemapEntry[] {
   const baseUrl = publicSiteUrl();
+  const locales = locale ? [locale] : LOCALES;
 
-  return LOCALES.flatMap((locale) =>
-    getAllDocSlugs(locale).map((slug) => {
+  return locales.flatMap((entryLocale) =>
+    getAllDocSlugs(entryLocale).map((slug) => {
       const route = `/docs/${slug.join("/")}`;
       const translatedLocales = LOCALES.filter((candidate) =>
         fs.existsSync(
@@ -149,7 +221,7 @@ export function documentationEntries(): SitemapEntry[] {
       }
 
       return {
-        url: `${baseUrl}/${locale}${route}`,
+        url: `${baseUrl}/${entryLocale}${route}`,
         alternates,
       };
     }),

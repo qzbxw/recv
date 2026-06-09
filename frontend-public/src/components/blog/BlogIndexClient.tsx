@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import Image from "next/image";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { useReveal } from "@/components/marketing/useReveal";
 
 export type BlogPostSummary = {
   slug: string;
@@ -9,6 +11,9 @@ export type BlogPostSummary = {
   excerpt?: string | null;
   author?: string | null;
   cover_image_url?: string | null;
+  cover_image_width?: number;
+  cover_image_height?: number;
+  cover_image_alt?: string | null;
   published_at: string;
 };
 
@@ -55,6 +60,13 @@ export function BlogIndexClient({
       <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
         <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse pointer-events-none" />
         <div className="container mx-auto px-6 relative z-10 text-center max-w-3xl">
+          <nav aria-label="Breadcrumb" className="lend-reveal--1 flex items-center justify-center gap-2 text-[11px] font-bold tracking-[0.2em] uppercase text-white/30 mb-10">
+            <Link href={`/${language}`} className="hover:text-accent transition-colors">
+              {language === "ru" ? "Главная" : "Home"}
+            </Link>
+            <span className="text-white/15">/</span>
+            <span className="text-accent/70">{language === "ru" ? "Блог" : "Blog"}</span>
+          </nav>
           <span className="lend-reveal--1 lend-section-kicker justify-center mx-auto">{language === "ru" ? "БЛОГ" : "BLOG"}</span>
           <h1 className="lend-reveal--2 !text-4xl md:!text-6xl lg:!text-7xl font-black tracking-tighter leading-[1.05] mb-8">
             <span className="text-white">{language === "ru" ? "Инженерия и " : "Engineering & "}</span>
@@ -81,8 +93,20 @@ export function BlogIndexClient({
               <div className="lend-card-spotlight" />
               <div
                 className="relative min-h-[260px] md:min-h-[420px] bg-gradient-to-br from-purple-600/20 via-violet-600/10 to-indigo-600/20 overflow-hidden"
-                style={featured.cover_image_url ? { backgroundImage: `url(${featured.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+                style={featured.cover_image_url && !featured.cover_image_url.startsWith("/media/")
+                  ? { backgroundImage: `url(${featured.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+                  : undefined}
               >
+                {featured.cover_image_url?.startsWith("/media/") ? (
+                  <Image
+                    src={featured.cover_image_url}
+                    alt={featured.cover_image_alt || featured.title}
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover"
+                  />
+                ) : null}
                 {!featured.cover_image_url && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-[8rem] font-black italic text-white/5 font-['Montserrat'] select-none">R</span>
@@ -120,8 +144,19 @@ export function BlogIndexClient({
                   <div className="lend-card-spotlight" />
                   <div
                     className="relative h-44 bg-gradient-to-br from-purple-600/20 via-violet-600/10 to-indigo-600/20 overflow-hidden"
-                    style={post.cover_image_url ? { backgroundImage: `url(${post.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+                    style={post.cover_image_url && !post.cover_image_url.startsWith("/media/")
+                      ? { backgroundImage: `url(${post.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+                      : undefined}
                   >
+                    {post.cover_image_url?.startsWith("/media/") ? (
+                      <Image
+                        src={post.cover_image_url}
+                        alt={post.cover_image_alt || post.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    ) : null}
                     {!post.cover_image_url && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-6xl font-black italic text-white/5 font-['Montserrat'] select-none">R</span>

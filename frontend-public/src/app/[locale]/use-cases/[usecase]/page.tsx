@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { UseCasePageClient } from "@/components/UseCasePageClient";
-import { languageAlternates } from "@/lib/seo";
+import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ usecase: string; locale: string }>;
@@ -29,7 +29,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   const page = getCopy(locale).marketing.useCasePages[usecase];
   const title = `${page.metadata.title} | recv`;
-  const description = page.metadata.description;
+  const description = metadataDescription(locale, page.metadata.description);
 
   return {
     title,
@@ -42,20 +42,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [
-        {
-          url: `/${locale}/opengraph-image`,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
+      images: socialImages(locale, title, locale === "ru" ? "Сценарий" : "Use case"),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`/${locale}/opengraph-image`],
+      images: socialImages(locale, title, locale === "ru" ? "Сценарий" : "Use case"),
     },
   };
 }

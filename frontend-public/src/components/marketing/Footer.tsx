@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { getCopy } from "@/lib/copy";
 
@@ -21,14 +19,14 @@ export function Footer({ language }: { language: "ru" | "en" }) {
             <Link href={`/${language}`} className="text-2xl font-black tracking-tighter text-white hover:opacity-90 transition-opacity">
               recv<span className="text-purple-500 animate-pulse inline-block">.</span>
             </Link>
-            <p className="mt-4 text-sm text-white/40 leading-relaxed max-w-[240px] font-medium">
+            <p className="mt-4 text-sm text-white/55 leading-relaxed max-w-[240px] font-medium">
               {f.body}
             </p>
           </div>
 
           {/* Product Column */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-6">{f.product}</h4>
+            <div className="text-xs font-bold uppercase tracking-widest text-white/50 mb-6">{f.product}</div>
             <ul className="space-y-4">
               <li><Link href={`/${language}/products/checkout`} className="lend-footer-link">{nav.products.checkout.title}</Link></li>
               <li><Link href={`/${language}/products/api`} className="lend-footer-link">{nav.products.api.title}</Link></li>
@@ -40,7 +38,7 @@ export function Footer({ language }: { language: "ru" | "en" }) {
 
           {/* Solutions Column */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-6">{f.solutions}</h4>
+            <div className="text-xs font-bold uppercase tracking-widest text-white/50 mb-6">{f.solutions}</div>
             <ul className="space-y-4">
               <li><Link href={`/${language}/use-cases/telegram-shops`} className="lend-footer-link">{nav.useCases.tgShops}</Link></li>
               <li><Link href={`/${language}/use-cases/saas-billing`} className="lend-footer-link">{nav.useCases.saas}</Link></li>
@@ -51,7 +49,7 @@ export function Footer({ language }: { language: "ru" | "en" }) {
 
           {/* Pricing/Company Column */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-6">{f.company}</h4>
+            <div className="text-xs font-bold uppercase tracking-widest text-white/50 mb-6">{f.company}</div>
             <ul className="space-y-4">
               <li><Link href={`/${language}/merchant`} className="lend-footer-link">{nav.pricing.merchant}</Link></li>
               <li><Link href={`/${language}/dev`} className="lend-footer-link">{nav.pricing.developer}</Link></li>
@@ -61,7 +59,7 @@ export function Footer({ language }: { language: "ru" | "en" }) {
 
           {/* Resources/Legal Column */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-6">{f.resources}</h4>
+            <div className="text-xs font-bold uppercase tracking-widest text-white/50 mb-6">{f.resources}</div>
             <ul className="space-y-4">
               <li><Link href={`/${language}/docs/introduction`} className="lend-footer-link">{nav.docs}</Link></li>
               <li><Link href={`/${language}/blog`} className="lend-footer-link">{nav.blog}</Link></li>
@@ -72,7 +70,7 @@ export function Footer({ language }: { language: "ru" | "en" }) {
         </div>
 
         <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-xs text-white/30 font-medium">
+          <div className="text-xs text-white/50 font-medium">
             © {new Date().getFullYear()} recv. All rights reserved.
           </div>
           <div className="flex items-center gap-8">

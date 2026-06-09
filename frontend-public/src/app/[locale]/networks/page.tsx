@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { HubPageClient } from "@/components/HubPageClient";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { JsonLd } from "@/components/JsonLd";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -14,7 +15,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     title: `${copy.marketing.networksHub.title} | recv`,
-    description: copy.marketing.networksHub.description,
+    description: metadataDescription(locale, copy.marketing.networksHub.description),
     alternates: {
       canonical: `/${locale}/networks`,
       languages: { en: "/en/networks", ru: "/ru/networks", "x-default": "/en/networks" },
@@ -24,7 +25,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       : "crypto payment networks, TON payments, TRON USDT, Solana payments, Base payments, Arbitrum USDT, BSC payments, blockchain integration",
     openGraph: {
       title: copy.marketing.networksHub.title,
-      description: copy.marketing.networksHub.description,
+      images: socialImages(locale, copy.marketing.networksHub.title, locale === "ru" ? "Сети" : "Networks"),
+      description: metadataDescription(locale, copy.marketing.networksHub.description),
     },
   };
 }
@@ -70,6 +72,7 @@ export default async function NetworksHubPage(props: Props) {
       <JsonLd schema={siteListSchema} />
       <HubPageClient
         language={locale}
+        path="/networks"
         kicker={copy.marketing.networksHub.kicker}
         title={copy.marketing.networksHub.title}
         description={copy.marketing.networksHub.description}

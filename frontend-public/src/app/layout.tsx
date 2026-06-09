@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
-import { Manrope, Montserrat } from "next/font/google";
+import { headers } from "next/headers";
+import localFont from "next/font/local";
+import { OptionalAnalytics } from "@/components/OptionalAnalytics";
+import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import "./tailwind.css";
 import "./globals.css";
 
-const manrope = Manrope({
-  subsets: ["latin", "cyrillic"],
+const manrope = localFont({
+  src: "./fonts/manrope-variable.woff2",
   display: "swap",
   variable: "--font-manrope",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "200 800",
 });
 
-const montserrat = Montserrat({
-  subsets: ["latin", "cyrillic"],
+const montserrat = localFont({
+  src: "./fonts/montserrat-variable.woff2",
   display: "swap",
   variable: "--font-montserrat",
-  weight: ["600", "700", "800", "900"],
+  weight: "100 900",
 });
 
 const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.PUBLIC_APP_URL || "https://recv.money").replace(/\/+$/, "");
@@ -50,17 +53,37 @@ export const metadata: Metadata = {
   },
   other: {
     "theme-color": "#7c3aed",
+    ...(process.env.YANDEX_VERIFICATION
+      ? { "yandex-verification": process.env.YANDEX_VERIFICATION }
+      : {}),
   },
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const requestHeaders = await headers();
+  const locale = requestHeaders.get("x-recv-locale") === "ru" ? "ru" : "en";
+
   return (
-    <html lang="en" suppressHydrationWarning className={`${manrope.variable} ${montserrat.variable}`}>
-      <body suppressHydrationWarning>{children}</body>
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={`${manrope.variable} ${montserrat.variable}`}
+    >
+      <body suppressHydrationWarning>
+        {children}
+        <WebVitalsReporter />
+        <OptionalAnalytics
+          gtmId={process.env.GTM_ID}
+          yandexMetrikaId={process.env.YANDEX_METRIKA_ID}
+        />
+      </body>
     </html>
   );
 }

@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect } from "react";
 import Link from "next/link";
 import { 
   ArrowRight, 
@@ -8,8 +5,9 @@ import {
   Layers, 
   Globe
 } from "lucide-react";
-import { MarketingLayout, useReveal } from "./marketing/MarketingLayout";
+import { MarketingLayout } from "./marketing/MarketingLayout";
 import { JsonLd } from "./JsonLd";
+import { BreadcrumbJsonLd } from "./BreadcrumbJsonLd";
 import { Locale } from "@/i18n";
 import "./marketing/plans/plans.css";
 
@@ -131,17 +129,8 @@ function localizedHref(locale: Locale, path: string) {
 }
 
 export function UseCasePageClient({ usecase, locale, copy }: Props) {
-  const reveal = useReveal();
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [usecase]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   const softwareSchema = {
     "@context": "https://schema.org",
@@ -162,9 +151,16 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
   return (
     <MarketingLayout language={locale}>
       <JsonLd schema={softwareSchema} />
+      <BreadcrumbJsonLd
+        items={[
+          { name: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },
+          { name: locale === "ru" ? "Кейсы" : "Use Cases", href: `/${locale}/use-cases` },
+          { name: copy.kicker, href: `/${locale}/use-cases/${usecase}` },
+        ]}
+      />
 
       {/* Hero Section */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -218,12 +214,11 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
       </section>
 
       {/* Narrative Section (Problem/Solution) */}
-      <section className="py-16 md:py-24" ref={reveal}>
+      <section className="py-16 md:py-24" data-reveal>
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lend-reveal--2">
             <article
               className="lend-card lend-spotlight-card group relative p-8 md:p-12 transition-all duration-500 hover:scale-[1.01]"
-              onMouseMove={handleMouseMove}
             >
               <div className="lend-card-spotlight" />
               <div className="relative z-10">
@@ -237,7 +232,6 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
 
             <article
               className="lend-card lend-spotlight-card group relative p-8 md:p-12 border-accent/20 bg-accent/[0.03] transition-all duration-500 hover:scale-[1.01]"
-              onMouseMove={handleMouseMove}
             >
               <div className="lend-card-spotlight" />
               <div className="relative z-10">
@@ -253,7 +247,7 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
       </section>
 
       {/* Product & Plan Recommendations */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto flex flex-col items-center mb-16">
             <div className="lend-section-copy lend-reveal--1">
@@ -266,7 +260,6 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto lend-reveal--2">
             <article
               className="lend-card lend-spotlight-card group relative p-10 flex flex-col transition-all duration-500 hover:scale-[1.02]"
-              onMouseMove={handleMouseMove}
             >
               <div className="lend-card-spotlight" />
               <div className="relative z-10 flex flex-col h-full">
@@ -285,7 +278,6 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
 
             <article
               className="lend-card lend-spotlight-card group relative p-10 flex flex-col transition-all duration-500 hover:scale-[1.02]"
-              onMouseMove={handleMouseMove}
             >
               <div className="lend-card-spotlight" />
               <div className="relative z-10 flex flex-col h-full">
@@ -306,7 +298,7 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
       </section>
 
       {/* Network Support */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto flex flex-col items-center mb-16">
             <div className="lend-section-copy lend-reveal--1">
@@ -321,7 +313,6 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
               <article
                 key={network.name}
                 className="lend-card lend-spotlight-card group relative p-8 transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10">
@@ -338,7 +329,7 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
       </section>
 
       {/* Flow Section (Horizontal) */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto flex flex-col items-center mb-16 md:mb-24">
             <div className="lend-section-copy lend-reveal--1">
@@ -374,7 +365,7 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
       </section>
 
       {/* Related Section */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto flex flex-col items-center mb-16">
             <div className="lend-section-copy lend-reveal--1">
@@ -389,7 +380,6 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
                 key={link.href}
                 href={localizedHref(locale, link.href)}
                 className="lend-card lend-spotlight-card group relative p-8 transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10">
@@ -406,7 +396,7 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-32 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+      <section className="py-32 relative overflow-hidden lend-spotlight-card group" data-reveal>
         <div className="lend-card-spotlight opacity-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
 

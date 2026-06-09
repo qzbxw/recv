@@ -1,14 +1,20 @@
-import { useEffect, useMemo, useState, FormEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
-import MDEditor from "@uiw/react-md-editor";
 import {
   getStoredAdminToken,
   fetchAdminBlogPosts,
   createAdminBlogPost,
   updateAdminBlogPost,
 } from "../lib/api";
+import { marked } from "marked";
 import { CustomSelect } from "../components/CustomSelect";
 import type { AdminBlogPost } from "../lib/types";
+
+const MDEditor = lazy(() => import("@uiw/react-md-editor"));
+const TipTapEditor = lazy(() => import("../features/blog/TipTapEditor"));
+const MediaLibraryModal = lazy(() =>
+  import("../features/blog/MediaLibraryModal").then((m) => ({ default: m.MediaLibraryModal })),
+);
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "Draft" },
@@ -34,11 +40,13 @@ function localeOf(post: Partial<AdminBlogPost>): string {
 function blankTranslation(base: Partial<AdminBlogPost>, locale: string): Partial<AdminBlogPost> {
   return {
     title: "",
+    h1: "",
     slug: base.slug || "",
     excerpt: "",
     content_md: "",
     cover_image_url: base.cover_image_url || "",
-    author: base.author || "recv Team",
+    author: base.author || "Recv Core Team",
+    author_slug: base.author_slug || "recv-core",
     is_published: false,
     status: "draft",
     tags: base.tags || [],
@@ -46,9 +54,23 @@ function blankTranslation(base: Partial<AdminBlogPost>, locale: string): Partial
     meta_title: "",
     meta_description: "",
     canonical_url: "",
+    og_title: "",
+    og_description: "",
+    og_image_url: "",
+    cover_image_alt: "",
+    robots_index: true,
+    robots_follow: true,
+    include_in_sitemap: true,
+    content_version: 1,
     internal_links_count: 0,
     internal_linking_status: "unknown",
   };
+}
+
+// Legacy posts store Markdown; the rich editor bootstraps from its HTML
+// rendering. Structured JSON becomes authoritative on the first save.
+function markdownToHTML(md: string): string {
+  return marked.parse(md, { async: false, gfm: true, breaks: false });
 }
 
 function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
@@ -96,6 +118,10 @@ export function AdminBlogPage() {
   const [error, setError] = useState("");
   const [editingPost, setEditingPost] = useState<Partial<AdminBlogPost> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showCoverLibrary, setShowCoverLibrary] = useState(false);
+  // Posts created before TipTap stay on the Markdown editor until the admin
+  // explicitly converts them; new posts and v2 posts always use TipTap.
+  const [convertedToRich, setConvertedToRich] = useState(false);
 
   // Group rows by slug: each group is one article with its locale translations.
   const groups = useMemo(() => {
@@ -154,6 +180,11 @@ export function AdminBlogPage() {
     setEditingPost((current) => ({ ...(current || {}), ...next }));
   }
 
+  function openPost(post: Partial<AdminBlogPost> | null) {
+    setConvertedToRich(false);
+    setEditingPost(post);
+  }
+
   if (!token) {
     return <Navigate replace to="/admin" />;
   }
@@ -166,10 +197,19 @@ export function AdminBlogPage() {
       : [];
     const siblingByLocale = new Map(siblings.map((p) => [localeOf(p), p]));
 
+    // Rich editor applies to: posts already on structured content (v2),
+    // brand-new posts, and legacy posts explicitly converted this session.
+    const hasStructured = (editingPost.content_version ?? 1) >= 2 && !!editingPost.content_json;
+    const isNewPost = !editingPost.id;
+    const useRichEditor = hasStructured || isNewPost || convertedToRich;
+    const richInitialContent = hasStructured
+      ? (editingPost.content_json as Record<string, unknown>)
+      : markdownToHTML(editingPost.content_md || "");
+
     function switchTranslation(locale: string) {
       if (locale === currentLocale) return;
       const existing = siblingByLocale.get(locale);
-      setEditingPost(existing ?? blankTranslation(editingPost!, locale));
+      openPost(existing ?? blankTranslation(editingPost!, locale));
     }
 
     return (
@@ -225,6 +265,10 @@ export function AdminBlogPage() {
                 <input className="dev-input" required value={editingPost.title || ""} onChange={(e) => updateEditingPost({ title: e.target.value })} />
               </div>
               <div className="dev-input-group">
+                <label>Page H1</label>
+                <input className="dev-input" required value={editingPost.h1 || ""} onChange={(e) => updateEditingPost({ h1: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
                 <label>Slug</label>
                 <input className="dev-input" required value={editingPost.slug || ""} onChange={(e) => updateEditingPost({ slug: e.target.value })} />
               </div>
@@ -241,8 +285,19 @@ export function AdminBlogPage() {
                 <input className="dev-input" required value={editingPost.author || ""} onChange={(e) => updateEditingPost({ author: e.target.value })} />
               </div>
               <div className="dev-input-group">
+                <label>Author slug</label>
+                <input className="dev-input" required value={editingPost.author_slug || "recv-core"} onChange={(e) => updateEditingPost({ author_slug: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
                 <label>Cover image URL</label>
-                <input className="dev-input" value={editingPost.cover_image_url || ""} onChange={(e) => updateEditingPost({ cover_image_url: e.target.value })} />
+                <div className="admin-blog-cover-row">
+                  <input className="dev-input" value={editingPost.cover_image_url || ""} onChange={(e) => updateEditingPost({ cover_image_url: e.target.value })} />
+                  <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => setShowCoverLibrary(true)}>Library</button>
+                </div>
+              </div>
+              <div className="dev-input-group">
+                <label>Cover image alt</label>
+                <input className="dev-input" value={editingPost.cover_image_alt || ""} onChange={(e) => updateEditingPost({ cover_image_alt: e.target.value })} />
               </div>
               <div className="dev-input-group admin-blog-grid__wide">
                 <label>Excerpt</label>
@@ -268,6 +323,30 @@ export function AdminBlogPage() {
                 <textarea className="dev-input" value={editingPost.meta_description || ""} onChange={(e) => updateEditingPost({ meta_description: e.target.value })} />
               </div>
               <div className="dev-input-group">
+                <label>OG title</label>
+                <input className="dev-input" value={editingPost.og_title || ""} onChange={(e) => updateEditingPost({ og_title: e.target.value })} />
+              </div>
+              <div className="dev-input-group">
+                <label>OG image URL</label>
+                <input className="dev-input" value={editingPost.og_image_url || ""} onChange={(e) => updateEditingPost({ og_image_url: e.target.value })} />
+              </div>
+              <div className="dev-input-group admin-blog-grid__wide">
+                <label>OG description</label>
+                <textarea className="dev-input" value={editingPost.og_description || ""} onChange={(e) => updateEditingPost({ og_description: e.target.value })} />
+              </div>
+              <label className="dev-input-group">
+                <span>Index page</span>
+                <input type="checkbox" checked={editingPost.robots_index ?? true} onChange={(e) => updateEditingPost({ robots_index: e.target.checked })} />
+              </label>
+              <label className="dev-input-group">
+                <span>Follow links</span>
+                <input type="checkbox" checked={editingPost.robots_follow ?? true} onChange={(e) => updateEditingPost({ robots_follow: e.target.checked })} />
+              </label>
+              <label className="dev-input-group">
+                <span>Include in sitemap</span>
+                <input type="checkbox" checked={editingPost.include_in_sitemap ?? true} onChange={(e) => updateEditingPost({ include_in_sitemap: e.target.checked })} />
+              </label>
+              <div className="dev-input-group">
                 <label>Tags (comma separated)</label>
                 <input className="dev-input" value={(editingPost.tags || []).join(", ")} onChange={(e) => updateEditingPost({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} />
               </div>
@@ -288,11 +367,50 @@ export function AdminBlogPage() {
 
           <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
             <div className="console-card-spotlight" />
-            <div className="dev-portal__section-header dev-portal__section-header--margin"><h3>Content</h3><p>Markdown</p></div>
-            <div data-color-mode="dark" className="admin-blog-editor">
-              <MDEditor value={editingPost.content_md || ""} onChange={(val) => updateEditingPost({ content_md: val || "" })} height={460} />
-            </div>
+            {useRichEditor ? (
+              <>
+                <div className="dev-portal__section-header dev-portal__section-header--margin"><h3>Content</h3><p>Rich text · stored as structured JSON v2</p></div>
+                <div className="admin-blog-editor">
+                  <Suspense fallback={<div className="dev-portal__empty-large">Loading editor…</div>}>
+                    <TipTapEditor
+                      key={`${editingPost.id ?? "new"}-${currentLocale}`}
+                      token={token}
+                      initialContent={richInitialContent}
+                      onChange={(doc) => updateEditingPost({ content_json: doc as Record<string, unknown>, content_version: 2 })}
+                    />
+                  </Suspense>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="dev-portal__section-header dev-portal__section-header--margin">
+                  <h3>Content</h3>
+                  <p>Markdown (legacy). Converting keeps Markdown as a fallback until you save.</p>
+                </div>
+                <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact admin-blog-convert" onClick={() => setConvertedToRich(true)}>
+                  Convert to rich editor
+                </button>
+                <div data-color-mode="dark" className="admin-blog-editor">
+                  <Suspense fallback={<div className="dev-portal__empty-large">Loading editor…</div>}>
+                    <MDEditor value={editingPost.content_md || ""} onChange={(val) => updateEditingPost({ content_md: val || "" })} height={460} />
+                  </Suspense>
+                </div>
+              </>
+            )}
           </div>
+
+          {showCoverLibrary && (
+            <Suspense fallback={null}>
+              <MediaLibraryModal
+                token={token}
+                onClose={() => setShowCoverLibrary(false)}
+                onSelect={(media) => {
+                  updateEditingPost({ cover_image_url: media.url, cover_image_alt: media.alt_text });
+                  setShowCoverLibrary(false);
+                }}
+              />
+            </Suspense>
+          )}
 
           <div className="admin-blog__footer">
             <button type="button" className="dev-btn dev-btn--secondary" onClick={() => setEditingPost(null)}>Cancel</button>
@@ -315,7 +433,7 @@ export function AdminBlogPage() {
           <button
             type="button"
             className="dev-btn dev-btn--primary dev-btn--compact"
-            onClick={() => setEditingPost({ title: "", slug: "", excerpt: "", content_md: "", cover_image_url: "", author: "recv Team", is_published: false, status: "draft", tags: [], locale: "en", internal_links_count: 0, internal_linking_status: "unknown" })}
+            onClick={() => openPost({ title: "", h1: "", slug: "", excerpt: "", content_md: "", content_version: 1, cover_image_url: "", cover_image_alt: "", author: "Recv Core Team", author_slug: "recv-core", is_published: false, status: "draft", tags: [], locale: "en", robots_index: true, robots_follow: true, include_in_sitemap: true, internal_links_count: 0, internal_linking_status: "unknown" })}
           >
             New post
           </button>
@@ -352,7 +470,7 @@ export function AdminBlogPage() {
                             key={loc}
                             type="button"
                             className={`admin-blog-locale-tab${existing ? "" : " admin-blog-locale-tab--missing"}`}
-                            onClick={() => setEditingPost(existing ?? blankTranslation(primary, loc))}
+                            onClick={() => openPost(existing ?? blankTranslation(primary, loc))}
                             title={existing ? `Edit ${loc.toUpperCase()} version` : `Add ${loc.toUpperCase()} translation`}
                           >
                             <span className="admin-blog-locale-tab__code">{loc.toUpperCase()}</span>
@@ -363,7 +481,7 @@ export function AdminBlogPage() {
                     </div>
                   </div>
                   <div className="dev-card__actions admin-actions">
-                    <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => setEditingPost(primary)}>Edit</button>
+                    <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => openPost(primary)}>Edit</button>
                   </div>
                 </div>
               </div>

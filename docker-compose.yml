@@ -30,6 +30,9 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgres://recv:recv@postgres:5432/recv?sslmode=disable}
       METRICS_PORT: ${API_METRICS_PORT:-9090}
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://recv.money}
+      MEDIA_DIR: /data/media
+    volumes:
+      - media_data:/data/media
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
       interval: 10s
@@ -77,6 +80,10 @@ services:
         PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://recv.money}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://recv.money}
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://recv.money}
+        GTM_ID: ${GTM_ID:-}
+        YANDEX_METRIKA_ID: ${YANDEX_METRIKA_ID:-}
+        GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+        YANDEX_VERIFICATION: ${YANDEX_VERIFICATION:-}
     restart: unless-stopped
     depends_on:
       - api
@@ -101,7 +108,6 @@ services:
     depends_on:
       - frontend
     environment:
-      CADDY_EMAIL: ${CADDY_EMAIL:-}
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-localhost}
     ports:
       - "8080:80"
@@ -129,6 +135,7 @@ services:
 
 volumes:
   postgres_data:
+  media_data:
   caddy_data:
   caddy_config:
   restore_data:

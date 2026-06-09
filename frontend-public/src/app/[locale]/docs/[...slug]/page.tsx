@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDocBySlug, getAllDocSlugs } from "@/lib/docs";
+import { metadataDescription, socialImages } from "@/lib/seo";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { JsonLd } from "@/components/JsonLd";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { docsMdxComponents } from "@/components/docs/mdxComponents";
 import { getCopy, normalizeLocale } from "@/i18n";
 import Link from "next/link";
@@ -35,11 +37,11 @@ export async function generateMetadata(props: {
   }
   const path = `/docs/${slug.join("/")}`;
   const title = (doc.data.title as string) || "Documentation";
-  const description =
+  const description = metadataDescription(locale,
     (doc.data.description as string) ||
     (locale === "ru"
       ? "Документация recv: API, вебхуки, сети и интеграция криптоплатежей."
-      : "recv documentation: API, webhooks, supported networks, and crypto payment integration.");
+      : "recv documentation: API, webhooks, supported networks, and crypto payment integration."));
   return {
     title: `${title} | recv Docs`,
     description,
@@ -50,6 +52,9 @@ export async function generateMetadata(props: {
         ru: `/ru${path}`,
         "x-default": `/en${path}`,
       },
+    },
+    openGraph: {
+      images: socialImages(locale, title, locale === "ru" ? "Документация" : "Docs"),
     },
   };
 }
@@ -90,7 +95,7 @@ export default async function DocPage(props: {
     "@context": "https://schema.org",
     "@type": "TechArticle",
     headline: doc.data.title as string,
-    description: (doc.data.description as string) || undefined,
+    description: metadataDescription(locale, (doc.data.description as string) || (doc.data.title as string)),
     inLanguage: locale,
     url: `https://recv.money/${locale}/docs/${slug.join("/")}`,
     author: { "@type": "Organization", name: "recv" },
@@ -100,6 +105,13 @@ export default async function DocPage(props: {
   return (
     <MarketingLayout language={locale}>
       <JsonLd schema={articleSchema} />
+      <BreadcrumbJsonLd
+        items={[
+          { name: copy.marketing.breadcrumbs.home, href: `/${locale}` },
+          { name: copy.nav.docs, href: `/${locale}/docs/introduction` },
+          { name: docLabel(slug), href: `/${locale}/docs/${slug.join("/")}` },
+        ]}
+      />
       <div className="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-10 lg:gap-14 pt-28 md:pt-32 pb-24">
         {/* Sidebar */}
         <aside className="hidden lg:block">

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { normalizeLocale } from "@/i18n";
 import HomeClient from "@/components/HomeClient";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -14,9 +15,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     title: isRu
       ? "recv — крипто-платёжный шлюз для USDT, TON и TRON"
       : "recv — Crypto Payment Gateway for USDT, TON & TRON",
-    description: isRu
+    description: metadataDescription(locale, isRu
       ? "Принимайте криптоплатежи напрямую на свои кошельки. Non-custodial checkout, API и вебхуки для USDT, TON, TON_USDT, TRON, Base и BSC. Без комиссии с оборота."
-      : "Accept crypto payments directly to your own wallets. Non-custodial checkout, API, and webhooks for USDT, TON, TON_USDT, TRON, Base, and BSC — with zero turnover fees.",
+      : "Accept crypto payments directly to your own wallets. Non-custodial checkout, API, and webhooks for USDT, TON, TON_USDT, TRON, Base, and BSC — with zero turnover fees."),
     keywords: isRu
       ? "крипто платёжный шлюз, принять криптоплатежи, USDT платежи, TON платежи, non-custodial криптоплатежи, recv, TRON платежи"
       : "crypto payment gateway, accept crypto payments, USDT payments, TON payments, non-custodial crypto, recv, TRON payments, crypto checkout API",
@@ -27,6 +28,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         ru: "/ru",
         "x-default": "/en",
       },
+    },
+    openGraph: {
+      images: socialImages(
+        locale,
+        isRu ? "Крипто-платёжный шлюз для USDT, TON и TRON" : "Crypto Payment Gateway for USDT, TON & TRON",
+        isRu ? "Платёжная инфраструктура" : "Payments infrastructure",
+      ),
     },
   };
 }

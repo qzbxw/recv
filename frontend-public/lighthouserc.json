@@ -1,0 +1,42 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm run start",
+      "startServerReadyPattern": "Ready in",
+      "url": [
+        "http://127.0.0.1:3000/en",
+        "http://127.0.0.1:3000/ru",
+        "http://127.0.0.1:3000/en/pricing",
+        "http://127.0.0.1:3000/en/products/api",
+        "http://127.0.0.1:3000/ru/networks/ton"
+      ],
+      "numberOfRuns": 1,
+      "settings": {
+        "budgets": [
+          {
+            "path": "/*",
+            "resourceSizes": [
+              { "resourceType": "script", "budget": 250 },
+              { "resourceType": "stylesheet", "budget": 64 },
+              { "resourceType": "font", "budget": 160 },
+              { "resourceType": "document", "budget": 130 },
+              { "resourceType": "total", "budget": 1024 }
+            ]
+          }
+        ]
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.85 }],
+        "categories:seo": ["error", { "minScore": 0.95 }],
+        "categories:accessibility": ["warn", { "minScore": 0.9 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 256000 }],
+        "resource-summary:stylesheet:size": ["error", { "maxNumericValue": 65536 }]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

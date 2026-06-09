@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -12,7 +13,10 @@ const blogPostSelectColumns = `
 	id,
 	slug,
 	title,
+	h1,
 	content_md,
+	content_json,
+	content_version,
 	excerpt,
 	cover_image_url,
 	author,
@@ -21,6 +25,14 @@ const blogPostSelectColumns = `
 	meta_title,
 	meta_description,
 	canonical_url,
+	og_title,
+	og_description,
+	og_image_url,
+	cover_image_alt,
+	robots_index,
+	robots_follow,
+	include_in_sitemap,
+	author_slug,
 	tags,
 	locale,
 	preview_token,
@@ -37,7 +49,10 @@ func scanBlogPost(row pgx.Row) (BlogPost, error) {
 		&p.ID,
 		&p.Slug,
 		&p.Title,
+		&p.H1,
 		&p.ContentMD,
+		&p.ContentJSON,
+		&p.ContentVersion,
 		&p.Excerpt,
 		&p.CoverImageURL,
 		&p.Author,
@@ -46,6 +61,14 @@ func scanBlogPost(row pgx.Row) (BlogPost, error) {
 		&p.MetaTitle,
 		&p.MetaDescription,
 		&p.CanonicalURL,
+		&p.OGTitle,
+		&p.OGDescription,
+		&p.OGImageURL,
+		&p.CoverImageAlt,
+		&p.RobotsIndex,
+		&p.RobotsFollow,
+		&p.IncludeInSitemap,
+		&p.AuthorSlug,
 		&p.Tags,
 		&p.Locale,
 		&p.PreviewToken,
@@ -68,14 +91,19 @@ func (s *Store) CreateBlogPost(ctx context.Context, post BlogPost) (BlogPost, er
 	post = normalizeBlogPostForWrite(post)
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO blog_posts (
-			slug, title, content_md, excerpt, cover_image_url, author, is_published, status,
-			meta_title, meta_description, canonical_url, tags, locale, preview_token,
+			slug, title, h1, content_md, content_json, content_version, excerpt, cover_image_url, author, is_published, status,
+			meta_title, meta_description, canonical_url, og_title, og_description, og_image_url,
+			cover_image_alt, robots_index, robots_follow, include_in_sitemap, author_slug,
+			tags, locale, preview_token,
 			internal_links_count, internal_linking_status, published_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
 		RETURNING `+blogPostSelectColumns+`
-	`, post.Slug, post.Title, post.ContentMD, post.Excerpt, post.CoverImageURL, post.Author, post.IsPublished, post.Status,
-		post.MetaTitle, post.MetaDescription, post.CanonicalURL, post.Tags, post.Locale, post.PreviewToken, post.InternalLinksCount, post.InternalLinkingStatus, post.PublishedAt)
+	`, post.Slug, post.Title, post.H1, post.ContentMD, nullableJSON(post.ContentJSON), post.ContentVersion,
+		post.Excerpt, post.CoverImageURL, post.Author, post.IsPublished, post.Status,
+		post.MetaTitle, post.MetaDescription, post.CanonicalURL, post.OGTitle, post.OGDescription, post.OGImageURL,
+		post.CoverImageAlt, post.RobotsIndex, post.RobotsFollow, post.IncludeInSitemap, post.AuthorSlug,
+		post.Tags, post.Locale, post.PreviewToken, post.InternalLinksCount, post.InternalLinkingStatus, post.PublishedAt)
 	return scanBlogPost(row)
 }
 
@@ -85,26 +113,40 @@ func (s *Store) UpdateBlogPost(ctx context.Context, id int64, post BlogPost) (Bl
 		UPDATE blog_posts
 		SET slug = $1,
 		    title = $2,
-		    content_md = $3,
-		    excerpt = $4,
-		    cover_image_url = $5,
-		    author = $6,
-		    is_published = $7,
-		    status = $8,
-		    meta_title = $9,
-		    meta_description = $10,
-		    canonical_url = $11,
-		    tags = $12,
-		    locale = $13,
-		    preview_token = $14,
-		    internal_links_count = $15,
-		    internal_linking_status = $16,
-		    published_at = $17,
+		    h1 = $3,
+		    content_md = $4,
+		    content_json = $5,
+		    content_version = $6,
+		    excerpt = $7,
+		    cover_image_url = $8,
+		    author = $9,
+		    is_published = $10,
+		    status = $11,
+		    meta_title = $12,
+		    meta_description = $13,
+		    canonical_url = $14,
+		    og_title = $15,
+		    og_description = $16,
+		    og_image_url = $17,
+		    cover_image_alt = $18,
+		    robots_index = $19,
+		    robots_follow = $20,
+		    include_in_sitemap = $21,
+		    author_slug = $22,
+		    tags = $23,
+		    locale = $24,
+		    preview_token = $25,
+		    internal_links_count = $26,
+		    internal_linking_status = $27,
+		    published_at = $28,
 		    updated_at = NOW()
-		WHERE id = $18
+		WHERE id = $29
 		RETURNING `+blogPostSelectColumns+`
-	`, post.Slug, post.Title, post.ContentMD, post.Excerpt, post.CoverImageURL, post.Author, post.IsPublished, post.Status,
-		post.MetaTitle, post.MetaDescription, post.CanonicalURL, post.Tags, post.Locale, post.PreviewToken, post.InternalLinksCount, post.InternalLinkingStatus, post.PublishedAt, id)
+	`, post.Slug, post.Title, post.H1, post.ContentMD, nullableJSON(post.ContentJSON), post.ContentVersion,
+		post.Excerpt, post.CoverImageURL, post.Author, post.IsPublished, post.Status,
+		post.MetaTitle, post.MetaDescription, post.CanonicalURL, post.OGTitle, post.OGDescription, post.OGImageURL,
+		post.CoverImageAlt, post.RobotsIndex, post.RobotsFollow, post.IncludeInSitemap, post.AuthorSlug,
+		post.Tags, post.Locale, post.PreviewToken, post.InternalLinksCount, post.InternalLinkingStatus, post.PublishedAt, id)
 	return scanBlogPost(row)
 }
 
@@ -166,6 +208,34 @@ func (s *Store) ListPublishedBlogLocalesBySlug(ctx context.Context, slug string)
 	return locales, rows.Err()
 }
 
+func (s *Store) ListPublishedBlogLocalesBySlugs(ctx context.Context, slugs []string) (map[string][]string, error) {
+	result := make(map[string][]string, len(slugs))
+	if len(slugs) == 0 {
+		return result, nil
+	}
+
+	rows, err := s.pool.Query(ctx, `
+		SELECT slug, array_agg(DISTINCT locale ORDER BY locale)
+		FROM blog_posts
+		WHERE slug = ANY($1) AND (status = 'published' OR is_published = TRUE)
+		GROUP BY slug
+	`, slugs)
+	if err != nil {
+		return nil, fmt.Errorf("list blog post locales by slugs: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var slug string
+		var locales []string
+		if err := rows.Scan(&slug, &locales); err != nil {
+			return nil, err
+		}
+		result[slug] = locales
+	}
+	return result, rows.Err()
+}
+
 func (s *Store) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPublished bool) ([]BlogPost, int, error) {
 	var total int
 	countQuery := `SELECT COUNT(1) FROM blog_posts`
@@ -208,8 +278,19 @@ func (s *Store) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPubli
 }
 
 func (s *Store) ListPublishedBlogPosts(ctx context.Context, page, pageSize int, locale string) ([]BlogPost, int, error) {
+	return s.listPublishedBlogPosts(ctx, page, pageSize, locale, false)
+}
+
+func (s *Store) ListPublishedBlogSitemapPosts(ctx context.Context, page, pageSize int, locale string) ([]BlogPost, int, error) {
+	return s.listPublishedBlogPosts(ctx, page, pageSize, locale, true)
+}
+
+func (s *Store) listPublishedBlogPosts(ctx context.Context, page, pageSize int, locale string, sitemapOnly bool) ([]BlogPost, int, error) {
 	where := ` WHERE (status = 'published' OR is_published = TRUE)`
 	args := []any{}
+	if sitemapOnly {
+		where += ` AND robots_index = TRUE AND include_in_sitemap = TRUE`
+	}
 	if locale != "" {
 		where += ` AND locale = $1`
 		args = append(args, locale)
@@ -274,5 +355,18 @@ func normalizeBlogPostForWrite(post BlogPost) BlogPost {
 	if post.InternalLinkingStatus == "" {
 		post.InternalLinkingStatus = "unknown"
 	}
+	if post.ContentVersion < 1 {
+		post.ContentVersion = 1
+	}
+	if post.AuthorSlug == "" {
+		post.AuthorSlug = "recv-core"
+	}
 	return post
+}
+
+func nullableJSON(value json.RawMessage) any {
+	if len(value) == 0 || string(value) == "null" {
+		return nil
+	}
+	return value
 }

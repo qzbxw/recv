@@ -1,27 +1,61 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 
-export default function NotFound() {
+export const metadata: Metadata = {
+  title: "Page not found | recv",
+};
+
+export default async function NotFound() {
+  const requestHeaders = await headers();
+  const language = requestHeaders.get("x-recv-locale") === "ru" ? "ru" : "en";
+  const copy = language === "ru"
+    ? {
+        title: "Страница не найдена",
+        body: "Запрошенная страница recv не существует или была перемещена.",
+        search: "Поиск по справке",
+        placeholder: "Например, webhooks",
+        home: "Главная",
+        docs: "Документация",
+        products: "Продукты",
+        help: "Помощь",
+      }
+    : {
+        title: "Page not found",
+        body: "The requested recv page does not exist or has moved.",
+        search: "Search help",
+        placeholder: "For example, webhooks",
+        home: "Home",
+        docs: "Documentation",
+        products: "Products",
+        help: "Help",
+      };
+
   return (
-    <main className="lend-page min-h-screen bg-black text-white relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[80%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
-      </div>
-      <section className="min-h-screen grid place-items-center px-6 text-center relative z-10">
+    <MarketingLayout language={language}>
+      <section className="min-h-[70vh] grid place-items-center px-6 pb-24 text-center relative z-10">
         <div className="max-w-2xl">
           <span className="lend-section-kicker justify-center mx-auto">404</span>
           <h1 className="mt-6 text-5xl md:text-7xl font-black tracking-tighter leading-[0.95] font-['Montserrat'] bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent">
-            Page not found
+            {copy.title}
           </h1>
           <p className="mt-6 text-base md:text-lg text-white/55 leading-relaxed">
-            The requested recv page does not exist or has moved.
+            {copy.body}
           </p>
+          <form action={`/${language}/help`} method="get" role="search" className="mt-8 flex gap-3">
+            <label htmlFor="not-found-search" className="sr-only">{copy.search}</label>
+            <input id="not-found-search" name="q" type="search" placeholder={copy.placeholder} className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-white outline-none focus:border-accent" />
+            <button type="submit" className="lend-primary px-6 py-4 rounded-2xl font-bold">{copy.search}</button>
+          </form>
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/en" className="lend-primary px-9 py-4 rounded-2xl font-bold">Home</Link>
-            <Link href="/en/docs" className="lend-secondary px-9 py-4 rounded-2xl font-bold">Docs</Link>
+            <Link href={`/${language}`} className="lend-primary px-7 py-4 rounded-2xl font-bold">{copy.home}</Link>
+            <Link href={`/${language}/docs/introduction`} className="lend-secondary px-7 py-4 rounded-2xl font-bold">{copy.docs}</Link>
+            <Link href={`/${language}/products`} className="lend-secondary px-7 py-4 rounded-2xl font-bold">{copy.products}</Link>
+            <Link href={`/${language}/help`} className="lend-secondary px-7 py-4 rounded-2xl font-bold">{copy.help}</Link>
           </div>
         </div>
       </section>
-    </main>
+    </MarketingLayout>
   );
 }

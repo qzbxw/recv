@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X, Zap, CreditCard, Code, Globe, Bot } from "lucide-react";
-import { getCopy } from "@/lib/copy";
+import type { PublicCopy } from "@/lib/copy";
 import { useLocaleAlternates } from "./localeAlternates";
 
 /** Swap the leading /en or /ru segment of the current path to the target locale. */
@@ -19,10 +19,9 @@ function swapLocaleInPath(pathname: string | null, target: "en" | "ru") {
   return `/${target}`;
 }
 
-export function Header({ language }: { language: "ru" | "en" }) {
+export function Header({ language, nav }: { language: "ru" | "en"; nav: PublicCopy["nav"] }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const copy = getCopy(language);
   const pathname = usePathname();
   const localeAlternates = useLocaleAlternates();
   const localeHref = (target: "en" | "ru") =>
@@ -44,7 +43,6 @@ export function Header({ language }: { language: "ru" | "en" }) {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isMenuOpen]);
 
-  const nav = copy.nav;
 
   return (
     <>
@@ -189,7 +187,7 @@ export function Header({ language }: { language: "ru" | "en" }) {
               {nav.console}
             </Link>
 
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden p-2 text-white/70 hover:text-white transition-colors">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label={isMenuOpen ? "Close menu" : "Open menu"} aria-expanded={isMenuOpen} className="lg:hidden p-2 text-white/70 hover:text-white transition-colors">
               {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>

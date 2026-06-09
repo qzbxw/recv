@@ -390,6 +390,17 @@ export type AdminAnalyticsResponse = {
   }>;
 };
 
+export type WebVitalsReport = {
+  from: string;
+  to: string;
+  metrics: Array<{
+    metric_name: "LCP" | "INP" | "CLS";
+    p75: number;
+    samples: number;
+    good: boolean;
+  }>;
+};
+
 export type AdminActionResponse<T> = {
   result: string;
 } & T;
@@ -427,6 +438,17 @@ export type SEOTarget = {
   updated_at: string;
 };
 
+export type SEORedirect = {
+  id: number;
+  source_path: string;
+  target_url: string;
+  status_code: 301 | 302 | 308;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AdminInvoiceListResponse = {
   items: AdminInvoice[];
   total: number;
@@ -458,7 +480,10 @@ export type AdminBlogPost = {
   id: number;
   slug: string;
   title: string;
+  h1: string | null;
   content_md: string;
+  content_json: Record<string, unknown> | null;
+  content_version: number;
   excerpt: string;
   cover_image_url: string;
   author: string;
@@ -467,6 +492,14 @@ export type AdminBlogPost = {
   meta_title: string | null;
   meta_description: string | null;
   canonical_url: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  og_image_url: string | null;
+  cover_image_alt: string | null;
+  robots_index: boolean;
+  robots_follow: boolean;
+  include_in_sitemap: boolean;
+  author_slug: string;
   tags: string[];
   locale: string;
   preview_token: string | null;
@@ -479,4 +512,26 @@ export type AdminBlogPost = {
 
 export type AdminBlogPostListResponse = {
   items: AdminBlogPost[];
+};
+
+export type AdminMedia = {
+  id: number;
+  file_name: string;
+  original_name: string;
+  mime_type: string;
+  byte_size: number;
+  width: number;
+  height: number;
+  alt_text: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  url: string;
+};
+
+export type AdminMediaListResponse = {
+  items: AdminMedia[];
+  total: number;
+  page: number;
+  page_size: number;
 };

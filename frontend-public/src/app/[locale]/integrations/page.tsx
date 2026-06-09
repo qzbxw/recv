@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { StaticMarketingPage } from "@/components/marketing/StaticMarketingPage";
 import { STATIC_PAGE_COPY } from "@/lib/static-pages";
 import { normalizeLocale } from "@/i18n";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -11,11 +12,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const copy = STATIC_PAGE_COPY.integrations[locale];
   return {
     title: `${copy.title} | recv`,
-    description: copy.body,
+    description: metadataDescription(locale, copy.body),
     keywords: locale === "ru"
       ? "recv API интеграция, crypto webhook, recv checkout, REST API крипто платежи, подписанные вебхуки"
       : "recv API integration, crypto webhook, recv checkout integration, REST API crypto payments, signed webhooks",
     alternates: { canonical: `/${locale}/integrations`, languages: { en: "/en/integrations", ru: "/ru/integrations", "x-default": "/en/integrations" } },
+    openGraph: { images: socialImages(locale, copy.title, locale === "ru" ? "Интеграции" : "Integrations") },
   };
 }
 

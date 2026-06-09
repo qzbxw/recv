@@ -102,6 +102,8 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	router.POST("/api/admin/logout", server.handleAdminLogout)
 	router.GET("/api/public/invoices/:public_id", server.handlePublicInvoice)
 	router.POST("/api/public/events", server.handlePublicProductEvent)
+	router.POST("/api/public/web-vitals", server.handlePublicWebVital)
+	router.GET("/api/public/seo/redirect", server.handlePublicResolveSEORedirect)
 
 	internal := router.Group("/internal")
 	internal.Use(server.internalTokenMiddleware())
@@ -167,6 +169,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	adminAPI.GET("/watchers", server.handleAdminWatchers)
 	adminAPI.GET("/notifications", server.handleAdminNotifications)
 	adminAPI.GET("/analytics", server.handleAdminAnalytics)
+	adminAPI.GET("/analytics/web-vitals", server.handleAdminWebVitals)
 	adminAPI.GET("/audit-events", server.handleAdminAuditEvents)
 	adminAPI.GET("/seo-targets", server.handleAdminSEOTargets)
 	adminAPI.POST("/sessions/revoke", server.handleAdminRevokeSession)
@@ -179,6 +182,17 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	adminAPI.POST("/internal-comments", server.handleAdminCreateInternalComment)
 	adminAPI.GET("/config/billing-wallets", server.handleAdminGetBillingWallets)
 	adminAPI.POST("/config/billing-wallets", server.handleAdminUpdateBillingWallets)
+	adminAPI.GET("/seo/robots", server.handleAdminGetRobotsConfig)
+	adminAPI.PUT("/seo/robots", server.handleAdminUpdateRobotsConfig)
+	adminAPI.GET("/seo/redirects", server.handleAdminListSEORedirects)
+	adminAPI.POST("/seo/redirects", server.handleAdminCreateSEORedirect)
+	adminAPI.PUT("/seo/redirects/:id", server.handleAdminUpdateSEORedirect)
+	adminAPI.DELETE("/seo/redirects/:id", server.handleAdminDeleteSEORedirect)
+
+	adminAPI.GET("/media", server.handleAdminListMedia)
+	adminAPI.POST("/media", server.handleAdminUploadMedia)
+	adminAPI.PATCH("/media/:id", server.handleAdminUpdateMediaAlt)
+	adminAPI.DELETE("/media/:id", server.handleAdminDeleteMedia)
 
 	adminAPI.GET("/blog", server.handleAdminListBlogPosts)
 	adminAPI.POST("/blog", server.handleAdminCreateBlogPost)
@@ -189,6 +203,9 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	publicBlog.GET("", server.handlePublicListBlogPosts)
 	publicBlog.GET("/sitemap", server.handlePublicBlogSitemap)
 	publicBlog.GET("/:slug", server.handlePublicGetBlogPost)
+	router.GET("/api/public/seo/robots", server.handlePublicRobotsConfig)
+	router.GET("/media/:file", server.handlePublicMedia)
+	router.HEAD("/media/:file", server.handlePublicMedia)
 
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

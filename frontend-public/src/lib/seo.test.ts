@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { robotsBody } from "@/app/robots.txt/route";
+import { robotsBody } from "@/lib/seo";
 import {
   documentationEntries,
   isNonSelfCanonical,
+  metadataDescription,
   publicPageEntries,
   renderSitemap,
   renderSitemapIndex,
@@ -23,7 +24,7 @@ describe("SEO generation", () => {
   it("opens public crawling while excluding private application surfaces", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://example.com/";
     const body = robotsBody();
-    expect(body).toContain("Content-Signal: search=yes, ai-input=yes, ai-train=yes");
+    expect(body).not.toContain("Content-Signal:");
     expect(body).toContain("User-agent: ClaudeBot\nAllow: /");
     expect(body).toContain("Disallow: /app/");
     expect(body).toContain("Sitemap: https://example.com/sitemap.xml");
@@ -74,6 +75,16 @@ describe("SEO generation", () => {
         "/en/blog/example",
       ),
     ).toBe(true);
+  });
+
+  it("normalizes metadata descriptions to the audit range", () => {
+    const short = metadataDescription("en", "Short product description.");
+    const long = metadataDescription("ru", "Очень длинное описание ".repeat(20));
+
+    expect(short.length).toBeGreaterThanOrEqual(120);
+    expect(short.length).toBeLessThanOrEqual(160);
+    expect(long.length).toBeGreaterThanOrEqual(120);
+    expect(long.length).toBeLessThanOrEqual(160);
   });
 
   it("escapes sitemap values and creates a valid sitemap index", () => {

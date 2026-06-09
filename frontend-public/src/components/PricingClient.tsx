@@ -1,7 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { getCopy } from "@/i18n";
 
 const TIER_LINKS = {
@@ -26,21 +24,15 @@ function CheckIcon() {
 
 export function PricingClient({ locale }: { locale: string }) {
   const copy = getCopy(locale as "en" | "ru");
-  const reveal = useReveal();
   const tiers: Tier[] = ["trial", "merchant", "developer", "business"];
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   const isRu = locale === "ru";
 
   return (
     <MarketingLayout language={locale as "en" | "ru"}>
       {/* HERO */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -63,7 +55,7 @@ export function PricingClient({ locale }: { locale: string }) {
       </section>
 
       {/* PRICING CARDS */}
-      <section className="py-12 md:py-20 pb-24" ref={reveal}>
+      <section className="py-12 md:py-20 pb-24" data-reveal>
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lend-reveal--2">
             {tiers.map((tier, idx) => {
@@ -76,7 +68,6 @@ export function PricingClient({ locale }: { locale: string }) {
                 <article
                   key={tier}
                   className={`lend-card lend-spotlight-card group relative flex flex-col p-8 transition-all duration-700 hover:scale-[1.02] ${isPopular ? "border-accent/40 bg-accent/[0.04]" : ""}`}
-                  onMouseMove={handleMouseMove}
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
                   <div className="lend-card-spotlight" />
@@ -140,7 +131,7 @@ export function PricingClient({ locale }: { locale: string }) {
       </section>
 
       {/* TRUST ROW */}
-      <section className="py-14 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-14 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="lend-reveal--1 flex flex-wrap justify-center gap-8 md:gap-14">
             {[
@@ -159,7 +150,7 @@ export function PricingClient({ locale }: { locale: string }) {
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-28 relative overflow-hidden lend-spotlight-card group" onMouseMove={handleMouseMove} ref={reveal}>
+      <section className="py-28 relative overflow-hidden lend-spotlight-card group" data-reveal>
         <div className="lend-card-spotlight opacity-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-accent/15 rounded-full blur-[200px] opacity-25 pointer-events-none animate-pulse" />
         <div className="container mx-auto px-6 text-center relative z-10 max-w-3xl">

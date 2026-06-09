@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { StaticMarketingPage } from "@/components/marketing/StaticMarketingPage";
 import { STATIC_PAGE_COPY } from "@/lib/static-pages";
 import { normalizeLocale } from "@/i18n";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -11,11 +12,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const copy = STATIC_PAGE_COPY.security[locale];
   return {
     title: `${copy.title} | recv`,
-    description: copy.body,
+    description: metadataDescription(locale, copy.body),
     keywords: locale === "ru"
       ? "безопасность крипто платежей, non-custodial безопасность, HMAC вебхуки, on-chain подтверждение, recv безопасность"
       : "crypto payment security, non-custodial security, HMAC webhooks, on-chain confirmation, recv security",
     alternates: { canonical: `/${locale}/security`, languages: { en: "/en/security", ru: "/ru/security", "x-default": "/en/security" } },
+    openGraph: { images: socialImages(locale, copy.title, locale === "ru" ? "Безопасность" : "Security") },
   };
 }
 

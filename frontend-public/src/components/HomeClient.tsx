@@ -1,23 +1,11 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import { COPY } from "@/lib/copy";
-import { MarketingLayout, useReveal } from "@/components/marketing/MarketingLayout";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { JsonLd } from "@/components/JsonLd";
 
 export default function HomeClient({ language }: { language: "ru" | "en" }) {
   const copy = COPY[language];
-  const [openFaq, setOpenFaq] = useState(0);
-  const reveal = useReveal();
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-  };
 
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -53,7 +41,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       <JsonLd schema={faqSchema} />
 
       {/* 1. MASSIVE HERO */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         {/* Background Elements */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
           <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
@@ -109,7 +97,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 2. BENTO GRID */}
-      <section id="infrastructure" className="py-20 md:py-28 lg:py-32" ref={reveal}>
+      <section id="infrastructure" className="py-20 md:py-28 lg:py-32" data-reveal>
         <div className="container mx-auto px-6">
           <div className="lend-reveal--1 mb-12 md:mb-16 lg:mb-20 text-center lg:text-left">
             <span className="lend-section-kicker">{copy.bento.kicker}</span>
@@ -129,7 +117,6 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                   key={item.id} 
                   href={`/${language}/products/${item.id}`}
                   className={`${gridClasses} lend-card lend-spotlight-card group p-7 md:p-8 lg:p-10 flex flex-col justify-between transition-all duration-700 ease-in-out hover:scale-[1.02]`}
-                  onMouseMove={handleMouseMove}
                 >
                   <div className="lend-card-spotlight" />
                   <div className="lend-dogfood-glow" />
@@ -184,7 +171,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 4. REDESIGNED USE CASES (GRID) */}
-      <section id="solutions" className="py-20 md:py-28 lg:py-32" ref={reveal}>
+      <section id="solutions" className="py-20 md:py-28 lg:py-32" data-reveal>
         <div className="container mx-auto px-6">
           <div className="lend-reveal--1 mb-12 md:mb-16 lg:mb-20 text-center lg:text-left">
             <span className="lend-section-kicker mx-auto lg:mx-0">{copy.useCases.kicker}</span>
@@ -197,7 +184,6 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                 key={uc.id} 
                 href={`/${language}/use-cases/${uc.id}`}
                 className="lend-card lend-spotlight-card group relative p-7 md:p-10 lg:p-14 transition-all duration-700 ease-in-out hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="lend-dogfood-glow" />
@@ -262,7 +248,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 4.5 AI / MCP */}
-      <section id="mcp" className="py-20 md:py-28 lg:py-32" ref={reveal}>
+      <section id="mcp" className="py-20 md:py-28 lg:py-32" data-reveal>
         <div className="container mx-auto px-6">
           <div className="lend-reveal--1 mb-10 md:mb-14 lg:mb-16 text-center lg:text-left max-w-3xl">
             <span className="lend-section-kicker mx-auto lg:mx-0">{copy.mcp.kicker}</span>
@@ -299,7 +285,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 5. VISUAL DIFF (COMPARE) */}
-      <section className="py-20 md:py-28 lg:py-32 overflow-hidden" ref={reveal}>
+      <section className="py-20 md:py-28 lg:py-32 overflow-hidden" data-reveal>
         <div className="container mx-auto px-6">
           <div className="flex flex-col items-center mb-12 md:mb-16 lg:mb-20 text-center lend-reveal--1">
             <span className="lend-section-kicker">{copy.compare.kicker}</span>
@@ -335,7 +321,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
             </div>
 
             {/* recv protocol card */}
-            <div className="relative p-10 md:p-16 rounded-[3.5rem] bg-white/[0.01] border border-accent/20 backdrop-blur-3xl transition-all duration-700 ease-in-out scale-100 lg:scale-[1.03] group-hover:scale-[1.06] group-hover:-translate-y-3 group-hover:border-accent/65 shadow-[0_30px_70px_rgba(0,0,0,0.8)] hover:shadow-[0_40px_100px_rgba(168,85,247,0.18)] overflow-hidden" onMouseMove={handleMouseMove}>
+            <div className="relative p-10 md:p-16 rounded-[3.5rem] bg-white/[0.01] border border-accent/20 backdrop-blur-3xl transition-all duration-700 ease-in-out scale-100 lg:scale-[1.03] group-hover:scale-[1.06] group-hover:-translate-y-3 group-hover:border-accent/65 shadow-[0_30px_70px_rgba(0,0,0,0.8)] hover:shadow-[0_40px_100px_rgba(168,85,247,0.18)] overflow-hidden">
               {/* Custom border/background mouse spotlight overrides */}
               <div className="lend-card-spotlight" />
               
@@ -375,7 +361,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 6. PRICING */}
-      <section id="pricing" className="py-20 md:py-28 lg:py-32" ref={reveal}>
+      <section id="pricing" className="py-20 md:py-28 lg:py-32" data-reveal>
         <div className="container mx-auto px-6">
           <div className="lend-reveal--1 mb-12 md:mb-16 lg:mb-20 text-center">
             <span className="lend-section-kicker justify-center">{copy.pricing.kicker}</span>
@@ -392,7 +378,6 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
                 <div 
                   key={tier} 
                   className={`lend-pricing-card lend-spotlight-card ${isPro ? 'lend-pricing-card--pro' : ''} ${isPopular ? 'is-popular' : ''} group`}
-                  onMouseMove={handleMouseMove}
                 >
                   <div className="lend-card-spotlight" />
                   <div className="lend-pricing-glow" />
@@ -445,7 +430,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       </section>
 
       {/* 7. FAQ */}
-      <section id="faq" className="py-20 md:py-28 lg:py-32" ref={reveal}>
+      <section id="faq" className="py-20 md:py-28 lg:py-32" data-reveal>
         <div className="container mx-auto px-6 max-w-5xl">
           <div className="lend-reveal--1 mb-14 md:mb-20 lg:mb-24 text-center">
             <span className="lend-section-kicker justify-center">{copy.faq.kicker}</span>
@@ -453,51 +438,10 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
           </div>
 
           <div className="lend-reveal--2 max-w-4xl mx-auto">
-            <div className="grid gap-6">
-              {copy.faq.items.map((item, index) => {
-                const isOpen = index === openFaq;
-                return (
-                  <div
-                    key={item.question}
-                    className={`lend-faq-card lend-spotlight-card ${isOpen ? 'is-open' : ''} group`}
-                    onMouseMove={handleMouseMove}
-                  >
-                    {/* Custom border/background mouse spotlight */}
-                    <div className="lend-card-spotlight" />
-                    
-                    {/* Animated left indicator line */}
-                    <div className="lend-faq-indicator" />
-
-                    <button
-                      onClick={() => setOpenFaq(isOpen ? -1 : index)}
-                      className="lend-faq-trigger w-full"
-                    >
-                      <div className="flex flex-col gap-2">
-                        <span className="lend-faq-eyebrow">
-                          {language === "ru" ? "Деталь протокола" : "Protocol Detail"} 0{index + 1}
-                        </span>
-                        <span className="lend-faq-question">
-                          {item.question}
-                        </span>
-                      </div>
-                      
-                      <div className="lend-faq-toggle-icon">
-                        <div className="lend-faq-toggle-bar h" />
-                        <div className="lend-faq-toggle-bar v" />
-                      </div>
-                    </button>
-                    
-                    <div className={`lend-faq-collapse ${isOpen ? 'is-open' : ''}`}>
-                      <div className="lend-faq-collapse-inner">
-                        <p className="lend-faq-answer">
-                          {item.answer}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <FaqAccordion
+              items={copy.faq.items.map((item) => ({ question: item.question, answer: item.answer }))}
+              eyebrow={language === "ru" ? "Деталь протокола" : "Protocol Detail"}
+            />
           </div>
         </div>
       </section>
@@ -505,8 +449,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
       {/* 8. FINAL CTA */}
       <section
         className="py-32 md:py-48 lg:py-64 relative overflow-hidden lend-spotlight-card group"
-        onMouseMove={handleMouseMove}
-        ref={reveal}
+        data-reveal
       >
         {/* Custom border/background mouse spotlight */}
         <div className="lend-card-spotlight opacity-10" />

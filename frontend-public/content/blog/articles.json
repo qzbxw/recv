@@ -1,0 +1,242 @@
+[
+  {
+    "slug": "accept-usdt-payments-on-website",
+    "locale": "en",
+    "title": "How to accept USDT payments on a website",
+    "excerpt": "A practical integration path for creating USDT invoices, showing payment instructions, detecting transfers, and fulfilling orders safely.",
+    "meta_description": "Learn how to accept USDT payments on a website with invoices, hosted checkout, direct wallet settlement, status tracking, and signed webhooks.",
+    "published_at": "2026-04-08T09:00:00Z",
+    "tags": ["USDT", "checkout", "integration"],
+    "sections": [
+      ["Choose the payment flow", "Start with a server-created invoice rather than a reusable wallet address. An invoice binds an order to an amount, asset, network, expiry window, and payment status. recv can return hosted checkout instructions while settlement still goes to your connected wallet. See the [quickstart](/en/docs/quickstart) and [invoice API](/en/docs/invoices)."],
+      ["Keep invoice creation on the server", "Create invoices from your backend after validating the cart and order total. Never expose a live API key in browser code. Store the invoice public ID beside the order, then send the customer to checkout or render the returned payment details in your own interface."],
+      ["Fulfill from verified state", "Treat the browser as a display layer, not the source of truth. Update the order from a signed webhook or a server-side invoice lookup. Verify the raw request body and timestamp before processing an event; the complete signing flow is documented in [webhooks](/en/docs/webhooks)."],
+      ["Handle network and amount mistakes", "Display the selected network prominently because USDT exists on multiple chains. Do not mark an order paid merely because a transaction exists: compare the detected asset, network, amount, destination, and invoice state. Route underpayments, overpayments, and late transfers through explicit support or review rules."]
+    ]
+  },
+  {
+    "slug": "accept-usdt-payments-on-website",
+    "locale": "ru",
+    "title": "Как принимать USDT на сайте",
+    "excerpt": "Практичная схема интеграции: создание USDT-инвойса, экран оплаты, детекция перевода и безопасная выдача заказа.",
+    "meta_description": "Как принимать USDT на сайте через инвойсы, hosted checkout, прямое зачисление на кошелёк, отслеживание статуса и подписанные вебхуки.",
+    "published_at": "2026-04-08T09:00:00Z",
+    "tags": ["USDT", "checkout", "интеграция"],
+    "sections": [
+      ["Выберите платёжный сценарий", "Используйте инвойс, созданный сервером, а не один постоянный адрес кошелька. Инвойс связывает заказ с суммой, активом, сетью, сроком действия и статусом. recv может вернуть hosted checkout, при этом средства зачисляются на подключённый кошелёк. Начните с [quickstart](/ru/docs/quickstart) и [API инвойсов](/ru/docs/invoices)."],
+      ["Создавайте инвойсы на backend", "Backend должен проверить корзину и итоговую сумму до обращения к платёжному API. Не передавайте live API key в браузер. Сохраните public ID инвойса рядом с заказом, затем откройте checkout или покажите полученные платёжные инструкции в своём интерфейсе."],
+      ["Выдавайте заказ по проверенному статусу", "Браузер показывает состояние, но не подтверждает оплату. Меняйте статус заказа по подписанному вебхуку или серверному запросу инвойса. Проверяйте исходные байты тела и timestamp до обработки события; схема подписи описана в разделе [вебхуков](/ru/docs/webhooks)."],
+      ["Обрабатывайте ошибки сети и суммы", "USDT существует в нескольких сетях, поэтому выбранную сеть нужно показывать явно. Наличие транзакции ещё не означает оплату заказа: сверяйте актив, сеть, сумму, адрес и состояние инвойса. Для недоплат, переплат и поздних переводов задайте отдельные правила поддержки или ручной проверки."]
+    ]
+  },
+  {
+    "slug": "non-custodial-payment-gateway",
+    "locale": "en",
+    "title": "What is a non-custodial payment gateway?",
+    "excerpt": "How direct-to-wallet crypto payment infrastructure differs from processors that hold balances and control merchant withdrawals.",
+    "meta_description": "Understand how a non-custodial payment gateway creates invoices and detects blockchain payments while funds settle directly to merchant wallets.",
+    "published_at": "2026-04-15T09:00:00Z",
+    "tags": ["non-custodial", "payments", "security"],
+    "sections": [
+      ["The custody boundary", "A non-custodial gateway coordinates payment instructions and status without holding the merchant's revenue balance. The customer transfers funds to a merchant-controlled destination, while the gateway observes the relevant chain and links the transfer to an invoice. This architecture is described on the [security page](/en/security)."],
+      ["What the gateway still does", "Non-custodial does not mean unmonitored. The service still creates invoices, calculates payable instructions, watches supported networks, records status transitions, and delivers signed webhooks. Merchant systems remain responsible for order policy, accounting, refunds, and access to their own wallet keys."],
+      ["Operational trade-offs", "Direct settlement reduces platform custody exposure, but it also moves wallet operations to the merchant. Teams need controlled wallet access, address checks, treasury procedures, and reconciliation. Review the exact supported assets and wallet buckets in [network documentation](/en/docs/networks)."],
+      ["Questions to ask a provider", "Confirm who controls private keys, where customer funds land, whether withdrawals are required, how payment status is determined, and how webhook authenticity is verified. Also check the handling of unsupported assets, wrong networks, late payments, and manual review before choosing an integration."]
+    ]
+  },
+  {
+    "slug": "non-custodial-payment-gateway",
+    "locale": "ru",
+    "title": "Что такое non-custodial payment gateway",
+    "excerpt": "Чем direct-to-wallet инфраструктура криптоплатежей отличается от процессинга, который хранит баланс и управляет выводом продавца.",
+    "meta_description": "Как non-custodial payment gateway создаёт инвойсы и детектит платежи в блокчейне, пока средства поступают прямо на кошельки продавца.",
+    "published_at": "2026-04-15T09:00:00Z",
+    "tags": ["non-custodial", "платежи", "безопасность"],
+    "sections": [
+      ["Граница хранения средств", "Non-custodial gateway формирует платёжные инструкции и статусы, но не хранит выручку продавца на внутреннем балансе. Покупатель переводит средства на адрес под контролем продавца, а gateway наблюдает сеть и связывает перевод с инвойсом. Архитектура описана на странице [безопасности](/ru/security)."],
+      ["Что всё равно делает gateway", "Non-custodial не означает отсутствие автоматизации. Сервис создаёт инвойсы, формирует реквизиты, наблюдает поддерживаемые сети, записывает переходы статусов и отправляет подписанные вебхуки. Продавец отвечает за правила заказов, учёт, возвраты и доступ к ключам своих кошельков."],
+      ["Операционные компромиссы", "Прямое зачисление уменьшает custodial-риск платформы, но переносит кошелёк и treasury-процессы к продавцу. Нужны контроль доступа, проверка адресов и сверка. Точные активы и wallet buckets перечислены в [документации сетей](/ru/docs/networks)."],
+      ["Что спросить у провайдера", "Уточните, кто контролирует приватные ключи, куда поступают средства, нужен ли вывод, как определяется статус и проверяется подлинность вебхуков. До интеграции также проверьте сценарии неверной сети, неподдерживаемого актива, поздней оплаты и ручной проверки."]
+    ]
+  },
+  {
+    "slug": "trc20-payment-api",
+    "locale": "en",
+    "title": "TRC20 payment API integration guide",
+    "excerpt": "A backend-focused guide to creating TRON USDT invoices, presenting the correct network, and processing payment events idempotently.",
+    "meta_description": "Integrate a TRC20 payment API for USDT on TRON: create invoices, show exact payment details, verify webhooks, and reconcile edge cases.",
+    "published_at": "2026-04-22T09:00:00Z",
+    "tags": ["TRC20", "TRON", "API"],
+    "sections": [
+      ["Model TRON as a network choice", "TRC20 describes a token standard on TRON; in a payment API, keep the network and asset explicit. For recv invoices the payment option uses the TRON network with USDT as the asset. Check the current identifiers in [supported networks](/en/docs/networks) instead of inferring them from a token label."],
+      ["Create and store the invoice", "Send the order amount and TRON/USDT option from your backend. Save the returned invoice ID, payable amount, destination, expiry, and current status with the order. The request and response fields are documented in the [invoice API](/en/docs/invoices)."],
+      ["Make the checkout unambiguous", "Show TRON or TRC20 next to USDT, include the exact amount, and warn customers not to use another network. A QR code should encode the same destination shown as text. Do not silently substitute a different chain when the customer has already selected a payment option."],
+      ["Process events idempotently", "Verify each webhook before updating an order and deduplicate repeated deliveries. Store the transition or invoice status you processed, then make fulfillment safe to run more than once. Return a successful response quickly and move slow business logic to a queue; see [webhook guidance](/en/docs/webhooks)."]
+    ]
+  },
+  {
+    "slug": "trc20-payment-api",
+    "locale": "ru",
+    "title": "Интеграция TRC20 payment API",
+    "excerpt": "Backend-гайд по созданию TRON USDT инвойсов, отображению правильной сети и идемпотентной обработке платёжных событий.",
+    "meta_description": "Интеграция TRC20 payment API для USDT в TRON: создание инвойсов, точные реквизиты, проверка вебхуков и сверка нестандартных платежей.",
+    "published_at": "2026-04-22T09:00:00Z",
+    "tags": ["TRC20", "TRON", "API"],
+    "sections": [
+      ["Храните сеть отдельно от актива", "TRC20 — стандарт токенов в TRON, поэтому в API сеть и актив должны быть явными. В инвойсах recv вариант оплаты использует сеть TRON и актив USDT. Проверяйте актуальные идентификаторы в разделе [поддерживаемых сетей](/ru/docs/networks), а не выводите их из названия токена."],
+      ["Создайте и сохраните инвойс", "Передайте сумму заказа и вариант TRON/USDT с backend. Сохраните ID инвойса, payable amount, адрес, срок действия и текущий статус рядом с заказом. Поля запроса и ответа перечислены в [API инвойсов](/ru/docs/invoices)."],
+      ["Сделайте checkout однозначным", "Показывайте TRON или TRC20 рядом с USDT, точную сумму и предупреждение не выбирать другую сеть. QR должен содержать тот же адрес, который показан текстом. Не заменяйте сеть молча после того, как покупатель выбрал вариант оплаты."],
+      ["Обрабатывайте события идемпотентно", "Проверяйте подпись вебхука и дедуплицируйте повторные доставки. Сохраняйте обработанный transition или статус инвойса, чтобы выдача могла безопасно выполняться повторно. Быстро отвечайте успешным HTTP-кодом, а тяжёлую логику переносите в очередь; см. [вебхуки](/ru/docs/webhooks)."]
+    ]
+  },
+  {
+    "slug": "ton-telegram-payments",
+    "locale": "en",
+    "title": "TON and Telegram payments: integration patterns",
+    "excerpt": "How Telegram shops and communities can connect an order to a TON or TON USDT invoice and unlock access after verified payment.",
+    "meta_description": "Build TON and Telegram payment flows with server-created invoices, wallet deep links, signed webhooks, and verified access or order fulfillment.",
+    "published_at": "2026-04-29T09:00:00Z",
+    "tags": ["TON", "Telegram", "checkout"],
+    "sections": [
+      ["Separate Telegram identity from payment state", "A Telegram user ID identifies the customer, but it does not prove payment. Create an order on your backend, associate it with the Telegram user, and then create a payment invoice. Keep bot tokens and payment API keys outside Mini App browser code."],
+      ["Offer the intended TON asset", "Native TON and USDT on TON are different payment options. Show the asset and network together, and preserve the selected option in the order. The current network identifiers and wallet grouping are listed in [network documentation](/en/docs/networks)."],
+      ["Use links as navigation, not confirmation", "A wallet deep link can simplify opening the transfer screen, but returning to Telegram is not evidence that the transfer completed. Display a pending state while your backend waits for a signed event or checks the invoice through the API."],
+      ["Unlock only after verification", "For a shop, mark the order ready after a verified paid state. For a channel or group, grant access from an idempotent backend job and record the entitlement separately from the invoice. The [Telegram shops use case](/en/use-cases/telegram-shops) shows where checkout fits in the wider flow."]
+    ]
+  },
+  {
+    "slug": "ton-telegram-payments",
+    "locale": "ru",
+    "title": "Платежи TON и Telegram: схемы интеграции",
+    "excerpt": "Как Telegram-магазину или сообществу связать заказ с TON либо TON USDT инвойсом и выдать доступ после проверенной оплаты.",
+    "meta_description": "Как построить платежи TON и Telegram через серверные инвойсы, wallet deep links, подписанные вебхуки и проверенную выдачу заказа или доступа.",
+    "published_at": "2026-04-29T09:00:00Z",
+    "tags": ["TON", "Telegram", "checkout"],
+    "sections": [
+      ["Разделяйте Telegram identity и оплату", "Telegram user ID определяет покупателя, но не подтверждает платёж. Создайте заказ на backend, свяжите его с пользователем Telegram и затем создайте платёжный инвойс. Не помещайте bot token и payment API key в браузерный код Mini App."],
+      ["Предлагайте конкретный TON-актив", "Нативный TON и USDT в сети TON — разные варианты оплаты. Показывайте актив вместе с сетью и сохраняйте выбор в заказе. Актуальные идентификаторы и группировка кошельков приведены в [документации сетей](/ru/docs/networks)."],
+      ["Deep link не подтверждает платёж", "Wallet deep link помогает открыть экран перевода, но возврат пользователя в Telegram не доказывает завершение транзакции. Показывайте pending, пока backend не получит подписанное событие или не проверит инвойс через API."],
+      ["Выдавайте доступ после проверки", "В магазине переводите заказ в готовое состояние после подтверждённого paid. Для канала или группы выдавайте доступ идемпотентной backend-задачей и храните entitlement отдельно от инвойса. Контекст показан на странице [Telegram shops](/ru/use-cases/telegram-shops)."]
+    ]
+  },
+  {
+    "slug": "verify-webhook-signatures",
+    "locale": "en",
+    "title": "How to verify webhook signatures safely",
+    "excerpt": "A practical checklist for HMAC verification, raw request bodies, timestamp tolerance, constant-time comparison, and idempotent processing.",
+    "meta_description": "Verify webhook signatures safely using the raw request body, timestamp checks, HMAC-SHA256, constant-time comparison, and idempotent event handling.",
+    "published_at": "2026-05-06T09:00:00Z",
+    "tags": ["webhooks", "HMAC", "security"],
+    "sections": [
+      ["Preserve the raw request body", "Signature verification must use the exact bytes received. Parsing JSON and serializing it again can change whitespace or key order and produce a different digest. Configure the webhook route to capture raw bytes before the framework applies a JSON body parser."],
+      ["Rebuild the signed message", "recv signs the timestamp and raw body together with HMAC-SHA256. Read the timestamp and signature headers, construct the documented message, and calculate the expected value with the endpoint secret. Follow the exact header names and format in [webhook documentation](/en/docs/webhooks)."],
+      ["Reject stale and mismatched requests", "Check that the timestamp falls within your accepted tolerance before acting on the event. Compare signatures with a constant-time function rather than a normal string equality check. Reject malformed values, unknown signature versions, and requests with missing headers."],
+      ["Make valid delivery safe to repeat", "A valid signature proves authenticity, not uniqueness. Providers retry deliveries when acknowledgements fail, so deduplicate using the transition or invoice state and make fulfillment idempotent. Store verification failures without logging the secret or full sensitive payload. Review the wider trust boundaries on the [security page](/en/security)."]
+    ]
+  },
+  {
+    "slug": "verify-webhook-signatures",
+    "locale": "ru",
+    "title": "Как безопасно проверять подпись вебхука",
+    "excerpt": "Практический checklist: HMAC, исходное тело запроса, допустимый timestamp, constant-time сравнение и идемпотентная обработка.",
+    "meta_description": "Безопасная проверка подписи вебхука: исходное тело, timestamp, HMAC-SHA256, constant-time сравнение и идемпотентная обработка событий.",
+    "published_at": "2026-05-06T09:00:00Z",
+    "tags": ["вебхуки", "HMAC", "безопасность"],
+    "sections": [
+      ["Сохраните исходное тело запроса", "Подпись нужно проверять по точным полученным байтам. Парсинг JSON с последующей сериализацией может изменить пробелы или порядок ключей и дать другой digest. Настройте webhook route так, чтобы получить raw body до JSON parser фреймворка."],
+      ["Соберите подписанное сообщение", "recv подписывает timestamp и raw body через HMAC-SHA256. Прочитайте заголовки timestamp и signature, соберите сообщение в документированном формате и вычислите ожидаемое значение секретом endpoint. Точные имена заголовков описаны в [документации вебхуков](/ru/docs/webhooks)."],
+      ["Отклоняйте устаревшие запросы", "Проверьте, что timestamp попадает в допустимое окно, до выполнения бизнес-логики. Сравнивайте подписи constant-time функцией, а не обычным равенством строк. Отклоняйте неверный формат, неизвестную версию подписи и отсутствующие заголовки."],
+      ["Безопасно обрабатывайте повторы", "Корректная подпись подтверждает источник, но не уникальность доставки. Вебхуки повторяются при неуспешном подтверждении, поэтому дедуплицируйте по transition или состоянию инвойса и делайте выдачу идемпотентной. Не записывайте секрет в логи; другие границы доверия описаны на странице [безопасности](/ru/security)."]
+    ]
+  },
+  {
+    "slug": "custodial-vs-direct-to-wallet",
+    "locale": "en",
+    "title": "Custodial vs direct-to-wallet crypto payments",
+    "excerpt": "A comparison of fund flow, withdrawals, operational responsibility, reconciliation, and integration trade-offs for merchants.",
+    "meta_description": "Compare custodial and direct-to-wallet crypto payments across fund flow, withdrawals, key ownership, reconciliation, refunds, and operations.",
+    "published_at": "2026-05-13T09:00:00Z",
+    "tags": ["custodial", "direct-to-wallet", "comparison"],
+    "sections": [
+      ["Follow the money first", "In a custodial flow, customer funds typically become a balance controlled by the processor until withdrawal or settlement. In a direct-to-wallet flow, the payment destination belongs to the merchant and the platform coordinates detection and status. The difference is architectural, not merely a checkout design choice."],
+      ["Compare control and responsibility", "Custody can centralize conversion, payouts, and account-level controls, but introduces dependence on the provider's balance and withdrawal process. Direct settlement avoids that platform balance while requiring the merchant to manage wallet access, treasury movements, and on-chain accounting."],
+      ["Review support workflows", "Both models need policies for wrong networks, unsupported tokens, duplicate transfers, refunds, and disputed order state. Direct-to-wallet refunds are sent from merchant-controlled funds rather than reversed from a processor balance. Read the [payment status guide](/en/docs/invoices) before designing customer support."],
+      ["Choose by operating model", "A team that wants managed conversion or fiat settlement may prioritize a custodial processor. A team that already operates crypto wallets and wants funds delivered directly may prefer a [non-custodial gateway](/en/blog/non-custodial-payment-gateway). Document the fund path, key ownership, fees, compliance duties, and failure procedures before deciding."]
+    ]
+  },
+  {
+    "slug": "custodial-vs-direct-to-wallet",
+    "locale": "ru",
+    "title": "Custodial или direct-to-wallet криптоплатежи",
+    "excerpt": "Сравнение движения средств, вывода, операционной ответственности, сверки и интеграционных компромиссов для продавца.",
+    "meta_description": "Сравнение custodial и direct-to-wallet криптоплатежей: движение средств, вывод, ключи, сверка, возвраты и операционные процессы.",
+    "published_at": "2026-05-13T09:00:00Z",
+    "tags": ["custodial", "direct-to-wallet", "сравнение"],
+    "sections": [
+      ["Сначала проследите движение средств", "В custodial-сценарии средства покупателя обычно становятся балансом под контролем процессинга до вывода или settlement. В direct-to-wallet сценарии адрес принадлежит продавцу, а платформа координирует детекцию и статус. Это архитектурное различие, а не только дизайн checkout."],
+      ["Сравните контроль и ответственность", "Custody может централизовать конвертацию, выплаты и контроль аккаунта, но создаёт зависимость от баланса и процесса вывода провайдера. Прямое зачисление убирает платформенный баланс, но требует от продавца управления доступом к кошелькам, treasury и on-chain учётом."],
+      ["Проверьте поддержку нестандартных случаев", "Обе модели требуют правил для неверной сети, неподдерживаемых токенов, повторных переводов, возвратов и спорного статуса заказа. В direct-to-wallet возврат отправляется из средств продавца. Изучите [статусы инвойса](/ru/docs/invoices) до проектирования поддержки."],
+      ["Выбирайте по операционной модели", "Команда, которой нужна управляемая конвертация или fiat settlement, может выбрать custodial-процессинг. Команда с собственными криптокошельками может предпочесть [non-custodial gateway](/ru/blog/non-custodial-payment-gateway). До решения зафиксируйте путь средств, владение ключами, комиссии и действия при сбоях."]
+    ]
+  },
+  {
+    "slug": "multi-chain-crypto-invoices",
+    "locale": "en",
+    "title": "How multi-chain crypto invoices work",
+    "excerpt": "How one order can offer selected payment options across networks without confusing settlement, status tracking, or reconciliation.",
+    "meta_description": "Learn how multi-chain crypto invoices present selected network and asset options while keeping payment detection, status, and reconciliation consistent.",
+    "published_at": "2026-05-20T09:00:00Z",
+    "tags": ["multi-chain", "invoices", "networks"],
+    "sections": [
+      ["One order, controlled options", "A multi-chain invoice lets a merchant offer a small set of network and asset combinations for one order. It should not mean accepting any token on any chain. The invoice response defines the supported choices and provides the destination and payable amount for each option."],
+      ["Keep every option explicit", "Render the network beside the asset, because the same symbol can exist on different chains. Preserve the selected option through checkout and analytics. recv invoice requests can include selected payment options; see the current request shape in [invoice documentation](/en/docs/invoices)."],
+      ["Use one business state", "The order should have one fulfillment state even when several payment options are displayed. When one option reaches a confirmed paid state, close or ignore the alternatives according to your application rules. Do not fulfill twice because two watchers report activity around the same order."],
+      ["Reconcile by network and asset", "Store the chosen network, asset, expected amount, detected amount, transaction reference, and final invoice status. This makes support and accounting possible when customers use the wrong option or send after expiry. Review the available chains in [supported networks](/en/docs/networks)."]
+    ]
+  },
+  {
+    "slug": "multi-chain-crypto-invoices",
+    "locale": "ru",
+    "title": "Как работают multi-chain инвойсы",
+    "excerpt": "Как предложить несколько сетей для одного заказа без путаницы в зачислении, статусах и сверке платежей.",
+    "meta_description": "Как multi-chain инвойсы предлагают выбранные сети и активы, сохраняя единые правила детекции платежа, статуса заказа и сверки.",
+    "published_at": "2026-05-20T09:00:00Z",
+    "tags": ["multi-chain", "инвойсы", "сети"],
+    "sections": [
+      ["Один заказ и ограниченный выбор", "Multi-chain инвойс предлагает покупателю небольшой набор комбинаций сети и актива для одного заказа. Это не означает приём любого токена в любой сети. Ответ API определяет доступные варианты и реквизиты для каждого из них."],
+      ["Показывайте сеть вместе с активом", "Одинаковый символ токена может существовать в разных сетях, поэтому сеть должна быть видна рядом с активом. Сохраняйте выбранный вариант в checkout и аналитике. Формат payment options приведён в [документации инвойсов](/ru/docs/invoices)."],
+      ["Используйте одно состояние заказа", "У заказа должно быть одно состояние выдачи, даже если на checkout показано несколько вариантов. Когда один вариант достигает подтверждённого paid, закройте или игнорируйте альтернативы по правилам приложения. Не выдавайте заказ дважды из-за активности в разных сетях."],
+      ["Сверяйте сеть и актив", "Храните выбранную сеть, актив, ожидаемую и фактическую сумму, ссылку на транзакцию и финальный статус. Это помогает поддержке и учёту при неверном варианте или оплате после expiry. Доступные сети перечислены в разделе [поддерживаемых сетей](/ru/docs/networks)."]
+    ]
+  },
+  {
+    "slug": "late-underpaid-overpaid-crypto-payments",
+    "locale": "en",
+    "title": "Late, underpaid, and overpaid crypto payments",
+    "excerpt": "Operational rules for crypto transfers that arrive after expiry, below the requested amount, or above the invoice total.",
+    "meta_description": "Handle late, underpaid, and overpaid crypto payments with explicit invoice states, review rules, customer evidence, and safe fulfillment.",
+    "published_at": "2026-05-27T09:00:00Z",
+    "tags": ["payments", "underpaid", "overpaid"],
+    "sections": [
+      ["Why exceptions need explicit states", "Blockchain transfers cannot be edited after broadcast, and customer wallets may send the wrong amount or confirm after checkout expires. Keep these cases separate from paid rather than forcing them into a binary success or failure field. recv exposes underpaid, overpaid, expired, and manual-review states in the [invoice lifecycle](/en/docs/invoices)."],
+      ["Underpaid transfers", "Define whether the customer may send the remainder and how long you will wait. Do not fulfill a full-value order from a partial transfer unless your business policy permits it. Store both expected and received amounts so support can explain the difference."],
+      ["Overpaid and late transfers", "An overpayment may be accepted, reviewed, or partially refunded according to merchant policy. A late transfer needs review because price, inventory, or access terms may have changed after expiry. Never automate a refund to an address taken only from untrusted customer input."],
+      ["Build a review workflow", "Show operators the invoice, transaction reference, network, asset, amounts, timestamps, and customer order. Keep fulfillment idempotent and record every manual decision. Signed events from [webhooks](/en/docs/webhooks) can open the review task, but the merchant's policy determines the outcome."]
+    ]
+  },
+  {
+    "slug": "late-underpaid-overpaid-crypto-payments",
+    "locale": "ru",
+    "title": "Поздние платежи, недоплаты и переплаты в крипто",
+    "excerpt": "Операционные правила для переводов после expiry, ниже запрошенной суммы или выше итоговой суммы инвойса.",
+    "meta_description": "Как обрабатывать поздние криптоплатежи, недоплаты и переплаты через явные статусы, ручную проверку и безопасную выдачу заказа.",
+    "published_at": "2026-05-27T09:00:00Z",
+    "tags": ["платежи", "недоплата", "переплата"],
+    "sections": [
+      ["Исключениям нужны отдельные статусы", "Перевод в блокчейне нельзя изменить после отправки, а покупатель может указать неверную сумму или получить подтверждение после expiry checkout. Не сводите такие случаи к одному success/failure. recv использует underpaid, overpaid, expired и manual-review в [lifecycle инвойса](/ru/docs/invoices)."],
+      ["Недоплата", "Определите, может ли покупатель доплатить остаток и сколько времени вы ждёте. Не выдавайте заказ полной стоимости по частичному переводу, если это не разрешено политикой бизнеса. Храните ожидаемую и фактическую сумму, чтобы поддержка могла объяснить расхождение."],
+      ["Переплата и поздний перевод", "Переплату можно принять, отправить на проверку или частично вернуть по правилам продавца. Поздний перевод требует review, потому что цена, остаток или условия доступа могли измениться. Не отправляйте автоматический refund на адрес, полученный только из непроверенного ввода клиента."],
+      ["Создайте workflow ручной проверки", "Покажите оператору инвойс, transaction reference, сеть, актив, суммы, timestamps и заказ. Делайте выдачу идемпотентной и записывайте ручные решения. Подписанные события из [вебхуков](/ru/docs/webhooks) могут открыть review-задачу, но результат определяет политика продавца."]
+    ]
+  }
+]

@@ -370,26 +370,37 @@ type NotificationJob struct {
 }
 
 type BlogPost struct {
-	ID                    int64      `json:"id"`
-	Slug                  string     `json:"slug"`
-	Title                 string     `json:"title"`
-	ContentMD             string     `json:"content_md"`
-	Excerpt               *string    `json:"excerpt"`
-	CoverImageURL         *string    `json:"cover_image_url"`
-	Author                *string    `json:"author"`
-	IsPublished           bool       `json:"is_published"`
-	Status                string     `json:"status"`
-	MetaTitle             *string    `json:"meta_title"`
-	MetaDescription       *string    `json:"meta_description"`
-	CanonicalURL          *string    `json:"canonical_url"`
-	Tags                  []string   `json:"tags"`
-	Locale                string     `json:"locale"`
-	PreviewToken          *string    `json:"preview_token"`
-	InternalLinksCount    int        `json:"internal_links_count"`
-	InternalLinkingStatus string     `json:"internal_linking_status"`
-	PublishedAt           *time.Time `json:"published_at"`
-	CreatedAt             time.Time  `json:"created_at"`
-	UpdatedAt             time.Time  `json:"updated_at"`
+	ID                    int64           `json:"id"`
+	Slug                  string          `json:"slug"`
+	Title                 string          `json:"title"`
+	H1                    *string         `json:"h1"`
+	ContentMD             string          `json:"content_md"`
+	ContentJSON           json.RawMessage `json:"content_json,omitempty"`
+	ContentVersion        int             `json:"content_version"`
+	Excerpt               *string         `json:"excerpt"`
+	CoverImageURL         *string         `json:"cover_image_url"`
+	Author                *string         `json:"author"`
+	IsPublished           bool            `json:"is_published"`
+	Status                string          `json:"status"`
+	MetaTitle             *string         `json:"meta_title"`
+	MetaDescription       *string         `json:"meta_description"`
+	CanonicalURL          *string         `json:"canonical_url"`
+	OGTitle               *string         `json:"og_title"`
+	OGDescription         *string         `json:"og_description"`
+	OGImageURL            *string         `json:"og_image_url"`
+	CoverImageAlt         *string         `json:"cover_image_alt"`
+	RobotsIndex           bool            `json:"robots_index"`
+	RobotsFollow          bool            `json:"robots_follow"`
+	IncludeInSitemap      bool            `json:"include_in_sitemap"`
+	AuthorSlug            string          `json:"author_slug"`
+	Tags                  []string        `json:"tags"`
+	Locale                string          `json:"locale"`
+	PreviewToken          *string         `json:"preview_token"`
+	InternalLinksCount    int             `json:"internal_links_count"`
+	InternalLinkingStatus string          `json:"internal_linking_status"`
+	PublishedAt           *time.Time      `json:"published_at"`
+	CreatedAt             time.Time       `json:"created_at"`
+	UpdatedAt             time.Time       `json:"updated_at"`
 	// AvailableLocales is not persisted; it is populated on read to expose which
 	// locale translations of this slug are published.
 	AvailableLocales []string `json:"available_locales,omitempty"`

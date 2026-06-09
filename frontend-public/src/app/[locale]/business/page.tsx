@@ -1,27 +1,33 @@
 import { PlanPage } from "@/components/PlanPageClient";
 import { Metadata } from "next";
-import { languageAlternates } from "@/lib/seo";
+import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { locale } = await props.params;
+  const { locale: rawLocale } = await props.params;
+  const locale = rawLocale === "ru" ? "ru" : "en";
+  const description = metadataDescription(locale, locale === "ru"
+    ? "Расширенные лимиты API, командный доступ и приоритетная поддержка для компаний с большим объёмом non-custodial криптоплатежей."
+    : "Extended API limits, team access, and priority support for businesses operating higher-volume non-custodial crypto payment workflows.");
   return {
-    title: "recv Business | Scalable Crypto Processing",
-    description: "Extended API limits, team access, and priority support for businesses with high payment volume.",
+    title: locale === "ru" ? "Криптопроцессинг для бизнеса и команд | recv" : "Scalable Crypto Processing for Business Teams | recv",
+    description,
     alternates: {
       canonical: `/${locale}/business`,
       languages: languageAlternates("/business"),
     },
     openGraph: {
-      title: "recv Business",
-      description: "Scale your crypto processing with advanced analytics and team support.",
+      title: locale === "ru" ? "recv Business" : "recv Business",
+      images: socialImages(locale, locale === "ru" ? "recv Business" : "recv Business", locale === "ru" ? "Тариф" : "Plan"),
+      description,
     },
   };
 }
 
-export default function Page() {
-  return <PlanPage variant="business" />;
+export default async function Page(props: Props) {
+  const { locale } = await props.params;
+  return <PlanPage variant="business" language={locale === "ru" ? "ru" : "en"} />;
 }

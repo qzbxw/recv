@@ -7,6 +7,7 @@ The required environment variables vary based on the deployment environment: `de
 | **App Configuration** |
 | `APP_ENV` | Application environment (`development`, `staging`, `production`) | `development` | `staging` | `production` |
 | `HTTP_PORT` | Port for the API | Optional (8080) | Required | Required |
+| `MEDIA_DIR` | Directory for CMS media uploads (Docker volume in compose) | Optional (`./data/media`) | `/data/media` | `/data/media` |
 | `JWT_SECRET` | Secret for user sessions | Dev secret | Strong secret | Strong secret |
 | `INTERNAL_TOKEN` | Token for internal service communication | Dev token | Strong token | Strong token |
 | `ALLOW_INSECURE_DEV_AUTH` | Allows bypassing standard auth for dev | `true` | `false` | `false` |

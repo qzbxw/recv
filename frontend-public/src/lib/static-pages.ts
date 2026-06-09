@@ -35,7 +35,7 @@ export const STATIC_PAGE_COPY: Record<StaticPageKey, { en: StaticMarketingPageCo
       title: "About recv — payment infrastructure you control",
       body: "recv is crypto payment infrastructure for merchants, SaaS platforms, and creators who want automated checkout in USDT, TON, and TRON without handing funds to a third-party processor.",
       points: [
-        { title: "Direct settlement", body: "We monitor seven blockchains and coordinate invoices end to end, while wallet ownership and funds stay entirely with the merchant." },
+        { title: "Direct settlement", body: "We monitor supported payment networks and coordinate invoices end to end, while wallet ownership and funds stay entirely with the merchant." },
         { title: "Developer-first", body: "A versioned REST API, signed webhooks, docs, and status surfaces are core product, not an afterthought bolted on later." },
         { title: "Built for operators", body: "A seller console and admin tools cover daily payment support, manual review, reconciliation, and revenue analytics." },
       ],
@@ -45,7 +45,7 @@ export const STATIC_PAGE_COPY: Record<StaticPageKey, { en: StaticMarketingPageCo
       title: "О recv — платёжная инфраструктура под вашим контролем",
       body: "recv — крипто-платёжная инфраструктура для продавцов, SaaS и авторов, которым нужен автоматический checkout в USDT, TON и TRON без передачи средств стороннему процессору.",
       points: [
-        { title: "Прямое зачисление", body: "Мы наблюдаем семь блокчейнов и ведём инвойсы от начала до конца, а кошельки и средства полностью остаются у продавца." },
+        { title: "Прямое зачисление", body: "Мы наблюдаем поддерживаемые платёжные сети и ведём инвойсы от начала до конца, а кошельки и средства полностью остаются у продавца." },
         { title: "Для разработчиков", body: "Версионированный REST API, подписанные вебхуки, документация и статусные страницы — это ядро продукта, а не надстройка." },
         { title: "Для операторов", body: "Консоль продавца и админ-инструменты закрывают поддержку платежей, ручную проверку, сверку и аналитику выручки." },
       ],

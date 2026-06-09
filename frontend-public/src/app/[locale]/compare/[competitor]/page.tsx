@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { COMPARE_FAQ } from "@/lib/compare-faq";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { CompareDetailClient } from "@/components/CompareDetailClient";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ competitor: string; locale: string }>;
@@ -19,7 +20,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     title: `${data.title} | recv`,
-    description: data.description,
+    description: metadataDescription(locale, data.description),
     alternates: {
       canonical: `/${locale}/compare/${competitor}`,
       languages: {
@@ -30,7 +31,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
     openGraph: {
       title: data.title,
-      description: data.description,
+      images: socialImages(locale, data.title, locale === "ru" ? "Сравнение" : "Comparison"),
+      description: metadataDescription(locale, data.description),
     },
   };
 }

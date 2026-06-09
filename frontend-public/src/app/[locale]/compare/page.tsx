@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { HubPageClient } from "@/components/HubPageClient";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { JsonLd } from "@/components/JsonLd";
+import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -14,7 +15,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     title: `${copy.marketing.compareHub.title} | recv`,
-    description: copy.marketing.compareHub.description,
+    description: metadataDescription(locale, copy.marketing.compareHub.description),
     alternates: {
       canonical: `/${locale}/compare`,
       languages: { en: "/en/compare", ru: "/ru/compare", "x-default": "/en/compare" },
@@ -24,7 +25,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       : "crypto payment gateway comparison, NowPayments alternative, BitPay alternative, Coinbase Commerce alternative, recv vs competitors, non-custodial payment gateway",
     openGraph: {
       title: copy.marketing.compareHub.title,
-      description: copy.marketing.compareHub.description,
+      images: socialImages(locale, copy.marketing.compareHub.title, locale === "ru" ? "Сравнения" : "Comparisons"),
+      description: metadataDescription(locale, copy.marketing.compareHub.description),
     },
   };
 }
@@ -61,6 +63,7 @@ export default async function CompareHubPage(props: Props) {
       <JsonLd schema={siteListSchema} />
       <HubPageClient
         language={locale}
+        path="/compare"
         kicker={hub.kicker}
         title={hub.title}
         description={hub.description}

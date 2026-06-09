@@ -1,9 +1,6 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MarketingLayout, useReveal } from "./marketing/MarketingLayout";
-import { useUI } from "./UIProvider";
+import { MarketingLayout } from "./marketing/MarketingLayout";
+import { FaqAccordion } from "./marketing/FaqAccordion";
 import { JsonLd } from "./JsonLd";
 import { PUBLIC_MARKETING_COPY, PUBLIC_PLAN_COPY } from "@/i18n";
 import { planSEOEn } from "@/i18n/plans.en";
@@ -30,24 +27,13 @@ function isGradientWord(raw: string) {
   return GRADIENT_WORDS.has(clean);
 }
 
-export function PlanPage({ variant }: { variant: Variant }) {
-  const { language } = useUI();
+export function PlanPage({ variant, language }: { variant: Variant; language: "ru" | "en" }) {
   const text = PUBLIC_PLAN_COPY[language];
   const marketing = PUBLIC_MARKETING_COPY[language];
   const product = text[variant];
   const seoText = language === "en" ? planSEOEn[variant] : planSEORu[variant];
-  const reveal = useReveal();
-  const [openFaq, setOpenFaq] = useState(0);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   const priceMap = {
     merchant: "9.00",
@@ -88,7 +74,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
       <JsonLd schema={faqSchema} />
 
       {/* Hero Section */}
-      <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
+      <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -131,7 +117,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
       </section>
 
       {/* Deep Dive Section */}
-      <section className="py-20 md:py-28" ref={reveal}>
+      <section className="py-20 md:py-28" data-reveal>
         <div className="container mx-auto px-6">
           <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
             <span className="lend-section-kicker justify-center mx-auto">{text.compareTitle}</span>
@@ -144,7 +130,6 @@ export function PlanPage({ variant }: { variant: Variant }) {
               <article
                 key={i}
                 className="lend-card lend-spotlight-card group relative p-8 md:p-10 transition-all duration-500 hover:scale-[1.01]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="lend-dogfood-glow" />
@@ -161,7 +146,6 @@ export function PlanPage({ variant }: { variant: Variant }) {
               <article
                 key={i}
                 className="lend-card lend-spotlight-card group relative text-center flex flex-col items-center justify-center p-6 transition-all duration-500 hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="lend-dogfood-glow" />
@@ -174,7 +158,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
       </section>
 
       {/* Integration Flow (Fully Redesigned Scenario Blocks) */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6">
           <div className="lend-section-copy text-center max-w-3xl mx-auto mb-16 lend-reveal--1 flex flex-col items-center">
             <span className="lend-section-kicker justify-center mx-auto">{text.flowTitle}</span>
@@ -186,7 +170,6 @@ export function PlanPage({ variant }: { variant: Variant }) {
               <article 
                 key={i} 
                 className="lend-card lend-spotlight-card group relative p-10 min-h-[260px] flex flex-col justify-between transition-all duration-700 ease-in-out hover:scale-[1.02]"
-                onMouseMove={handleMouseMove}
               >
                 <div className="lend-card-spotlight" />
                 <div className="lend-dogfood-glow" />
@@ -210,11 +193,10 @@ export function PlanPage({ variant }: { variant: Variant }) {
 
       {/* Code Section (Only rendered for Developer plan to remove unnecessary block clutter on other plans) */}
       {variant === "developer" && "code" in product && product.code && (
-        <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+        <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
           <div className="container mx-auto px-6 max-w-5xl">
             <div
               className="lend-card lend-spotlight-card group relative p-8 md:p-12 transition-all duration-500"
-              onMouseMove={handleMouseMove}
             >
               <div className="lend-card-spotlight" />
               <div className="lend-dogfood-glow" />
@@ -236,11 +218,10 @@ export function PlanPage({ variant }: { variant: Variant }) {
       )}
 
       {/* Technical Specs */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6 max-w-4xl">
           <div
             className="lend-card lend-spotlight-card group relative p-8 md:p-12 transition-all duration-500"
-            onMouseMove={handleMouseMove}
           >
             <div className="lend-card-spotlight" />
             <div className="lend-dogfood-glow" />
@@ -264,11 +245,10 @@ export function PlanPage({ variant }: { variant: Variant }) {
       </section>
 
       {/* Security Architecture */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6 max-w-4xl">
           <div
             className="lend-card lend-spotlight-card group relative p-8 md:p-12 transition-all duration-500"
-            onMouseMove={handleMouseMove}
           >
             <div className="lend-card-spotlight" />
             <div className="lend-dogfood-glow" />
@@ -293,11 +273,10 @@ export function PlanPage({ variant }: { variant: Variant }) {
       </section>
 
       {/* Ideal For Section */}
-      <section className="py-20 md:py-28 border-t border-white/[0.04]" ref={reveal}>
+      <section className="py-20 md:py-28 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6 max-w-4xl">
           <div
             className="lend-card lend-spotlight-card group relative p-8 md:p-12 transition-all duration-500"
-            onMouseMove={handleMouseMove}
           >
             <div className="lend-card-spotlight" />
             <div className="lend-dogfood-glow" />
@@ -326,7 +305,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
       </section>
 
       {/* FAQ Accordion Section (Adapted from HomeClient.tsx) */}
-      <section id="faq" className="py-32 border-t border-white/[0.04]" ref={reveal}>
+      <section id="faq" className="py-32 border-t border-white/[0.04]" data-reveal>
         <div className="container mx-auto px-6 max-w-5xl">
           <div className="lend-reveal--1 mb-24 text-center">
             <span className="lend-section-kicker justify-center mx-auto">FAQ</span>
@@ -336,48 +315,13 @@ export function PlanPage({ variant }: { variant: Variant }) {
           </div>
 
           <div className="lend-reveal--2 max-w-4xl mx-auto">
-            <div className="grid gap-6">
-              {seoText.faq.map((item, index) => {
-                const isOpen = index === openFaq;
-                return (
-                  <div
-                    key={item.q}
-                    className={`lend-faq-card lend-spotlight-card ${isOpen ? 'is-open' : ''} group`}
-                    onMouseMove={handleMouseMove}
-                  >
-                    <div className="lend-card-spotlight" />
-                    <div className="lend-faq-indicator" />
-
-                    <button
-                      onClick={() => setOpenFaq(isOpen ? -1 : index)}
-                      className="lend-faq-trigger w-full flex items-center justify-between"
-                    >
-                      <div className="flex flex-col gap-2 text-left">
-                        <span className="lend-faq-eyebrow">
-                          {language === "ru" ? "Деталь тарифа" : "Plan Detail"} 0{index + 1}
-                        </span>
-                        <span className="lend-faq-question text-white font-['Montserrat']">
-                          {item.q}
-                        </span>
-                      </div>
-                      
-                      <div className="lend-faq-toggle-icon">
-                        <div className="lend-faq-toggle-bar h" />
-                        <div className="lend-faq-toggle-bar v" />
-                      </div>
-                    </button>
-                    
-                    <div className={`lend-faq-collapse ${isOpen ? 'is-open' : ''}`}>
-                      <div className="lend-faq-collapse-inner">
-                        <p className="lend-faq-answer text-white/60">
-                          {item.a}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <FaqAccordion
+              items={seoText.faq.map((item) => ({ question: item.q, answer: item.a }))}
+              eyebrow={language === "ru" ? "Деталь тарифа" : "Plan Detail"}
+              triggerClassName="flex items-center justify-between"
+              questionClassName="text-white font-['Montserrat']"
+              answerClassName="text-white/60"
+            />
           </div>
         </div>
       </section>
@@ -385,8 +329,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
       {/* Massive Glowing Final CTA Section (Adapted from HomeClient.tsx) */}
       <section 
         className="py-64 relative overflow-hidden lend-spotlight-card group" 
-        onMouseMove={handleMouseMove} 
-        ref={reveal}
+        data-reveal
       >
         <div className="lend-card-spotlight opacity-10" />
 
