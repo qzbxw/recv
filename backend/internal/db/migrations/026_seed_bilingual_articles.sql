@@ -252,7 +252,155 @@ Show operators the invoice, transaction reference, network, asset, amounts, time
 
 ## Создайте workflow ручной проверки
 
-Покажите оператору инвойс, transaction reference, сеть, актив, суммы, timestamps и заказ. Делайте выдачу идемпотентной и записывайте ручные решения. Подписанные события из [вебхуков](/ru/docs/webhooks) могут открыть review-задачу, но результат определяет политика продавца.$body15$, $excerpt15$Операционные правила для переводов после expiry, ниже запрошенной суммы или выше итоговой суммы инвойса.$excerpt15$, $author15$Recv Core Team$author15$, $status15$published$status15$, $metaTitle15$Поздние платежи, недоплаты и переплаты в крипто$metaTitle15$, $metaDescription15$Как обрабатывать поздние криптоплатежи, недоплаты и переплаты через явные статусы, ручную проверку и безопасную выдачу заказа.$metaDescription15$, $ogTitle15$Поздние платежи, недоплаты и переплаты в крипто$ogTitle15$, $ogDescription15$Как обрабатывать поздние криптоплатежи, недоплаты и переплаты через явные статусы, ручную проверку и безопасную выдачу заказа.$ogDescription15$, $authorSlug15$recv-core$authorSlug15$, ARRAY[$tag15_0$платежи$tag15_0$, $tag15_1$недоплата$tag15_1$, $tag15_2$переплата$tag15_2$]::text[], $locale15$ru$locale15$, 2, $linkStatus15$complete$linkStatus15$, '2026-05-27T09:00:00Z'::timestamptz)
+Покажите оператору инвойс, transaction reference, сеть, актив, суммы, timestamps и заказ. Делайте выдачу идемпотентной и записывайте ручные решения. Подписанные события из [вебхуков](/ru/docs/webhooks) могут открыть review-задачу, но результат определяет политика продавца.$body15$, $excerpt15$Операционные правила для переводов после expiry, ниже запрошенной суммы или выше итоговой суммы инвойса.$excerpt15$, $author15$Recv Core Team$author15$, $status15$published$status15$, $metaTitle15$Поздние платежи, недоплаты и переплаты в крипто$metaTitle15$, $metaDescription15$Как обрабатывать поздние криптоплатежи, недоплаты и переплаты через явные статусы, ручную проверку и безопасную выдачу заказа.$metaDescription15$, $ogTitle15$Поздние платежи, недоплаты и переплаты в крипто$ogTitle15$, $ogDescription15$Как обрабатывать поздние криптоплатежи, недоплаты и переплаты через явные статусы, ручную проверку и безопасную выдачу заказа.$ogDescription15$, $authorSlug15$recv-core$authorSlug15$, ARRAY[$tag15_0$платежи$tag15_0$, $tag15_1$недоплата$tag15_1$, $tag15_2$переплата$tag15_2$]::text[], $locale15$ru$locale15$, 2, $linkStatus15$complete$linkStatus15$, '2026-05-27T09:00:00Z'::timestamptz),
+  ($slug16$cryptobot-alternative-usdt-ton$slug16$, $title16$Looking for a CryptoBot Alternative? Accept USDT and TON Natively$title16$, $h116$Looking for a CryptoBot Alternative? Accept USDT and TON Natively$h116$, $body16$## Introduction
+
+For developers and online business owners operating in the Telegram ecosystem, managing cryptocurrency payments efficiently is essential. While many start out using Telegram-native solutions, the search for a reliable CryptoBot alternative often begins when transaction fees start eating into margins and custody-related risks become too high to ignore. If you want to accept USDT and TON without giving up control of your funds or paying a percentage on every sale, it is time to look at non-custodial payment architectures.
+
+Using custodial gateways introduces unnecessary friction, including transaction verification delays, mandatory compliance checks, and expensive withdrawal fees. This guide analyzes how to accept digital currencies natively, comparing the well-known Crypto Pay API, unautomated manual transfers, and modern non-custodial processing.
+
+---
+
+## Why You Need a CryptoBot Alternative for Your Business
+
+While custodial services like CryptoBot are simple to set up initially, they come with architectural trade-offs that can hinder a growing digital business. Understanding these trade-offs helps explain why more indie hackers, SaaS founders, and Telegram shop owners are migrating to alternative tools.
+
+### The Problem with Custody and Account Freezes
+When you use a custodial provider, your revenue does not go directly to you. Instead, it accumulates in the provider's collective wallet. This means you do not hold your own private keys, and your funds are subject to the provider’s internal rules, regional restrictions, and compliance processes. If a sudden policy change or false fraud flag occurs, your business revenue can be locked instantly, with little recourse. 
+
+### Squeezed Margins from Turnover and Withdrawal Fees
+Custodial gateways monetize by taking a percentage of your sales (often around 1% or higher) and charging heavy withdrawal fees when you try to transfer your funds to your private wallet. For example, withdrawing USDT can cost upwards of 1 to 3.5 USDT per transaction. For high-volume merchants, these transaction taxes quickly add up to hundreds or thousands of dollars monthly.
+
+### The Friction of Forced KYC
+For many international merchants, maintaining privacy or avoiding complex onboarding verification is key. Custodial processors frequently enforce strict KYC verification tiers. If you run a legitimate independent SaaS or a paid community, navigating these verification hurdles can delay your time-to-market.
+
+---
+
+## Comparing the Options: Crypto Pay API, Manual Payments, and recv
+
+When building a check-out system for a Telegram bot or web application, three main pathways emerge. The following table highlights the operational differences:
+
+| Feature | Crypto Pay API | Manual Payments | recv |
+| :--- | :--- | :--- | :--- |
+| **Custody Type** | Custodial (Funds held by platform) | Non-custodial (Direct to your wallet) | Non-custodial (Direct to your wallet) |
+| **Turnover Fee** | Typically ~1% per invoice | 0% | 0% (Flat subscription) |
+| **Withdrawal Fees** | High fixed network fees per payout | None | None |
+| **Verification (KYC)** | Strict tiered KYC limits | None | No KYC required |
+| **Automation** | Automated via Webhooks | Manual validation (Time-consuming) | Automated via HMAC-SHA256 Webhooks |
+| **Supported Networks** | TON, TRON, BSC, etc. | Varies by your personal wallets | TON, TRON, Base, BSC |
+| **Developer Tools** | Standard JSON API | None | Unified API, AI/MCP server, TG bot |
+
+---
+
+## Deep Dive into the Three Payment Methods
+
+To choose the right checkout architecture, it helps to examine how each method operates in production environments.
+
+### 1. Crypto Pay API (The Custodial Approach)
+The Crypto Pay API, built on top of the CryptoBot ecosystem, is widely used for Telegram bot payments. It provides developers with a standard API to generate invoices and receive webhook alerts once an invoice is paid.
+
+*   **How it works:** The customer pays the invoice, and the funds go to the provider's pool. To actually use those funds, the merchant must initiate a payout request to their own address.
+*   **Drawbacks:** Apart from the custodial risk, the withdrawal process triggers fixed network fees that eat into small transactions. Additionally, if your target audience wants to pay with emerging networks, your integration is limited only to what the custodial platform supports.
+
+### 2. Manual Payments (The DIY Approach)
+Some small-scale merchants decide to bypass platforms altogether by asking users to send payments manually to a specific address, followed by sending a transaction screenshot to an admin or support bot.
+
+*   **How it works:** The customer copies the wallet address, opens their wallet app, transfers the funds, and waits for a human administrator to verify the transaction on the blockchain.
+*   **Drawbacks:** This approach is impossible to scale. It introduces errors like unpaid invoices, underpayments (where a user forgets to account for transaction fees), and delayed customer delivery. It also ruins the checkout experience, leading to high cart abandonment rates.
+
+### 3. The Modern Solution: recv (Non-Custodial & Fee-Free)
+To bridge the gap between complete ownership and total automation, choosing a [non-custodial crypto payment gateway](/en/) provides the ideal balance. That is exactly where using a platform like recv shifts the paradigm.
+
+By utilizing a real-time blockchain watcher, recv matches incoming transfers to specific invoices without ever taking custody of your money. 
+
+*   **Direct-to-Wallet Settlement:** The payment moves directly from the customer’s private wallet to your private wallet. Because recv never holds your private keys, your funds cannot be frozen, compromised, or delayed.
+*   **0% Turnover Fees:** Instead of taking a percentage of your hard-earned revenue, recv operates on a transparent, flat-rate subscription model. You keep 100% of your sales, whether you process $1,000 or $100,000 a month. Plans scale from a free Trial (up to 15 live invoices) to Merchant ($9/mo), Developer ($29/mo), and Business ($79/mo).
+*   **Smart Checkout Features:** Customers enjoy QR-native checkouts, direct deep-linking into popular wallets like Tonkeeper or Phantom, and intelligent underpayment resolution (which allows users to pay the remaining balance if they sent too little).
+*   **Multi-Network Support:** You can accept TON, TON_USDT, TRON (TRC-20 USDT), Base (Coinbase L2), and BSC. Supported assets include USDT, USDC, TON, SOL, and BNB.
+
+---
+
+## Integrating a Non-Custodial Checkout Flow
+
+For developers, integrating recv is designed to be highly intuitive. It provides a [unified payment API](/en/dev) that handles address generation and monitoring behind the scenes, emitting secure webhooks once payment is confirmed.
+
+To keep your backend secure, every webhook payload is signed with an `HMAC-SHA256` signature, allowing your application to verify that the message came securely from the payment gateway.
+
+Here is a practical example of how to implement webhook validation in a TypeScript/Node.js environment:$body16$, $excerpt16$Tired of custodial freeze risks and high withdrawal commissions? Learn how using a non-custodial CryptoBot alternative can save your margins.$excerpt16$, $author16$Recv Core Team$author16$, $status16$published$status16$, $metaTitle16$Looking for a CryptoBot Alternative? Accept USDT and TON Natively$metaTitle16$, $metaDescription16$Need an automated CryptoBot alternative to accept USDT and TON? Compare Crypto Pay API, manual payments, and recv. Keep 100% of your revenue.$metaDescription16$, $ogTitle16$Looking for a CryptoBot Alternative? Accept USDT and TON Natively$ogTitle16$, $ogDescription16$Need an automated CryptoBot alternative to accept USDT and TON? Compare Crypto Pay API, manual payments, and recv. Keep 100% of your revenue.$ogDescription16$, $authorSlug16$recv-core$authorSlug16$, ARRAY[$tag16_0$cryptobot alternative$tag16_0$, $tag16_1$crypto pay api$tag16_1$, $tag16_2$accept usdt$tag16_2$, $tag16_3$accept ton$tag16_3$, $tag16_4$non-custodial checkout$tag16_4$, $tag16_5$telegram bot payments$tag16_5$, $tag16_6$payment gateway$tag16_6$]::text[], $locale16$en$locale16$, 2, $linkStatus16$complete$linkStatus16$, '2026-06-10T12:00:00Z'::timestamptz),
+  ($slug17$cryptobot-alternative-usdt-ton$slug17$, $title17$Альтернатива CryptoBot: прием USDT и TON без лишних комиссий$title17$, $h117$Альтернатива CryptoBot: прием USDT и TON без лишних комиссий$h117$, $body17$## Введение
+
+Для разработчиков и владельцев бизнеса в экосистеме Telegram критически важно настроить быстрый и экономичный прием криптовалюты. Хотя многие начинают с использования встроенных решений мессенджера, надежная альтернатива CryptoBot требуется сразу, как только комиссии за вывод начинают съедать маржу, а риски блокировки средств становятся реальной угрозой. Если вы хотите принимать USDT и TON, не передавая контроль над транзакциями третьим лицам и не выплачивая проценты с каждой продажи, стоит обратить внимание на некастодиальную архитектуру.
+
+Использование кастодиальных шлюзов создает лишнее трение: задержки при обработке транзакций, обязательные проверки KYC и высокие фиксированные комиссии за вывод средств на личные адреса. В этой статье мы подробно разберем, как организовать прием цифровых активов без посредников, сравнив популярный интерфейс Crypto Pay API, ручные переводы и современные платежные мониторы.
+
+---
+
+## Почему разработчики ищут альтернативу CryptoBot
+
+Хотя кастодиальные боты кажутся удобными для быстрого старта, их технические особенности накладывают серьезные ограничения на масштабирование цифрового бизнеса.
+
+### Риск заморозки и кастодиальные угрозы
+При использовании кастодиального процессора ваши средства скапливаются на общем балансе сервиса. Вы не владеете приватными ключами, а значит, сохранность вашей выручки полностью зависит от внутренних правил платформы, комплаенс-политики и географических ограничений. В случае внезапного изменения правил или ложного срабатывания систем безопасности ваши деньги могут оказаться замороженными на неопределенный срок.
+
+### Потери на комиссиях с оборота и за вывод средств
+Кастодиальные платформы зарабатывают на процентах от каждой вашей транзакции (обычно от 1% и выше) плюс взимают фиксированные сборы за вывод активов. Например, комиссия за отправку USDT может составлять от 1 до 3.5 USDT за каждую транзакцию вывода. Для бизнеса с большим объемом микроплатежей эти издержки выливаются в сотни долларов упущенной прибыли каждый месяц.
+
+### Сложности прохождения KYC
+Многие предприниматели предпочитают сохранять конфиденциальность своей деятельности или просто не хотят тратить время на бюрократическую верификацию. В кастодиальных платежных системах требования к идентификации личности становятся все более жесткими. Прохождение многоуровневых проверок замедляет запуск продукта и отсекает часть аудитории.
+
+---
+
+## Сравнение платежных решений: Crypto Pay API, ручные платежи и recv
+
+При проектировании платежного сценария для Telegram-бота или веб-сайта у вас есть три основных пути. Сравним их ключевые характеристики:
+
+| Критерий сравнения | Crypto Pay API | Ручные платежи | recv |
+| :--- | :--- | :--- | :--- |
+| **Тип кастодиальности** | Кастодиальный (средства у платформы) | Некастодиальный (напрямую вам) | Некастодиальный (напрямую вам) |
+| **Комиссия с оборота** | Около 1% с каждого счета | 0% | 0% (фиксированная подписка) |
+| **Комиссия за вывод** | Высокие сетевые сборы платформы | Отсутствует | Отсутствует |
+| **Верификация (KYC)** | Обязательный KYC по лимитам | Отсутствует | Не требуется |
+| **Автоматизация** | Автоматически через Webhooks | Вручную (проверка скриншотов) | Автоматически через HMAC-SHA256 вебхуки |
+| **Доступные сети** | TON, TRON, BSC и др. | Ограничено вашими кошельками | TON, TRON, Base, BSC |
+| **Инструменты разработчика** | Базовый JSON API | Отсутствуют | Единый API, MCP-сервер, Telegram-бот |
+
+---
+
+## Детальный анализ платежных методов
+
+Чтобы принять правильное архитектурное решение, важно понимать, как эти методы проявляют себя в реальной эксплуатации.
+
+### 1. Сервис Crypto Pay API (Кастодиальный подход)
+Интерфейс Crypto Pay API является частью экосистемы популярного бота CryptoBot. Он предоставляет разработчикам удобные методы для генерации платежных ссылок прямо внутри мессенджера.
+
+*   **Принцип работы:** Пользователь переводит средства на адрес системы. Баланс отображается в личном кабинете разработчика, но для реального использования криптовалюты ее необходимо перевести на собственный кошелек.
+*   **Минусы:** Помимо риска блокировок, вывод небольших сумм становится невыгодным из-за завышенных сетевых тарифов сервиса. Кроме того, вы полностью привязаны к списку сетей и токенов, которые поддерживает провайдер.
+
+### 2. Ручные переводы (Метод «на коленке»)
+Некоторые небольшие каналы и чаты просят покупателей отправлять средства на указанный в описании адрес, после чего администратор вручную проверяет транзакцию по хэшу или скриншоту.
+
+*   **Принцип работы:** Покупатель вручную копирует адрес, отправляет точную сумму из своего кошелька, а затем ждет подтверждения от администратора.
+*   **Минусы:** Данный процесс невозможно автоматизировать или масштабировать. Возникают проблемы с недоплатами (когда клиенты забывают учесть комиссию сети), путаницей в транзакциях и задержкой выдачи доступа к продукту, что снижает конверсию и лояльность пользователей.
+
+### 3. Современный подход: recv (Некастодиальный эквайринг)
+Чтобы совместить безопасность прямого владения активами и удобство полной автоматизации, компании выбирают [некастодиальный криптопроцессинг](/ru/). В этом сценарии платформа recv предлагает принципиально иную логику работы.
+
+Специальный блокчейн-наблюдатель в реальном времени отслеживает транзакции в публичном реестре и сопоставляет их с выставленными счетами.
+
+*   **Расчеты прямо на ваш кошелек:** Криптовалюта отправляется покупателем напрямую на ваши реквизиты. Поскольку платформа recv не хранит ваши приватные ключи и не удерживает баланс, ваши средства физически невозможно заморозить или конфисковать.
+*   **0% комиссии с оборота:** Вместо удержания процентов от продаж используется прозрачная модель подписки с фиксированной оплатой. Вы сохраняете всю полученную выручку. Доступны различные [тарифные планы](/ru/business): от бесплатного тарифа Trial (с ограничением в 15 активных счетов) до тарифов Merchant ($9/мес), Developer ($29/мес) и Business ($79/мес).
+*   **Удобный интерфейс Smart Checkout:** Ваши покупатели получают готовые платежные страницы с поддержкой QR-кодов, бесшовным открытием мобильных кошельков (Tonkeeper, Phantom) через диплинки и функцией автоматического отслеживания недоплат (клиент может просто доплатить недостающую сумму по тому же счету).
+*   **Поддержка популярных сетей:** Вы можете настроить автоматический прием платежей TON, TON_USDT, TRON (USDT TRC-20), Base и BSC. Процессинг работает с токенами USDT, USDC, TON, SOL и BNB.
+
+---
+
+## Настройка интеграции и прием платежей
+
+Для веб-разработчиков и создателей ботов интеграция recv выглядит максимально прозрачной. Платформа предоставляет [единый API для платежей](/ru/dev), который решает все задачи по генерации адресов и отслеживанию статуса транзакций в блокчейне.
+
+Для защиты вашего сервера от поддельных запросов каждое уведомление подписывается уникальной сигнатурой `HMAC-SHA256`.
+
+Ниже представлен рабочий пример обработки и проверки вебхука на Node.js (TypeScript):$body17$, $excerpt17$Устали от кастодиальных рисков и высоких комиссий на вывод? Рассказываем, как альтернатива CryptoBot экономит ваши деньги.$excerpt17$, $author17$Recv Core Team$author17$, $status17$published$status17$, $metaTitle17$Альтернатива CryptoBot: прием USDT и TON без лишних комиссий$metaTitle17$, $metaDescription17$Ищете замену CryptoBot для приема USDT и TON? Сравните Crypto Pay API, ручные переводы и recv. Принимайте платежи прямо на свой кошелек.$metaDescription17$, $ogTitle17$Альтернатива CryptoBot: прием USDT и TON без лишних комиссий$ogTitle17$, $ogDescription17$Ищете замену CryptoBot для приема USDT и TON? Сравните Crypto Pay API, ручные переводы и recv. Принимайте платежи прямо на свой кошелек.$ogDescription17$, $authorSlug17$recv-core$authorSlug17$, ARRAY[$tag17_0$альтернатива cryptobot$tag17_0$, $tag17_1$прием usdt$tag17_1$, $tag17_2$прием ton$tag17_2$, $tag17_3$некастодиальный эквайринг$tag17_3$, $tag17_4$криптопроцессинг без комиссий$tag17_4$, $tag17_5$телеграм боты платежи$tag17_5$, $tag17_6$платежный шлюз$tag17_6$]::text[], $locale17$ru$locale17$, 3, $linkStatus17$complete$linkStatus17$, '2026-06-10T12:00:00Z'::timestamptz)
 ) AS seed(
   slug, title, h1, content_md, excerpt, author, status,
   meta_title, meta_description, og_title, og_description, author_slug,

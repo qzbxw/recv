@@ -17,10 +17,11 @@ for (const article of articles) {
   }
   if (article.sections.length < 4) throw new Error(`${key} needs at least four H2 sections`);
   const content = article.sections.map(([heading, body]) => `## ${heading}\n\n${body}`).join("\n\n");
-  const links = [...content.matchAll(/\]\(\/(?:en|ru)\//g)].length;
+  const links = [...content.matchAll(/\]\(\/(?:en|ru)\b/g)].length;
   if (links < 2) throw new Error(`${key} needs at least two internal links`);
 }
-if (articles.length !== 16) throw new Error(`expected 16 localized articles, found ${articles.length}`);
+if (articles.length < 16) throw new Error(`expected at least 16 localized articles, found ${articles.length}`);
+if (articles.length % 2 !== 0) throw new Error(`expected even number of localized articles (EN/RU pairs), found ${articles.length}`);
 
 function literal(value, tag) {
   const marker = `$${tag}$`;

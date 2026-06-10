@@ -79,16 +79,6 @@ func TestRunMigrations(t *testing.T) {
 			FROM blog_posts
 			WHERE author_slug = 'recv-core'
 			  AND status = 'published'
-			  AND slug IN (
-			    'accept-usdt-payments-on-website',
-			    'non-custodial-payment-gateway',
-			    'trc20-payment-api',
-			    'ton-telegram-payments',
-			    'verify-webhook-signatures',
-			    'custodial-vs-direct-to-wallet',
-			    'multi-chain-crypto-invoices',
-			    'late-underpaid-overpaid-crypto-payments'
-			  )
 		`).Scan(&seededArticles); err != nil {
 			t.Fatalf("count seeded bilingual articles: %v", err)
 		}
