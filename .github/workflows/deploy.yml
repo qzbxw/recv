@@ -84,11 +84,18 @@ jobs:
             docker compose up -d --remove-orphans \
               api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
 
+            # Caddy matches sites by Host header, so the edge check must send
+            # the real site host instead of 127.0.0.1 (which matches no site).
+            site_host="$(grep -E '^CADDY_SITE_ADDRESS=' .env | tail -n1 | cut -d= -f2- | tr -d '"' | sed -e 's#^https\?://##' -e 's#[:/].*##')"
+            site_host="${site_host:-localhost}"
+
+            echo "Waiting for health gate (api healthz + caddy robots.txt, Host: ${site_host})..."
             healthy=0
             for i in $(seq 1 60); do
               if docker compose exec -T api \
-                   wget -qO- http://127.0.0.1:8080/healthz >/dev/null &&
-                 wget -qO- http://127.0.0.1:8080/robots.txt >/dev/null; then
+                   wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1 &&
+                 docker compose exec -T caddy \
+                   wget -qO- --header="Host: ${site_host}" http://127.0.0.1:80/robots.txt >/dev/null 2>&1; then
                 healthy=1
                 break
               fi
@@ -96,11 +103,17 @@ jobs:
             done
 
             if [ "$healthy" -eq 1 ]; then
+              echo "Health gate passed."
               printf '%s' "$DEPLOY_SHA" > .deploy-sha
               docker image prune -f --filter "until=168h"
               exit 0
             fi
 
+            echo "Health gate failed after 120s. Diagnostics:"
+            docker compose exec -T api \
+              wget -qO- http://127.0.0.1:8080/healthz || echo "api healthz: FAILED"
+            docker compose exec -T caddy \
+              wget -qO- --header="Host: ${site_host}" http://127.0.0.1:80/robots.txt >/dev/null || echo "caddy robots.txt: FAILED (Host: ${site_host})"
             docker compose logs --no-color --tail=200 \
               api frontend_public frontend caddy
             echo "Health gate failed; rolling back to $previous_sha"
