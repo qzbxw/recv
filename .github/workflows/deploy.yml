@@ -64,7 +64,11 @@ jobs:
 
             previous_sha="$(git rev-parse HEAD)"
             git fetch --prune origin main
-            git checkout --detach "$DEPLOY_SHA"
+            # The working tree is a deploy target: discard any local edits to
+            # tracked files (e.g. leftovers from scripts run on the server)
+            # so checkout never aborts. Untracked files (.env, backups/,
+            # article.txt) are not touched.
+            git checkout --force --detach "$DEPLOY_SHA"
 
             mkdir -p backups
             if docker compose ps --status running postgres | grep -q postgres; then
@@ -118,7 +122,7 @@ jobs:
               api frontend_public frontend caddy
             echo "Health gate failed; rolling back to $previous_sha"
 
-            git checkout --detach "$previous_sha"
+            git checkout --force --detach "$previous_sha"
             docker compose build \
               api blockchain_watcher telegram_bot_worker frontend_public frontend
             docker compose up -d --remove-orphans \
