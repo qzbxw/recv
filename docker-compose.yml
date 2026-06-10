@@ -87,6 +87,8 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    environment:
+      BACKEND_INTERNAL_URL: http://api:8080
 
   frontend:
     image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/frontend:${GHCR_IMAGE_TAG:-latest}

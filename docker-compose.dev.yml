@@ -67,6 +67,7 @@ services:
       PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       NEXT_PUBLIC_API_URL: http://localhost:3000
+      BACKEND_INTERNAL_URL: http://api:8080
     # Ports are internal only
 
   frontend:
