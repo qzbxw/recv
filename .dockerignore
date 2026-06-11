@@ -9,6 +9,11 @@
 **/.turbo
 **/.cache
 **/*.tsbuildinfo
+**/tmp
+**/output
+**/.lighthouseci
+**/.playwright-cli
+frontend-public/C:*
 
 .env
 .env.*

@@ -5,6 +5,10 @@ import { FALLBACK_BLOG_POSTS } from "@/lib/blog-articles";
 import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
+// The index is prerendered at build time when the backend is unreachable
+// (Docker build network), so it must revalidate to pick up real posts.
+export const revalidate = 60;
+
 export async function generateMetadata(props: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {

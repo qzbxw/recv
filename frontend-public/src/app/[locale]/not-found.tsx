@@ -1,15 +1,15 @@
+"use client";
+
 import Link from "next/link";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { usePathname } from "next/navigation";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 
-export const metadata: Metadata = {
-  title: "Page not found | recv",
-};
-
-export default async function NotFound() {
-  const requestHeaders = await headers();
-  const language = requestHeaders.get("x-recv-locale") === "ru" ? "ru" : "en";
+// Client component on purpose: a server not-found reading headers() embeds a
+// dynamic API into every route shell of the segment, which opted the whole
+// [locale] tree out of static prerendering.
+export default function NotFound() {
+  const pathname = usePathname();
+  const language = pathname === "/ru" || pathname?.startsWith("/ru/") ? "ru" : "en";
   const copy = language === "ru"
     ? {
         title: "Страница не найдена",
