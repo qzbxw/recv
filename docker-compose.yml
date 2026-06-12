@@ -54,6 +54,11 @@ services:
       APP_RUNTIME: watcher
       DATABASE_URL: ${DATABASE_URL:-postgres://recv:recv@postgres:5432/recv?sslmode=disable}
       METRICS_PORT: ${WATCHER_METRICS_PORT:-9091}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${WATCHER_METRICS_PORT:-9091}/healthz >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
 
   telegram_bot_worker:
     image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/api:${GHCR_IMAGE_TAG:-latest}
@@ -70,6 +75,11 @@ services:
       APP_RUNTIME: bot
       DATABASE_URL: ${DATABASE_URL:-postgres://recv:recv@postgres:5432/recv?sslmode=disable}
       METRICS_PORT: ${BOT_METRICS_PORT:-9092}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${BOT_METRICS_PORT:-9092}/healthz >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
 
   frontend_public:
     image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/frontend-public:${GHCR_IMAGE_TAG:-latest}

@@ -63,6 +63,23 @@ jobs:
         env:
           NEXT_PUBLIC_SITE_URL: https://recv.money
 
+  mcp-server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mcp-server/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Smoke-start stdio server
+        run: timeout 5 node dist/index.js </dev/null 2>&1 | grep -q "recv MCP Server running on stdio"
+
   lighthouse:
     runs-on: ubuntu-latest
     defaults:
@@ -105,7 +122,6 @@ jobs:
           NEXT_PUBLIC_SITE_URL=http://localhost:3000
           NEXT_PUBLIC_API_URL=http://api:8080
           VITE_API_BASE_URL=http://localhost:3000
-          TON_USD_RATE=2.50
           EOF
       - name: Build production containers
         run: docker compose build
