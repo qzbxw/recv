@@ -1,4 +1,45 @@
-# Progress: Comprehensive recv SEO Update
+# Progress: Production-Readiness Audit and Fixes
+
+## Session 2026-06-12: audit fixes (critical + important findings)
+
+### Backend
+- Native USD rates (TON/SOL/BNB): added 2-minute in-memory cache and 30-minute bounded stale fallback around the CoinGecko fetch; added regression tests for fresh-cache reuse, stale fallback, and stale-bound expiry.
+- config.Load now refuses TON_USD_RATE / SOL_USD_RATE / BNB_USD_RATE in APP_ENV=production (static rate overrides are dev/test-only); removed TON_USD_RATE from the CI production .env template; added config test.
+- Watcher checkpoint filter now re-scans a 15-minute overlap window behind the checkpoint so late-indexed transactions are not dropped (dedup by external event id absorbs repeats); updated the checkpoint test.
+- Webhook deliveries moved to their own 5-second loop inside the bot worker (independent of Telegram long-polling), delivered concurrently per claimed batch, with a dedicated 15s HTTP client (35s Telegram client untouched; tests construct workers without the new client and fall back).
+
+### Infra
+- docker-compose: healthchecks for blockchain_watcher and telegram_bot_worker via metrics /healthz (9091/9092).
+- deploy.yml health gate now also requires watcher and bot /healthz; failure diagnostics include their logs.
+- ENV_MATRIX.md: removed nonexistent SMTP section; fixed duplicate BASE_RPC_URL and wrong ETHEREUM_RPC_URL description; added ARBITRUM/SOLANA RPC and TON_USDT_MASTER_ADDRESS rows; documented *_USD_RATE as forbidden in prod; corrected ADMIN_* rows to match config validation.
+
+### frontend-public
+- Blog article route now distinguishes backend 404 (real notFound) from backend outage/timeout (throws -> error boundary -> 5xx), so crawlers never see hard 404s on published articles during incidents. lookupPublishedBlogPost returns ok/not_found/unavailable; getPublishedBlogPost kept as wrapper for the OG route.
+- Removed all 63 user-facing "TON_USDT" leaks in EN/RU copy (layout/home meta descriptions, FAQ/schema answers, plans, compare, changelog, legal text) -> "USDT on TON"/"USDT в TON" or accurate network lists incl. Solana/Arbitrum where claims enumerate support.
+- Home networks marquee: list entries converted to {slug,label} so display labels no longer double as URL slugs (was generating /networks/usdt on ton after the copy fix; also previously produced duplicate Base chips); fixed header nav label arbitrum: "Base" -> "Arbitrum" in both locales.
+
+### mcp-server
+- Fixed broken build pipeline: tsconfig rootDir/outDir enabled, package.json main/bin -> dist/index.js, prepare script compiles on npm install; deleted committed build artifacts from src/ and untracked them; added .gitignore.
+- Added shebang, 15s fetch timeouts (AbortSignal.timeout), tolerant JSON parsing for non-JSON error pages; removed unused zod dependency.
+- Updated install instructions (EN/RU docs + README) to the compiled dist entrypoint with a build prerequisite; added a CI job (npm ci, build, stdio smoke-start).
+
+### Verification
+- go test ./... fully green (incl. embedded-postgres suites); coverage gate run pending at session end.
+- frontend-public: tsc clean, 25 unit tests pass, production build passes.
+- mcp-server: npm ci + build produce dist/, stdio smoke-start OK.
+
+### Operational follow-up (IMPORTANT)
+- Before the next deploy: check /root/recv/.env for TON_USD_RATE. If present, REMOVE it - the API now fails fast in production with it set, which would fail the health gate and roll the deploy back.
+
+
+### Session 2026-06-12 (continued): registry deploys, npm publishing, dynamic MCP networks
+
+- Backend: added GET /api/public/payment-options exposing the network/asset matrix derived from store.SupportedPaymentOptions() (built on IsSupportedPaymentOption so it cannot drift); cacheable 5 min; test asserts parity with the support checks.
+- MCP: list_supported_networks now fetches the live endpoint and falls back to the static list on failure; package.json gained repository/homepage/engines/publishConfig (license MIT); release-mcp.yml publishes to npm as recv-mcp on mcp-v* tags with provenance (needs NPM_TOKEN secret; name is free on npm). Docs/README switched to `npx -y recv-mcp` with from-source fallback.
+- CD: deploy.yml rebuilt as two jobs — build-images pushes api/frontend-public/frontend to ghcr.io/qzbxw/recv/* (sha + latest tags, GHA layer cache, frontend build args from Actions vars with recv.money defaults), deploy SSHes, logs into GHCR with workflow GITHUB_TOKEN, persists GHCR_IMAGE_PREFIX/TAG into server .env, pulls instead of building (build kept as fallback), health gate unchanged, rollback pulls the previous SHA tag (fast) with build fallback. ENV_MATRIX documents the new secrets/vars.
+- PRE-MERGE CHECKLIST: (1) remove TON_USD_RATE from /root/recv/.env; (2) if prod .env carries GTM_ID/YANDEX_METRIKA_ID/verification values, copy them into repo Actions Variables — they are now baked at CI build time; (3) create NPM_TOKEN secret and push tag mcp-v1.0.0 to publish recv-mcp BEFORE the docs go live (they reference npx recv-mcp).
+
+## Previous task history (SEO update)
 
 ## Session 2026-06-10: claims audit and production launch checks
 
