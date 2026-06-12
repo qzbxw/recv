@@ -2,6 +2,12 @@
 
 Model Context Protocol (MCP) server for integrating recv Payment Gateway into AI agents (Claude, Cursor, etc.).
 
+## Install
+
+Published to npm as [`recv-mcp`](https://www.npmjs.com/package/recv-mcp); MCP hosts can run it with `npx -y recv-mcp`. To run from source: `npm install` (compiles `dist/` via the `prepare` script), then `node dist/index.js` or `npm run dev`.
+
+Releasing a new version: bump `version` in `package.json`, then push a matching tag (`git tag mcp-v1.0.1 && git push origin mcp-v1.0.1`) — the `release-mcp` workflow builds and publishes with npm provenance (requires the `NPM_TOKEN` repository secret).
+
 ## Features
 
 ### Tools
@@ -63,7 +69,7 @@ Add this to your `claude_desktop_config.json`:
   "mcpServers": {
     "recv": {
       "command": "npx",
-      "args": ["-y", "tsx", "/path/to/recv/mcp-server/src/index.ts"],
+      "args": ["-y", "recv-mcp"],
       "env": {
         "RECV_ACCESS_TOKEN": "your_recv_console_token_here",
         "RECV_API_KEY": "your_api_key_here",
@@ -78,6 +84,6 @@ Add this to your `claude_desktop_config.json`:
 
 ```bash
 cd mcp-server
-npm install
-npm run dev
+npm install   # also compiles dist/ via the prepare script
+npm run dev   # or: npm start
 ```

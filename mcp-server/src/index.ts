@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -14,6 +15,27 @@ const ACCESS_TOKEN = process.env.RECV_ACCESS_TOKEN || "";
 const WEBHOOK_SECRET = process.env.RECV_WEBHOOK_SECRET || "";
 const DOCS_BASE_URL = process.env.RECV_DOCS_URL || "https://recv.money/en/docs";
 const APP_BASE_URL = process.env.RECV_APP_URL || deriveAppBaseUrl(API_BASE_URL);
+// Bounded request budget so a hung backend fails the tool call instead of
+// hanging the agent indefinitely.
+const REQUEST_TIMEOUT_MS = 15_000;
+
+function apiFetch(url: string, init: RequestInit = {}) {
+  return fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+}
+
+// Backends behind proxies can answer errors with HTML; surface the status
+// line instead of throwing a JSON parse error at the agent.
+async function parseJSONResponse(response: Response): Promise<unknown> {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      error: `Non-JSON response (HTTP ${response.status})`,
+      body_snippet: text.slice(0, 256),
+    };
+  }
+}
 
 const server = new Server(
   {
@@ -73,7 +95,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   const slug = uri.replace("recv://docs/", "");
   
   try {
-    const response = await fetch(`${DOCS_BASE_URL}/raw/${slug}`);
+    const response = await apiFetch(`${DOCS_BASE_URL}/raw/${slug}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch doc: ${response.status}`);
     }
@@ -295,10 +317,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case "list_supported_networks": {
+        // Live support matrix from the backend; static text only as a
+        // fallback so an API outage does not break discovery entirely.
+        try {
+          const response = await apiFetch(appApiUrl("/api/public/payment-options"));
+          if (response.ok) {
+            const data = (await parseJSONResponse(response)) as {
+              options?: Array<{ network: string; assets: string[]; default_asset: string }>;
+            };
+            if (Array.isArray(data.options) && data.options.length > 0) {
+              const lines = data.options.map(
+                (option) =>
+                  `- ${option.network}: ${option.assets.join(", ")} (default: ${option.default_asset})`,
+              );
+              return {
+                content: [{ type: "text", text: `recv supports these payment options:\n${lines.join("\n")}` }],
+              };
+            }
+          }
+        } catch {
+          // fall through to the static fallback
+        }
         return {
-          content: [{ 
-            type: "text", 
-            text: "recv supports these payment options:\n- TON/TON\n- TON_USDT/USDT\n- TRON/USDT\n- SOLANA/SOL, SOLANA/USDT, SOLANA/USDC\n- BASE/USDT, BASE/USDC\n- ARBITRUM/USDT, ARBITRUM/USDC\n- BSC/BNB, BSC/USDT"
+          content: [{
+            type: "text",
+            text: "recv supports these payment options (cached fallback):\n- TON/TON\n- TON_USDT/USDT\n- TRON/USDT\n- SOLANA/SOL, SOLANA/USDT, SOLANA/USDC\n- BASE/USDT, BASE/USDC\n- ARBITRUM/USDT, ARBITRUM/USDC\n- BSC/BNB, BSC/USDT"
           }],
         };
       }
@@ -337,12 +380,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (payable_asset) body.payable_asset = String(payable_asset).toUpperCase();
         if (Array.isArray(payment_options)) body.payment_options = payment_options;
         if (expires_in_minutes != null) body.expires_in_minutes = expires_in_minutes;
-        const response = await fetch(`${API_BASE_URL}/invoices`, {
+        const response = await apiFetch(`${API_BASE_URL}/invoices`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
         });
-        const data = await response.json();
+        const data = await parseJSONResponse(response);
         return {
           content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
           isError: !response.ok,
@@ -350,24 +393,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       case "get_account": {
         if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
-        const response = await fetch(appApiUrl("/api/me"), { headers: consoleHeaders });
-        const data = await response.json();
+        const response = await apiFetch(appApiUrl("/api/me"), { headers: consoleHeaders });
+        const data = await parseJSONResponse(response);
         return jsonToolResult(data, response.ok);
       }
       case "bootstrap_agent_workspace": {
         const { workspace_name = "", contact_email = "" } = (args as any) || {};
-        const response = await fetch(appApiUrl("/api/auth/agent/bootstrap"), {
+        const response = await apiFetch(appApiUrl("/api/auth/agent/bootstrap"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ workspace_name, contact_email }),
         });
-        const data = await response.json();
+        const data = await parseJSONResponse(response);
         return jsonToolResult(data, response.ok);
       }
       case "create_subscription_checkout": {
         if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
         const { plan_code = "developer", payable_network = "TRON", payable_asset, payment_options } = (args as any) || {};
-        const response = await fetch(appApiUrl("/api/billing/checkout"), {
+        const response = await apiFetch(appApiUrl("/api/billing/checkout"), {
           method: "POST",
           headers: consoleHeaders,
           body: JSON.stringify({
@@ -377,7 +420,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             ...(Array.isArray(payment_options) ? { payment_options } : {}),
           }),
         });
-        const data: any = await response.json();
+        const data: any = await parseJSONResponse(response);
         if (data && typeof data.checkout_url === "string" && data.checkout_url.startsWith("/")) {
           data.checkout_url = `${APP_BASE_URL}${data.checkout_url}`;
         }
@@ -385,8 +428,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       case "get_checkout_invoice": {
         const { public_id } = args as { public_id: string };
-        const response = await fetch(appApiUrl(`/api/public/invoices/${encodeURIComponent(public_id)}`));
-        const data: any = await response.json();
+        const response = await apiFetch(appApiUrl(`/api/public/invoices/${encodeURIComponent(public_id)}`));
+        const data: any = await parseJSONResponse(response);
         if (data && typeof data.checkout_url === "string" && data.checkout_url.startsWith("/")) {
           data.checkout_url = `${APP_BASE_URL}${data.checkout_url}`;
         }
@@ -395,7 +438,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "create_api_key": {
         if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
         const { label = "recv MCP agent", environment = "live", scopes } = (args as any) || {};
-        const response = await fetch(appApiUrl("/api/developer/api-keys"), {
+        const response = await apiFetch(appApiUrl("/api/developer/api-keys"), {
           method: "POST",
           headers: consoleHeaders,
           body: JSON.stringify({
@@ -404,25 +447,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             scopes: Array.isArray(scopes) && scopes.length > 0 ? scopes : ["invoices:read", "invoices:write"],
           }),
         });
-        const data = await response.json();
+        const data = await parseJSONResponse(response);
         return jsonToolResult(data, response.ok);
       }
       case "create_webhook_endpoint": {
         if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
         const { url, label = "recv MCP webhook", environment = "live" } = (args as any) || {};
-        const response = await fetch(appApiUrl("/api/developer/webhooks"), {
+        const response = await apiFetch(appApiUrl("/api/developer/webhooks"), {
           method: "POST",
           headers: consoleHeaders,
           body: JSON.stringify({ url, label, environment }),
         });
-        const data = await response.json();
+        const data = await parseJSONResponse(response);
         return jsonToolResult(data, response.ok);
       }
       case "get_invoice": {
         if (!API_KEY) throw new Error("API_KEY not set");
         const { id } = args as { id: string };
-        const response = await fetch(`${API_BASE_URL}/invoices/${id}`, { headers });
-        const data = await response.json();
+        const response = await apiFetch(`${API_BASE_URL}/invoices/${id}`, { headers });
+        const data = await parseJSONResponse(response);
         return {
           content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
           isError: !response.ok,
@@ -431,8 +474,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "list_invoices": {
         if (!API_KEY) throw new Error("API_KEY not set");
         const { page = 1, page_size = 20 } = (args as any) || {};
-        const response = await fetch(`${API_BASE_URL}/invoices?page=${page}&page_size=${page_size}`, { headers });
-        const data = await response.json();
+        const response = await apiFetch(`${API_BASE_URL}/invoices?page=${page}&page_size=${page_size}`, { headers });
+        const data = await parseJSONResponse(response);
         return {
           content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
           isError: !response.ok,
@@ -441,11 +484,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "simulate_payment": {
         if (!API_KEY) throw new Error("API_KEY not set");
         const { id } = args as { id: string };
-        const response = await fetch(`${API_BASE_URL}/test/invoices/${id}/simulate-payment`, {
+        const response = await apiFetch(`${API_BASE_URL}/test/invoices/${id}/simulate-payment`, {
           method: "POST",
           headers,
         });
-        const data = await response.json();
+        const data = await parseJSONResponse(response);
         return {
           content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
           isError: !response.ok,

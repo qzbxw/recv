@@ -24,14 +24,14 @@ The server reads these environment variables:
 
 ### Claude Desktop
 
-Add the server to `claude_desktop_config.json`:
+Add the server to `claude_desktop_config.json` (the package is published to npm as [`recv-mcp`](https://www.npmjs.com/package/recv-mcp); to run from source instead, build it with `cd mcp-server && npm install` and use `node /path/to/recv/mcp-server/dist/index.js`):
 
 ```json
 {
   "mcpServers": {
     "recv": {
       "command": "npx",
-      "args": ["-y", "tsx", "/path/to/recv/mcp-server/src/index.ts"],
+      "args": ["-y", "recv-mcp"],
       "env": {
         "RECV_ACCESS_TOKEN": "your_console_token_here",
         "RECV_API_KEY": "test_your_key_here",
@@ -50,8 +50,8 @@ Add the same `mcpServers` block to Cursor's MCP settings (Settings → MCP), the
 
 ```bash
 cd mcp-server
-npm install
-npm run dev
+npm install   # also compiles dist/ via the prepare script
+npm run dev   # or: npm start
 ```
 
 ## Tools

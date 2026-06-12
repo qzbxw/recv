@@ -1,20 +1,47 @@
 {
   "name": "recv-mcp",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Model Context Protocol server for the recv crypto payment gateway: agent onboarding, invoices, API keys, and webhook verification.",
   "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "recv-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "prepare": "tsc",
     "start": "node dist/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "crypto",
+    "payments",
+    "recv"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qzbxw/recv.git",
+    "directory": "mcp-server"
+  },
+  "homepage": "https://recv.money/en/products/mcp",
+  "bugs": {
+    "url": "https://github.com/qzbxw/recv/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.3.6"
+    "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
