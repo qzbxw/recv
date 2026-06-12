@@ -3,6 +3,8 @@ import { ApiError } from "../errors";
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const TOKEN_KEY = "recv_token";
 const ADMIN_TOKEN_KEY = "recv_admin_token";
+let sellerRefreshPromise: Promise<string> | null = null;
+let adminRefreshPromise: Promise<string> | null = null;
 
 export function getApiBase() {
   return API_BASE;
@@ -72,7 +74,24 @@ function canRefreshForPath(path: string) {
   return !path.includes("/login") && !path.includes("/logout") && !path.includes("/refresh") && !path.includes("/public/");
 }
 
-async function refreshAccessToken(kind: "seller" | "admin") {
+function refreshAccessToken(kind: "seller" | "admin") {
+  const pendingRefresh = kind === "admin" ? adminRefreshPromise : sellerRefreshPromise;
+  if (pendingRefresh) {
+    return pendingRefresh;
+  }
+
+  const refreshPromise = performAccessTokenRefresh(kind).finally(() => {
+    if (kind === "admin") adminRefreshPromise = null;
+    else sellerRefreshPromise = null;
+  });
+
+  if (kind === "admin") adminRefreshPromise = refreshPromise;
+  else sellerRefreshPromise = refreshPromise;
+
+  return refreshPromise;
+}
+
+async function performAccessTokenRefresh(kind: "seller" | "admin") {
   const path = kind === "admin" ? "/api/admin/refresh" : "/api/auth/refresh";
   const response = await fetch(`${getApiBase()}${path}`, {
     method: "POST",
@@ -87,7 +106,11 @@ async function refreshAccessToken(kind: "seller" | "admin") {
   }
   const payload = (await response.json()) as { token?: string; access_token?: string };
   const nextToken = payload.token || payload.access_token || "";
-  if (!nextToken) return "";
+  if (!nextToken) {
+    if (kind === "admin") clearStoredAdminToken();
+    else clearStoredToken();
+    return "";
+  }
   if (kind === "admin") setStoredAdminToken(nextToken);
   else setStoredToken(nextToken);
   return nextToken;

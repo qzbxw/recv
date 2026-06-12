@@ -593,7 +593,32 @@ export function SellerConsolePage() {
     );
   }
 
-  if (!session) return null;
+  if (!session) {
+    const storedToken = getStoredToken();
+    return (
+      <main className="auth-portal">
+        <div className="dev-portal__backdrop dev-portal__backdrop--grid" />
+        <div className="dev-portal__locked-state">
+          <h3>{language === "ru" ? "Не удалось загрузить консоль" : "Could not load the console"}</h3>
+          <p>
+            {error || (language === "ru"
+              ? "Сессия недоступна. Повторите загрузку или войдите снова."
+              : "The session is unavailable. Retry loading or sign in again.")}
+          </p>
+          <div className="cluster">
+            {storedToken ? (
+              <button type="button" className="dev-btn dev-btn--primary" onClick={() => void loadSession(storedToken)}>
+                {language === "ru" ? "Повторить" : "Retry"}
+              </button>
+            ) : null}
+            <Link className="dev-btn dev-btn--secondary" to={buildAuthHref(location.pathname)}>
+              {language === "ru" ? "Войти снова" : "Sign in again"}
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   const workspaceName = session.me.workspace.username || `#${session.me.workspace.id}`;
   const activeWalletsCount = filteredWallets.filter(w => w.is_active).length;
