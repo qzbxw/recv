@@ -7,9 +7,10 @@ import {
   requestTelegramLoginCode,
   setStoredToken,
   trackEvent,
+  validateReferralCode,
 } from "../lib/api";
 import { sanitizeNextPath } from "../lib/routing";
-import { readAttribution } from "../lib/attribution";
+import { readAttribution, readRefCode, sanitizeRefCode } from "../lib/attribution";
 import { useUI } from "../lib/ui";
 import { AUTH_COPY as COPY } from "../i18n";
 
@@ -41,6 +42,27 @@ export function AuthPortalPage() {
     username: "",
     code: "",
   });
+  const [refCode, setRefCode] = useState(() => readRefCode());
+  const [refStatus, setRefStatus] = useState<"idle" | "valid" | "invalid">("idle");
+  const [refPartner, setRefPartner] = useState("");
+
+  useEffect(() => {
+    const code = sanitizeRefCode(refCode);
+    if (!code) {
+      setRefStatus("idle");
+      setRefPartner("");
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      validateReferralCode(code)
+        .then((result) => {
+          setRefStatus(result.valid ? "valid" : "invalid");
+          setRefPartner(result.partner_name || "");
+        })
+        .catch(() => setRefStatus("idle"));
+    }, 400);
+    return () => window.clearTimeout(timeout);
+  }, [refCode]);
   const [devForm, setDevForm] = useState({
     username: "designer",
     telegramId: "10001",
@@ -88,7 +110,7 @@ export function AuthPortalPage() {
       if (!sessionInitData) {
         throw new Error("No Telegram session found");
       }
-      const result = await authenticateTelegram({ init_data: sessionInitData, attribution: readAttribution() });
+      const result = await authenticateTelegram({ init_data: sessionInitData, attribution: readAttribution(), ref_code: sanitizeRefCode(refCode) });
       setStoredToken(result.token);
       void trackEvent(result.token, { event_name: "signup_completed", source: "auth", properties: { method: "telegram_init_data" } }).catch(() => undefined);
       navigate(nextPath, { replace: true });
@@ -122,6 +144,7 @@ export function AuthPortalPage() {
         username: form.username.trim(),
         code: form.code.trim(),
         attribution: readAttribution(),
+        ref_code: sanitizeRefCode(refCode),
       });
       setStoredToken(result.token);
       void trackEvent(result.token, { event_name: "signup_completed", source: "auth", properties: { method: "telegram_code" } }).catch(() => undefined);
@@ -152,6 +175,7 @@ export function AuthPortalPage() {
         username,
         telegram_id: telegramId,
         attribution: readAttribution(),
+        ref_code: sanitizeRefCode(refCode),
       });
       setStoredToken(result.token);
       void trackEvent(result.token, { event_name: "signup_completed", source: "auth", properties: { method: "dev" } }).catch(() => undefined);
@@ -281,6 +305,23 @@ export function AuthPortalPage() {
                   {sendingCode ? text.sendingCode : text.sendCode}
                 </button>
               </div>
+            </div>
+
+            <div className="dev-input-group" style={{ marginTop: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '8px' }}>{text.refCode}</label>
+              <input
+                className="dev-input"
+                type="text"
+                placeholder={text.refCodePlaceholder}
+                value={refCode}
+                onChange={(event) => setRefCode(event.target.value)}
+              />
+              {refStatus === "valid" ? (
+                <p style={{ fontSize: '0.8rem', color: '#48bb78', margin: '6px 0 0' }}>{text.refCodeApplied} {refPartner}</p>
+              ) : null}
+              {refStatus === "invalid" ? (
+                <p style={{ fontSize: '0.8rem', color: '#718096', margin: '6px 0 0' }}>{text.refCodeInvalid}</p>
+              ) : null}
             </div>
 
             <button type="submit" className="dev-btn dev-btn--primary auth-portal__submit-btn" disabled={loading} style={{ width: '100%', marginTop: '1.5rem' }}>

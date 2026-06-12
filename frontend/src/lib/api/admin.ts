@@ -17,6 +17,11 @@ import type {
   Workspace,
   WebhookDelivery,
   WebVitalsReport,
+  UTMReport,
+  ReferralPartner,
+  ReferralPartnerPayload,
+  ReferralPartnerReport,
+  ReferralPartnerStats,
 } from "../types";
 import { getApiBase, request } from "./core";
 
@@ -130,6 +135,39 @@ export async function fetchAdminAnalytics(token: string, params: { from?: string
 
 export async function fetchAdminWebVitals(token: string) {
   return request<WebVitalsReport>("/api/admin/analytics/web-vitals", {}, token);
+}
+
+export async function fetchAdminUTMReport(token: string) {
+  return request<UTMReport>("/api/admin/analytics/utm", {}, token);
+}
+
+export async function fetchReferralPartners(token: string) {
+  return request<{ items: ReferralPartnerStats[] }>("/api/admin/referrals/partners", {}, token);
+}
+
+export async function createReferralPartner(token: string, payload: ReferralPartnerPayload) {
+  return request<{ partner: ReferralPartner }>("/api/admin/referrals/partners", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function updateReferralPartner(token: string, partnerId: number, payload: ReferralPartnerPayload) {
+  return request<{ partner: ReferralPartner }>(`/api/admin/referrals/partners/${partnerId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function fetchReferralPartnerReport(token: string, partnerId: number) {
+  return request<ReferralPartnerReport>(`/api/admin/referrals/partners/${partnerId}/report`, {}, token);
+}
+
+export async function createReferralPayout(token: string, partnerId: number, payload: { amount_usd: string; note?: string }) {
+  return request<{ payout: ReferralPartnerReport["payouts"][number] }>(`/api/admin/referrals/partners/${partnerId}/payouts`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
 }
 
 export async function fetchAdminAuditEvents(token: string) {

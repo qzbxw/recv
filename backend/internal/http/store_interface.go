@@ -75,6 +75,14 @@ type httpStore interface {
 	RecordAdminAuditEvent(ctx context.Context, actor string, action string, targetType string, targetID string, metadata any) error
 	RecordProductEvent(ctx context.Context, input store.ProductEventInput) error
 	RecordWebVital(ctx context.Context, vital store.WebVital) error
+	RecordUTMVisit(ctx context.Context, attr store.AttributionInput) error
+	GetUTMReport(ctx context.Context, from time.Time, to time.Time) (store.UTMReport, error)
+	ListReferralPartners(ctx context.Context) ([]store.ReferralPartnerStats, error)
+	CreateReferralPartner(ctx context.Context, input store.ReferralPartnerInput) (store.ReferralPartner, error)
+	UpdateReferralPartner(ctx context.Context, id int64, input store.ReferralPartnerInput) (store.ReferralPartner, error)
+	GetReferralPartnerByCode(ctx context.Context, code string) (store.ReferralPartner, error)
+	GetReferralPartnerReport(ctx context.Context, partnerID int64) (store.ReferralPartnerReport, error)
+	CreateReferralPayout(ctx context.Context, partnerID int64, amountUSD decimal.Decimal, note string, createdBy string) (store.ReferralPayout, error)
 	CreateSEORedirect(ctx context.Context, redirect store.SEORedirect) (store.SEORedirect, error)
 	UpdateSEORedirect(ctx context.Context, id int64, redirect store.SEORedirect) (store.SEORedirect, error)
 	DeleteSEORedirect(ctx context.Context, id int64) error

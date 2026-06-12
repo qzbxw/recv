@@ -2,7 +2,7 @@ import type { MeResponse, User, Workspace } from "../types";
 import type { AttributionPayload } from "../attribution";
 import { request } from "./core";
 
-export async function authenticateTelegram(payload: { init_data?: string; widget_data?: string; telegram_id?: number; username?: string; attribution?: AttributionPayload }) {
+export async function authenticateTelegram(payload: { init_data?: string; widget_data?: string; telegram_id?: number; username?: string; attribution?: AttributionPayload; ref_code?: string }) {
   return request<{ token: string; user: User; workspace: Workspace }>("/api/auth/telegram", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -16,11 +16,15 @@ export async function requestTelegramLoginCode(payload: { username: string }) {
   });
 }
 
-export async function loginWithTelegramCode(payload: { username: string; code: string; attribution?: AttributionPayload }) {
+export async function loginWithTelegramCode(payload: { username: string; code: string; attribution?: AttributionPayload; ref_code?: string }) {
   return request<{ token: string; user: User; workspace: Workspace }>("/api/auth/telegram/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function validateReferralCode(code: string) {
+  return request<{ valid: boolean; partner_name?: string; code?: string }>(`/api/public/referral-codes/${encodeURIComponent(code)}`);
 }
 
 export async function fetchMe(token: string) {

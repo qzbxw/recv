@@ -8,6 +8,7 @@ import {
   createAdminInternalComment,
   fetchAdminAnalytics,
   fetchAdminWebVitals,
+  fetchAdminUTMReport,
   fetchAdminAuditEvents,
   fetchAdminInvoices,
   fetchAdminOpsOverview,
@@ -16,6 +17,11 @@ import {
   fetchAdminWorkspaces,
   fetchAdminBillingWallets,
   updateAdminBillingWallets,
+  fetchReferralPartners,
+  createReferralPartner,
+  updateReferralPartner,
+  fetchReferralPartnerReport,
+  createReferralPayout,
   createAdminSEORedirect,
   deleteAdminSEORedirect,
   getStoredAdminToken,
@@ -39,9 +45,13 @@ import type {
   SEOTarget,
   SEORedirect,
   WebVitalsReport,
+  UTMReport,
+  ReferralPartnerPayload,
+  ReferralPartnerReport,
+  ReferralPartnerStats,
 } from "../lib/types";
 
-type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "audit" | "content" | "settings";
+type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings";
 
 type Filters = { status: string; kind: string; query: string };
 const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "" };
@@ -117,6 +127,7 @@ const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
   workspaces: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
   webhooks: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
   analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
+  partners: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" opacity="0" /><path d="M18 8a3 3 0 1 0-6 0c0 1.5.7 2.4 1.6 3.1.5.4.4 1.2-.2 1.4C10.5 13.6 8 15.2 8 18h12c0-2.8-2.5-4.4-5.4-5.5-.6-.2-.7-1-.2-1.4.9-.7 1.6-1.6 1.6-3.1z" /><path d="M9 11a2.5 2.5 0 1 0-5 0c0 1.2.6 2 1.3 2.6.4.3.3 1-.2 1.2C3.1 15.6 1 16.9 1 19h6" /></svg>,
   audit: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
   content: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></svg>,
   settings: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
@@ -144,6 +155,7 @@ export function AdminDashboardPage() {
   const [invoiceList, setInvoiceList] = useState<AdminInvoiceListResponse | null>(null);
   const [analytics, setAnalytics] = useState<AdminAnalyticsResponse | null>(null);
   const [webVitals, setWebVitals] = useState<WebVitalsReport | null>(null);
+  const [utmReport, setUtmReport] = useState<UTMReport | null>(null);
   const [auditEvents, setAuditEvents] = useState<AdminAuditEvent[]>([]);
   const [seoTargets, setSeoTargets] = useState<SEOTarget[]>([]);
   const [seoRedirects, setSeoRedirects] = useState<SEORedirect[]>([]);
@@ -163,11 +175,12 @@ export function AdminDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [nextOverview, nextInvoices, nextAnalytics, nextVitals, nextAuditEvents, nextSEO, nextWorkspaces, nextRedirects] = await Promise.all([
+      const [nextOverview, nextInvoices, nextAnalytics, nextVitals, nextUTM, nextAuditEvents, nextSEO, nextWorkspaces, nextRedirects] = await Promise.all([
         fetchAdminOpsOverview(activeToken),
         fetchAdminInvoices(activeToken, { page: 1, page_size: 50, ...nextFilters }),
         fetchAdminAnalytics(activeToken, { group_by: analyticsGroupBy }),
         fetchAdminWebVitals(activeToken).catch(() => null),
+        fetchAdminUTMReport(activeToken).catch(() => null),
         fetchAdminAuditEvents(activeToken),
         fetchAdminSEOTargets(activeToken),
         fetchAdminWorkspaces(activeToken).catch(() => ({ items: [] })),
@@ -177,6 +190,7 @@ export function AdminDashboardPage() {
       setInvoiceList(nextInvoices);
       setAnalytics(nextAnalytics);
       setWebVitals(nextVitals);
+      setUtmReport(nextUTM);
       setAuditEvents(nextAuditEvents.items || []);
       setSeoTargets(nextSEO.items || []);
       setWorkspaces(nextWorkspaces.items || []);
@@ -305,6 +319,7 @@ export function AdminDashboardPage() {
       items: [
         { key: "webhooks", label: "Webhooks", badge: overview?.failed_webhook_queue?.length || 0 },
         { key: "analytics", label: "Analytics" },
+        { key: "partners", label: "Partners" },
         { key: "audit", label: "Audit log" },
         { key: "content", label: "Content & SEO" },
         { key: "settings", label: "Settings" },
@@ -402,7 +417,11 @@ export function AdminDashboardPage() {
             )}
 
             {activePanel === "analytics" && (
-              <AnalyticsPanel analytics={analytics} webVitals={webVitals} groupBy={analyticsGroupBy} onGroupBy={(g) => void reloadAnalytics(g)} />
+              <AnalyticsPanel analytics={analytics} webVitals={webVitals} utmReport={utmReport} groupBy={analyticsGroupBy} onGroupBy={(g) => void reloadAnalytics(g)} setToast={setToast} />
+            )}
+
+            {activePanel === "partners" && (
+              <PartnersPanel token={token} setToast={setToast} setError={setError} />
             )}
 
             {activePanel === "audit" && <AuditPanel events={auditEvents} />}
@@ -926,11 +945,446 @@ function WebhooksPanel({ deliveries, busyKey, runAction }: { deliveries: AdminWe
   );
 }
 
-function AnalyticsPanel({ analytics, webVitals, groupBy, onGroupBy }: {
+function slugifyUTMValue(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\/(www\.)?t\.me\//, "")
+    .replace(/^t\.me\//, "")
+    .replace(/^@+/, "")
+    .replace(/[^a-z0-9а-яё_-]+/gi, "_")
+    .replace(/_{2,}/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
+  const [channel, setChannel] = useState("");
+  const [campaign, setCampaign] = useState("");
+  const [content, setContent] = useState("");
+  const [medium, setMedium] = useState("cpc");
+  const [landingPath, setLandingPath] = useState("/ru");
+
+  const channelSlug = slugifyUTMValue(channel);
+  const campaignSlug = slugifyUTMValue(campaign);
+  let link = "";
+  if (channelSlug) {
+    const params = new URLSearchParams();
+    params.set("utm_source", `tg_${channelSlug}`);
+    if (medium.trim()) params.set("utm_medium", slugifyUTMValue(medium));
+    if (campaignSlug) params.set("utm_campaign", campaignSlug);
+    if (content.trim()) params.set("utm_content", slugifyUTMValue(content));
+    const path = landingPath.trim().startsWith("/") ? landingPath.trim() : `/${landingPath.trim()}`;
+    link = `${window.location.origin}${path}?${params.toString()}`;
+  }
+
+  async function handleCopy() {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      setToast("UTM link copied");
+    } catch {
+      setToast("Copy failed — select the link manually");
+    }
+  }
+
+  return (
+    <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+      <div className="console-card-spotlight" />
+      <div className="dev-portal__section-header dev-portal__section-header--margin">
+        <h3>UTM link builder</h3>
+        <span className="dev-card__note-text">Paste the channel you are buying from (e.g. on telega.in), copy the tagged link into the ad creative. Results land in the table below.</span>
+      </div>
+      <div className="dev-form">
+        <div className="admin-blog-grid">
+          <div className="dev-input-group">
+            <label>Telegram channel</label>
+            <input className="dev-input" value={channel} onChange={(e) => setChannel(e.target.value)} placeholder="@durov or t.me/durov" />
+          </div>
+          <div className="dev-input-group">
+            <label>Campaign</label>
+            <input className="dev-input" value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="telega-june" />
+          </div>
+          <div className="dev-input-group">
+            <label>Creative (optional)</label>
+            <input className="dev-input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="post-v1" />
+          </div>
+        </div>
+        <div className="admin-blog-grid">
+          <div className="dev-input-group">
+            <label>Landing page</label>
+            <input className="dev-input" value={landingPath} onChange={(e) => setLandingPath(e.target.value)} placeholder="/ru" />
+          </div>
+          <div className="dev-input-group">
+            <label>Medium</label>
+            <input className="dev-input" value={medium} onChange={(e) => setMedium(e.target.value)} placeholder="cpc" />
+          </div>
+        </div>
+        <div className="dev-input-group">
+          <label>Tagged link</label>
+          <div className="admin-manage__note">
+            <input className="dev-input" readOnly value={link} placeholder="Fill in the channel to generate a link" onFocus={(e) => e.target.select()} />
+            <button type="button" className="dev-btn dev-btn--primary dev-btn--compact" disabled={!link} onClick={() => void handleCopy()}>Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const EMPTY_PARTNER_FORM = {
+  name: "",
+  contact: "",
+  code: "",
+  commission_pct: "25",
+  launch_commission_pct: "",
+  launch_months: "",
+  payout_address: "",
+  notes: "",
+};
+
+function partnerLink(code: string) {
+  return `${window.location.origin}/?ref=${code}`;
+}
+
+function formatMonth(value: string) {
+  return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(new Date(value));
+}
+
+function PartnersPanel({ token, setToast, setError }: {
+  token: string;
+  setToast: (message: string) => void;
+  setError: (message: string) => void;
+}) {
+  const [partners, setPartners] = useState<ReferralPartnerStats[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState(EMPTY_PARTNER_FORM);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [report, setReport] = useState<ReferralPartnerReport | null>(null);
+  const [payoutForm, setPayoutForm] = useState({ amount: "", note: "" });
+  const [busy, setBusy] = useState(false);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+      const next = await fetchReferralPartners(token);
+      setPartners(next.items || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load referral partners");
+    } finally {
+      setLoading(false);
+    }
+  }, [token, setError]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  function buildPayload(): ReferralPartnerPayload {
+    const payload: ReferralPartnerPayload = {
+      name: form.name,
+      contact: form.contact,
+      commission_pct: form.commission_pct || "25",
+      payout_address: form.payout_address,
+      notes: form.notes,
+    };
+    if (!editingId && form.code.trim()) payload.code = form.code.trim();
+    if (form.launch_commission_pct.trim()) {
+      payload.launch_commission_pct = form.launch_commission_pct.trim();
+      payload.launch_months = Number(form.launch_months) || 3;
+    }
+    return payload;
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    try {
+      if (editingId) {
+        const current = partners.find((p) => p.id === editingId);
+        await updateReferralPartner(token, editingId, { ...buildPayload(), is_archived: current?.is_archived || false });
+        setToast("Partner updated");
+      } else {
+        const created = await createReferralPartner(token, buildPayload());
+        setToast(`Partner created — link: ${partnerLink(created.partner.code)}`);
+      }
+      setForm(EMPTY_PARTNER_FORM);
+      setEditingId(null);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save partner");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startEdit(partner: ReferralPartnerStats) {
+    setEditingId(partner.id);
+    setForm({
+      name: partner.name,
+      contact: partner.contact,
+      code: partner.code,
+      commission_pct: partner.commission_pct,
+      launch_commission_pct: partner.launch_commission_pct || "",
+      launch_months: "",
+      payout_address: partner.payout_address,
+      notes: partner.notes,
+    });
+  }
+
+  async function toggleArchive(partner: ReferralPartnerStats) {
+    setBusy(true);
+    try {
+      await updateReferralPartner(token, partner.id, {
+        name: partner.name,
+        contact: partner.contact,
+        commission_pct: partner.commission_pct,
+        launch_commission_pct: partner.launch_commission_pct || undefined,
+        launch_ends_at: partner.launch_ends_at || undefined,
+        payout_address: partner.payout_address,
+        notes: partner.notes,
+        is_archived: !partner.is_archived,
+      });
+      setToast(partner.is_archived ? "Partner restored" : "Partner archived");
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update partner");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openReport(partner: ReferralPartnerStats) {
+    try {
+      const next = await fetchReferralPartnerReport(token, partner.id);
+      setReport(next);
+      setPayoutForm({ amount: partner.owed_usd, note: "" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load partner report");
+    }
+  }
+
+  async function handlePayout(event: FormEvent) {
+    event.preventDefault();
+    if (!report) return;
+    setBusy(true);
+    try {
+      await createReferralPayout(token, report.partner.id, { amount_usd: payoutForm.amount, note: payoutForm.note });
+      setToast("Payout recorded — don't forget the actual USDT transfer");
+      const [nextReport] = await Promise.all([fetchReferralPartnerReport(token, report.partner.id), reload()]);
+      setReport(nextReport);
+      setPayoutForm({ amount: "", note: "" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to record payout");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyLink(code: string) {
+    try {
+      await navigator.clipboard.writeText(partnerLink(code));
+      setToast("Referral link copied");
+    } catch {
+      setToast("Copy failed — build the link manually: /?ref=" + code);
+    }
+  }
+
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Referral partners" subtitle="25% recurring (auto-bumps to 30% at 10 referrals paying in the same month), optional launch rate. Payouts in USDT are sent manually and recorded here." />
+
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>{editingId ? "Edit partner" : "New partner"}</h3>
+          <span className="dev-card__note-text">The referral link is recv.money/?ref=code. Leave the code empty to generate one from the name.</span>
+        </div>
+        <form className="dev-form" onSubmit={handleSubmit}>
+          <div className="admin-blog-grid">
+            <div className="dev-input-group">
+              <label>Name</label>
+              <input className="dev-input" value={form.name} onChange={(e) => setForm((c) => ({ ...c, name: e.target.value }))} placeholder="Ivan, TG-shop developer" required />
+            </div>
+            <div className="dev-input-group">
+              <label>Contact</label>
+              <input className="dev-input" value={form.contact} onChange={(e) => setForm((c) => ({ ...c, contact: e.target.value }))} placeholder="@ivan / email" />
+            </div>
+            <div className="dev-input-group">
+              <label>Code {editingId ? "(immutable)" : "(optional)"}</label>
+              <input className="dev-input" value={form.code} disabled={Boolean(editingId)} onChange={(e) => setForm((c) => ({ ...c, code: e.target.value }))} placeholder="tg-ivan" />
+            </div>
+          </div>
+          <div className="admin-blog-grid">
+            <div className="dev-input-group">
+              <label>Commission %</label>
+              <input className="dev-input" value={form.commission_pct} onChange={(e) => setForm((c) => ({ ...c, commission_pct: e.target.value }))} placeholder="25" />
+            </div>
+            <div className="dev-input-group">
+              <label>Launch % (optional)</label>
+              <input className="dev-input" value={form.launch_commission_pct} onChange={(e) => setForm((c) => ({ ...c, launch_commission_pct: e.target.value }))} placeholder="40" />
+            </div>
+            <div className="dev-input-group">
+              <label>Launch months</label>
+              <input className="dev-input" value={form.launch_months} onChange={(e) => setForm((c) => ({ ...c, launch_months: e.target.value }))} placeholder="3" />
+            </div>
+          </div>
+          <div className="admin-blog-grid">
+            <div className="dev-input-group">
+              <label>USDT payout address</label>
+              <input className="dev-input" value={form.payout_address} onChange={(e) => setForm((c) => ({ ...c, payout_address: e.target.value }))} placeholder="TRC-20 / TON address" />
+            </div>
+            <div className="dev-input-group">
+              <label>Notes</label>
+              <input className="dev-input" value={form.notes} onChange={(e) => setForm((c) => ({ ...c, notes: e.target.value }))} placeholder="Builds Tilda shops, ~10 clients" />
+            </div>
+          </div>
+          <div className="admin-manage__note">
+            <button type="submit" className="dev-btn dev-btn--primary dev-btn--compact" disabled={busy}>{editingId ? "Save changes" : "Create partner"}</button>
+            {editingId ? (
+              <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => { setEditingId(null); setForm(EMPTY_PARTNER_FORM); }}>Cancel</button>
+            ) : null}
+          </div>
+        </form>
+      </div>
+
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Partners</h3>
+          <span className="dev-card__note-text">Clicks → signups → referred subscription revenue. "Owed" is accrued commission minus recorded payouts; suggested payout threshold is $10.</span>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead><tr><th>Partner</th><th>Code</th><th>Rate</th><th>Clicks</th><th>Signups</th><th>Paying/mo</th><th>Revenue</th><th>Accrued</th><th>Paid</th><th>Owed</th><th>Actions</th></tr></thead>
+            <tbody>
+              {partners.map((partner) => {
+                const launchActive = partner.launch_ends_at && new Date(partner.launch_ends_at) > new Date();
+                return (
+                  <tr key={partner.id} style={partner.is_archived ? { opacity: 0.5 } : undefined}>
+                    <td>
+                      <strong>{partner.name}</strong>
+                      {partner.contact ? <div className="dev-card__note-text">{partner.contact}</div> : null}
+                    </td>
+                    <td><span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{partner.code}</span></td>
+                    <td>
+                      {partner.commission_pct}%
+                      {launchActive ? <div className="dev-card__note-text">launch {partner.launch_commission_pct}% until {formatDateTime(partner.launch_ends_at)}</div> : null}
+                    </td>
+                    <td>{partner.clicks}</td>
+                    <td>{partner.signups}</td>
+                    <td>{partner.active_referrals}</td>
+                    <td>{formatMoney(partner.revenue_usd)}</td>
+                    <td>{formatMoney(partner.accrued_usd)}</td>
+                    <td>{formatMoney(partner.paid_usd)}</td>
+                    <td><strong>{formatMoney(partner.owed_usd)}</strong></td>
+                    <td>
+                      <div className="admin-manage__note">
+                        <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void copyLink(partner.code)}>Link</button>
+                        <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void openReport(partner)}>Report</button>
+                        <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => startEdit(partner)}>Edit</button>
+                        <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void toggleArchive(partner)}>{partner.is_archived ? "Restore" : "Archive"}</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {partners.length === 0 && <tr><td colSpan={11} className="admin-table-empty">{loading ? "Loading partners…" : "No partners yet. Create the first one above and share recv.money/?ref=code."}</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {report ? (
+        <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+          <div className="console-card-spotlight" />
+          <div className="dev-portal__section-header dev-portal__section-header--margin">
+            <h3>{report.partner.name} — monthly report</h3>
+            <span className="dev-card__note-text">Verify the month, send USDT to {report.partner.payout_address || "the partner (no address on file!)"}, then record the payout below.</span>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-sales-table">
+              <thead><tr><th>Month</th><th>Paying referrals</th><th>Referred revenue</th><th>Rate</th><th>Commission</th></tr></thead>
+              <tbody>
+                {report.months.map((month) => (
+                  <tr key={month.month}>
+                    <td>{formatMonth(month.month)}</td>
+                    <td>{month.active_referrals}</td>
+                    <td>{formatMoney(month.revenue_usd)}</td>
+                    <td>{month.rate_pct}%</td>
+                    <td>{formatMoney(month.accrued_usd)}</td>
+                  </tr>
+                ))}
+                {report.months.length === 0 && <tr><td colSpan={5} className="admin-table-empty">No referred subscription payments yet.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+
+          <form className="dev-form" onSubmit={handlePayout} style={{ marginTop: "1rem" }}>
+            <div className="admin-blog-grid">
+              <div className="dev-input-group">
+                <label>Payout amount (USD)</label>
+                <input className="dev-input" value={payoutForm.amount} onChange={(e) => setPayoutForm((c) => ({ ...c, amount: e.target.value }))} placeholder="25.00" required />
+              </div>
+              <div className="dev-input-group">
+                <label>Note / tx hash</label>
+                <input className="dev-input" value={payoutForm.note} onChange={(e) => setPayoutForm((c) => ({ ...c, note: e.target.value }))} placeholder="june 2026, tx 0x…" />
+              </div>
+              <div className="dev-input-group" style={{ alignSelf: "end" }}>
+                <button type="submit" className="dev-btn dev-btn--primary dev-btn--compact" disabled={busy}>Record payout</button>
+              </div>
+            </div>
+          </form>
+
+          {report.payouts.length > 0 ? (
+            <div className="admin-table-wrap" style={{ marginTop: "1rem" }}>
+              <table className="admin-sales-table">
+                <thead><tr><th>Paid at</th><th>Amount</th><th>Note</th><th>By</th></tr></thead>
+                <tbody>
+                  {report.payouts.map((payout) => (
+                    <tr key={payout.id}>
+                      <td>{formatDateTime(payout.paid_at)}</td>
+                      <td>{formatMoney(payout.amount_usd)}</td>
+                      <td>{payout.note || "—"}</td>
+                      <td>{payout.created_by || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          <div className="dev-portal__section-header dev-portal__section-header--margin">
+            <h3>Referred workspaces</h3>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-sales-table">
+              <thead><tr><th>Workspace</th><th>Username</th><th>Signed up</th><th>Subscription revenue</th></tr></thead>
+              <tbody>
+                {report.referrals.map((row) => (
+                  <tr key={row.workspace_id}>
+                    <td>#{row.workspace_id}</td>
+                    <td>{row.username ? `@${row.username}` : "—"}</td>
+                    <td>{formatDateTime(row.signed_up_at)}</td>
+                    <td>{formatMoney(row.revenue_usd)}</td>
+                  </tr>
+                ))}
+                {report.referrals.length === 0 && <tr><td colSpan={4} className="admin-table-empty">No referred signups yet.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, setToast }: {
   analytics: AdminAnalyticsResponse | null;
   webVitals: WebVitalsReport | null;
+  utmReport: UTMReport | null;
   groupBy: string;
   onGroupBy: (g: "date" | "network" | "plan" | "mode") => void;
+  setToast: (message: string) => void;
 }) {
   const vital = (name: "LCP" | "INP" | "CLS") => webVitals?.metrics.find((metric) => metric.metric_name === name);
   const formatVital = (name: "LCP" | "INP" | "CLS") => {
@@ -971,6 +1425,38 @@ function AnalyticsPanel({ analytics, webVitals, groupBy, onGroupBy }: {
             />
           );
         })}
+      </div>
+      <UTMLinkBuilder setToast={setToast} />
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Campaign tracking (UTM)</h3>
+          <span className="dev-card__note-text">Ad clicks → signups → paid subscriptions, rolling 28 days. Tag links with utm_source / utm_medium / utm_campaign.</span>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Visits</th><th>Unique</th><th>Signups</th><th>CR</th><th>Paying</th><th>Revenue</th></tr></thead>
+            <tbody>
+              {(utmReport?.campaigns || []).map((row) => {
+                const cr = row.unique_visitors > 0 ? `${((row.signups / row.unique_visitors) * 100).toFixed(1)}%` : "—";
+                return (
+                  <tr key={`${row.source}|${row.medium}|${row.campaign}`}>
+                    <td><span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{row.source || "—"}</span></td>
+                    <td>{row.medium || "—"}</td>
+                    <td>{row.campaign || "—"}</td>
+                    <td>{row.visits}</td>
+                    <td>{row.unique_visitors}</td>
+                    <td>{row.signups}</td>
+                    <td>{cr}</td>
+                    <td>{row.paying_workspaces}</td>
+                    <td>{formatMoney(row.paid_usd)}</td>
+                  </tr>
+                );
+              })}
+              {(utmReport?.campaigns || []).length === 0 && <tr><td colSpan={9} className="admin-table-empty">No campaign traffic yet. Add ?utm_source=…&utm_campaign=… to your ad links.</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </div>
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />

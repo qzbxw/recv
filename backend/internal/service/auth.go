@@ -43,6 +43,7 @@ type TelegramAuthInput struct {
 	TelegramID  int64                   `json:"telegram_id"`
 	Username    string                  `json:"username"`
 	Attribution *store.AttributionInput `json:"attribution,omitempty"`
+	RefCode     string                  `json:"ref_code,omitempty"`
 }
 
 type TelegramCodeRequestInput struct {
@@ -53,12 +54,14 @@ type TelegramCodeLoginInput struct {
 	Username    string                  `json:"username"`
 	Code        string                  `json:"code"`
 	Attribution *store.AttributionInput `json:"attribution,omitempty"`
+	RefCode     string                  `json:"ref_code,omitempty"`
 }
 
 type AgentBootstrapInput struct {
 	WorkspaceName string                  `json:"workspace_name"`
 	ContactEmail  string                  `json:"contact_email"`
 	Attribution   *store.AttributionInput `json:"attribution,omitempty"`
+	RefCode       string                  `json:"ref_code,omitempty"`
 }
 
 type AuthResult struct {
@@ -124,6 +127,7 @@ func (s *AuthService) AuthenticateTelegram(ctx context.Context, input TelegramAu
 	if input.Attribution != nil {
 		_ = s.store.RecordUTMAttribution(ctx, workspace.ID, *input.Attribution)
 	}
+	_ = s.store.AttachReferralSignup(ctx, workspace.ID, input.RefCode)
 	return s.issueAuthResult(user, workspace)
 }
 
@@ -214,6 +218,7 @@ func (s *AuthService) AuthenticateTelegramCode(ctx context.Context, input Telegr
 	if input.Attribution != nil {
 		_ = s.store.RecordUTMAttribution(ctx, workspace.ID, *input.Attribution)
 	}
+	_ = s.store.AttachReferralSignup(ctx, workspace.ID, input.RefCode)
 	return s.issueAuthResult(user, workspace)
 }
 
@@ -241,6 +246,7 @@ func (s *AuthService) BootstrapAgentWorkspace(ctx context.Context, input AgentBo
 		if input.Attribution != nil {
 			_ = s.store.RecordUTMAttribution(ctx, workspace.ID, *input.Attribution)
 		}
+		_ = s.store.AttachReferralSignup(ctx, workspace.ID, input.RefCode)
 		return s.issueAuthResult(user, workspace)
 	}
 	if lastErr != nil {

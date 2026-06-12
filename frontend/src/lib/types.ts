@@ -390,6 +390,21 @@ export type AdminAnalyticsResponse = {
   }>;
 };
 
+export type UTMReport = {
+  from: string;
+  to: string;
+  campaigns: Array<{
+    source: string;
+    medium: string;
+    campaign: string;
+    visits: number;
+    unique_visitors: number;
+    signups: number;
+    paying_workspaces: number;
+    paid_usd: string;
+  }>;
+};
+
 export type WebVitalsReport = {
   from: string;
   to: string;
@@ -399,6 +414,68 @@ export type WebVitalsReport = {
     samples: number;
     good: boolean;
   }>;
+};
+
+export type ReferralPartner = {
+  id: number;
+  code: string;
+  name: string;
+  contact: string;
+  commission_pct: string;
+  launch_commission_pct?: string | null;
+  launch_ends_at?: string | null;
+  payout_address: string;
+  notes: string;
+  is_archived: boolean;
+  created_at: string;
+};
+
+export type ReferralPartnerStats = ReferralPartner & {
+  clicks: number;
+  signups: number;
+  active_referrals: number;
+  revenue_usd: string;
+  accrued_usd: string;
+  paid_usd: string;
+  owed_usd: string;
+};
+
+export type ReferralPartnerReport = {
+  partner: ReferralPartner;
+  months: Array<{
+    month: string;
+    revenue_usd: string;
+    active_referrals: number;
+    rate_pct: string;
+    accrued_usd: string;
+  }>;
+  payouts: Array<{
+    id: number;
+    partner_id: number;
+    amount_usd: string;
+    note: string;
+    created_by: string;
+    paid_at: string;
+  }>;
+  referrals: Array<{
+    workspace_id: number;
+    username: string;
+    signed_up_at: string;
+    revenue_usd: string;
+  }>;
+};
+
+export type ReferralPartnerPayload = {
+  code?: string;
+  name: string;
+  contact?: string;
+  commission_pct?: string;
+  launch_commission_pct?: string;
+  launch_months?: number;
+  launch_ends_at?: string;
+  payout_address?: string;
+  notes?: string;
+  is_archived?: boolean;
 };
 
 export type AdminActionResponse<T> = {

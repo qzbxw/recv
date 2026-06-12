@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { UIProvider, useUI } from "./lib/ui";
 import { getStoredToken } from "./lib/api";
+import { captureAttribution } from "./lib/attribution";
 import { buildAuthHref } from "./lib/routing";
 
 const AdminBlogPage = lazy(() => import("./pages/AdminBlogPage").then((module) => ({ default: module.AdminBlogPage })));
@@ -78,6 +79,10 @@ function ProtectedConsoleRoute() {
 }
 
 export default function App() {
+  useEffect(() => {
+    captureAttribution();
+  }, []);
+
   return (
     <UIProvider>
       <RouteTitleManager />

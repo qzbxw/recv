@@ -385,6 +385,38 @@ func (m *mockHTTPStore) RecordWebVital(ctx context.Context, vital store.WebVital
 	return m.real.RecordWebVital(ctx, vital)
 }
 
+func (m *mockHTTPStore) RecordUTMVisit(ctx context.Context, attr store.AttributionInput) error {
+	return m.real.RecordUTMVisit(ctx, attr)
+}
+
+func (m *mockHTTPStore) GetUTMReport(ctx context.Context, from time.Time, to time.Time) (store.UTMReport, error) {
+	return m.real.GetUTMReport(ctx, from, to)
+}
+
+func (m *mockHTTPStore) ListReferralPartners(ctx context.Context) ([]store.ReferralPartnerStats, error) {
+	return m.real.ListReferralPartners(ctx)
+}
+
+func (m *mockHTTPStore) CreateReferralPartner(ctx context.Context, input store.ReferralPartnerInput) (store.ReferralPartner, error) {
+	return m.real.CreateReferralPartner(ctx, input)
+}
+
+func (m *mockHTTPStore) UpdateReferralPartner(ctx context.Context, id int64, input store.ReferralPartnerInput) (store.ReferralPartner, error) {
+	return m.real.UpdateReferralPartner(ctx, id, input)
+}
+
+func (m *mockHTTPStore) GetReferralPartnerByCode(ctx context.Context, code string) (store.ReferralPartner, error) {
+	return m.real.GetReferralPartnerByCode(ctx, code)
+}
+
+func (m *mockHTTPStore) GetReferralPartnerReport(ctx context.Context, partnerID int64) (store.ReferralPartnerReport, error) {
+	return m.real.GetReferralPartnerReport(ctx, partnerID)
+}
+
+func (m *mockHTTPStore) CreateReferralPayout(ctx context.Context, partnerID int64, amountUSD decimal.Decimal, note string, createdBy string) (store.ReferralPayout, error) {
+	return m.real.CreateReferralPayout(ctx, partnerID, amountUSD, note, createdBy)
+}
+
 func (m *mockHTTPStore) RefreshAdminInvoiceStatus(ctx context.Context, invoiceID int64) (store.Invoice, string, error) {
 	return m.real.RefreshAdminInvoiceStatus(ctx, invoiceID)
 }
