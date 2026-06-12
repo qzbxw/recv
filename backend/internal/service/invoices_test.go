@@ -92,6 +92,82 @@ func TestInvoiceServiceNativeRateUSDFetchesBNBFromUpstream(t *testing.T) {
 	}
 }
 
+func TestInvoiceServiceNativeRateUSDUsesFreshCacheWithoutRefetch(t *testing.T) {
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"the-open-network":{"usd":3.75}}`))
+	}))
+	defer server.Close()
+
+	service := NewInvoiceService(nil, "")
+	service.httpClient = rewriteHTTPClient(t, server)
+
+	for i := 0; i < 3; i++ {
+		rate, err := service.tonRateUSD(context.Background())
+		if err != nil {
+			t.Fatalf("tonRateUSD call %d returned error: %v", i, err)
+		}
+		if !rate.Equal(decimal.RequireFromString("3.75")) {
+			t.Fatalf("expected rate 3.75 on call %d, got %s", i, rate)
+		}
+	}
+	if calls != 1 {
+		t.Fatalf("expected a single upstream fetch with a fresh cache, got %d", calls)
+	}
+}
+
+func TestInvoiceServiceNativeRateUSDServesBoundedStaleCacheOnUpstreamFailure(t *testing.T) {
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		if calls == 1 {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"the-open-network":{"usd":3.75}}`))
+			return
+		}
+		http.Error(w, "rate limit", http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+
+	service := NewInvoiceService(nil, "")
+	service.httpClient = rewriteHTTPClient(t, server)
+
+	if _, err := service.tonRateUSD(context.Background()); err != nil {
+		t.Fatalf("initial tonRateUSD returned error: %v", err)
+	}
+
+	// Age the cache past the fresh window but inside the stale bound.
+	service.rateMu.Lock()
+	entry := service.rateCache[store.AssetTON]
+	entry.fetchedAt = time.Now().Add(-rateCacheFreshFor - time.Minute)
+	service.rateCache[store.AssetTON] = entry
+	service.rateMu.Unlock()
+
+	rate, err := service.tonRateUSD(context.Background())
+	if err != nil {
+		t.Fatalf("expected stale-cache fallback, got error: %v", err)
+	}
+	if !rate.Equal(decimal.RequireFromString("3.75")) {
+		t.Fatalf("expected stale cached rate 3.75, got %s", rate)
+	}
+	if calls != 2 {
+		t.Fatalf("expected one refresh attempt before stale fallback, got %d calls", calls)
+	}
+
+	// Age the cache past the stale bound: the upstream failure must surface.
+	service.rateMu.Lock()
+	entry = service.rateCache[store.AssetTON]
+	entry.fetchedAt = time.Now().Add(-rateCacheMaxStale - time.Minute)
+	service.rateCache[store.AssetTON] = entry
+	service.rateMu.Unlock()
+
+	if _, err := service.tonRateUSD(context.Background()); err == nil || !strings.Contains(err.Error(), "rate limit") {
+		t.Fatalf("expected upstream error past the stale bound, got %v", err)
+	}
+}
+
 func TestInvoiceServiceTONRateUSDHandlesUpstreamError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "rate limit", http.StatusTooManyRequests)

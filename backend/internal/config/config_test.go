@@ -92,6 +92,19 @@ func TestLoadRejectsUnsafeProductionAdminConfig(t *testing.T) {
 		}
 	})
 
+	t.Run("static usd rate overrides are rejected in production", func(t *testing.T) {
+		t.Setenv("APP_ENV", "production")
+		t.Setenv("DATABASE_URL", "postgres://localhost/recv")
+		t.Setenv("JWT_SECRET", "jwt-secret")
+		t.Setenv("ADMIN_JWT_SECRET", "admin-secret")
+		t.Setenv("TON_USD_RATE", "2.50")
+
+		_, err := Load()
+		if err == nil || err.Error() != "TON_USD_RATE is a dev/test-only static rate override and must not be set in production" {
+			t.Fatalf("expected static rate override error, got %v", err)
+		}
+	})
+
 	t.Run("insecure dev auth is rejected outside development", func(t *testing.T) {
 		t.Setenv("APP_ENV", "staging")
 		t.Setenv("DATABASE_URL", "postgres://localhost/recv")

@@ -352,6 +352,13 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 	return transfers, nil
 }
 
+// checkpointOverlapWindow is re-scanned behind the checkpoint each poll.
+// Upstream indexers (TonCenter, TronGrid) can surface a transaction whose
+// block timestamp is older than transactions already seen; a strict cutoff
+// would drop such a payment forever. Re-processing inside the window is safe
+// because RecordObservedTransfer dedupes by external event id.
+const checkpointOverlapWindow = 15 * time.Minute
+
 func (w *Watcher) filterTransfersAfterCheckpoint(ctx context.Context, wallet store.WatchedWallet, transfers []store.ObservedTransfer, lastBlock int64) []store.ObservedTransfer {
 	if w.store == nil {
 		return transfers
@@ -365,9 +372,10 @@ func (w *Watcher) filterTransfersAfterCheckpoint(ctx context.Context, wallet sto
 	filtered := transfers
 	var maxObserved *time.Time
 	if checkpoint.LastObservedAt != nil {
+		cutoff := checkpoint.LastObservedAt.Add(-checkpointOverlapWindow)
 		filtered = make([]store.ObservedTransfer, 0, len(transfers))
 		for _, transfer := range transfers {
-			if transfer.ObservedAt.After(*checkpoint.LastObservedAt) {
+			if transfer.ObservedAt.After(cutoff) {
 				filtered = append(filtered, transfer)
 			}
 		}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -97,6 +98,13 @@ func Load() (Config, error) {
 	if cfg.AppEnv == "production" {
 		if cfg.AdminUsername != "" || cfg.AdminPassword != "" {
 			return Config{}, fmt.Errorf("ADMIN_USERNAME/ADMIN_PASSWORD are dev-only; use ADMIN_BOOTSTRAP_EMAIL/ADMIN_BOOTSTRAP_PASSWORD in production")
+		}
+		// Static USD rate overrides silently freeze checkout pricing for
+		// volatile assets; they exist for dev/test only.
+		for _, name := range []string{"TON_USD_RATE", "SOL_USD_RATE", "BNB_USD_RATE"} {
+			if strings.TrimSpace(os.Getenv(name)) != "" {
+				return Config{}, fmt.Errorf("%s is a dev/test-only static rate override and must not be set in production", name)
+			}
 		}
 		if cfg.AdminJWTSecret == "" || cfg.AdminJWTSecret == "change-me-admin-too" || cfg.AdminJWTSecret == cfg.JWTSecret {
 			return Config{}, fmt.Errorf("strong ADMIN_JWT_SECRET distinct from JWT_SECRET is required in production")

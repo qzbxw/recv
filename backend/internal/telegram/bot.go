@@ -36,6 +36,7 @@ type BotWorker struct {
 	token          string
 	publicAppURL   string
 	httpClient     *http.Client
+	webhookClient  *http.Client
 	logger         *slog.Logger
 	offset         int64
 	sessions       map[int64]*botSession
@@ -124,25 +125,30 @@ func NewBotWorker(st *store.Store, invoiceService *service.InvoiceService, token
 		httpClient: &http.Client{
 			Timeout: 35 * time.Second,
 		},
+		// Seller webhook endpoints get a much tighter budget than Telegram
+		// long-polling so one slow endpoint cannot stall the delivery batch.
+		webhookClient: &http.Client{
+			Timeout: 15 * time.Second,
+		},
 	}
 }
 
 func (b *BotWorker) Run(ctx context.Context) error {
 	ctx = metrics.WithSource(ctx, "telegram_bot")
+
+	// Seller webhook deliveries run on their own cadence so Telegram
+	// long-polling and notification sends never delay them (and vice versa).
+	webhookDone := make(chan struct{})
+	go func() {
+		defer close(webhookDone)
+		b.runWebhookDeliveryLoop(ctx)
+	}()
+	defer func() { <-webhookDone }()
+
 	if strings.TrimSpace(b.token) == "" {
-		b.logger.Info("telegram bot token is empty, running delivery worker without Telegram polling")
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
-		for {
-			if err := b.flush(ctx); err != nil {
-				b.logger.Error("flush delivery jobs", "error", err)
-			}
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-ticker.C:
-			}
-		}
+		b.logger.Info("telegram bot token is empty, running webhook delivery worker without Telegram polling")
+		<-ctx.Done()
+		return ctx.Err()
 	}
 
 	for {
@@ -173,25 +179,37 @@ func (b *BotWorker) Run(ctx context.Context) error {
 	}
 }
 
-func (b *BotWorker) flush(ctx context.Context) error {
-	if strings.TrimSpace(b.token) != "" {
-		jobs, err := b.store.ClaimNotificationJobs(ctx, 20)
-		if err != nil {
-			return err
+func (b *BotWorker) runWebhookDeliveryLoop(ctx context.Context) {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	for {
+		if err := b.flushWebhookDeliveries(ctx); err != nil {
+			b.logger.Error("flush webhook deliveries", "error", err)
 		}
-
-		for _, job := range jobs {
-			keyboard := b.notificationKeyboard(job.Payload)
-			if _, err := b.sendMessage(ctx, job.RecipientTelegramID, job.Message, keyboard); err != nil {
-				_ = b.store.MarkNotificationFailed(ctx, job.ID, err.Error())
-				continue
-			}
-			_ = b.store.MarkNotificationSent(ctx, job.ID)
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
 		}
 	}
+}
 
-	if err := b.flushWebhookDeliveries(ctx); err != nil {
+func (b *BotWorker) flush(ctx context.Context) error {
+	if strings.TrimSpace(b.token) == "" {
+		return nil
+	}
+	jobs, err := b.store.ClaimNotificationJobs(ctx, 20)
+	if err != nil {
 		return err
+	}
+
+	for _, job := range jobs {
+		keyboard := b.notificationKeyboard(job.Payload)
+		if _, err := b.sendMessage(ctx, job.RecipientTelegramID, job.Message, keyboard); err != nil {
+			_ = b.store.MarkNotificationFailed(ctx, job.ID, err.Error())
+			continue
+		}
+		_ = b.store.MarkNotificationSent(ctx, job.ID)
 	}
 	return nil
 }

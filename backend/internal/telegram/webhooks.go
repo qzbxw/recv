@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"recv/backend/internal/metrics"
@@ -23,23 +24,31 @@ func (b *BotWorker) flushWebhookDeliveries(ctx context.Context) error {
 		return err
 	}
 
+	// Deliver the claimed batch concurrently: each target gets its own
+	// HTTP budget, so one slow seller endpoint cannot hold up the rest.
+	var wg sync.WaitGroup
 	for _, delivery := range deliveries {
-		attempt := b.sendWebhookDelivery(ctx, delivery.TargetURL, delivery.Secret, delivery.EventType, delivery.Payload)
-		_ = b.store.RecordWebhookDeliveryAttempt(ctx, delivery.ID, delivery.EndpointID, delivery.Attempts, attempt)
-		statusCode := attempt.StatusCode
-		requestErr := errorFromString(attempt.Error)
-		if requestErr != nil || statusCode >= http.StatusBadRequest {
-			message := ""
-			if requestErr != nil {
-				message = requestErr.Error()
-			} else {
-				message = fmt.Sprintf("webhook responded with HTTP %d", statusCode)
+		wg.Add(1)
+		go func(delivery store.WebhookDelivery) {
+			defer wg.Done()
+			attempt := b.sendWebhookDelivery(ctx, delivery.TargetURL, delivery.Secret, delivery.EventType, delivery.Payload)
+			_ = b.store.RecordWebhookDeliveryAttempt(ctx, delivery.ID, delivery.EndpointID, delivery.Attempts, attempt)
+			statusCode := attempt.StatusCode
+			requestErr := errorFromString(attempt.Error)
+			if requestErr != nil || statusCode >= http.StatusBadRequest {
+				message := ""
+				if requestErr != nil {
+					message = requestErr.Error()
+				} else {
+					message = fmt.Sprintf("webhook responded with HTTP %d", statusCode)
+				}
+				_ = b.store.MarkWebhookDeliveryFailed(ctx, delivery.ID, delivery.EndpointID, delivery.Attempts, delivery.MaxAttempts, statusCode, message)
+				return
 			}
-			_ = b.store.MarkWebhookDeliveryFailed(ctx, delivery.ID, delivery.EndpointID, delivery.Attempts, delivery.MaxAttempts, statusCode, message)
-			continue
-		}
-		_ = b.store.MarkWebhookDeliverySent(ctx, delivery.ID, delivery.EndpointID)
+			_ = b.store.MarkWebhookDeliverySent(ctx, delivery.ID, delivery.EndpointID)
+		}(delivery)
 	}
+	wg.Wait()
 	return nil
 }
 
@@ -58,7 +67,11 @@ func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, s
 	req.Header.Set("X-recv-Timestamp", timestamp)
 	req.Header.Set("X-recv-Signature", signature)
 
-	resp, err := b.httpClient.Do(req)
+	client := b.webhookClient
+	if client == nil {
+		client = b.httpClient
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		metrics.ObserveUpstream("seller_webhook", eventType, "failure", time.Since(startedAt))
 		return store.WebhookAttemptResult{Status: "failure", Error: err.Error(), Duration: time.Since(startedAt)}

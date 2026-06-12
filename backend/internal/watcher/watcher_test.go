@@ -578,6 +578,16 @@ func TestFilterTransfersAfterCheckpointSkipsAlreadyObservedTransfers(t *testing.
 			Network:            store.NetworkBASE,
 			DestinationAddress: wallet.Address,
 			Amount:             decimal.RequireFromString("1"),
+			ObservedAt:         checkpointAt.Add(-checkpointOverlapWindow - time.Second),
+		},
+		{
+			// Indexed late: timestamp is behind the checkpoint but inside
+			// the overlap window, so it must be re-emitted (dedup catches
+			// genuine repeats downstream).
+			TxHash:             "late-indexed-transfer",
+			Network:            store.NetworkBASE,
+			DestinationAddress: wallet.Address,
+			Amount:             decimal.RequireFromString("3"),
 			ObservedAt:         checkpointAt.Add(-time.Second),
 		},
 		{
@@ -590,8 +600,8 @@ func TestFilterTransfersAfterCheckpointSkipsAlreadyObservedTransfers(t *testing.
 	}
 
 	filtered := w.filterTransfersAfterCheckpoint(ctx, wallet, transfers, 125)
-	if len(filtered) != 1 || filtered[0].TxHash != "fresh-transfer" {
-		t.Fatalf("expected only fresh transfer after checkpoint, got %+v", filtered)
+	if len(filtered) != 2 || filtered[0].TxHash != "late-indexed-transfer" || filtered[1].TxHash != "fresh-transfer" {
+		t.Fatalf("expected late-indexed and fresh transfers after checkpoint overlap, got %+v", filtered)
 	}
 	updated, err := st.GetWatcherCheckpoint(ctx, wallet.PollNetwork, wallet.PayableNetwork, wallet.Address)
 	if err != nil {
@@ -600,7 +610,7 @@ func TestFilterTransfersAfterCheckpointSkipsAlreadyObservedTransfers(t *testing.
 	if updated.LastBlock != 125 {
 		t.Fatalf("expected checkpoint block 125, got %d", updated.LastBlock)
 	}
-	if updated.LastObservedAt == nil || !updated.LastObservedAt.Equal(transfers[1].ObservedAt) {
+	if updated.LastObservedAt == nil || !updated.LastObservedAt.Equal(transfers[2].ObservedAt) {
 		t.Fatalf("expected checkpoint to advance to newest observed transfer, got %+v", updated.LastObservedAt)
 	}
 }

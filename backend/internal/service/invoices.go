@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"recv/backend/internal/metrics"
@@ -21,12 +22,27 @@ import (
 
 const (
 	TrialInvoiceLimit = 15
+
+	// rateCacheFreshFor is how long a fetched USD rate is served without
+	// re-contacting the upstream price API.
+	rateCacheFreshFor = 2 * time.Minute
+	// rateCacheMaxStale bounds how old a cached rate may be when the
+	// upstream price API is unavailable; past this, invoice creation fails
+	// rather than pricing against a stale market.
+	rateCacheMaxStale = 30 * time.Minute
 )
 
 type InvoiceService struct {
 	store      *store.Store
 	httpClient *http.Client
 	tonRateEnv string
+	rateMu     sync.Mutex
+	rateCache  map[store.PaymentAsset]cachedRate
+}
+
+type cachedRate struct {
+	value     decimal.Decimal
+	fetchedAt time.Time
 }
 
 type CreateInvoiceInput struct {
@@ -52,6 +68,7 @@ func NewInvoiceService(st *store.Store, tonRateEnv string) *InvoiceService {
 			Timeout: 10 * time.Second,
 		},
 		tonRateEnv: tonRateEnv,
+		rateCache:  map[store.PaymentAsset]cachedRate{},
 	}
 }
 
@@ -396,6 +413,44 @@ func (s *InvoiceService) nativeRateUSD(ctx context.Context, asset store.PaymentA
 		return value, nil
 	}
 
+	if value, ok := s.cachedRateWithin(asset, rateCacheFreshFor); ok {
+		return value, nil
+	}
+
+	value, err := s.fetchUpstreamRateUSD(ctx, asset, coinGeckoID, payloadKey, metricName)
+	if err != nil {
+		// Serve a bounded-staleness cached rate so a transient upstream
+		// outage or rate limit does not fail invoice creation outright.
+		if stale, ok := s.cachedRateWithin(asset, rateCacheMaxStale); ok {
+			metrics.ObserveUpstream(metricName+"_stale_cache", "fallback", "success", 0)
+			return stale, nil
+		}
+		return decimal.Zero, err
+	}
+	s.storeCachedRate(asset, value)
+	return value, nil
+}
+
+func (s *InvoiceService) cachedRateWithin(asset store.PaymentAsset, maxAge time.Duration) (decimal.Decimal, bool) {
+	s.rateMu.Lock()
+	defer s.rateMu.Unlock()
+	entry, ok := s.rateCache[asset]
+	if !ok || time.Since(entry.fetchedAt) > maxAge {
+		return decimal.Zero, false
+	}
+	return entry.value, true
+}
+
+func (s *InvoiceService) storeCachedRate(asset store.PaymentAsset, value decimal.Decimal) {
+	s.rateMu.Lock()
+	defer s.rateMu.Unlock()
+	if s.rateCache == nil {
+		s.rateCache = map[store.PaymentAsset]cachedRate{}
+	}
+	s.rateCache[asset] = cachedRate{value: value, fetchedAt: time.Now()}
+}
+
+func (s *InvoiceService) fetchUpstreamRateUSD(ctx context.Context, asset store.PaymentAsset, coinGeckoID string, payloadKey string, metricName string) (decimal.Decimal, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.coingecko.com/api/v3/simple/price?ids="+coinGeckoID+"&vs_currencies=usd", nil)
 	if err != nil {
 		return decimal.Zero, fmt.Errorf("build %s rate request: %w", asset, err)
