@@ -7,7 +7,7 @@ export const COMPARE_FAQ: Record<string, { en: FaqItem[]; ru: FaqItem[] }> = {
     en: [
       {
         q: "Why use recv instead of tracking crypto payments manually?",
-        a: "Manual tracking does not scale: every payment needs to be matched to an order by hand, which is slow and error-prone. recv automates detection across TON, TON_USDT, TRON, Base, and BSC, matches exact amounts to invoices, and fires signed webhooks so fulfillment happens instantly.",
+        a: "Manual tracking does not scale: every payment needs to be matched to an order by hand, which is slow and error-prone. recv automates detection across TON, USDT on TON, TRON, Base, and BSC, matches exact amounts to invoices, and fires signed webhooks so fulfillment happens instantly.",
       },
       {
         q: "How does recv prevent missed or misattributed payments?",
@@ -21,7 +21,7 @@ export const COMPARE_FAQ: Record<string, { en: FaqItem[]; ru: FaqItem[] }> = {
     ru: [
       {
         q: "Зачем использовать recv вместо ручного отслеживания криптоплатежей?",
-        a: "Ручное отслеживание не масштабируется: каждый платёж нужно вручную сопоставлять с заказом — это медленно и чревато ошибками. recv автоматически детектит платежи в TON, TON_USDT, TRON, Base и BSC, сопоставляет точные суммы с инвойсами и отправляет подписанные вебхуки для мгновенной выдачи.",
+        a: "Ручное отслеживание не масштабируется: каждый платёж нужно вручную сопоставлять с заказом — это медленно и чревато ошибками. recv автоматически детектит платежи в TON, USDT в TON, TRON, Base и BSC, сопоставляет точные суммы с инвойсами и отправляет подписанные вебхуки для мгновенной выдачи.",
       },
       {
         q: "Как recv предотвращает пропущенные и неверно зачисленные платежи?",
@@ -75,7 +75,7 @@ export const COMPARE_FAQ: Record<string, { en: FaqItem[]; ru: FaqItem[] }> = {
       },
       {
         q: "Which networks does recv support?",
-        a: "recv supports TON, TRON (TRC-20 USDT), TON_USDT, Base, and BSC, with a single API, signed webhooks, and hosted checkout across all of them.",
+        a: "recv supports TON (native and USDT), TRON (TRC-20 USDT), Solana, Base, Arbitrum, and BSC, with a single API, signed webhooks, and hosted checkout across all of them.",
       },
     ],
     ru: [
@@ -89,7 +89,7 @@ export const COMPARE_FAQ: Record<string, { en: FaqItem[]; ru: FaqItem[] }> = {
       },
       {
         q: "Какие сети поддерживает recv?",
-        a: "recv поддерживает TON, TRON (TRC-20 USDT), TON_USDT, Base и BSC — единый API, подписанные вебхуки и hosted checkout для всех сетей.",
+        a: "recv поддерживает TON (нативный и USDT), TRON (TRC-20 USDT), Solana, Base, Arbitrum и BSC — единый API, подписанные вебхуки и hosted checkout для всех сетей.",
       },
     ],
   },

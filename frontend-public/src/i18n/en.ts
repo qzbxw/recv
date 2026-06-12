@@ -89,10 +89,18 @@ const en = {
     networks: {
       kicker: "NETWORKS",
       title: "Global Connectivity.",
-      list: ["TON", "TON_USDT", "TRON", "BASE", "BSC"],
+      list: [
+        { slug: "ton", label: "TON" },
+        { slug: "ton_usdt", label: "USDT on TON" },
+        { slug: "tron", label: "TRON" },
+        { slug: "solana", label: "Solana" },
+        { slug: "base", label: "Base" },
+        { slug: "arbitrum", label: "Arbitrum" },
+        { slug: "bsc", label: "BSC" },
+      ],
       rails: [
         { name: "TON", body: "Native TON payments for Telegram-based commerce and the growing TON ecosystem." },
-        { name: "TON_USDT", body: "USDT on TON for stablecoin payments in the TON ecosystem." },
+        { name: "USDT on TON", body: "USDT on TON for stablecoin payments in the TON ecosystem." },
         { name: "TRON", body: "The global standard for USDT settlement with high throughput and low costs." },
         { name: "BASE", body: "Coinbase's L2 for reliable EVM-compatible stablecoin payments." },
         { name: "BSC", body: "High-performance network with one of the largest ecosystems of active users." }
@@ -157,7 +165,7 @@ const en = {
         },
         {
           question: "Which networks and assets are currently supported?",
-          answer: "We currently support TON, TON_USDT, TRON, Base, and BSC. We are continuously adding new liquid protocols based on business-tier demands.",
+          answer: "We currently support TON (native and USDT), TRON, Solana, Base, Arbitrum, and BSC. We are continuously adding new liquid protocols based on business-tier demands.",
         },
         {
           question: "Can I automate the delivery of digital goods?",
@@ -176,7 +184,7 @@ const en = {
           answer: "Paid subscription plans have absolutely no limits on manual invoice creation. However, the free Trial plan has a lifetime limit of 15 live invoices. You can upgrade to any paid plan to unlock unlimited invoices.",
         },
         {
-          question: "What happens if a network (e.g., TON_USDT) goes down?",
+          question: "What happens if a network (e.g., TRON) goes down?",
           answer: "Our watchers are distributed across multiple global RPC providers. If a network halts, recv queues the monitoring tasks. Once the blockchain resumes block production, all pending transactions will be automatically verified and webhooks fired.",
         },
       ],
@@ -227,7 +235,7 @@ const en = {
         solana: "Solana",
         base: "Base",
         bsc: "BSC",
-        arbitrum: "Base",
+        arbitrum: "Arbitrum",
       },
       pricing: {
         title: "Pricing",
@@ -252,7 +260,7 @@ const en = {
     tryDemo: "Try Demo",
     common: {
       whyChoose: "Why choose",
-      engineered: "Direct-to-wallet settlement, signed webhooks, and zero turnover fees across TON, TON_USDT, TRON, Base, and BSC.",
+      engineered: "Direct-to-wallet settlement, signed webhooks, and zero turnover fees across TON, USDT on TON, TRON, Base, and BSC.",
       implementation: "IMPLEMENTATION",
       readyInMinutes: "Production-ready in minutes",
       integrateEase: "Integrate our high-performance API into your existing stack with ease.",
@@ -266,9 +274,9 @@ const en = {
     ogSubtitle: "Next-generation crypto payments infrastructure",
     checkoutProduct: {
       metadata: {
-        title: "Accept Crypto Payments | Non-Custodial Checkout for TON, TRC-20, TON_USDT",
-        description: "Scale your business with the highest-converting crypto checkout. Support USDT (TRC-20, TON, TON_USDT, Base, BSC) with 0% turnover fees. Non-custodial, secure, and Telegram-ready.",
-        keywords: "accept crypto payments, crypto checkout gateway, TON payments, TRON USDT gateway, TON_USDT checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout"
+        title: "Accept Crypto Payments | Non-Custodial Checkout for TON, TRC-20, TON USDT",
+        description: "Scale your business with the highest-converting crypto checkout. Support USDT (TRC-20, TON, Base, BSC) with 0% turnover fees. Non-custodial, secure, and Telegram-ready.",
+        keywords: "accept crypto payments, crypto checkout gateway, TON payments, TRON USDT gateway, TON USDT checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout"
       },
       kicker: "CONVERSION ENGINE",
       title: "Checkout: The Gold Standard of Crypto UX",
@@ -317,7 +325,7 @@ const en = {
         },
         {
           title: "Cross-Chain Unified UI",
-          body: "Whether it's the 10-decimal precision of TON_USDT or the unique memo requirements of TON, recv abstracts the complexity. Your customers get a consistent, polished experience regardless of the underlying blockchain technology, reducing cognitive load and increasing trust."
+          body: "Whether it's jetton transfers for USDT on TON or the unique memo requirements of native TON, recv abstracts the complexity. Your customers get a consistent, polished experience regardless of the underlying blockchain technology, reducing cognitive load and increasing trust."
         }
       ],
       stats: [
@@ -378,7 +386,7 @@ const en = {
         },
         {
           title: "Unified Chain Abstraction",
-          body: "Integrating TON, TRON, and EVM usually requires three different libraries and logic flows. recv provides a single schema for all networks. Create an invoice for TRC-20 USDT the same way you create one for TON Jettons or TON_USDT assets."
+          body: "Integrating TON, TRON, and EVM usually requires three different libraries and logic flows. recv provides a single schema for all networks. Create an invoice for TRC-20 USDT the same way you create one for native TON or USDT on TON."
         },
         {
           title: "High-Performance Watchers",
@@ -397,7 +405,7 @@ const en = {
     invoicingProduct: {
       metadata: {
         title: "Professional Crypto Invoicing | B2B Billing Solution with 0% Fees",
-        description: "Issue, track, and manage professional crypto invoices. Support for USDT, TON, and TON_USDT. Non-custodial, automated tracking, and CSV reports for accounting.",
+        description: "Issue, track, and manage professional crypto invoices. Support for USDT and native TON. Non-custodial, automated tracking, and CSV reports for accounting.",
         keywords: "crypto invoicing for business, b2b crypto billing, freelance crypto invoices, professional usdt billing, crypto payment tracking, 0 fee crypto invoicing"
       },
       kicker: "BUSINESS GRADE",
@@ -532,7 +540,7 @@ const en = {
         { value: "0", label: "Human Steps" }
       ],
       finalTitle: "Give your agent the power to earn.",
-      seo: "recv MCP (Model Context Protocol) integration enables AI agents and LLM-powered applications to autonomously manage the full lifecycle of crypto payments. Agents running in Claude Desktop, Claude Code, Cursor, or any MCP-compatible host can call bootstrap_agent_workspace to self-register, purchase a subscription plan, generate API keys, create and monitor payment invoices across TON, TON_USDT, TRON, Base, and BSC networks, and register webhook endpoints for event-driven payment flows. The verify_webhook tool performs local HMAC-SHA256 signature validation without exposing secrets to the network. This makes recv the first payment infrastructure platform natively designed for the agentic era of autonomous software."
+      seo: "recv MCP (Model Context Protocol) integration enables AI agents and LLM-powered applications to autonomously manage the full lifecycle of crypto payments. Agents running in Claude Desktop, Claude Code, Cursor, or any MCP-compatible host can call bootstrap_agent_workspace to self-register, purchase a subscription plan, generate API keys, create and monitor payment invoices across TON, TRON, Solana, Base, Arbitrum, and BSC networks, and register webhook endpoints for event-driven payment flows. The verify_webhook tool performs local HMAC-SHA256 signature validation without exposing secrets to the network. This makes recv the first payment infrastructure platform natively designed for the agentic era of autonomous software."
     },
     productsHub: {
       title: "Solutions for Every Business Scale",
@@ -1186,7 +1194,7 @@ const en = {
           items: [
             { name: "TON", body: "The native choice for Telegram-based commerce and the growing TON ecosystem." },
             { name: "TRON USDT", body: "The global standard for USDT settlement with high throughput and low costs." },
-            { name: "TON_USDT / Base", body: "High-performance L1/L2 alternatives for web3-native audiences." },
+            { name: "Solana / Base", body: "High-performance L1/L2 alternatives for web3-native audiences." },
           ],
         },
         flow: {
@@ -1275,7 +1283,7 @@ const en = {
           items: [
             { name: "TRON USDT", body: "The industry standard for USD-denominated stablecoin billing." },
             { name: "Base / Base", body: "Optimized L2 networks for low-fee Base ecosystem payments." },
-            { name: "TON / TON_USDT", body: "High-performance options for web3-native user bases." },
+            { name: "TON / USDT on TON", body: "High-performance options for web3-native user bases." },
           ],
         },
         flow: {
@@ -1364,7 +1372,7 @@ const en = {
           items: [
             { name: "TRON USDT", body: "Low-fee stablecoin transfers preferred by software and gaming buyers." },
             { name: "TON", body: "The native choice for digital assets sold within the Telegram ecosystem." },
-            { name: "TON_USDT", body: "Fast, confirmation-aware monitoring for high-speed digital sales." },
+            { name: "USDT on TON", body: "Fast, confirmation-aware monitoring for high-speed digital sales." },
           ],
         },
         flow: {
@@ -1400,7 +1408,7 @@ const en = {
         name: "Paid Communities",
         metadata: {
           title: "Accept Crypto for Private Communities & Channels",
-          description: "Manage membership access for Telegram channels and private groups with automated crypto payments. Support for TON, USDT, and TON_USDT.",
+          description: "Manage membership access for Telegram channels and private groups with automated crypto payments. Support for TON and USDT on TON.",
         },
         kicker: "MEMBERSHIP ECONOMY",
         hero: {
@@ -1733,7 +1741,7 @@ const en = {
       features: [
         { title: "Webhook Delivery", body: "Queued delivery with automated retries and HMAC signatures." },
         { title: "Real-time Monitoring", body: "Transaction monitoring updates invoice state as supported networks are observed." },
-        { title: "Unified API v1", body: "A single interface for native TON, TON_USDT, TRON, Base, and BSC." },
+        { title: "Unified API v1", body: "A single interface for native TON, USDT on TON, TRON, Base, and BSC." },
         { title: "Idempotency", body: "Built-in protection against duplicate transactions at the API level." },
       ],
       flow: [
@@ -1811,7 +1819,7 @@ const inv = await res.json();`
         {
           title: "2. THE FUNDAMENTAL REALITY OF BLOCKCHAIN DATA (CRITICAL NOTICE)",
           paragraphs: [
-            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TON_USDT, TRON, Base, and BSC) are decentralized, public ledgers.",
+            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TRON, Solana, Base, Arbitrum, and BSC) are decentralized, public ledgers.",
             '2.2. No Expectation of Privacy On-Chain: Wallet addresses, transaction hashes (TXIDs), timestamps, transfer amounts, and on-chain memos/comments are inherently public, permanently recorded, and accessible to anyone globally. The Company does not control these networks and cannot erase, obfuscate, or alter on-chain data. 2.3. Exemption from Deletion Requests: Requests to invoke the "Right to be Forgotten" or data erasure under the GDPR or CCPA cannot and will not apply to cryptographic data broadcasted to and confirmed on public blockchain networks.',
           ],
         },
@@ -1867,7 +1875,7 @@ const inv = await res.json();`
           ],
           bullets: [
             "Telegram Messenger Inc.: For authentication, bot interactions, and Merchant notifications.",
-            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM/TON_USDT node providers) used to read the blockchain.",
+            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM and TON node providers) used to read the blockchain.",
             "Cloud Infrastructure: Secure database hosting (PostgreSQL) and server environments (e.g., AWS, DigitalOcean, or Cloudflare for edge routing).",
             "Market Oracles: Third-party APIs (e.g., CoinGecko) to fetch real-time USD to Digital Asset exchange rates.",
           ],
@@ -1930,7 +1938,7 @@ const inv = await res.json();`
           title: '2. STRICT DEFINITION OF THE SERVICE (THE "MERE CONDUIT" DOCTRINE)',
           paragraphs: [
             '2.1. Software as a Service (SaaS): The "Service" refers exclusively to the proprietary, non-custodial software middleware provided by the Company. This includes the dashboard, checkout page generators, smart-matching algorithms, API endpoints, webhook delivery systems, and blockchain monitoring logic (the "Watchers").',
-            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, TON_USDT, Base, BSC-compatible chains) and visualizes this data.",
+            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, Solana, Base, BSC-compatible chains) and visualizes this data.",
             "2.3. Zero Financial Intermediation: The Company is strictly not a payment processor, payment gateway, money transmitter, clearinghouse, custodian, fiduciary, or financial institution. At no point in the technical architecture does the Company receive, hold, control, or possess any fiat currency, digital assets, or cryptographic private keys belonging to the Merchant or the Merchant’s end-users (\"Customers\").",
             "2.4. Direct-to-Wallet Execution: All transfers of Digital Assets occur exclusively and directly on the public blockchain from the Customer's unhosted or custodial wallet directly to the Merchant's designated destination address.",
           ],
@@ -2024,7 +2032,7 @@ const inv = await res.json();`
         {
           title: "12. FORCE MAJEURE AND BLOCKCHAIN ANOMALIES",
           paragraphs: [
-            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM or TON_USDT).",
+            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM chains or TON).",
           ],
         },
         {

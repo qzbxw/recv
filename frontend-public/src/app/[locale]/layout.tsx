@@ -39,7 +39,7 @@ export async function generateMetadata(props: {
       default: "recv | Crypto Payments Infrastructure",
       template: "%s",
     },
-    description: "Professional crypto processing with instant payouts directly to your wallets. Non-custodial, fixed fees, and support for major networks like TON, TON_USDT, and TRON.",
+    description: "Professional crypto processing with instant payouts directly to your wallets. Non-custodial, fixed fees, and support for major networks like TON, TRON, Solana, and Base.",
     alternates: {
       canonical: `/${locale}`,
       languages: {

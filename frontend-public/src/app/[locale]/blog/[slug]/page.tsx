@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { BlogPostClient } from "@/components/blog/BlogPostClient";
-import { getPublishedBlogPost } from "@/lib/blog";
+import { lookupPublishedBlogPost, type PublicBlogPost } from "@/lib/blog";
 import { fallbackBlogPost } from "@/lib/blog-articles";
 import { isNonSelfCanonical, publicSiteUrl } from "@/lib/seo";
 
@@ -15,13 +15,30 @@ function authorSlug(author?: string | null) {
   return author.toLowerCase().trim().replace(/\s+/g, "-");
 }
 
+// Resolves the article while keeping crawler-visible semantics honest:
+// a backend 404 yields null (real 404 page), but a backend outage throws so
+// the route answers 5xx instead of telling crawlers the article is gone.
+async function resolveBlogPost(
+  slug: string,
+  language: "ru" | "en",
+): Promise<PublicBlogPost | null> {
+  const lookup = await lookupPublishedBlogPost(slug, language);
+  const isDevOrTest = process.env.PLAYWRIGHT_TEST === "true";
+  if (lookup.status === "ok") return lookup.post;
+  const fallback = isDevOrTest ? fallbackBlogPost(slug, language) : null;
+  if (fallback) return fallback;
+  if (lookup.status === "unavailable") {
+    throw new Error(`Blog backend unavailable while resolving "${slug}" (${language})`);
+  }
+  return null;
+}
+
 export async function generateMetadata(
   props: Props
 ): Promise<Metadata> {
   const params = await props.params;
   const language = params.locale === "ru" ? "ru" : "en";
-  const isDevOrTest = process.env.PLAYWRIGHT_TEST === "true";
-  const post = await getPublishedBlogPost(params.slug, language) || (isDevOrTest ? fallbackBlogPost(params.slug, language) : null);
+  const post = await resolveBlogPost(params.slug, language);
 
   if (!post) {
     return { title: params.locale === "ru" ? "Материал не найден" : "Post Not Found" };
@@ -70,8 +87,7 @@ export async function generateMetadata(
 export default async function BlogPost(props: Props) {
   const params = await props.params;
   const language = params.locale as "ru" | "en";
-  const isDevOrTest = process.env.PLAYWRIGHT_TEST === "true";
-  const post = await getPublishedBlogPost(params.slug, language) || (isDevOrTest ? fallbackBlogPost(params.slug, language) : null);
+  const post = await resolveBlogPost(params.slug, language);
 
   if (!post) {
     notFound();

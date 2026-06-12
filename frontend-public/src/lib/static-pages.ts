@@ -79,7 +79,7 @@ export const STATIC_PAGE_COPY: Record<StaticPageKey, { en: StaticMarketingPageCo
       title: "Crypto payment API, webhooks & checkout links",
       body: "Connect recv to your stack with a REST API, signed webhooks, and hosted checkout links — built for Telegram Mini Apps, SaaS billing, digital goods, and custom commerce.",
       points: [
-        { title: "REST API", body: "Create invoices, read live status, and automate the full payment lifecycle in USDT, TON, TON_USDT, TRON, Base, and BSC from your backend." },
+        { title: "REST API", body: "Create invoices, read live status, and automate the full payment lifecycle in USDT, TON, TRON, Solana, Base, Arbitrum, and BSC from your backend." },
         { title: "Signed webhooks", body: "Receive HMAC-signed status changes to drive fulfillment, subscription state, and your internal ledger without polling." },
         { title: "Hosted checkout", body: "Send buyers to a payment screen with QR, wallet deep link, exact amount, network, and live confirmation state." },
       ],
@@ -89,7 +89,7 @@ export const STATIC_PAGE_COPY: Record<StaticPageKey, { en: StaticMarketingPageCo
       title: "API криптоплатежей, вебхуки и checkout-ссылки",
       body: "Подключите recv к своему стеку через REST API, подписанные вебхуки и hosted checkout — для Telegram Mini Apps, SaaS-биллинга, digital goods и кастомной коммерции.",
       points: [
-        { title: "REST API", body: "Создавайте инвойсы, читайте статус в реальном времени и автоматизируйте весь lifecycle платежа в USDT, TON, TON_USDT, TRON, Base и BSC из своего backend." },
+        { title: "REST API", body: "Создавайте инвойсы, читайте статус в реальном времени и автоматизируйте весь lifecycle платежа в USDT, TON, TRON, Solana, Base, Arbitrum и BSC из своего backend." },
         { title: "Подписанные вебхуки", body: "Получайте изменения статуса с подписью HMAC для выдачи товара, состояния подписок и учёта — без постоянного опроса." },
         { title: "Hosted checkout", body: "Отправляйте покупателей на экран оплаты с QR, deep link кошелька, точной суммой, сетью и live-статусом подтверждения." },
       ],
@@ -124,7 +124,7 @@ export const STATIC_PAGE_COPY: Record<StaticPageKey, { en: StaticMarketingPageCo
       body: "Track what changes in recv: API and webhook updates, new blockchain support, checkout improvements, and operational changes that matter to merchants and developers.",
       points: [
         { title: "API changes", body: "Versioned endpoint, schema, and webhook payload updates, with notes on anything that affects existing integrations." },
-        { title: "Network support", body: "Additions and reliability changes across TON, TRON, TON_USDT, Base, and BSC." },
+        { title: "Network support", body: "Additions and reliability changes across TON, USDT on TON, TRON, Base, and BSC." },
         { title: "Operational improvements", body: "Updates to admin tooling, reconciliation, analytics, and the checkout flow." },
       ],
     },
@@ -134,7 +134,7 @@ export const STATIC_PAGE_COPY: Record<StaticPageKey, { en: StaticMarketingPageCo
       body: "Отслеживайте изменения в recv: обновления API и вебхуков, поддержку новых блокчейнов, улучшения checkout и операционные изменения, важные продавцам и разработчикам.",
       points: [
         { title: "Изменения API", body: "Версионированные изменения эндпоинтов, схем и payload вебхуков с пометками о влиянии на текущие интеграции." },
-        { title: "Поддержка сетей", body: "Добавления и изменения надёжности по TON, TRON, TON_USDT, Base и BSC." },
+        { title: "Поддержка сетей", body: "Добавления и изменения надёжности по TON, USDT в TON, TRON, Base и BSC." },
         { title: "Операционные улучшения", body: "Обновления админ-инструментов, сверки, аналитики и процесса checkout." },
       ],
     },

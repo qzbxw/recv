@@ -89,10 +89,18 @@ const ru = {
     networks: {
       kicker: "СЕТИ",
       title: "Глобальная связность.",
-      list: ["TON", "TON_USDT", "TRON", "BASE", "BSC"],
+      list: [
+        { slug: "ton", label: "TON" },
+        { slug: "ton_usdt", label: "USDT в TON" },
+        { slug: "tron", label: "TRON" },
+        { slug: "solana", label: "Solana" },
+        { slug: "base", label: "Base" },
+        { slug: "arbitrum", label: "Arbitrum" },
+        { slug: "bsc", label: "BSC" },
+      ],
       rails: [
         { name: "TON", body: "Нативные TON-платежи для Telegram-бизнеса и быстрорастущей экосистемы TON." },
-        { name: "TON_USDT", body: "USDT в TON для stablecoin-платежей внутри экосистемы TON." },
+        { name: "USDT в TON", body: "USDT в TON для stablecoin-платежей внутри экосистемы TON." },
         { name: "TRON", body: "Глобальный стандарт для USDT-платежей с высокой пропускной способностью." },
         { name: "BASE", body: "L2 от Coinbase для надежных EVM-совместимых stablecoin-платежей." },
         { name: "BSC", body: "Высокопроизводительная сеть с одной из крупнейших активных экосистем." }
@@ -157,7 +165,7 @@ const ru = {
         },
         {
           question: "Какие именно сети и активы поддерживаются?",
-          answer: "В данный момент мы поддерживаем TON, TON_USDT, TRON, Base и BSC. Мы постоянно добавляем новые ликвидные протоколы по запросам наших Business-клиентов.",
+          answer: "В данный момент мы поддерживаем TON (нативный и USDT), TRON, Solana, Base, Arbitrum и BSC. Мы постоянно добавляем новые ликвидные протоколы по запросам наших Business-клиентов.",
         },
         {
           question: "Могу ли я автоматизировать выдачу цифровых товаров?",
@@ -176,7 +184,7 @@ const ru = {
           answer: "Никаких лимитов на ручное создание инвойсов на платных тарифах нет. Вы можете генерировать миллионы ссылок на оплату. Однако бесплатный тариф Trial имеет лимит в 15 live-инвойсов за всё время работы. Вы можете перейти на любой платный тариф, чтобы снять это ограничение.",
         },
         {
-          question: "Что произойдет, если сеть (например, TON_USDT) упадет?",
+          question: "Что произойдет, если сеть (например, TRON) упадет?",
           answer: "Наши вотчеры распределены по множеству глобальных RPC-провайдеров. Если сеть останавливается, recv ставит задачи на мониторинг в очередь. Как только блокчейн возобновляет работу, все платежи будут автоматически подтверждены.",
         },
       ],
@@ -226,7 +234,7 @@ const ru = {
         solana: "Solana",
         base: "Base",
         bsc: "BSC",
-        arbitrum: "Base",
+        arbitrum: "Arbitrum",
       },
       pricing: {
         title: "Тарифы",
@@ -251,7 +259,7 @@ const ru = {
     tryDemo: "Попробовать демо",
     common: {
       whyChoose: "Почему выбирают",
-      engineered: "Прямое зачисление на кошельки, подписанные вебхуки и нулевая комиссия с оборота в TON, TON_USDT, TRON, Base и BSC.",
+      engineered: "Прямое зачисление на кошельки, подписанные вебхуки и нулевая комиссия с оборота в TON, USDT в TON, TRON, Base и BSC.",
       implementation: "ВНЕДРЕНИЕ",
       readyInMinutes: "Готовность к работе за минуты",
       integrateEase: "Легко интегрируйте наше высокопроизводительное API в ваш существующий стек.",
@@ -265,9 +273,9 @@ const ru = {
     ogSubtitle: "Инфраструктура криптоплатежей нового поколения",
     checkoutProduct: {
       metadata: {
-        title: "Прием платежей в криптовалюте | Non-custodial чекаут для TON, TRON, TON_USDT",
-        description: "Масштабируйте бизнес с высококонверсионным крипто-чекаутом. Поддержка USDT (TRC-20, TON, TON_USDT, Base, BSC) с 0% комиссии с оборота. Безопасно и готово для Telegram.",
-        keywords: "прием платежей криптовалюта, крипто эквайринг, оплата в TON, прием USDT TRC20, TON_USDT чекаут, некастодиальный платежный шлюз, прием крипты в телеграм, api для оплаты криптовалютой"
+        title: "Прием платежей в криптовалюте | Non-custodial чекаут для TON, TRON, TON USDT",
+        description: "Масштабируйте бизнес с высококонверсионным крипто-чекаутом. Поддержка USDT (TRC-20, TON, Base, BSC) с 0% комиссии с оборота. Безопасно и готово для Telegram.",
+        keywords: "прием платежей криптовалюта, крипто эквайринг, оплата в TON, прием USDT TRC20, TON USDT чекаут, некастодиальный платежный шлюз, прием крипты в телеграм, api для оплаты криптовалютой"
       },
       kicker: "ДВИЖОК КОНВЕРСИИ",
       title: "Checkout: Золотой стандарт крипто-UX",
@@ -316,7 +324,7 @@ const ru = {
         },
         {
           title: "Унифицированный интерфейс мультичейна",
-          body: "Будь то 10 знаков после запятой в TON_USDT или уникальные мемо в TON, recv берет сложность на себя. Ваши клиенты получают привычный, качественный интерфейс независимо от блокчейна, что повышает доверие и снижает когнитивную нагрузку."
+          body: "Будь то jetton-переводы USDT в TON или уникальные мемо в нативном TON, recv берет сложность на себя. Ваши клиенты получают привычный, качественный интерфейс независимо от блокчейна, что повышает доверие и снижает когнитивную нагрузку."
         }
       ],
       stats: [
@@ -347,7 +355,7 @@ const ru = {
         items: [
           {
             legacy: "Управление множеством RPC-нод и нестабильных эксплореров.",
-            recv: "Единый API для TON, TON_USDT, TRON, Base и BSC со стандартизированным JSON."
+            recv: "Единый API для TON, USDT в TON, TRON, Base и BSC со стандартизированным JSON."
           },
           {
             legacy: "Вебхуки, которые падают без логики повторов и подписей.",
@@ -377,7 +385,7 @@ const ru = {
         },
         {
           title: "Абстракция блокчейн-сетей",
-          body: "Интеграция TON, TRON и EVM обычно требует разных библиотек и логики. recv дает единую схему для всех сетей. Создавайте инвойс для TRC-20 USDT так же просто, как для TON Jettons или активов в сети TON_USDT."
+          body: "Интеграция TON, TRON и EVM обычно требует разных библиотек и логики. recv дает единую схему для всех сетей. Создавайте инвойс для TRC-20 USDT так же просто, как для нативного TON или USDT в TON."
         },
         {
           title: "Высокопроизводительные вотчеры",
@@ -396,7 +404,7 @@ const ru = {
     invoicingProduct: {
       metadata: {
         title: "Профессиональный крипто-инвойсинг | B2B биллинг без комиссий",
-        description: "Выставляйте и управляйте профессиональными крипто-счетами. Поддержка USDT, TON и TON_USDT. Автоматический трекинг и CSV-отчеты для бухгалтерии.",
+        description: "Выставляйте и управляйте профессиональными крипто-счетами. Поддержка USDT и нативного TON. Автоматический трекинг и CSV-отчеты для бухгалтерии.",
         keywords: "крипто инвойсинг для бизнеса, b2b крипто биллинг, счета на оплату в крипте, профессиональный usdt биллинг, трекинг крипто платежей, инвойсы без комиссии"
       },
       kicker: "BUSINESS GRADE",
@@ -1185,7 +1193,7 @@ const ru = {
           items: [
             { name: "TON", body: "Нативный выбор для коммерции внутри Telegram и растущей экосистемы TON." },
             { name: "TRON USDT", body: "Глобальный стандарт для расчетов в USDT с высокой пропускной способностью." },
-            { name: "TON_USDT / Base", body: "Высокопроизводительные L1/L2 альтернативы для web3-аудитории." },
+            { name: "Solana / Base", body: "Высокопроизводительные L1/L2 альтернативы для web3-аудитории." },
           ],
         },
         flow: {
@@ -1274,7 +1282,7 @@ const ru = {
           items: [
             { name: "TRON USDT", body: "Индустриальный стандарт для расчетов в стейблкоинах с привязкой к USD." },
             { name: "Base / Base", body: "Оптимизированные L2-сети для недорогих платежей в экосистеме Base." },
-            { name: "TON / TON_USDT", body: "Высокопроизводительные варианты для web3-аудитории." },
+            { name: "TON / USDT в TON", body: "Высокопроизводительные варианты для web3-аудитории." },
           ],
         },
         flow: {
@@ -1363,7 +1371,7 @@ const ru = {
           items: [
             { name: "TRON USDT", body: "Низкие комиссии, предпочтительный выбор покупателей софта и игр." },
             { name: "TON", body: "Нативный выбор для цифровых товаров, продаваемых внутри экосистемы Telegram." },
-            { name: "TON_USDT", body: "Быстрый мониторинг для мгновенных цифровых продаж." },
+            { name: "USDT в TON", body: "Быстрый мониторинг для мгновенных цифровых продаж." },
           ],
         },
         flow: {
@@ -1399,7 +1407,7 @@ const ru = {
         name: "Закрытые сообщества",
         metadata: {
           title: "Прием криптовалюты для закрытых сообществ и каналов",
-          description: "Управляйте доступом в Telegram-каналы и группы через автоматические крипто-платежи. Поддержка TON, USDT и TON_USDT.",
+          description: "Управляйте доступом в Telegram-каналы и группы через автоматические крипто-платежи. Поддержка TON и USDT в TON.",
         },
         kicker: "ЭКОНОМИКА ПОДПИСОК",
         hero: {
@@ -1732,7 +1740,7 @@ const ru = {
       features: [
         { title: "Webhook Delivery", body: "Очередь доставки с автоматическими ретраями и HMAC подписью." },
         { title: "Real-time Monitoring", body: "Мониторинг обновляет статус инвойса по мере наблюдения поддерживаемой сети." },
-        { title: "Unified API v1", body: "Единый интерфейс для нативного TON, TON_USDT, TRON, Base и BSC." },
+        { title: "Unified API v1", body: "Единый интерфейс для нативного TON, USDT в TON, TRON, Base и BSC." },
         { title: "Idempotency", body: "Встроенная защита от дублирования транзакций на уровне протокола API." },
       ],
       flow: [
@@ -1810,7 +1818,7 @@ const inv = await res.json();`
         {
           title: "2. THE FUNDAMENTAL REALITY OF BLOCKCHAIN DATA (CRITICAL NOTICE)",
           paragraphs: [
-            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TON_USDT, TRON, Base, and BSC) are decentralized, public ledgers.",
+            "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TRON, Solana, Base, Arbitrum, and BSC) are decentralized, public ledgers.",
             '2.2. No Expectation of Privacy On-Chain: Wallet addresses, transaction hashes (TXIDs), timestamps, transfer amounts, and on-chain memos/comments are inherently public, permanently recorded, and accessible to anyone globally. The Company does not control these networks and cannot erase, obfuscate, or alter on-chain data. 2.3. Exemption from Deletion Requests: Requests to invoke the "Right to be Forgotten" or data erasure under the GDPR or CCPA cannot and will not apply to cryptographic data broadcasted to and confirmed on public blockchain networks.',
           ],
         },
@@ -1866,7 +1874,7 @@ const inv = await res.json();`
           ],
           bullets: [
             "Telegram Messenger Inc.: For authentication, bot interactions, and Merchant notifications.",
-            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM/TON_USDT node providers) used to read the blockchain.",
+            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM and TON node providers) used to read the blockchain.",
             "Cloud Infrastructure: Secure database hosting (PostgreSQL) and server environments (e.g., AWS, DigitalOcean, or Cloudflare for edge routing).",
             "Market Oracles: Third-party APIs (e.g., CoinGecko) to fetch real-time USD to Digital Asset exchange rates.",
           ],
@@ -1929,7 +1937,7 @@ const inv = await res.json();`
           title: '2. STRICT DEFINITION OF THE SERVICE (THE "MERE CONDUIT" DOCTRINE)',
           paragraphs: [
             '2.1. Software as a Service (SaaS): The "Service" refers exclusively to the proprietary, non-custodial software middleware provided by the Company. This includes the dashboard, checkout page generators, smart-matching algorithms, API endpoints, webhook delivery systems, and blockchain monitoring logic (the "Watchers").',
-            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, TON_USDT, Base, BSC-compatible chains) and visualizes this data.",
+            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, Solana, Base, BSC-compatible chains) and visualizes this data.",
             "2.3. Zero Financial Intermediation: The Company is strictly not a payment processor, payment gateway, money transmitter, clearinghouse, custodian, fiduciary, or financial institution. At no point in the technical architecture does the Company receive, hold, control, or possess any fiat currency, digital assets, or cryptographic private keys belonging to the Merchant or the Merchant’s end-users (\"Customers\").",
             "2.4. Direct-to-Wallet Execution: All transfers of Digital Assets occur exclusively and directly on the public blockchain from the Customer's unhosted or custodial wallet directly to the Merchant's designated destination address.",
           ],
@@ -2023,7 +2031,7 @@ const inv = await res.json();`
         {
           title: "12. FORCE MAJEURE AND BLOCKCHAIN ANOMALIES",
           paragraphs: [
-            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM or TON_USDT).",
+            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM chains or TON).",
           ],
         },
         {

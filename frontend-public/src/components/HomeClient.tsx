@@ -156,12 +156,12 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex gap-12 items-center">
                 {copy.networks.list.map((net) => (
-                  <Link 
-                    key={`${i}-${net}`} 
-                    href={`/${language}/networks/${net.toLowerCase()}`}
+                  <Link
+                    key={`${i}-${net.slug}`}
+                    href={`/${language}/networks/${net.slug}`}
                     className="lend-marquee-item group transition-all duration-500 hover:text-accent hover:border-accent/30 hover:bg-accent/5"
                   >
-                    <span className="font-bold">{net}</span>
+                    <span className="font-bold">{net.label}</span>
                   </Link>
                 ))}
               </div>

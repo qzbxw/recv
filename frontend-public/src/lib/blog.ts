@@ -53,10 +53,17 @@ export async function getPublishedBlogPosts(locale: "en" | "ru", pageSize = 100)
   }
 }
 
-export async function getPublishedBlogPost(
+export type BlogPostLookup =
+  | { status: "ok"; post: PublicBlogPost }
+  | { status: "not_found" }
+  // The CMS backend errored or timed out: the article may well exist, so
+  // callers must NOT serve a hard 404 (crawlers would deindex it).
+  | { status: "unavailable" };
+
+export async function lookupPublishedBlogPost(
   slug: string,
   locale: "en" | "ru",
-) {
+): Promise<BlogPostLookup> {
   try {
     const response = await fetch(
       `${backendApiUrl()}/api/public/blog/${encodeURIComponent(slug)}?locale=${locale}`,
@@ -65,9 +72,18 @@ export async function getPublishedBlogPost(
         signal: AbortSignal.timeout(2_000),
       },
     );
-    if (!response.ok) return null;
-    return (await response.json()) as PublicBlogPost;
+    if (response.status === 404) return { status: "not_found" };
+    if (!response.ok) return { status: "unavailable" };
+    return { status: "ok", post: (await response.json()) as PublicBlogPost };
   } catch {
-    return null;
+    return { status: "unavailable" };
   }
+}
+
+export async function getPublishedBlogPost(
+  slug: string,
+  locale: "en" | "ru",
+) {
+  const lookup = await lookupPublishedBlogPost(slug, locale);
+  return lookup.status === "ok" ? lookup.post : null;
 }
