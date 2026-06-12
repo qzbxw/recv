@@ -135,7 +135,6 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key_path: ${{ runner.temp }}/recv_deploy_key
           envs: DEPLOY_SHA,GHCR_IMAGE_PREFIX,GHCR_USER,GHCR_TOKEN
-          script_stop: true
           command_timeout: 30m
           script: |
             set -eu
