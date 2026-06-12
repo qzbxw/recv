@@ -115,6 +115,35 @@ func IsNativeAsset(asset PaymentAsset) bool {
 	return asset == AssetTON || asset == AssetSOL || asset == AssetBNB
 }
 
+type PaymentOptionSupport struct {
+	Network      Network        `json:"network"`
+	Assets       []PaymentAsset `json:"assets"`
+	DefaultAsset PaymentAsset   `json:"default_asset"`
+}
+
+// SupportedPaymentOptions enumerates the payable network/asset matrix in a
+// stable order. It is derived from IsSupportedPaymentOption so public
+// consumers (MCP server, docs) cannot drift from the actual support checks.
+func SupportedPaymentOptions() []PaymentOptionSupport {
+	networks := []Network{NetworkTON, NetworkTON_USDT, NetworkTRON, NetworkSOLANA, NetworkBASE, NetworkARBITRUM, NetworkBSC}
+	assets := []PaymentAsset{AssetTON, AssetUSDT, AssetUSDC, AssetSOL, AssetBNB}
+	options := make([]PaymentOptionSupport, 0, len(networks))
+	for _, network := range networks {
+		supported := make([]PaymentAsset, 0, len(assets))
+		for _, asset := range assets {
+			if IsSupportedPaymentOption(network, asset) {
+				supported = append(supported, asset)
+			}
+		}
+		options = append(options, PaymentOptionSupport{
+			Network:      network,
+			Assets:       supported,
+			DefaultAsset: DefaultAssetForNetwork(network),
+		})
+	}
+	return options
+}
+
 func ValidateWalletAddress(network Network, address string) error {
 	address = strings.TrimSpace(address)
 	switch network {

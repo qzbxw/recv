@@ -101,6 +101,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	router.POST("/api/admin/refresh", server.handleAdminRefresh)
 	router.POST("/api/admin/logout", server.handleAdminLogout)
 	router.GET("/api/public/invoices/:public_id", server.handlePublicInvoice)
+	router.GET("/api/public/payment-options", server.handlePublicPaymentOptions)
 	router.POST("/api/public/events", server.handlePublicProductEvent)
 	router.POST("/api/public/web-vitals", server.handlePublicWebVital)
 	router.GET("/api/public/seo/redirect", server.handlePublicResolveSEORedirect)
@@ -660,6 +661,14 @@ func (s *Server) handlePublicInvoice(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, publicInvoiceResponse(invoice))
+}
+
+// handlePublicPaymentOptions exposes the supported network/asset matrix so
+// external consumers (MCP server, integrations) stay in sync with the
+// backend's actual support checks.
+func (s *Server) handlePublicPaymentOptions(c *gin.Context) {
+	c.Header("Cache-Control", "public, max-age=300")
+	c.JSON(http.StatusOK, gin.H{"options": store.SupportedPaymentOptions()})
 }
 
 func (s *Server) handleObservedTransfers(c *gin.Context) {

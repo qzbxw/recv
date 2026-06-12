@@ -2833,3 +2833,46 @@ func TestValidateWebhookURLAdditionalCases(t *testing.T) {
 		}
 	}
 }
+
+func TestHandlePublicPaymentOptions(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	server := &Server{}
+	router := gin.New()
+	router.GET("/api/public/payment-options", server.handlePublicPaymentOptions)
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(stdhttp.MethodGet, "/api/public/payment-options", nil)
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != stdhttp.StatusOK {
+		t.Fatalf("expected 200, got %d", recorder.Code)
+	}
+	if cache := recorder.Header().Get("Cache-Control"); !strings.Contains(cache, "max-age=300") {
+		t.Fatalf("expected cacheable response, got %q", cache)
+	}
+
+	var payload struct {
+		Options []store.PaymentOptionSupport `json:"options"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode payment options: %v", err)
+	}
+	if len(payload.Options) != 7 {
+		t.Fatalf("expected 7 networks, got %d", len(payload.Options))
+	}
+	byNetwork := map[store.Network][]store.PaymentAsset{}
+	for _, option := range payload.Options {
+		byNetwork[option.Network] = option.Assets
+		for _, asset := range option.Assets {
+			if !store.IsSupportedPaymentOption(option.Network, asset) {
+				t.Fatalf("endpoint advertises unsupported option %s/%s", option.Network, asset)
+			}
+		}
+	}
+	if assets := byNetwork[store.NetworkSOLANA]; len(assets) != 3 {
+		t.Fatalf("expected SOLANA to list 3 assets, got %v", assets)
+	}
+	if assets := byNetwork[store.NetworkTON]; len(assets) != 1 || assets[0] != store.AssetTON {
+		t.Fatalf("expected TON to list only native TON, got %v", assets)
+	}
+}
