@@ -51,13 +51,13 @@ Developer API mode lets an agent create and manage payment invoices:
 
 Use the existing Merchant plan for checkout-only merchants. Do not create a separate AI plan by default: AI agents that need API access should buy `developer` or `business`, because those plans already include API keys, webhooks, limits, and subscription billing.
 
-1. If there is no console token, call `bootstrap_agent_workspace` and persist the returned `token`/`access_token` as `RECV_ACCESS_TOKEN`.
+1. If there is no console token, call `bootstrap_agent_workspace`. The server keeps the returned token in memory for subsequent calls; persist it as `RECV_ACCESS_TOKEN` to survive a server restart.
 2. Call `get_account` to inspect the active workspace and plan.
 3. If the plan does not include API access, call `create_subscription_checkout` with `plan_code: "developer"` and a payable network.
 4. Send the returned `checkout_url` to the payer, or open it in the host app.
 5. Poll `get_checkout_invoice` with the returned `public_id` until `status` is `paid`.
-6. Call `create_api_key`, then store the returned `secret` as `RECV_API_KEY`.
-7. Optionally call `create_webhook_endpoint` and store the returned `webhook.secret` as `RECV_WEBHOOK_SECRET`.
+6. Call `create_api_key`. The server uses the returned secret immediately; store it as `RECV_API_KEY` to survive a restart.
+7. Optionally call `create_webhook_endpoint`. The returned webhook secret is also used immediately; store it as `RECV_WEBHOOK_SECRET` to survive a restart.
 8. Use `create_invoice`, `get_invoice`, and `list_invoices` for customer payments.
 
 ## Usage with Claude Desktop

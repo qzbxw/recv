@@ -10,9 +10,9 @@ import {
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 const API_BASE_URL = process.env.RECV_API_URL || "https://recv.money/v1";
-const API_KEY = process.env.RECV_API_KEY || "";
-const ACCESS_TOKEN = process.env.RECV_ACCESS_TOKEN || "";
-const WEBHOOK_SECRET = process.env.RECV_WEBHOOK_SECRET || "";
+let apiKey = process.env.RECV_API_KEY || "";
+let accessToken = process.env.RECV_ACCESS_TOKEN || "";
+let webhookSecret = process.env.RECV_WEBHOOK_SECRET || "";
 const DOCS_BASE_URL = process.env.RECV_DOCS_URL || "https://recv.money/en/docs";
 const APP_BASE_URL = process.env.RECV_APP_URL || deriveAppBaseUrl(API_BASE_URL);
 // Bounded request budget so a hung backend fails the tool call instead of
@@ -306,11 +306,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   const headers = {
-    "X-API-Key": API_KEY,
+    "X-API-Key": apiKey,
     "Content-Type": "application/json",
   };
   const consoleHeaders = {
-    "Authorization": `Bearer ${ACCESS_TOKEN}`,
+    "Authorization": `Bearer ${accessToken}`,
     "Content-Type": "application/json",
   };
 
@@ -346,7 +346,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
       case "verify_webhook": {
-        if (!WEBHOOK_SECRET) {
+        if (!webhookSecret) {
           return {
             content: [{ type: "text", text: "Error: RECV_WEBHOOK_SECRET is not set. Verification cannot be performed." }],
             isError: true,
@@ -354,7 +354,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
         const { raw_body, timestamp, signature } = args as { raw_body: string; timestamp: string; signature: string };
         // recv signs: "v1=" + HMAC_SHA256(secret, `${timestamp}.${rawBody}`)
-        const hmac = createHmac("sha256", WEBHOOK_SECRET.trim());
+        const hmac = createHmac("sha256", webhookSecret.trim());
         hmac.update(timestamp);
         hmac.update(".");
         hmac.update(raw_body);
@@ -370,7 +370,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
       case "create_invoice": {
-        if (!API_KEY) throw new Error("API_KEY not set");
+        if (!apiKey) throw new Error("API_KEY not set");
         const { title, base_amount_usd, payable_network, payable_asset, payment_options, expires_in_minutes } = (args as any) || {};
         const body: Record<string, unknown> = {
           title,
@@ -392,7 +392,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
       case "get_account": {
-        if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
+        if (!accessToken) throw new Error("RECV_ACCESS_TOKEN not set");
         const response = await apiFetch(appApiUrl("/api/me"), { headers: consoleHeaders });
         const data = await parseJSONResponse(response);
         return jsonToolResult(data, response.ok);
@@ -405,10 +405,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           body: JSON.stringify({ workspace_name, contact_email }),
         });
         const data = await parseJSONResponse(response);
+        if (response.ok) {
+          accessToken = readStringField(data, "access_token") || readStringField(data, "token") || accessToken;
+        }
         return jsonToolResult(data, response.ok);
       }
       case "create_subscription_checkout": {
-        if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
+        if (!accessToken) throw new Error("RECV_ACCESS_TOKEN not set");
         const { plan_code = "developer", payable_network = "TRON", payable_asset, payment_options } = (args as any) || {};
         const response = await apiFetch(appApiUrl("/api/billing/checkout"), {
           method: "POST",
@@ -436,7 +439,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return jsonToolResult(data, response.ok);
       }
       case "create_api_key": {
-        if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
+        if (!accessToken) throw new Error("RECV_ACCESS_TOKEN not set");
         const { label = "recv MCP agent", environment = "live", scopes } = (args as any) || {};
         const response = await apiFetch(appApiUrl("/api/developer/api-keys"), {
           method: "POST",
@@ -448,10 +451,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }),
         });
         const data = await parseJSONResponse(response);
+        if (response.ok) {
+          apiKey = readStringField(data, "secret") || apiKey;
+        }
         return jsonToolResult(data, response.ok);
       }
       case "create_webhook_endpoint": {
-        if (!ACCESS_TOKEN) throw new Error("RECV_ACCESS_TOKEN not set");
+        if (!accessToken) throw new Error("RECV_ACCESS_TOKEN not set");
         const { url, label = "recv MCP webhook", environment = "live" } = (args as any) || {};
         const response = await apiFetch(appApiUrl("/api/developer/webhooks"), {
           method: "POST",
@@ -459,10 +465,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           body: JSON.stringify({ url, label, environment }),
         });
         const data = await parseJSONResponse(response);
+        if (response.ok) {
+          webhookSecret = readNestedStringField(data, "webhook", "secret") || webhookSecret;
+        }
         return jsonToolResult(data, response.ok);
       }
       case "get_invoice": {
-        if (!API_KEY) throw new Error("API_KEY not set");
+        if (!apiKey) throw new Error("API_KEY not set");
         const { id } = args as { id: string };
         const response = await apiFetch(`${API_BASE_URL}/invoices/${id}`, { headers });
         const data = await parseJSONResponse(response);
@@ -472,7 +481,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
       case "list_invoices": {
-        if (!API_KEY) throw new Error("API_KEY not set");
+        if (!apiKey) throw new Error("API_KEY not set");
         const { page = 1, page_size = 20 } = (args as any) || {};
         const response = await apiFetch(`${API_BASE_URL}/invoices?page=${page}&page_size=${page_size}`, { headers });
         const data = await parseJSONResponse(response);
@@ -482,7 +491,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
       case "simulate_payment": {
-        if (!API_KEY) throw new Error("API_KEY not set");
+        if (!apiKey) throw new Error("API_KEY not set");
         const { id } = args as { id: string };
         const response = await apiFetch(`${API_BASE_URL}/test/invoices/${id}/simulate-payment`, {
           method: "POST",
@@ -515,6 +524,18 @@ function deriveAppBaseUrl(apiBaseUrl: string) {
 
 function appApiUrl(path: string) {
   return `${APP_BASE_URL}${path}`;
+}
+
+function readStringField(data: unknown, field: string) {
+  if (!data || typeof data !== "object") return "";
+  const value = (data as Record<string, unknown>)[field];
+  return typeof value === "string" ? value : "";
+}
+
+function readNestedStringField(data: unknown, parent: string, field: string) {
+  if (!data || typeof data !== "object") return "";
+  const nested = (data as Record<string, unknown>)[parent];
+  return readStringField(nested, field);
 }
 
 function jsonToolResult(data: unknown, ok: boolean) {

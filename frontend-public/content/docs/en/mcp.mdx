@@ -7,7 +7,7 @@ description: Drive recv from AI agents (Claude Desktop, Cursor) with the recv Mo
 
 recv ships a **Model Context Protocol (MCP) server** that exposes the payment gateway to AI agents as tools and resources. Any MCP-compatible client — **Claude Desktop**, **Cursor**, and others — can use it to create invoices, check payment status, verify webhooks, and look up supported networks, all in natural language.
 
-The server is `recv-agent-mcp` and runs locally over stdio. Under the hood it calls the same recv API documented elsewhere in these docs. It can also bootstrap a new agent workspace, create a recv subscription checkout, and issue API credentials after the subscription is paid.
+The server is `recv-mcp` and runs locally over stdio. Under the hood it calls the same recv API documented elsewhere in these docs. It can also bootstrap a new agent workspace, create a recv subscription checkout, and issue API credentials after the subscription is paid.
 
 ## Configuration
 
@@ -60,7 +60,7 @@ The agent can call these tools.
 
 ### `bootstrap_agent_workspace`
 
-Create a new trial workspace for a fully autonomous agent. The tool returns a normal recv console auth result; persist `token` or `access_token` as `RECV_ACCESS_TOKEN` before calling self-service tools.
+Create a new trial workspace for a fully autonomous agent. The MCP server keeps the returned `token` or `access_token` in memory for subsequent self-service calls. Persist it as `RECV_ACCESS_TOKEN` to survive a server restart.
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -168,11 +168,11 @@ The server also exposes documentation as MCP resources, which the agent can read
 
 For a brand-new autonomous agent:
 
-1. Call `bootstrap_agent_workspace` and store the returned access token as `RECV_ACCESS_TOKEN`.
+1. Call `bootstrap_agent_workspace`. The returned access token is available to subsequent calls in the same MCP process; store it as `RECV_ACCESS_TOKEN` for future processes.
 2. Call `create_subscription_checkout` with `plan_code: "developer"`.
 3. Open or return the checkout URL, then poll `get_checkout_invoice` until the subscription invoice is `paid`.
-4. Call `create_api_key` and store the returned `secret` as `RECV_API_KEY`.
-5. Optionally call `create_webhook_endpoint` and store the returned webhook secret as `RECV_WEBHOOK_SECRET`.
+4. Call `create_api_key`. The returned secret is used by subsequent invoice tools in the same process; store it as `RECV_API_KEY` for future processes.
+5. Optionally call `create_webhook_endpoint`. The returned secret is used by `verify_webhook` in the same process; store it as `RECV_WEBHOOK_SECRET` for future processes.
 
 With the server configured against an `test_` or `live_` key, you can drive the customer payment flow conversationally:
 

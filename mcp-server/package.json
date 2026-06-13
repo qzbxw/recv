@@ -1,6 +1,6 @@
 {
   "name": "recv-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Model Context Protocol server for the recv crypto payment gateway: agent onboarding, invoices, API keys, and webhook verification.",
   "type": "module",
   "main": "dist/index.js",
