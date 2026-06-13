@@ -1438,3 +1438,65 @@ func rewriteTelegramHTTPClient(t *testing.T, server *httptest.Server) *http.Clie
 		},
 	}
 }
+
+func TestBotWorkerStartParameters(t *testing.T) {
+	ctx := context.Background()
+	st := newTelegramBotTestStore(t, ctx)
+	worker, _ := newTestBotWorker(t, st)
+
+	t.Run("parseStartParam helper", func(t *testing.T) {
+		utm, ref := parseStartParam("utm__tg_vcru__cpc__vcru__post-v1")
+		if utm == nil || utm.Source != "tg_vcru" || utm.Medium != "cpc" || utm.Campaign != "vcru" || utm.Content != "post-v1" {
+			t.Errorf("expected UTM params, got %+v", utm)
+		}
+
+		utm, ref = parseStartParam("utm__tg_vcru")
+		if utm == nil || utm.Source != "tg_vcru" || utm.Medium != "" || utm.Campaign != "" {
+			t.Errorf("expected source, got %+v", utm)
+		}
+
+		utm, ref = parseStartParam("ref__mycode")
+		if utm != nil || ref != "mycode" {
+			t.Errorf("expected referral code mycode, got utm=%+v, ref=%q", utm, ref)
+		}
+
+		utm, ref = parseStartParam("mycode")
+		if utm != nil || ref != "mycode" {
+			t.Errorf("expected referral code mycode, got utm=%+v, ref=%q", utm, ref)
+		}
+	})
+
+	t.Run("handleMessage with UTM", func(t *testing.T) {
+		user := tgUser{ID: 1001, Username: "utm_user"}
+		msg := botMessage(100, 1001, user, "/start utm__tg_vcru__cpc__vcru")
+		err := worker.handleMessage(ctx, msg)
+		if err != nil {
+			t.Fatalf("handleMessage error: %v", err)
+		}
+
+		// Retrieve workspace
+		_, err = st.GetWorkspaceByTelegramID(ctx, 1001)
+		if err != nil {
+			t.Fatalf("failed to find workspace: %v", err)
+		}
+
+		// Check UTM report
+		rep, err := st.GetUTMReport(ctx, time.Now().Add(-time.Hour), time.Now().Add(time.Hour))
+		if err != nil {
+			t.Fatalf("failed to get UTM report: %v", err)
+		}
+
+		found := false
+		for _, r := range rep.Campaigns {
+			if r.Source == "tg_vcru" && r.Campaign == "vcru" {
+				found = true
+				if r.Visits != 1 || r.Signups != 1 {
+					t.Errorf("expected 1 visit and 1 signup, got %+v", r)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("expected campaign tg_vcru/vcru in report, got: %+v", rep.Campaigns)
+		}
+	})
+}

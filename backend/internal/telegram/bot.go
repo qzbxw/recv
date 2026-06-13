@@ -237,7 +237,25 @@ func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error
 
 	text := strings.TrimSpace(message.Text)
 	if strings.HasPrefix(text, "/") {
-		return b.handleCommand(ctx, workspace, message, strings.Fields(text)[0])
+		fields := strings.Fields(text)
+		if len(fields) > 0 {
+			cmd := fields[0]
+			if strings.ToLower(cmd) == "/start" && len(fields) > 1 {
+				param := fields[1]
+				utm, refCode := parseStartParam(param)
+				if utm != nil {
+					attrID := fmt.Sprintf("tg-bot-%d-%d", workspace.ID, time.Now().UTC().UnixNano())
+					utm.AttributionID = attrID
+					utm.LandingPath = "/tg-bot"
+					_ = b.store.RecordUTMVisit(ctx, *utm)
+					_ = b.store.RecordUTMAttribution(ctx, workspace.ID, *utm)
+				}
+				if refCode != "" {
+					_ = b.store.AttachReferralSignup(ctx, workspace.ID, refCode)
+				}
+			}
+			return b.handleCommand(ctx, workspace, message, cmd)
+		}
 	}
 
 	session := b.session(message.Chat.ID)
@@ -1011,4 +1029,36 @@ func networkButtonLabel(network store.Network) string {
 	default:
 		return string(network)
 	}
+}
+
+func parseStartParam(param string) (*store.AttributionInput, string) {
+	param = strings.TrimSpace(param)
+	if param == "" {
+		return nil, ""
+	}
+	if strings.HasPrefix(param, "utm__") {
+		parts := strings.Split(param, "__")
+		attr := &store.AttributionInput{
+			TouchType: "last",
+		}
+		if len(parts) > 1 {
+			attr.Source = parts[1]
+		}
+		if len(parts) > 2 {
+			attr.Medium = parts[2]
+		}
+		if len(parts) > 3 {
+			attr.Campaign = parts[3]
+		}
+		if len(parts) > 4 {
+			attr.Content = parts[4]
+		}
+		return attr, ""
+	}
+
+	if strings.HasPrefix(param, "ref__") {
+		return nil, strings.TrimPrefix(param, "ref__")
+	}
+
+	return nil, param
 }

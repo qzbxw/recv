@@ -958,6 +958,8 @@ function slugifyUTMValue(value: string) {
 }
 
 function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
+  const [target, setTarget] = useState<"web" | "bot">("web");
+  const [platform, setPlatform] = useState<"tg" | "other">("tg");
   const [channel, setChannel] = useState("");
   const [campaign, setCampaign] = useState("");
   const [content, setContent] = useState("");
@@ -966,22 +968,48 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
 
   const channelSlug = slugifyUTMValue(channel);
   const campaignSlug = slugifyUTMValue(campaign);
+
   let link = "";
   if (channelSlug) {
-    const params = new URLSearchParams();
-    params.set("utm_source", `tg_${channelSlug}`);
-    if (medium.trim()) params.set("utm_medium", slugifyUTMValue(medium));
-    if (campaignSlug) params.set("utm_campaign", campaignSlug);
-    if (content.trim()) params.set("utm_content", slugifyUTMValue(content));
-    const path = landingPath.trim().startsWith("/") ? landingPath.trim() : `/${landingPath.trim()}`;
-    link = `${window.location.origin}${path}?${params.toString()}`;
+    const finalSource = platform === "tg" ? `tg_${channelSlug}` : channelSlug;
+
+    if (target === "web") {
+      const params = new URLSearchParams();
+      params.set("utm_source", finalSource);
+      if (medium.trim()) params.set("utm_medium", slugifyUTMValue(medium));
+      if (campaignSlug) params.set("utm_campaign", campaignSlug);
+      if (content.trim()) params.set("utm_content", slugifyUTMValue(content));
+      const path = landingPath.trim().startsWith("/") ? landingPath.trim() : `/${landingPath.trim()}`;
+      link = `${window.location.origin}${path}?${params.toString()}`;
+    } else {
+      // Telegram Bot start parameter
+      // Format: utm__[source]__[medium]__[campaign]__[content]
+      const cleanSource = finalSource.replace(/__/g, "_");
+      const cleanMedium = slugifyUTMValue(medium).replace(/__/g, "_");
+      const cleanCampaign = campaignSlug.replace(/__/g, "_");
+      const cleanContent = slugifyUTMValue(content).replace(/__/g, "_");
+
+      const parts = ["utm", cleanSource];
+      if (cleanMedium || cleanCampaign || cleanContent) {
+        parts.push(cleanMedium);
+      }
+      if (cleanCampaign || cleanContent) {
+        parts.push(cleanCampaign);
+      }
+      if (cleanContent) {
+        parts.push(cleanContent);
+      }
+
+      const startParam = parts.join("__");
+      link = `https://t.me/recvxyz_bot?start=${startParam}`;
+    }
   }
 
   async function handleCopy() {
     if (!link) return;
     try {
       await navigator.clipboard.writeText(link);
-      setToast("UTM link copied");
+      setToast("Link copied");
     } catch {
       setToast("Copy failed — select the link manually");
     }
@@ -992,13 +1020,62 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
       <div className="console-card-spotlight" />
       <div className="dev-portal__section-header dev-portal__section-header--margin">
         <h3>UTM link builder</h3>
-        <span className="dev-card__note-text">Paste the channel you are buying from (e.g. on telega.in), copy the tagged link into the ad creative. Results land in the table below.</span>
+        <span className="dev-card__note-text">
+          Generate campaign tracking links for the Web App or Telegram Bot. Results land in the table below.
+        </span>
       </div>
       <div className="dev-form">
+        <div style={{ display: "flex", gap: "16px", marginBottom: "16px", flexWrap: "wrap" }}>
+          <div className="dev-input-group" style={{ flex: "1 1 200px" }}>
+            <label>Link Target</label>
+            <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+              <button
+                type="button"
+                className={`dev-btn dev-btn--compact ${target === "web" ? "dev-btn--primary" : "dev-btn--secondary"}`}
+                onClick={() => setTarget("web")}
+              >
+                Web Landing Page
+              </button>
+              <button
+                type="button"
+                className={`dev-btn dev-btn--compact ${target === "bot" ? "dev-btn--primary" : "dev-btn--secondary"}`}
+                onClick={() => setTarget("bot")}
+              >
+                Telegram Bot
+              </button>
+            </div>
+          </div>
+
+          <div className="dev-input-group" style={{ flex: "1 1 200px" }}>
+            <label>Platform / Traffic Source</label>
+            <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+              <button
+                type="button"
+                className={`dev-btn dev-btn--compact ${platform === "tg" ? "dev-btn--primary" : "dev-btn--secondary"}`}
+                onClick={() => setPlatform("tg")}
+              >
+                Telegram (prefixes tg_)
+              </button>
+              <button
+                type="button"
+                className={`dev-btn dev-btn--compact ${platform === "other" ? "dev-btn--primary" : "dev-btn--secondary"}`}
+                onClick={() => setPlatform("other")}
+              >
+                Web / Article / Other
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="admin-blog-grid">
           <div className="dev-input-group">
-            <label>Telegram channel</label>
-            <input className="dev-input" value={channel} onChange={(e) => setChannel(e.target.value)} placeholder="@durov or t.me/durov" />
+            <label>{platform === "tg" ? "Telegram channel/chat" : "Source (site, blog, platform)"}</label>
+            <input
+              className="dev-input"
+              value={channel}
+              onChange={(e) => setChannel(e.target.value)}
+              placeholder={platform === "tg" ? "@durov or t.me/durov" : "e.g. vcru, habr, google"}
+            />
           </div>
           <div className="dev-input-group">
             <label>Campaign</label>
@@ -1009,21 +1086,33 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
             <input className="dev-input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="post-v1" />
           </div>
         </div>
+
         <div className="admin-blog-grid">
-          <div className="dev-input-group">
-            <label>Landing page</label>
-            <input className="dev-input" value={landingPath} onChange={(e) => setLandingPath(e.target.value)} placeholder="/ru" />
-          </div>
+          {target === "web" && (
+            <div className="dev-input-group">
+              <label>Landing page</label>
+              <input className="dev-input" value={landingPath} onChange={(e) => setLandingPath(e.target.value)} placeholder="/ru" />
+            </div>
+          )}
           <div className="dev-input-group">
             <label>Medium</label>
             <input className="dev-input" value={medium} onChange={(e) => setMedium(e.target.value)} placeholder="cpc" />
           </div>
         </div>
+
         <div className="dev-input-group">
-          <label>Tagged link</label>
+          <label>Generated Tagged Link</label>
           <div className="admin-manage__note">
-            <input className="dev-input" readOnly value={link} placeholder="Fill in the channel to generate a link" onFocus={(e) => e.target.select()} />
-            <button type="button" className="dev-btn dev-btn--primary dev-btn--compact" disabled={!link} onClick={() => void handleCopy()}>Copy</button>
+            <input
+              className="dev-input"
+              readOnly
+              value={link}
+              placeholder="Fill in the source to generate a link"
+              onFocus={(e) => e.target.select()}
+            />
+            <button type="button" className="dev-btn dev-btn--primary dev-btn--compact" disabled={!link} onClick={() => void handleCopy()}>
+              Copy
+            </button>
           </div>
         </div>
       </div>
