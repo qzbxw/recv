@@ -388,7 +388,7 @@ function verify(payload, signature, secret) {
     retry: "Повторить",
     warning: "Отправьте ТОЧНУЮ сумму. Если переводите с биржи (Binance/Bybit), не забудьте прибавить комиссию биржи за вывод, иначе платеж уйдет в ручную проверку.",
     exactAmountWarning: "Отправьте ТОЧНУЮ сумму. Если переводите с биржи (Binance/Bybit), не забудьте прибавить комиссию биржи за вывод, иначе платеж уйдет в ручную проверку.",
-    payloadTitle: "Важное примечание",
+    payloadTitle: "Обязательный комментарий",
     payloadHint: "Без этого комментария мы не сможем распознать ваш перевод.",
     qrLoading: "QR-код...",
     paymentRequest: "Оплата",
@@ -418,6 +418,7 @@ function verify(payload, signature, secret) {
     docHintExpired: "Пожалуйста, запросите новую ссылку для оплаты у продавца.",
     footerPoweredBy: "Работает на",
     footerCTA: "Принимайте платежи так же с recv",
+    payInWallet: "Открыть кошелек",
   },
   sellerConsole: {
     nav: {

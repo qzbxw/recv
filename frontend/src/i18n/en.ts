@@ -419,6 +419,7 @@ function verify(payload, signature, secret) {
     docHintExpired: "Please request a new payment link from the seller if needed.",
     footerPoweredBy: "Powered by",
     footerCTA: "Accept crypto payments like this with recv",
+    payInWallet: "Pay in Wallet",
   },
   sellerConsole: {
     nav: {

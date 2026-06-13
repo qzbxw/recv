@@ -1,0 +1,54 @@
+- main [ref=e5]:
+  - generic [ref=e6]:
+    - link "recv" [ref=e7] [cursor=pointer]:
+      - /url: /
+    - group "language" [ref=e8]:
+      - button "RU" [active] [ref=e9] [cursor=pointer]
+      - button "EN" [ref=e10] [cursor=pointer]
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e15]:
+        - generic [ref=e17]: Ждет оплату
+        - generic [ref=e18]: ·
+        - generic [ref=e19]: Инвойс RECV-DEMO-149
+      - heading "recv Product Demo" [level=1] [ref=e20]
+    - generic [ref=e21]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: Сумма
+        - generic [ref=e25]:
+          - generic [ref=e26]: 149 USDT
+          - button "Скопировать точную сумму" [ref=e27] [cursor=pointer]:
+            - img [ref=e28]
+        - generic [ref=e31]: TON Только эта сеть
+      - generic [ref=e33]:
+        - generic [ref=e34]: Обязательный комментарий
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]: RECV-DEMO-149
+            - generic "Без этого комментария мы не сможем распознать ваш перевод." [ref=e38]: ⚠️
+          - button "Копировать" [ref=e39] [cursor=pointer]:
+            - img [ref=e40]
+        - generic [ref=e43]: Без этого комментария мы не сможем распознать ваш перевод.
+      - generic [ref=e45]:
+        - generic [ref=e46]: Адрес
+        - generic [ref=e47]:
+          - generic [ref=e48]: UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7
+          - button "Копировать" [ref=e49] [cursor=pointer]:
+            - img [ref=e50]
+    - link "Открыть кошелек" [ref=e54] [cursor=pointer]:
+      - /url: ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=149000000000&text=RECV-DEMO-149
+      - img [ref=e55]
+      - text: Открыть кошелек
+    - generic [ref=e59]:
+      - img "Invoice QR" [ref=e61]
+      - paragraph [ref=e62]: Отсканируйте для быстрой оплаты
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - img [ref=e65]
+        - generic [ref=e68]: 16:55
+      - generic [ref=e69]: ·
+      - generic [ref=e70]: Отправьте ТОЧНУЮ сумму. Если переводите с биржи (Binance/Bybit), не забудьте прибавить комиссию биржи за вывод, иначе платеж уйдет в ручную проверку.
+  - link "Работает на recv" [ref=e72] [cursor=pointer]:
+    - /url: /
+    - generic [ref=e73]: Работает на
+    - strong [ref=e74]: recv

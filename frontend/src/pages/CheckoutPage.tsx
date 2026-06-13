@@ -26,6 +26,13 @@ function formatAddressPreview(address: string) {
   return `${address.slice(0, 10)}...${address.slice(-10)}`;
 }
 
+function formatAddressTruncatedMobile(address: string) {
+  if (address.length <= 12) {
+    return address;
+  }
+  return `${address.slice(0, 6)}...${address.slice(-6)}`;
+}
+
 function formatDateTime(value: string, language: keyof typeof COPY) {
   return new Date(value).toLocaleString(language === "ru" ? "ru-RU" : "en-US");
 }
@@ -87,6 +94,13 @@ const Icons = {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2" />
       <line x1="3" y1="12" x2="21" y2="12" />
+    </svg>
+  ),
+  Wallet: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 12V8H6a2 2 0 0 1 2-2h12v6" />
+      <path d="M4 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" />
+      <circle cx="16" cy="14" r="1" />
     </svg>
   ),
 };
@@ -180,11 +194,11 @@ export function CheckoutPage() {
 
     void QRCode.toDataURL(source, {
       width: 288,
-      margin: 1,
+      margin: 2,
       errorCorrectionLevel: "M",
       color: {
-        dark: "#050505",
-        light: "#ffffff",
+        dark: "#ffffff",
+        light: "#121214",
       },
     })
       .then(setQrDataUrl)
@@ -192,11 +206,11 @@ export function CheckoutPage() {
         try {
           const fallback = await QRCode.toDataURL(fallbackPaymentURI(invoice), {
             width: 288,
-            margin: 1,
+            margin: 2,
             errorCorrectionLevel: "M",
             color: {
-              dark: "#050505",
-              light: "#ffffff",
+              dark: "#ffffff",
+              light: "#121214",
             },
           });
           setQrDataUrl(fallback);
@@ -322,8 +336,8 @@ export function CheckoutPage() {
       <header className="co-top">
         <a className="co-brand" href="/">recv</a>
         <div className="co-lang" role="group" aria-label="language">
-          <button type="button" className={language === "ru" ? "is-active" : ""} onClick={() => setLanguage("ru")}>RU</button>
-          <button type="button" className={language === "en" ? "is-active" : ""} onClick={() => setLanguage("en")}>EN</button>
+          <button id="co-lang-ru" type="button" className={language === "ru" ? "is-active" : ""} onClick={() => setLanguage("ru")}>RU</button>
+          <button id="co-lang-en" type="button" className={language === "en" ? "is-active" : ""} onClick={() => setLanguage("en")}>EN</button>
         </div>
       </header>
 
@@ -364,28 +378,16 @@ export function CheckoutPage() {
           <div className="co-pay">
             <div className="co-head">
               <div className="co-statusrow">
-                <span className={`co-pill co-pill--${statusTone}`}>
-                  {isUnderpaid ? <Icons.Alert /> : null}
-                  {statusLabel}
+                <span className="co-statusrow__meta">
+                  <span className={`co-pill co-pill--${statusTone}`} />
+                  <span style={{ fontWeight: 600, color: statusTone === "neutral" ? "var(--co-muted)" : `var(--co-${statusTone})` }}>
+                    {statusLabel}
+                  </span>
+                  <span className="co-statusrow__divider">·</span>
+                  <span className="co-id">{text.invoiceId} <span style={{ color: "var(--co-faint)" }}>{invoice.public_id}</span></span>
                 </span>
-                <span className="co-id"><b>{text.invoiceId}</b> {invoice.public_id}</span>
               </div>
               <h1 className="co-title">{title}</h1>
-            </div>
-
-            <div className="co-amount">
-              <span className="co-amount__label">{text.amount}</span>
-              <div className="co-amount__value">{bigAmount}</div>
-              <span className="co-amount__net">
-                <b>{netLabel}</b>
-                <span>{text.networkOnly}</span>
-              </span>
-              {isUnderpaid ? (
-                <div className="co-amount__note">
-                  <span>{text.underpaidReceived}: <b>{invoice.received_amount || "0"} {formatNetworkLabel(invoice.payable_network)}</b></span>
-                  {remainingAmount ? <span>{text.underpaidRemaining}: <b>{remainingAmount} {formatNetworkLabel(invoice.payable_network)}</b></span> : null}
-                </div>
-              ) : null}
             </div>
 
             {invoice.payment_options && invoice.payment_options.length > 1 ? (
@@ -403,70 +405,102 @@ export function CheckoutPage() {
               </div>
             ) : null}
 
-            <div className={`co-timer ${isExpiringSoon ? "is-urgent" : ""}`}>
-              <Icons.Clock />
-              <span className="co-timer__val">{timeLeft}</span>
-              {isExpiringSoon ? <span className="co-timer__hint">{text.expiresSoon}</span> : null}
+            <div className="co-details">
+              {/* Amount Field */}
+              <div className="co-copy-line">
+                <div className="co-copy-line__left">
+                  <span className="co-copy-line__label">{text.amount}</span>
+                  <div className="co-copy-line__val-row">
+                    <span className="co-copy-line__value co-copy-line__value--amount">{bigAmount}</span>
+                    <button
+                      id="co-copy-amount"
+                      type="button"
+                      className={`co-copy-btn ${copiedField === "amount" ? "is-copied" : ""}`}
+                      onClick={() => void copyValue("amount", bigAmount)}
+                      title={text.copyAmount}
+                    >
+                      <Icons.Copy />
+                    </button>
+                  </div>
+                  <span className="co-copy-line__sub">{netLabel} {text.networkOnly}</span>
+                </div>
+              </div>
+
+              {/* Comment Field (if required) */}
+              {commentValue ? (
+                <div className="co-copy-line">
+                  <div className="co-copy-line__left">
+                    <span className="co-copy-line__label">{text.payloadTitle}</span>
+                    <div className="co-copy-line__val-row">
+                      <span className="co-copy-line__value" style={{ fontWeight: 600 }}>{commentValue}</span>
+                      <button
+                        id="co-copy-comment"
+                        type="button"
+                        className={`co-copy-btn ${copiedField === "comment" ? "is-copied" : ""}`}
+                        onClick={() => void copyValue("comment", commentValue)}
+                        title={text.copyComment}
+                      >
+                        <Icons.Copy />
+                      </button>
+                    </div>
+                    <span className="co-copy-line__sub">{text.payloadHint}</span>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Wallet Address Field */}
+              <div className="co-copy-line">
+                <div className="co-copy-line__left">
+                  <span className="co-copy-line__label">{text.wallet}</span>
+                  <div className="co-copy-line__val-row">
+                    <span className="co-copy-line__value co-address-desktop">{addressValue}</span>
+                    <span className="co-copy-line__value co-address-mobile">{formatAddressTruncatedMobile(addressValue)}</span>
+                    <button
+                      id="co-copy-address"
+                      type="button"
+                      className={`co-copy-btn ${copiedField === "address" ? "is-copied" : ""}`}
+                      onClick={() => void copyValue("address", addressValue)}
+                      title={text.copyAddress}
+                    >
+                      <Icons.Copy />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {isUnderpaid ? (
+              <div className="co-amount__note" style={{ borderTop: "none", marginTop: 0, paddingLeft: 0, paddingRight: 0 }}>
+                <span>{text.underpaidReceived}: <b>{invoice.received_amount || "0"} {formatNetworkLabel(invoice.payable_network)}</b></span>
+                {remainingAmount ? <span>{text.underpaidRemaining}: <b>{remainingAmount} {formatNetworkLabel(invoice.payable_network)}</b></span> : null}
+              </div>
+            ) : null}
+
+            <div className="co-actions">
+              <a
+                id="co-btn-pay"
+                href={activePayment?.payment_uri || fallbackPaymentURI(invoice)}
+                className="co-btn co-btn--primary"
+              >
+                <Icons.Wallet />
+                {text.payInWallet}
+              </a>
             </div>
 
             <div className="co-qr">
               <div className="co-qr__frame">
                 {qrDataUrl ? <img src={qrDataUrl} alt="Invoice QR" /> : <span className="co-qr__ph">{text.qrLoading}</span>}
               </div>
-              <p className="co-qr__hint">{text.scanHint}</p>
+              <p className="co-qr__hint">{language === "ru" ? "Отсканируйте для быстрой оплаты" : "Scan for quick payment"}</p>
             </div>
 
-            <div className="co-actions">
-              <button
-                type="button"
-                className={`co-btn co-btn--primary ${copiedField === "amount" ? "is-copied" : ""}`}
-                onClick={() => void copyValue("amount", bigAmount)}
-              >
-                <Icons.Copy />
-                {copiedField === "amount" ? text.copied : text.copyAmount}
-              </button>
-            </div>
-
-            <div className="co-warn">
-              <Icons.Alert />
-              <p>{text.exactAmountWarning}</p>
-            </div>
-
-            <div className="co-details">
-              <span className="co-details__kicker"><Icons.Scan /> {text.paymentDetails}</span>
-
-              {commentValue ? (
-                <button
-                  type="button"
-                  className={`co-field co-field--required ${copiedField === "comment" ? "is-active" : ""}`}
-                  onClick={() => void copyValue("comment", commentValue)}
-                >
-                  <div className="co-field__body">
-                    <span className="co-field__label">{text.payloadTitle}</span>
-                    <span className="co-field__value">{commentValue}</span>
-                    <span className="co-field__sub">{text.payloadHint}</span>
-                  </div>
-                  <span className={`co-copy ${copiedField === "comment" ? "is-copied" : ""}`}>
-                    <Icons.Copy />
-                    {copiedField === "comment" ? text.copied : text.copyComment}
-                  </span>
-                </button>
-              ) : null}
-
-              <button
-                type="button"
-                className="co-field"
-                onClick={() => void copyValue("address", addressValue)}
-              >
-                <div className="co-field__body">
-                  <span className="co-field__label">{text.wallet}</span>
-                  <span className="co-field__value">{addressValue}</span>
-                </div>
-                <span className={`co-copy ${copiedField === "address" ? "is-copied" : ""}`}>
-                  <Icons.Copy />
-                  {copiedField === "address" ? text.copied : text.copyAddress}
-                </span>
-              </button>
+            <div className="co-alert-bar">
+              <span className="co-alert-bar__timer">
+                <Icons.Clock />
+                <span>{timeLeft}</span>
+              </span>
+              <span className="co-alert-bar__divider">·</span>
+              <span className="co-alert-bar__text">{text.exactAmountWarning}</span>
             </div>
           </div>
         )}
@@ -478,7 +512,6 @@ export function CheckoutPage() {
             <span>{text.footerPoweredBy}</span>
             <strong>recv</strong>
           </a>
-          <a href="/" className="co-foot__cta">{text.footerCTA}</a>
         </footer>
       ) : null}
     </main>
