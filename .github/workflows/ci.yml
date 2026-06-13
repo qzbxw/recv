@@ -134,15 +134,16 @@ jobs:
       - name: Smoke routes
         run: |
           for i in $(seq 1 60); do
-            if curl --retry 5 --retry-connrefused --retry-delay 2 -fsS http://localhost:8080/en >/dev/null; then
+            if curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/en >/dev/null; then
               break
             fi
             sleep 2
           done
+          sleep 5
           curl -fsSI http://localhost:8080/ | grep -E "30[78]"
-          curl --retry 5 --retry-connrefused --retry-delay 2 -fsS http://localhost:8080/en >/dev/null
-          curl --retry 5 --retry-connrefused --retry-delay 2 -fsS http://localhost:8080/app/ >/dev/null
-          curl --retry 5 --retry-connrefused --retry-delay 2 -fsS http://localhost:8080/docs/index.html >/dev/null
+          curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/en >/dev/null
+          curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/app/ >/dev/null
+          curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/docs/index.html >/dev/null
           curl -sS -o /tmp/v1_me.out -w "%{http_code}" http://localhost:8080/v1/me | grep -E "401|403"
           curl -sS -o /tmp/admin_login.out -w "%{http_code}" -H "Content-Type: application/json" -d '{"username":"admin","password":"admin"}' http://localhost:8080/api/admin/login | grep -E "401|403"
       - name: Dump docker logs
