@@ -43,7 +43,7 @@ import type { APIKey, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse
 import { useUI } from "../lib/ui";
 import { SELLER_CONSOLE_COPY as COPY } from "../i18n";
 
-const BOT_URL = "https://t.me/recvxyz_bot";
+const BOT_URL = "https://t.me/recvmoney_bot";
 
 declare global {
   interface Window {

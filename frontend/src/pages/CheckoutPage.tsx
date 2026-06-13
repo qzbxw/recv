@@ -7,7 +7,7 @@ import type { Invoice } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { CHECKOUT_COPY as COPY } from "../i18n";
 
-const BOT_URL = "https://t.me/recvxyz_bot";
+const BOT_URL = "https://t.me/recvmoney_bot";
 const DEMO_PUBLIC_ID = "demo";
 
 function fallbackPaymentURI(invoice: Invoice) {

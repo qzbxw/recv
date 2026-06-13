@@ -146,14 +146,14 @@ func (s *AuthService) RequestTelegramLoginCode(ctx context.Context, input Telegr
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			metrics.IncAuthAttempt("telegram_code_request", "failure", "workspace_not_found")
-			return errors.New("Telegram username not found. Open @recvxyz_bot, press Start, then request the code again")
+			return errors.New("Telegram username not found. Open @recvmoney_bot, press Start, then request the code again")
 		}
 		metrics.IncAuthAttempt("telegram_code_request", "failure", "load_workspace")
 		return fmt.Errorf("load workspace by username: %w", err)
 	}
 	if workspace.OwnerTelegramID == nil {
 		metrics.IncAuthAttempt("telegram_code_request", "failure", "telegram_unlinked")
-		return errors.New("Telegram account is not linked yet. Open @recvxyz_bot and press Start first")
+		return errors.New("Telegram account is not linked yet. Open @recvmoney_bot and press Start first")
 	}
 
 	code, err := randomDigits(6)
@@ -192,7 +192,7 @@ func (s *AuthService) AuthenticateTelegramCode(ctx context.Context, input Telegr
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			metrics.IncAuthAttempt("telegram_code_login", "failure", "workspace_not_found")
-			return AuthResult{}, errors.New("Telegram username not found. Open @recvxyz_bot, press Start, then request the code again")
+			return AuthResult{}, errors.New("Telegram username not found. Open @recvmoney_bot, press Start, then request the code again")
 		}
 		metrics.IncAuthAttempt("telegram_code_login", "failure", "load_workspace")
 		return AuthResult{}, fmt.Errorf("load workspace by username: %w", err)

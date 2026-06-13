@@ -1001,7 +1001,7 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
       }
 
       const startParam = parts.join("__");
-      link = `https://t.me/recvxyz_bot?start=${startParam}`;
+      link = `https://t.me/recvmoney_bot?start=${startParam}`;
     }
   }
 

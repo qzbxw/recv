@@ -14,7 +14,7 @@ import { readAttribution, readRefCode, sanitizeRefCode } from "../lib/attributio
 import { useUI } from "../lib/ui";
 import { AUTH_COPY as COPY } from "../i18n";
 
-const BOT_URL = "https://t.me/recvxyz_bot";
+const BOT_URL = "https://t.me/recvmoney_bot";
 const DEV_AUTH_ENABLED = import.meta.env.VITE_ENABLE_DEV_AUTH === "true";
 
 declare global {
