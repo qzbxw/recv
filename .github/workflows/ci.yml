@@ -130,22 +130,26 @@ jobs:
       - name: Validate Caddy configuration
         run: docker run --rm -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.8-alpine caddy validate --config /etc/caddy/Caddyfile
       - name: Start production smoke stack
-        run: docker compose up -d postgres api frontend_public frontend caddy
+        run: CADDY_SITE_ADDRESS=http://localhost docker compose up -d postgres api frontend_public frontend caddy
       - name: Smoke routes
         run: |
+          sleep 10
           for i in $(seq 1 60); do
-            if curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/en >/dev/null; then
+            set +e
+            curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/v1/me >/dev/null 2>&1
+            status=$?
+            set -e
+            if [ $status -eq 22 ]; then
               break
             fi
             sleep 2
           done
-          sleep 5
           curl -fsSI http://localhost:8080/ | grep -E "30[78]"
           curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/en >/dev/null
           curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/app/ >/dev/null
           curl --retry 5 --retry-all-errors --retry-delay 2 -fsS http://localhost:8080/docs/index.html >/dev/null
-          curl -sS -o /tmp/v1_me.out -w "%{http_code}" http://localhost:8080/v1/me | grep -E "401|403"
-          curl -sS -o /tmp/admin_login.out -w "%{http_code}" -H "Content-Type: application/json" -d '{"username":"admin","password":"admin"}' http://localhost:8080/api/admin/login | grep -E "401|403"
+          curl --retry 5 --retry-all-errors --retry-delay 2 -sS -o /tmp/v1_me.out -w "%{http_code}" http://localhost:8080/v1/me | grep -E "401|403"
+          curl --retry 5 --retry-all-errors --retry-delay 2 -sS -o /tmp/admin_login.out -w "%{http_code}" -H "Content-Type: application/json" -d '{"username":"admin","password":"admin"}' http://localhost:8080/api/admin/login | grep -E "401|403"
       - name: Dump docker logs
         if: failure()
         run: docker compose logs --no-color
