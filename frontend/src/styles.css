@@ -12113,3 +12113,256 @@ html {
     min-width: 0;
   }
 }
+
+/* Telegram Mini App and compact-phone console refinements. */
+.dev-portal--console {
+  --console-safe-top: max(
+    env(safe-area-inset-top, 0px),
+    var(--tg-safe-area-inset-top, 0px),
+    var(--tg-content-safe-area-inset-top, 0px)
+  );
+  --console-safe-bottom: max(
+    env(safe-area-inset-bottom, 0px),
+    var(--tg-safe-area-inset-bottom, 0px),
+    var(--tg-content-safe-area-inset-bottom, 0px)
+  );
+  height: var(--tg-viewport-stable-height, 100dvh) !important;
+  min-height: 100dvh;
+}
+
+.dev-portal--console .dev-portal__layout,
+.dev-portal--console .dev-portal__content {
+  height: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .dev-portal--console .dev-portal__header {
+    height: calc(56px + var(--console-safe-top));
+    padding: var(--console-safe-top) 0.875rem 0;
+  }
+
+  .dev-portal--console .dev-portal__sidebar {
+    top: calc(56px + var(--console-safe-top));
+    height: calc(var(--tg-viewport-stable-height, 100dvh) - 56px - var(--console-safe-top)) !important;
+    padding-bottom: calc(1.25rem + var(--console-safe-bottom));
+  }
+
+  .dev-portal--console .dev-portal__body {
+    padding:
+      calc(56px + var(--console-safe-top) + 1.5rem)
+      1rem
+      calc(3rem + var(--console-safe-bottom));
+    gap: 2rem;
+  }
+
+  .dev-portal__brand-mobile,
+  .dev-portal__brand-mobile strong {
+    white-space: nowrap;
+  }
+
+  .dev-portal__header-actions {
+    min-width: 0;
+  }
+
+  .dev-portal__hero--compact h1 {
+    font-size: clamp(1.75rem, 8vw, 2.25rem);
+    line-height: 1.05;
+  }
+
+  .dev-portal__hero--compact p {
+    line-height: 1.55;
+  }
+}
+
+@media (max-width: 560px) {
+  .dev-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.625rem !important;
+  }
+
+  .dev-metric-item {
+    min-height: 108px;
+    padding: 0.9rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .dev-metric-label {
+    font-size: 0.58rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .dev-metric-value {
+    font-size: clamp(1.15rem, 6vw, 1.4rem) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .dev-metric-meta {
+    font-size: 0.68rem !important;
+    line-height: 1.35;
+  }
+
+  .dev-analytics-col,
+  .dev-setup-panel,
+  .dev-card {
+    padding: 1.25rem !important;
+  }
+
+  .dev-network-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .dev-network-card {
+    min-width: 0;
+    padding: 1rem !important;
+  }
+
+  .dev-network-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .dev-network-card__name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .dev-network-card__addresses,
+  .dev-network-card__addr,
+  .dev-network-card__empty {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .dev-network-card__addr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .dev-network-card__addr .dev-wallet-address {
+    min-width: 0;
+    margin: 0;
+  }
+
+  .dev-network-card__addr .dev-btn,
+  .dev-network-card__empty .dev-btn {
+    width: 100% !important;
+    min-height: 40px;
+  }
+
+  .dev-resource-list,
+  .dev-resource-card,
+  .dev-resource-card__info,
+  .dev-resource-card__header,
+  .dev-team-invite-grid,
+  .dev-input-group {
+    min-width: 0;
+  }
+
+  .dev-resource-card__title,
+  .dev-resource-card__meta,
+  .dev-resource-card__url {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .dev-resource-card__header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.875rem;
+    width: 100%;
+  }
+
+  .dev-resource-card__header .dev-resource-card__actions {
+    width: 100%;
+  }
+
+  .dev-resource-card__header .dev-resource-card__actions .dev-btn {
+    flex: 1 1 0;
+  }
+
+  .dev-team-member__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .dev-team-role-select,
+  .dev-team-role-select .custom-select,
+  .dev-team-role-select .custom-select-trigger {
+    min-width: 0;
+    width: 100% !important;
+  }
+
+  .dev-team-invite-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 1rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dev-team-invite-grid > *,
+  .dev-form__row-grid > * {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dev-team-invite-btn,
+  .dev-form__row-grid .dev-btn {
+    width: 100% !important;
+    white-space: normal;
+  }
+
+  .dev-form__row-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 1rem !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dev-code-box,
+  .dev-code-box__content {
+    max-width: 100%;
+  }
+
+  .dev-code-box__content {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+}
+
+@media (max-width: 380px) {
+  .dev-portal--console .dev-portal__header {
+    padding-inline: 0.75rem;
+  }
+
+  .dev-portal__mobile-brand-row {
+    gap: 0.65rem;
+  }
+
+  .dev-portal__menu-trigger {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dev-portal__workspace-badge {
+    display: none;
+  }
+
+  .env-toggle__btn {
+    padding-inline: 8px !important;
+  }
+
+  .dev-portal--console .dev-portal__body {
+    padding-inline: 0.75rem;
+  }
+}

@@ -103,7 +103,7 @@ type httpStore interface {
 	UpdateWorkspaceEmail(ctx context.Context, workspaceID int64, email string) (store.Workspace, error)
 	UpdateWorkspaceLanguage(ctx context.Context, workspaceID int64, language string) (store.Workspace, error)
 	UpdateWorkspaceMemberRole(ctx context.Context, workspaceID, userID int64, role store.MemberRole) error
-	CreatePromoCode(ctx context.Context, code string, durationDays int, planCode store.PlanCode, expiresAt *time.Time, maxUses *int, createdBy string) (store.PromoCode, error)
+	CreatePromoCode(ctx context.Context, code string, durationDays int, planCode store.PlanCode, expiresAt *time.Time, maxUses *int, discountPercent int, createdBy string) (store.PromoCode, error)
 	ListPromoCodes(ctx context.Context) ([]store.PromoCode, error)
 	DeletePromoCode(ctx context.Context, id int64) error
 	RedeemPromoCode(ctx context.Context, workspaceID int64, code string) (store.Workspace, error)

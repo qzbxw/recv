@@ -266,6 +266,8 @@ type Workspace struct {
 	FreeInvoicesUsed   int        `json:"free_invoices_used"`
 	IsBlocked          bool       `json:"is_blocked"`
 	TelegramLinkedAt   *time.Time `json:"telegram_linked_at"`
+	DiscountPercent    int        `json:"discount_percent"`
+	DiscountPlanCode   *string    `json:"discount_plan_code"`
 	CreatedAt          time.Time  `json:"created_at"`
 }
 
@@ -443,6 +445,7 @@ type PromoCode struct {
 	ExpiresAt    *time.Time `json:"expires_at"`
 	MaxUses      *int       `json:"max_uses"`
 	UsesCount    int        `json:"uses_count"`
+	DiscountPercent int     `json:"discount_percent"`
 	CreatedBy    string     `json:"created_by"`
 	CreatedAt    time.Time  `json:"created_at"`
 }

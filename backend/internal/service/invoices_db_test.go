@@ -268,6 +268,55 @@ func TestInvoiceServiceCreatePlanInvoiceWithDB(t *testing.T) {
 			t.Fatalf("expected subscription kind, got %s", inv.Kind)
 		}
 	})
+
+	t.Run("CreatePlanInvoice applies promo discount", func(t *testing.T) {
+		// Configure billing wallet for TON
+		wallets := map[string]string{"TON": "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqBB"}
+		if err := st.UpsertSystemConfig(ctx, "billing_wallets", wallets, true, "test"); err != nil {
+			t.Fatalf("UpsertSystemConfig billing wallet: %v", err)
+		}
+		t.Cleanup(func() {
+			_ = st.UpsertSystemConfig(ctx, "billing_wallets", map[string]string{}, true, "test")
+		})
+
+		// Create workspace with a discount applied: 20% on plan business
+		wsDisc, err := st.UpsertWorkspaceByTelegram(ctx, 99400, "discuser")
+		if err != nil {
+			t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+		}
+		
+		// Create discount promo code and redeem it for the workspace
+		p, err := st.CreatePromoCode(ctx, "DISCOUNT20BIZ", 0, store.PlanCodeBusiness, nil, nil, 20, "admin")
+		if err != nil {
+			t.Fatalf("CreatePromoCode: %v", err)
+		}
+		wsDisc, err = st.RedeemPromoCode(ctx, wsDisc.ID, p.Code)
+		if err != nil {
+			t.Fatalf("RedeemPromoCode: %v", err)
+		}
+
+		// 1. Create plan invoice for a DIFFERENT plan (e.g. PlanCodeMerchant = $9)
+		// Since discount is restricted to PlanCodeBusiness, this should have NO discount applied.
+		invMerch, err := svc.CreatePlanInvoice(ctx, wsDisc, store.PlanCodeMerchant, store.NetworkTON)
+		if err != nil {
+			t.Fatalf("CreatePlanInvoice (Merchant): %v", err)
+		}
+		expectedMerchPrice := decimal.RequireFromString("9")
+		if !invMerch.BaseAmountUSD.Equal(expectedMerchPrice) {
+			t.Errorf("Expected price %s for Merchant plan (no discount), got %s", expectedMerchPrice, invMerch.BaseAmountUSD)
+		}
+
+		// 2. Create plan invoice for the business plan ($79)
+		// This should have 20% discount applied: $79 * 0.8 = $63.20
+		invBiz, err := svc.CreatePlanInvoice(ctx, wsDisc, store.PlanCodeBusiness, store.NetworkTON)
+		if err != nil {
+			t.Fatalf("CreatePlanInvoice (Business): %v", err)
+		}
+		expectedBizPrice := decimal.RequireFromString("63.20")
+		if !invBiz.BaseAmountUSD.Equal(expectedBizPrice) {
+			t.Errorf("Expected discounted price %s for Business plan, got %s", expectedBizPrice, invBiz.BaseAmountUSD)
+		}
+	})
 }
 
 // TestInvoiceServiceCreateInvoiceWalletBranches tests wallet selection logic.

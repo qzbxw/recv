@@ -19,7 +19,7 @@ func TestPromoCodes(t *testing.T) {
 	t.Run("Create and List Promo Codes", func(t *testing.T) {
 		maxUses := 5
 		expiresAt := time.Now().Add(time.Hour)
-		p, err := st.CreatePromoCode(ctx, "SAVE10", 30, PlanCodeBusiness, &expiresAt, &maxUses, "admin1")
+		p, err := st.CreatePromoCode(ctx, "SAVE10", 30, PlanCodeBusiness, &expiresAt, &maxUses, 0, "admin1")
 		if err != nil {
 			t.Fatalf("CreatePromoCode: %v", err)
 		}
@@ -57,7 +57,7 @@ func TestPromoCodes(t *testing.T) {
 	})
 
 	t.Run("Successful Redemption", func(t *testing.T) {
-		p, err := st.CreatePromoCode(ctx, "REDEEM30", 30, PlanCodeMerchant, nil, nil, "admin1")
+		p, err := st.CreatePromoCode(ctx, "REDEEM30", 30, PlanCodeMerchant, nil, nil, 0, "admin1")
 		if err != nil {
 			t.Fatalf("CreatePromoCode: %v", err)
 		}
@@ -100,7 +100,7 @@ func TestPromoCodes(t *testing.T) {
 	})
 
 	t.Run("Prevent Double Redemption by Same Workspace", func(t *testing.T) {
-		p, err := st.CreatePromoCode(ctx, "ONCEONLY", 15, PlanCodeMerchant, nil, nil, "admin")
+		p, err := st.CreatePromoCode(ctx, "ONCEONLY", 15, PlanCodeMerchant, nil, nil, 0, "admin")
 		if err != nil {
 			t.Fatalf("CreatePromoCode: %v", err)
 		}
@@ -118,7 +118,7 @@ func TestPromoCodes(t *testing.T) {
 
 	t.Run("Expired Promo Code", func(t *testing.T) {
 		past := time.Now().Add(-time.Hour)
-		p, err := st.CreatePromoCode(ctx, "EXPIRED_CODE", 30, PlanCodeMerchant, &past, nil, "admin")
+		p, err := st.CreatePromoCode(ctx, "EXPIRED_CODE", 30, PlanCodeMerchant, &past, nil, 0, "admin")
 		if err != nil {
 			t.Fatalf("CreatePromoCode: %v", err)
 		}
@@ -131,7 +131,7 @@ func TestPromoCodes(t *testing.T) {
 
 	t.Run("Max Uses Limit reached", func(t *testing.T) {
 		limit := 1
-		p, err := st.CreatePromoCode(ctx, "LIMITED_USES", 30, PlanCodeMerchant, nil, &limit, "admin")
+		p, err := st.CreatePromoCode(ctx, "LIMITED_USES", 30, PlanCodeMerchant, nil, &limit, 0, "admin")
 		if err != nil {
 			t.Fatalf("CreatePromoCode: %v", err)
 		}
@@ -155,7 +155,7 @@ func TestPromoCodes(t *testing.T) {
 	})
 
 	t.Run("Delete Promo Code", func(t *testing.T) {
-		p, err := st.CreatePromoCode(ctx, "DELETE_ME", 30, PlanCodeMerchant, nil, nil, "admin")
+		p, err := st.CreatePromoCode(ctx, "DELETE_ME", 30, PlanCodeMerchant, nil, nil, 0, "admin")
 		if err != nil {
 			t.Fatalf("CreatePromoCode: %v", err)
 		}
@@ -173,6 +173,68 @@ func TestPromoCodes(t *testing.T) {
 			if promo.Code == "DELETE_ME" {
 				t.Error("Deleted promo code should not be in the list")
 			}
+		}
+	})
+
+	t.Run("Discount Promo Code Creation and Redemption", func(t *testing.T) {
+		// 1. Create a workspace with default/trial plan
+		dws, err := st.UpsertWorkspaceByTelegram(ctx, 90001, "discount_user")
+		if err != nil {
+			t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+		}
+
+		// 2. Create discount promo code restricted to PlanCodeBusiness
+		p, err := st.CreatePromoCode(ctx, "BIZDISC20", 0, PlanCodeBusiness, nil, nil, 20, "admin")
+		if err != nil {
+			t.Fatalf("CreatePromoCode with discount: %v", err)
+		}
+
+		if p.DiscountPercent != 20 {
+			t.Errorf("Expected discount percent 20, got %d", p.DiscountPercent)
+		}
+		if p.PlanCode != PlanCodeBusiness {
+			t.Errorf("Expected plan code %s, got %s", PlanCodeBusiness, p.PlanCode)
+		}
+
+		// 3. Redeem discount promo code
+		updatedWs, err := st.RedeemPromoCode(ctx, dws.ID, p.Code)
+		if err != nil {
+			t.Fatalf("RedeemPromoCode failed: %v", err)
+		}
+
+		// Verify plan was NOT updated (since duration_days is 0)
+		if updatedWs.PlanCode != dws.PlanCode {
+			t.Errorf("Expected plan code to remain unchanged (%s), got %s", dws.PlanCode, updatedWs.PlanCode)
+		}
+
+		// Verify discount was applied
+		if updatedWs.DiscountPercent != 20 {
+			t.Errorf("Expected workspace discount percent 20, got %d", updatedWs.DiscountPercent)
+		}
+		if updatedWs.DiscountPlanCode == nil || *updatedWs.DiscountPlanCode != string(PlanCodeBusiness) {
+			t.Errorf("Expected workspace discount plan code 'business', got %v", updatedWs.DiscountPlanCode)
+		}
+
+		// 4. Create another promo code that is general (no plan restriction)
+		p2, err := st.CreatePromoCode(ctx, "ANYDISC10", 0, "", nil, nil, 10, "admin")
+		if err != nil {
+			t.Fatalf("CreatePromoCode: %v", err)
+		}
+
+		if p2.PlanCode != "" {
+			t.Errorf("Expected empty plan code, got %s", p2.PlanCode)
+		}
+
+		updatedWs2, err := st.RedeemPromoCode(ctx, dws.ID, p2.Code)
+		if err != nil {
+			t.Fatalf("RedeemPromoCode failed: %v", err)
+		}
+
+		if updatedWs2.DiscountPercent != 10 {
+			t.Errorf("Expected workspace discount percent 10, got %d", updatedWs2.DiscountPercent)
+		}
+		if updatedWs2.DiscountPlanCode != nil {
+			t.Errorf("Expected workspace discount plan code nil, got %v", updatedWs2.DiscountPlanCode)
 		}
 	})
 }

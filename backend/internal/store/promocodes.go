@@ -18,25 +18,31 @@ var (
 	ErrPromoCodeAlreadyUsed  = errors.New("promo code has already been redeemed by this workspace")
 )
 
-func (s *Store) CreatePromoCode(ctx context.Context, code string, durationDays int, planCode PlanCode, expiresAt *time.Time, maxUses *int, createdBy string) (PromoCode, error) {
+func (s *Store) CreatePromoCode(ctx context.Context, code string, durationDays int, planCode PlanCode, expiresAt *time.Time, maxUses *int, discountPercent int, createdBy string) (PromoCode, error) {
 	code = strings.ToUpper(strings.TrimSpace(code))
 	if code == "" {
 		return PromoCode{}, errors.New("promo code cannot be empty")
 	}
-	if durationDays <= 0 {
-		return PromoCode{}, errors.New("duration days must be greater than zero")
+	if durationDays < 0 {
+		return PromoCode{}, errors.New("duration days cannot be negative")
 	}
-	if planCode == "" {
+	if durationDays == 0 && discountPercent <= 0 {
+		return PromoCode{}, errors.New("duration days or discount percent must be greater than zero")
+	}
+	if discountPercent < 0 || discountPercent > 100 {
+		return PromoCode{}, errors.New("discount percent must be between 0 and 100")
+	}
+	if planCode == "" && durationDays > 0 {
 		planCode = PlanCodeMerchant
 	}
 
 	var promo PromoCode
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO promo_codes (code, duration_days, plan_code, expires_at, max_uses, created_by)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, code, duration_days, plan_code, expires_at, max_uses, uses_count, created_by, created_at
-	`, code, durationDays, planCode, expiresAt, maxUses, createdBy).Scan(
-		&promo.ID, &promo.Code, &promo.DurationDays, &promo.PlanCode, &promo.ExpiresAt, &promo.MaxUses, &promo.UsesCount, &promo.CreatedBy, &promo.CreatedAt,
+		INSERT INTO promo_codes (code, duration_days, plan_code, expires_at, max_uses, discount_percent, created_by)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, code, duration_days, plan_code, expires_at, max_uses, uses_count, discount_percent, created_by, created_at
+	`, code, durationDays, planCode, expiresAt, maxUses, discountPercent, createdBy).Scan(
+		&promo.ID, &promo.Code, &promo.DurationDays, &promo.PlanCode, &promo.ExpiresAt, &promo.MaxUses, &promo.UsesCount, &promo.DiscountPercent, &promo.CreatedBy, &promo.CreatedAt,
 	)
 	if err != nil {
 		return PromoCode{}, fmt.Errorf("create promo code: %w", err)
@@ -48,7 +54,7 @@ func (s *Store) CreatePromoCode(ctx context.Context, code string, durationDays i
 
 func (s *Store) ListPromoCodes(ctx context.Context) ([]PromoCode, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, code, duration_days, plan_code, expires_at, max_uses, uses_count, created_by, created_at
+		SELECT id, code, duration_days, plan_code, expires_at, max_uses, uses_count, discount_percent, created_by, created_at
 		FROM promo_codes
 		ORDER BY created_at DESC
 	`)
@@ -60,7 +66,7 @@ func (s *Store) ListPromoCodes(ctx context.Context) ([]PromoCode, error) {
 	var promos []PromoCode
 	for rows.Next() {
 		var promo PromoCode
-		if err := rows.Scan(&promo.ID, &promo.Code, &promo.DurationDays, &promo.PlanCode, &promo.ExpiresAt, &promo.MaxUses, &promo.UsesCount, &promo.CreatedBy, &promo.CreatedAt); err != nil {
+		if err := rows.Scan(&promo.ID, &promo.Code, &promo.DurationDays, &promo.PlanCode, &promo.ExpiresAt, &promo.MaxUses, &promo.UsesCount, &promo.DiscountPercent, &promo.CreatedBy, &promo.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan promo code: %w", err)
 		}
 		promos = append(promos, promo)
@@ -101,11 +107,11 @@ func (s *Store) RedeemPromoCode(ctx context.Context, workspaceID int64, code str
 	// Fetch promo code and lock it
 	var promo PromoCode
 	err = tx.QueryRow(ctx, `
-		SELECT id, code, duration_days, plan_code, expires_at, max_uses, uses_count
+		SELECT id, code, duration_days, plan_code, expires_at, max_uses, uses_count, discount_percent
 		FROM promo_codes
 		WHERE code = $1
 		FOR UPDATE
-	`, code).Scan(&promo.ID, &promo.Code, &promo.DurationDays, &promo.PlanCode, &promo.ExpiresAt, &promo.MaxUses, &promo.UsesCount)
+	`, code).Scan(&promo.ID, &promo.Code, &promo.DurationDays, &promo.PlanCode, &promo.ExpiresAt, &promo.MaxUses, &promo.UsesCount, &promo.DiscountPercent)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Workspace{}, ErrPromoCodeNotFound
 	}
@@ -155,14 +161,22 @@ func (s *Store) RedeemPromoCode(ctx context.Context, workspaceID int64, code str
 		return Workspace{}, fmt.Errorf("increment uses count: %w", err)
 	}
 
-	// Upgrade plan and extend subscription
+	var discountPlanCode *string
+	if promo.PlanCode != "" {
+		val := string(promo.PlanCode)
+		discountPlanCode = &val
+	}
+
+	// Upgrade plan and extend subscription if durationDays > 0, apply discount if discountPercent > 0
 	row := tx.QueryRow(ctx, `
 		UPDATE workspaces
-		SET plan_code = $2,
-		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + make_interval(days => $3)
+		SET plan_code = CASE WHEN $2 > 0 THEN $3 ELSE plan_code END,
+		    subscription_ends_at = CASE WHEN $2 > 0 THEN GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + make_interval(days => $2) ELSE subscription_ends_at END,
+		    discount_percent = CASE WHEN $4 > 0 THEN $4 ELSE discount_percent END,
+		    discount_plan_code = CASE WHEN $4 > 0 THEN $5 ELSE discount_plan_code END
 		WHERE id = $1
 		RETURNING `+workspaceSelectColumns+`
-	`, workspaceID, promo.PlanCode, promo.DurationDays)
+	`, workspaceID, promo.DurationDays, promo.PlanCode, promo.DiscountPercent, discountPlanCode)
 
 	workspace, err := scanWorkspace(row)
 	if err != nil {

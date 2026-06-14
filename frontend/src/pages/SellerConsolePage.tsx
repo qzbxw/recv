@@ -219,6 +219,11 @@ export function SellerConsolePage() {
   const [promoNotice, setPromoNotice] = useState("");
   const [promoError, setPromoError] = useState("");
 
+  useEffect(() => {
+    window.Telegram?.WebApp?.ready?.();
+    window.Telegram?.WebApp?.expand?.();
+  }, []);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -546,7 +551,17 @@ export function SellerConsolePage() {
     setPromoError("");
     try {
       const res = await redeemPromoCode(session.token, promoCode.trim().toUpperCase());
-      setPromoNotice(res.result || t.billing.promoSuccess || "Promo code redeemed successfully!");
+      const updatedWs = res.workspace;
+      let msg = res.result || "Promo code redeemed successfully!";
+      if (updatedWs && updatedWs.discount_percent > 0) {
+        if (updatedWs.discount_plan_code) {
+          const planName = updatedWs.discount_plan_code.charAt(0).toUpperCase() + updatedWs.discount_plan_code.slice(1);
+          msg = `Promo code redeemed! A ${updatedWs.discount_percent}% discount on ${planName} plan is applied.`;
+        } else {
+          msg = `Promo code redeemed! A ${updatedWs.discount_percent}% discount on any plan is applied.`;
+        }
+      }
+      setPromoNotice(msg);
       setPromoCode("");
       await loadSession(session.token, { silent: true });
     } catch (err) {
@@ -1772,7 +1787,33 @@ export function SellerConsolePage() {
                                 <span className="dev-plan-card__name">{plan.name}</span>
                                 {isCurrent && <span className="dev-api-badge dev-api-badge--get dev-api-badge--micro">{t.billing.currentBadge}</span>}
                               </div>
-                              <div className="dev-plan-card__price">${plan.price_usd}<span className="dev-plan-card__period">{t.billing.perMonth}</span></div>
+                              {(() => {
+                                const dPct = session.me.workspace.discount_percent || 0;
+                                const dPlan = session.me.workspace.discount_plan_code;
+                                const hasD = dPct > 0 && (!dPlan || dPlan === plan.code);
+                                if (hasD) {
+                                  const originalPrice = Number(plan.price_usd);
+                                  const discountedPrice = originalPrice * (1 - dPct / 100);
+                                  const formattedPrice = discountedPrice % 1 === 0 ? String(discountedPrice) : discountedPrice.toFixed(2);
+                                  return (
+                                    <div className="dev-plan-card__price">
+                                      <span style={{ textDecoration: "line-through", opacity: 0.6, fontSize: "0.85em", marginRight: "0.5rem" }}>
+                                        ${plan.price_usd}
+                                      </span>
+                                      <span style={{ color: "#27c24c", fontWeight: "bold" }}>
+                                        ${formattedPrice}
+                                      </span>
+                                      <span className="dev-plan-card__period">{t.billing.perMonth}</span>
+                                      <div style={{ fontSize: "0.75em", color: "#27c24c", marginTop: "0.25rem", fontWeight: "normal" }}>
+                                        ({dPct}% discount applied)
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div className="dev-plan-card__price">${plan.price_usd}<span className="dev-plan-card__period">{t.billing.perMonth}</span></div>
+                                );
+                              })()}
                               <div className="dev-plan-card__feats">
                                 {featRow(t.billing.featApi, plan.has_api)}
                                 {featRow(t.billing.featWebhooks, plan.has_webhooks)}
@@ -1823,6 +1864,19 @@ export function SellerConsolePage() {
                         ariaLabel={t.common.plan}
                         onChange={v => setBillingForm(c => ({ ...c, plan: v }))}
                       />
+                      {(() => {
+                        const selectedPlan = session.me.plans.find(p => p.code === billingForm.plan);
+                        const dPct = session.me.workspace.discount_percent || 0;
+                        const dPlan = session.me.workspace.discount_plan_code;
+                        const hasD = selectedPlan && dPct > 0 && (!dPlan || dPlan === selectedPlan.code);
+                        if (!hasD) return null;
+                        return (
+                          <div style={{ color: "#27c24c", fontSize: "0.85em", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                            <span style={{ fontSize: "1.2em" }}>✓</span>
+                            {dPct}% discount will be applied to your checkout!
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="dev-input-group">
                       <label>{t.common.network}</label>

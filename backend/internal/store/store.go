@@ -38,7 +38,9 @@ const workspaceSelectColumns = `
 	free_invoices_used,
 	is_blocked,
 	telegram_linked_at,
-	created_at
+	created_at,
+	discount_percent,
+	COALESCE(discount_plan_code, '')
 `
 
 const invoiceSelectColumns = `
@@ -158,7 +160,9 @@ func (s *Store) ListWorkspacesForUser(ctx context.Context, userID int64) ([]Work
 			w.free_invoices_used,
 			w.is_blocked,
 			w.telegram_linked_at,
-			w.created_at
+			w.created_at,
+			w.discount_percent,
+			COALESCE(w.discount_plan_code, '')
 		FROM workspaces w
 		JOIN workspace_members wm ON w.id = wm.workspace_id
 		WHERE wm.user_id = $1
@@ -1360,6 +1364,7 @@ func (s *Store) MarkNotificationFailed(ctx context.Context, id int64, message st
 func scanWorkspace(row pgx.Row) (Workspace, error) {
 	var workspace Workspace
 	var telegramID sql.NullInt64
+	var discountPlanCode string
 	err := row.Scan(
 		&workspace.ID,
 		&telegramID,
@@ -1373,7 +1378,12 @@ func scanWorkspace(row pgx.Row) (Workspace, error) {
 		&workspace.IsBlocked,
 		&workspace.TelegramLinkedAt,
 		&workspace.CreatedAt,
+		&workspace.DiscountPercent,
+		&discountPlanCode,
 	)
+	if discountPlanCode != "" {
+		workspace.DiscountPlanCode = &discountPlanCode
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Workspace{}, ErrNotFound
 	}
@@ -1602,7 +1612,9 @@ func applyInvoicePostPaymentEffects(ctx context.Context, tx pgx.Tx, invoice Invo
 	if _, err := tx.Exec(ctx, `
 		UPDATE workspaces
 		SET plan_code = $2,
-		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + make_interval(days => $3)
+		    subscription_ends_at = GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + make_interval(days => $3),
+		    discount_percent = 0,
+		    discount_plan_code = NULL
 		WHERE id = $1
 	`, invoice.WorkspaceID, planCode, invoice.SubscriptionDays); err != nil {
 		return fmt.Errorf("extend workspace subscription: %w", err)

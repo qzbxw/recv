@@ -26,6 +26,8 @@ export type Workspace = {
   plan_code: "trial" | "merchant" | "developer" | "business";
   subscription_ends_at: string | null;
   is_blocked: boolean;
+  discount_percent?: number;
+  discount_plan_code?: string | null;
   created_at: string;
 };
 
@@ -621,6 +623,7 @@ export type PromoCode = {
   expires_at: string | null;
   max_uses: number | null;
   uses_count: number;
+  discount_percent: number;
   created_by: string;
   created_at: string;
 };

@@ -1880,6 +1880,7 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
   const [planCode, setPlanCode] = useState("merchant");
   const [expiresAt, setExpiresAt] = useState("");
   const [maxUses, setMaxUses] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
 
   const loadPromos = useCallback(() => {
     setLoading(true);
@@ -1910,6 +1911,7 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
         plan_code: planCode,
         expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
         max_uses: maxUses ? Number(maxUses) : null,
+        discount_percent: Number(discountPercent),
       };
 
       await createAdminPromoCode(token, payload);
@@ -1919,6 +1921,7 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
       setPlanCode("merchant");
       setExpiresAt("");
       setMaxUses("");
+      setDiscountPercent(0);
       loadPromos();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create promo code");
@@ -1947,11 +1950,11 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
         <div className="console-card-spotlight" />
         <div className="dev-portal__section-header dev-portal__section-header--margin">
           <h3>Create Promo Code</h3>
-          <p>Generate a new code which grants a plan with subscription days.</p>
+          <p>Generate a new code which grants a plan with subscription days or a discount.</p>
         </div>
 
         <form onSubmit={handleCreate} className="dev-form">
-          <div className="dev-preset-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", width: "100%", marginBottom: "1rem" }}>
+          <div className="dev-preset-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", width: "100%", marginBottom: "1rem" }}>
             <div className="dev-input-group">
               <label>Promo Code</label>
               <input
@@ -1963,10 +1966,11 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
               />
             </div>
             <div className="dev-input-group">
-              <label>Plan Granted</label>
+              <label>Plan Restricted/Granted</label>
               <CustomSelect
                 value={planCode}
                 options={[
+                  { value: "", label: "Any Plan (Discount only)" },
                   { value: "merchant", label: "Merchant" },
                   { value: "developer", label: "Developer" },
                   { value: "business", label: "Business" },
@@ -1979,10 +1983,22 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
               <label>Duration (Days)</label>
               <input
                 type="number"
-                min="1"
+                min="0"
                 className="dev-input"
                 value={durationDays}
                 onChange={e => setDurationDays(Number(e.target.value))}
+                required
+              />
+            </div>
+            <div className="dev-input-group">
+              <label>Discount (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                className="dev-input"
+                value={discountPercent}
+                onChange={e => setDiscountPercent(Number(e.target.value))}
                 required
               />
             </div>
@@ -2030,6 +2046,7 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
               <tr>
                 <th>Code</th>
                 <th>Plan</th>
+                <th>Discount</th>
                 <th>Duration</th>
                 <th>Expires</th>
                 <th>Usage</th>
@@ -2041,21 +2058,36 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
             <tbody>
               {loading && promos.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="admin-table-empty">Loading promo codes...</td>
+                  <td colSpan={9} className="admin-table-empty">Loading promo codes...</td>
                 </tr>
               )}
               {!loading && promos.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="admin-table-empty">No promo codes yet.</td>
+                  <td colSpan={9} className="admin-table-empty">No promo codes yet.</td>
                 </tr>
               )}
               {promos.map(promo => (
                 <tr key={promo.id}>
                   <td><strong>{promo.code}</strong></td>
                   <td>
-                    <span className={`dev-api-badge dev-api-badge--get dev-api-badge--micro`}>
-                      {promo.plan_code}
-                    </span>
+                    {promo.plan_code ? (
+                      <span className={`dev-api-badge dev-api-badge--get dev-api-badge--micro`}>
+                        {promo.plan_code}
+                      </span>
+                    ) : (
+                      <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">
+                        Any
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {promo.discount_percent > 0 ? (
+                      <span className="dev-api-badge dev-api-badge--post dev-api-badge--micro" style={{ backgroundColor: "#27c24c", borderColor: "#27c24c", color: "#fff" }}>
+                        {promo.discount_percent}% off
+                      </span>
+                    ) : (
+                      "-"
+                    )}
                   </td>
                   <td>{promo.duration_days} days</td>
                   <td>{promo.expires_at ? formatDateTime(promo.expires_at) : "Never"}</td>

@@ -276,6 +276,7 @@ export async function createAdminPromoCode(token: string, payload: {
   plan_code: string;
   expires_at: string | null;
   max_uses: number | null;
+  discount_percent: number;
 }) {
   return request<PromoCode>("/api/admin/promocodes", {
     method: "POST",

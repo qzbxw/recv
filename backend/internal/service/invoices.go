@@ -191,6 +191,11 @@ func (s *InvoiceService) CreatePlanInvoiceWithPriceAndOptions(ctx context.Contex
 	baseAmountUSD := plan.PriceUSD
 	if overridePriceUSD != nil {
 		baseAmountUSD = overridePriceUSD.Round(6)
+	} else {
+		if workspace.DiscountPercent > 0 && (workspace.DiscountPlanCode == nil || *workspace.DiscountPlanCode == "" || store.PlanCode(*workspace.DiscountPlanCode) == planCode) {
+			discountMultiplier := decimal.NewFromInt(100 - int64(workspace.DiscountPercent)).Div(decimal.NewFromInt(100))
+			baseAmountUSD = baseAmountUSD.Mul(discountMultiplier).Round(2)
+		}
 	}
 	if !baseAmountUSD.IsPositive() {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "invalid_price")

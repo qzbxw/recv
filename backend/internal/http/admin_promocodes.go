@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"recv/backend/internal/store"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,11 +22,12 @@ func (s *Server) handleAdminListPromoCodes(c *gin.Context) {
 
 func (s *Server) handleAdminCreatePromoCode(c *gin.Context) {
 	var body struct {
-		Code         string     `json:"code"`
-		DurationDays int        `json:"duration_days"`
-		PlanCode     string     `json:"plan_code"`
-		ExpiresAt    *time.Time `json:"expires_at"`
-		MaxUses      *int       `json:"max_uses"`
+		Code            string     `json:"code"`
+		DurationDays    int        `json:"duration_days"`
+		PlanCode        string     `json:"plan_code"`
+		ExpiresAt       *time.Time `json:"expires_at"`
+		MaxUses         *int       `json:"max_uses"`
+		DiscountPercent int        `json:"discount_percent"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -37,30 +40,39 @@ func (s *Server) handleAdminCreatePromoCode(c *gin.Context) {
 		return
 	}
 
-	if body.DurationDays <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "duration_days must be greater than zero"})
+	if body.DurationDays < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "duration_days cannot be negative"})
+		return
+	}
+	if body.DurationDays == 0 && body.DiscountPercent <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "either duration_days or discount_percent must be greater than zero"})
 		return
 	}
 
-	planCode, ok := validAdminPlanCode(body.PlanCode)
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid plan_code"})
-		return
+	var planCode store.PlanCode
+	if body.PlanCode != "" {
+		var ok bool
+		planCode, ok = validAdminPlanCode(body.PlanCode)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid plan_code"})
+			return
+		}
 	}
 
 	adminCtx := adminFromContext(c)
-	promo, err := s.store.CreatePromoCode(c.Request.Context(), code, body.DurationDays, planCode, body.ExpiresAt, body.MaxUses, adminCtx.Claims.Username)
+	promo, err := s.store.CreatePromoCode(c.Request.Context(), code, body.DurationDays, planCode, body.ExpiresAt, body.MaxUses, body.DiscountPercent, adminCtx.Claims.Username)
 	if err != nil {
 		respondError(c, http.StatusBadRequest, err)
 		return
 	}
 
 	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_promo_code", "promo_code", promo.Code, gin.H{
-		"id":            promo.ID,
-		"duration_days": promo.DurationDays,
-		"plan_code":     promo.PlanCode,
-		"expires_at":    promo.ExpiresAt,
-		"max_uses":      promo.MaxUses,
+		"id":               promo.ID,
+		"duration_days":    promo.DurationDays,
+		"plan_code":        promo.PlanCode,
+		"expires_at":       promo.ExpiresAt,
+		"max_uses":         promo.MaxUses,
+		"discount_percent": promo.DiscountPercent,
 	})
 
 	c.JSON(http.StatusCreated, promo)
