@@ -22,6 +22,7 @@ import type {
   ReferralPartnerPayload,
   ReferralPartnerReport,
   ReferralPartnerStats,
+  PromoCode,
 } from "../types";
 import { getApiBase, request } from "./core";
 
@@ -261,6 +262,29 @@ export async function updateAdminMediaAlt(token: string, id: number, altText: st
 
 export async function deleteAdminMedia(token: string, id: number) {
   return request<{ status: string }>(`/api/admin/media/${id}`, {
+    method: "DELETE",
+  }, token);
+}
+
+export async function fetchAdminPromoCodes(token: string) {
+  return request<{ items: PromoCode[] }>("/api/admin/promocodes", {}, token);
+}
+
+export async function createAdminPromoCode(token: string, payload: {
+  code: string;
+  duration_days: number;
+  plan_code: string;
+  expires_at: string | null;
+  max_uses: number | null;
+}) {
+  return request<PromoCode>("/api/admin/promocodes", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function deleteAdminPromoCode(token: string, id: number) {
+  return request<{ ok: boolean }>(`/api/admin/promocodes/${id}`, {
     method: "DELETE",
   }, token);
 }

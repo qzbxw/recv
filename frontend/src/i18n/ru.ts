@@ -631,6 +631,11 @@ function verify(payload, signature, secret) {
       checkoutSubtitle: "Оплатите счёт за подписку криптовалютой.",
       included: "Включено",
       notIncluded: "Не включено",
+      promoTitle: "Промокод",
+      promoSubtitle: "Есть промокод? Введите его ниже, чтобы активировать тариф или продлить подписку.",
+      promoCodeLabel: "Код купона",
+      redeemBtn: "Активировать",
+      promoSuccess: "Промокод успешно активирован!",
     },
     settings: {
       title: "Настройки профиля",

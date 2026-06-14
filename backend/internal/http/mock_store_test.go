@@ -501,3 +501,19 @@ func (m *mockHTTPStore) UpdateWorkspaceMemberRole(ctx context.Context, workspace
 	}
 	return m.real.UpdateWorkspaceMemberRole(ctx, workspaceID, userID, role)
 }
+
+func (m *mockHTTPStore) CreatePromoCode(ctx context.Context, code string, durationDays int, planCode store.PlanCode, expiresAt *time.Time, maxUses *int, createdBy string) (store.PromoCode, error) {
+	return m.real.CreatePromoCode(ctx, code, durationDays, planCode, expiresAt, maxUses, createdBy)
+}
+
+func (m *mockHTTPStore) ListPromoCodes(ctx context.Context) ([]store.PromoCode, error) {
+	return m.real.ListPromoCodes(ctx)
+}
+
+func (m *mockHTTPStore) DeletePromoCode(ctx context.Context, id int64) error {
+	return m.real.DeletePromoCode(ctx, id)
+}
+
+func (m *mockHTTPStore) RedeemPromoCode(ctx context.Context, workspaceID int64, code string) (store.Workspace, error) {
+	return m.real.RedeemPromoCode(ctx, workspaceID, code)
+}

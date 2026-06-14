@@ -7,6 +7,7 @@ import {
   clearStoredToken,
   createAPIKey,
   createBillingCheckout,
+  redeemPromoCode,
   createInvoice,
   createWallet,
   createWebhookEndpoint,
@@ -213,6 +214,10 @@ export function SellerConsolePage() {
   const [invitingMember, setInvitingMember] = useState(false);
   const [teamNotice, setTeamNotice] = useState("");
   const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [redeemingPromo, setRedeemingPromo] = useState(false);
+  const [promoNotice, setPromoNotice] = useState("");
+  const [promoError, setPromoError] = useState("");
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -532,6 +537,23 @@ export function SellerConsolePage() {
       });
       setCheckoutUrl(buildCheckoutUrl(inv.public_id));
     } catch (err) { setError(formatApiError(err)); }
+  }
+
+  async function onRedeemPromoCode() {
+    if (!session || !promoCode.trim()) return;
+    setRedeemingPromo(true);
+    setPromoNotice("");
+    setPromoError("");
+    try {
+      const res = await redeemPromoCode(session.token, promoCode.trim().toUpperCase());
+      setPromoNotice(res.result || t.billing.promoSuccess || "Promo code redeemed successfully!");
+      setPromoCode("");
+      await loadSession(session.token, { silent: true });
+    } catch (err) {
+      setPromoError(formatApiError(err));
+    } finally {
+      setRedeemingPromo(false);
+    }
   }
 
   const filteredInvoices = useMemo(() => session?.invoices.filter(inv => inv.environment === environment) ?? [], [session, environment]);
@@ -1854,6 +1876,32 @@ export function SellerConsolePage() {
                         <p className="dev-card__plan-label">{t.billing.current}: <strong className="dev-card__plan-strong">{session.me.plan.name}</strong></p>
                       </div>
                     )}
+                  </div>
+                </div>
+
+                <div className="dev-card dev-billing-card console-spotlight-card" onMouseMove={handleMouseMove} style={{ marginTop: "2rem" }}>
+                  <div className="console-card-spotlight" />
+                  <div className="console-dogfood-glow" />
+                  <div className="dev-form">
+                    <h3>{t.billing.promoTitle}</h3>
+                    <p className="dev-card__note-text">{t.billing.promoSubtitle}</p>
+                    
+                    {promoNotice && <div className="alert alert--success" style={{ marginBottom: "1rem", cursor: "pointer" }} onClick={() => setPromoNotice("")}>{promoNotice}</div>}
+                    {promoError && <div className="alert" style={{ marginBottom: "1rem", color: "#ff4d4f", borderColor: "#ff4d4f", cursor: "pointer" }} onClick={() => setPromoError("")}>{promoError}</div>}
+                    
+                    <div className="dev-input-group">
+                      <label>{t.billing.promoCodeLabel}</label>
+                      <input
+                        type="text"
+                        className="dev-input"
+                        placeholder="SUMMER30"
+                        value={promoCode}
+                        onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                      />
+                    </div>
+                    <button className="dev-btn dev-btn--primary" onClick={onRedeemPromoCode} disabled={!promoCode.trim() || redeemingPromo}>
+                      {redeemingPromo ? t.common.loading : t.billing.redeemBtn}
+                    </button>
                   </div>
                 </div>
               </div>

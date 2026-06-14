@@ -31,6 +31,9 @@ import {
   resendAdminWebhookDelivery,
   reviewAdminInvoice,
   setStoredAdminToken,
+  fetchAdminPromoCodes,
+  createAdminPromoCode,
+  deleteAdminPromoCode,
 } from "../lib/api";
 import { CustomSelect } from "../components/CustomSelect";
 import { buildCheckoutUrl, buildCheckoutPath } from "../lib/routing";
@@ -49,9 +52,10 @@ import type {
   ReferralPartnerPayload,
   ReferralPartnerReport,
   ReferralPartnerStats,
+  PromoCode,
 } from "../lib/types";
 
-type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings";
+type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings" | "promocodes";
 
 type Filters = { status: string; kind: string; query: string };
 const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "" };
@@ -131,6 +135,7 @@ const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
   audit: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
   content: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></svg>,
   settings: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
+  promocodes: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" strokeLinecap="round" strokeWidth="3" /></svg>,
   logout: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
   refresh: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>,
 };
@@ -312,6 +317,7 @@ export function AdminDashboardPage() {
         { key: "invoices", label: "Invoices" },
         { key: "review", label: "Manual review", badge: overview?.invoices.manual_review || 0 },
         { key: "workspaces", label: "Workspaces" },
+        { key: "promocodes", label: "Promo Codes" },
       ],
     },
     {
@@ -438,6 +444,9 @@ export function AdminDashboardPage() {
             )}
 
             {activePanel === "settings" && <SettingsPanel token={token} setToast={setToast} setError={setError} />}
+            {activePanel === "promocodes" && (
+              <PromoCodesPanel token={token} setToast={setToast} setError={setError} />
+            )}
           </div>
         </div>
       </div>
@@ -1859,3 +1868,218 @@ function SettingsPanel({ token, setToast, setError }: { token: string; setToast:
     </div>
   );
 }
+
+function PromoCodesPanel({ token, setToast, setError }: { token: string; setToast: (msg: string) => void; setError: (msg: string) => void }) {
+  const [promos, setPromos] = useState<PromoCode[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  // Form State
+  const [code, setCode] = useState("");
+  const [durationDays, setDurationDays] = useState(30);
+  const [planCode, setPlanCode] = useState("merchant");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [maxUses, setMaxUses] = useState("");
+
+  const loadPromos = useCallback(() => {
+    setLoading(true);
+    fetchAdminPromoCodes(token)
+      .then(res => {
+        setPromos(res.items || []);
+      })
+      .catch(err => {
+        setError(err instanceof Error ? err.message : "Failed to load promo codes");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [token, setError]);
+
+  useEffect(() => {
+    loadPromos();
+  }, [loadPromos]);
+
+  async function handleCreate(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setCreating(true);
+    setError("");
+    try {
+      const payload = {
+        code: code.trim().toUpperCase(),
+        duration_days: Number(durationDays),
+        plan_code: planCode,
+        expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
+        max_uses: maxUses ? Number(maxUses) : null,
+      };
+
+      await createAdminPromoCode(token, payload);
+      setToast("Promo code created successfully");
+      setCode("");
+      setDurationDays(30);
+      setPlanCode("merchant");
+      setExpiresAt("");
+      setMaxUses("");
+      loadPromos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create promo code");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!window.confirm("Are you sure you want to delete this promo code?")) return;
+    setError("");
+    try {
+      await deleteAdminPromoCode(token, id);
+      setToast("Promo code deleted");
+      loadPromos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete promo code");
+    }
+  }
+
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Promo Codes" subtitle="Generate discount and subscription promo codes for users." />
+
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove} style={{ marginBottom: "2rem" }}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Create Promo Code</h3>
+          <p>Generate a new code which grants a plan with subscription days.</p>
+        </div>
+
+        <form onSubmit={handleCreate} className="dev-form">
+          <div className="dev-preset-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", width: "100%", marginBottom: "1rem" }}>
+            <div className="dev-input-group">
+              <label>Promo Code</label>
+              <input
+                className="dev-input"
+                value={code}
+                onChange={e => setCode(e.target.value.toUpperCase())}
+                placeholder="e.g. MON100"
+                required
+              />
+            </div>
+            <div className="dev-input-group">
+              <label>Plan Granted</label>
+              <CustomSelect
+                value={planCode}
+                options={[
+                  { value: "merchant", label: "Merchant" },
+                  { value: "developer", label: "Developer" },
+                  { value: "business", label: "Business" },
+                ]}
+                ariaLabel="Plan"
+                onChange={setPlanCode}
+              />
+            </div>
+            <div className="dev-input-group">
+              <label>Duration (Days)</label>
+              <input
+                type="number"
+                min="1"
+                className="dev-input"
+                value={durationDays}
+                onChange={e => setDurationDays(Number(e.target.value))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="dev-preset-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", width: "100%", marginBottom: "1rem" }}>
+            <div className="dev-input-group">
+              <label>Expiration Date (Optional)</label>
+              <input
+                type="datetime-local"
+                className="dev-input"
+                value={expiresAt}
+                onChange={e => setExpiresAt(e.target.value)}
+              />
+            </div>
+            <div className="dev-input-group">
+              <label>Max Uses (Optional)</label>
+              <input
+                type="number"
+                min="1"
+                className="dev-input"
+                value={maxUses}
+                onChange={e => setMaxUses(e.target.value)}
+                placeholder="Unlimited"
+              />
+            </div>
+          </div>
+
+          <button type="submit" className="dev-btn dev-btn--primary" disabled={creating}>
+            {creating ? "Creating..." : "Create Promo Code"}
+          </button>
+        </form>
+      </div>
+
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Active Promo Codes</h3>
+          <p>List of all existing promo codes and their current usage metrics.</p>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Plan</th>
+                <th>Duration</th>
+                <th>Expires</th>
+                <th>Usage</th>
+                <th>Created By</th>
+                <th>Created At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && promos.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="admin-table-empty">Loading promo codes...</td>
+                </tr>
+              )}
+              {!loading && promos.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="admin-table-empty">No promo codes yet.</td>
+                </tr>
+              )}
+              {promos.map(promo => (
+                <tr key={promo.id}>
+                  <td><strong>{promo.code}</strong></td>
+                  <td>
+                    <span className={`dev-api-badge dev-api-badge--get dev-api-badge--micro`}>
+                      {promo.plan_code}
+                    </span>
+                  </td>
+                  <td>{promo.duration_days} days</td>
+                  <td>{promo.expires_at ? formatDateTime(promo.expires_at) : "Never"}</td>
+                  <td>
+                    {promo.uses_count} / {promo.max_uses !== null ? promo.max_uses : "∞"}
+                  </td>
+                  <td>{promo.created_by}</td>
+                  <td>{formatDateTime(promo.created_at)}</td>
+                  <td>
+                    <button
+                      className="dev-btn dev-btn--secondary dev-btn--micro"
+                      onClick={() => handleDelete(promo.id)}
+                      style={{ color: "#ff4d4f", borderColor: "#ff4d4f" }}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+

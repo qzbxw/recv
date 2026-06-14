@@ -632,6 +632,11 @@ function verify(payload, signature, secret) {
       checkoutSubtitle: "Pay the subscription invoice with crypto.",
       included: "Included",
       notIncluded: "Not included",
+      promoTitle: "Promo Code",
+      promoSubtitle: "Have a promo code? Enter it below to activate your plan or extend your subscription.",
+      promoCodeLabel: "Promo Code",
+      redeemBtn: "Redeem Code",
+      promoSuccess: "Promo code redeemed successfully!",
     },
     settings: {
       title: "Profile Settings",

@@ -434,3 +434,22 @@ type BlogPost struct {
 	// locale translations of this slug are published.
 	AvailableLocales []string `json:"available_locales,omitempty"`
 }
+
+type PromoCode struct {
+	ID           int64      `json:"id"`
+	Code         string     `json:"code"`
+	DurationDays int        `json:"duration_days"`
+	PlanCode     PlanCode   `json:"plan_code"`
+	ExpiresAt    *time.Time `json:"expires_at"`
+	MaxUses      *int       `json:"max_uses"`
+	UsesCount    int        `json:"uses_count"`
+	CreatedBy    string     `json:"created_by"`
+	CreatedAt    time.Time  `json:"created_at"`
+}
+
+type PromoCodeRedemption struct {
+	ID          int64     `json:"id"`
+	PromoCodeID int64     `json:"promo_code_id"`
+	WorkspaceID int64     `json:"workspace_id"`
+	RedeemedAt  time.Time `json:"redeemed_at"`
+}

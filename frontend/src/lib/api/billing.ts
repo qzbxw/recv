@@ -12,3 +12,10 @@ export async function createBillingCheckout(token: string, payload: {
     body: JSON.stringify(payload),
   }, token);
 }
+
+export async function redeemPromoCode(token: string, code: string) {
+  return request<{ workspace: any; result: string }>("/api/billing/promo-code/redeem", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  }, token);
+}

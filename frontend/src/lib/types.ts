@@ -612,3 +612,15 @@ export type AdminMediaListResponse = {
   page: number;
   page_size: number;
 };
+
+export type PromoCode = {
+  id: number;
+  code: string;
+  duration_days: number;
+  plan_code: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  uses_count: number;
+  created_by: string;
+  created_at: string;
+};
