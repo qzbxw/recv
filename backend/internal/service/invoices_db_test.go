@@ -317,6 +317,39 @@ func TestInvoiceServiceCreatePlanInvoiceWithDB(t *testing.T) {
 			t.Errorf("Expected discounted price %s for Business plan, got %s", expectedBizPrice, invBiz.BaseAmountUSD)
 		}
 	})
+
+	t.Run("CreatePlanInvoice with custom subscription days", func(t *testing.T) {
+		// Configure billing wallet for TON
+		wallets := map[string]string{"TON": "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqCC"}
+		if err := st.UpsertSystemConfig(ctx, "billing_wallets", wallets, true, "test"); err != nil {
+			t.Fatalf("UpsertSystemConfig billing wallet: %v", err)
+		}
+		t.Cleanup(func() {
+			_ = st.UpsertSystemConfig(ctx, "billing_wallets", map[string]string{}, true, "test")
+		})
+
+		// 1. Minimum duration validation (less than 14 days must fail)
+		_, err := svc.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, store.PlanCodeDeveloper, []PaymentOptionInput{{Network: store.NetworkTON}}, nil, 10)
+		if err == nil || !strings.Contains(err.Error(), "at least 14 days") {
+			t.Fatalf("expected error for <14 days subscription, got: %v", err)
+		}
+
+		// 2. Custom 14 days on Developer Plan ($29/30 * 14 = $13.53)
+		invCustom, err := svc.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, store.PlanCodeDeveloper, []PaymentOptionInput{{Network: store.NetworkTON}}, nil, 14)
+		if err != nil {
+			t.Fatalf("CreatePlanInvoiceWithPriceAndOptions custom days: %v", err)
+		}
+		expectedPrice := decimal.RequireFromString("13.53")
+		if !invCustom.BaseAmountUSD.Equal(expectedPrice) {
+			t.Errorf("expected price %s, got %s", expectedPrice, invCustom.BaseAmountUSD)
+		}
+		if invCustom.SubscriptionDays != 14 {
+			t.Errorf("expected subscription days 14, got %d", invCustom.SubscriptionDays)
+		}
+		if invCustom.Title != "recv Developer · 14 days" {
+			t.Errorf("expected title 'recv Developer · 14 days', got '%s'", invCustom.Title)
+		}
+	})
 }
 
 // TestInvoiceServiceCreateInvoiceWalletBranches tests wallet selection logic.

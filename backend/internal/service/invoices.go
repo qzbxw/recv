@@ -164,10 +164,10 @@ func (s *InvoiceService) CreatePlanInvoice(ctx context.Context, workspace store.
 }
 
 func (s *InvoiceService) CreatePlanInvoiceWithPrice(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, network store.Network, overridePriceUSD *decimal.Decimal) (store.Invoice, error) {
-	return s.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, []PaymentOptionInput{{Network: network}}, overridePriceUSD)
+	return s.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, []PaymentOptionInput{{Network: network}}, overridePriceUSD, 0)
 }
 
-func (s *InvoiceService) CreatePlanInvoiceWithPriceAndOptions(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, requestedOptions []PaymentOptionInput, overridePriceUSD *decimal.Decimal) (store.Invoice, error) {
+func (s *InvoiceService) CreatePlanInvoiceWithPriceAndOptions(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, requestedOptions []PaymentOptionInput, overridePriceUSD *decimal.Decimal, customDays int) (store.Invoice, error) {
 	source := metrics.SourceFromContext(ctx)
 	planCode = store.NormalizePlanCode(string(planCode))
 	network := store.Network("")
@@ -188,7 +188,19 @@ func (s *InvoiceService) CreatePlanInvoiceWithPriceAndOptions(ctx context.Contex
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "unsupported_network")
 		return store.Invoice{}, err
 	}
+	billingDays := plan.BillingDays
+	if customDays > 0 {
+		if customDays < 14 {
+			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "invalid_duration")
+			return store.Invoice{}, errors.New("subscription duration must be at least 14 days")
+		}
+		billingDays = customDays
+	}
+
 	baseAmountUSD := plan.PriceUSD
+	if customDays > 0 {
+		baseAmountUSD = plan.PriceUSD.Mul(decimal.NewFromInt(int64(customDays))).Div(decimal.NewFromInt(int64(plan.BillingDays))).Round(2)
+	}
 	if overridePriceUSD != nil {
 		baseAmountUSD = overridePriceUSD.Round(6)
 	} else {
@@ -219,13 +231,17 @@ func (s *InvoiceService) CreatePlanInvoiceWithPriceAndOptions(ctx context.Contex
 	if err != nil {
 		return store.Invoice{}, err
 	}
+	title := plan.CheckoutTitle
+	if customDays > 0 {
+		title = fmt.Sprintf("recv %s · %d days", plan.Name, customDays)
+	}
 	invoice, err := s.createInvoiceFromOptions(ctx, store.CreateInvoiceParams{
 		WorkspaceID:       workspace.ID,
 		Kind:              store.InvoiceKindSubscription,
-		SubscriptionDays:  plan.BillingDays,
+		SubscriptionDays:  billingDays,
 		PlanCode:          plan.Code,
 		CountTowardsTrial: false,
-		Title:             plan.CheckoutTitle,
+		Title:             title,
 		BaseAmountUSD:     baseAmountUSD,
 		Mode:              "live",
 	}, requests, wallets, ttl)

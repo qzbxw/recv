@@ -285,8 +285,19 @@ func NormalizeLanguage(value string) string {
 }
 
 func (w Workspace) HasActiveSubscription(now time.Time) bool {
-	return w.SubscriptionEndsAt != nil && w.SubscriptionEndsAt.After(now)
+	if w.SubscriptionEndsAt == nil {
+		return false
+	}
+	if w.SubscriptionEndsAt.After(now) {
+		return true
+	}
+	planCode := NormalizePlanCode(string(w.PlanCode))
+	if planCode == PlanCodeDeveloper || planCode == PlanCodeBusiness {
+		return w.SubscriptionEndsAt.Add(7 * 24 * time.Hour).After(now)
+	}
+	return false
 }
+
 
 func (w Workspace) EffectivePlanCode(now time.Time) PlanCode {
 	if !w.HasActiveSubscription(now) {

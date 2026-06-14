@@ -933,16 +933,22 @@ func isWorkspaceManagedInvoice(invoice store.Invoice) bool {
 func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	var body struct {
-		PayableNetwork string `json:"payable_network"`
-		PayableAsset   string `json:"payable_asset"`
-		PaymentOptions []struct {
+		PayableNetwork   string `json:"payable_network"`
+		PayableAsset     string `json:"payable_asset"`
+		PaymentOptions   []struct {
 			Network string `json:"network"`
 			Asset   string `json:"asset"`
 		} `json:"payment_options"`
-		PlanCode string `json:"plan_code"`
+		PlanCode         string `json:"plan_code"`
+		SubscriptionDays int    `json:"subscription_days"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if body.SubscriptionDays > 0 && body.SubscriptionDays < 14 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "subscription duration must be at least 14 days"})
 		return
 	}
 
@@ -955,7 +961,7 @@ func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	if len(options) == 0 {
 		options = []service.PaymentOptionInput{{Network: network, Asset: store.NormalizePaymentAsset(body.PayableAsset)}}
 	}
-	invoice, err := s.invoiceService.CreatePlanInvoiceWithPriceAndOptions(c.Request.Context(), wc.Workspace, planCode, options, nil)
+	invoice, err := s.invoiceService.CreatePlanInvoiceWithPriceAndOptions(c.Request.Context(), wc.Workspace, planCode, options, nil, body.SubscriptionDays)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

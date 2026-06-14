@@ -32,6 +32,12 @@ const PLAN_OPTIONS = [
   { value: "business", label: "Business" },
 ] as const;
 
+const PLAN_PRICES = {
+  merchant: 9,
+  developer: 29,
+  business: 79,
+} as const;
+
 const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
   { value: "TON", label: "TON" },
   { value: "TON_USDT", label: "TON USDT" },
@@ -70,6 +76,7 @@ export function DeveloperPortalPage() {
   const [copiedId, setCopiedId] = useState("");
   const [billingPlan, setBillingPlan] = useState<string>("developer");
   const [billingNetwork, setBillingNetwork] = useState<Network>("TRON");
+  const [billingDays, setBillingDays] = useState<number>(30);
   const [keyLabel, setKeyLabel] = useState("");
   const [keyScopes, setKeyScopes] = useState<string[]>(DEFAULT_SCOPES);
   const [keyEnvironment, setKeyEnvironment] = useState<Environment>("test");
@@ -183,8 +190,16 @@ export function DeveloperPortalPage() {
 
   const handleUpgrade = async () => {
     if (!token) return;
+    if (billingDays < 14) {
+      setError(t.billing.durationInvalid || "Subscription duration must be at least 14 days");
+      return;
+    }
     try {
-      const invoice = await createBillingCheckout(token, { payable_network: billingNetwork, plan_code: billingPlan });
+      const invoice = await createBillingCheckout(token, {
+        payable_network: billingNetwork,
+        plan_code: billingPlan,
+        subscription_days: billingDays,
+      });
       setCheckoutUrl(buildCheckoutUrl(invoice.public_id));
     } catch (err) { setError(formatApiError(err)); }
   };
@@ -728,9 +743,41 @@ export function DeveloperPortalPage() {
                     <CustomSelect value={billingPlan} options={PLAN_OPTIONS.map(o => ({...o}))} ariaLabel={t.common.plan} onChange={v => setBillingPlan(v)} />
                   </div>
                   <div className="dev-input-group">
+                    <label>{t.billing.durationDays || "Duration (days)"}</label>
+                    <input
+                      type="number"
+                      min="14"
+                      className="dev-input"
+                      value={billingDays}
+                      onChange={e => {
+                        const val = parseInt(e.target.value, 10);
+                        setBillingDays(isNaN(val) ? 30 : val);
+                      }}
+                    />
+                    <span className="dev-input-hint" style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "0.25rem" }}>
+                      {t.billing.durationDaysHint || "Minimum 14 days"}
+                    </span>
+                  </div>
+                  <div className="dev-input-group">
                     <label>{t.common.network}</label>
                     <CustomSelect value={billingNetwork} options={NETWORK_OPTIONS} ariaLabel={t.common.network} onChange={v => setBillingNetwork(v as any)} />
                   </div>
+                  {(() => {
+                    const basePrice = PLAN_PRICES[billingPlan as keyof typeof PLAN_PRICES];
+                    const days = billingDays;
+                    if (days < 14) return null;
+                    const dailyRate = basePrice / 30;
+                    const totalPrice = dailyRate * days;
+                    const dPct = me?.workspace?.discount_percent || 0;
+                    const dPlan = me?.workspace?.discount_plan_code;
+                    const hasD = dPct > 0 && (!dPlan || dPlan === billingPlan);
+                    const finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
+                    return (
+                      <div style={{ fontSize: "0.9em", marginBottom: "1rem", opacity: 0.9 }}>
+                        {t.billing.estimatedPrice || "Estimated price"}: <strong>${finalPrice.toFixed(2)} USD</strong> {days !== 30 && `(for ${days} days)`}
+                      </div>
+                    );
+                  })()}
                   <button className="dev-btn dev-btn--primary" onClick={handleUpgrade}>{t.billing.upgrade}</button>
                 </div>
 

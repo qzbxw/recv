@@ -193,7 +193,7 @@ export function SellerConsolePage() {
   const [hookForm, setHookForm] = useState({ label: "", url: "" });
   const [latestKeySecret, setLatestKeySecret] = useState("");
   const [latestWebhookSecret, setLatestWebhookSecret] = useState("");
-  const [billingForm, setBillingForm] = useState<{ plan: string; network: Network; optionKeys: string[] }>({ plan: "merchant", network: "TRON", optionKeys: ["TRON:USDT"] });
+  const [billingForm, setBillingForm] = useState<{ plan: string; network: Network; optionKeys: string[]; subscriptionDays: number }>({ plan: "merchant", network: "TRON", optionKeys: ["TRON:USDT"], subscriptionDays: 30 });
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [emailForm, setEmailForm] = useState("");
   const [emailNotice, setEmailNotice] = useState("");
@@ -531,6 +531,10 @@ export function SellerConsolePage() {
 
   async function onUpgrade() {
     if (!session) return;
+    if (billingForm.subscriptionDays < 14) {
+      setError(t.billing.durationInvalid || "Subscription duration must be at least 14 days");
+      return;
+    }
     try {
       const inv = await createBillingCheckout(session.token, {
         payable_network: billingForm.network,
@@ -539,6 +543,7 @@ export function SellerConsolePage() {
           .filter(Boolean)
           .map(option => ({ network: option!.network, asset: option!.asset })),
         plan_code: billingForm.plan,
+        subscription_days: billingForm.subscriptionDays,
       });
       setCheckoutUrl(buildCheckoutUrl(inv.public_id));
     } catch (err) { setError(formatApiError(err)); }
@@ -1874,6 +1879,39 @@ export function SellerConsolePage() {
                           <div style={{ color: "#27c24c", fontSize: "0.85em", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
                             <span style={{ fontSize: "1.2em" }}>✓</span>
                             {dPct}% discount will be applied to your checkout!
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    <div className="dev-input-group">
+                      <label>{t.billing.durationDays || "Duration (days)"}</label>
+                      <input
+                        type="number"
+                        min="14"
+                        className="dev-input"
+                        value={billingForm.subscriptionDays}
+                        onChange={e => {
+                          const val = parseInt(e.target.value, 10);
+                          setBillingForm(c => ({ ...c, subscriptionDays: isNaN(val) ? 30 : val }));
+                        }}
+                      />
+                      <span className="dev-input-hint" style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "0.25rem" }}>
+                        {t.billing.durationDaysHint || "Minimum 14 days"}
+                      </span>
+                      {(() => {
+                        const selectedPlan = session.me.plans.find(p => p.code === billingForm.plan);
+                        if (!selectedPlan) return null;
+                        const days = billingForm.subscriptionDays;
+                        if (days < 14) return null;
+                        const dailyRate = Number(selectedPlan.price_usd) / 30;
+                        const totalPrice = dailyRate * days;
+                        const dPct = session.me.workspace.discount_percent || 0;
+                        const dPlan = session.me.workspace.discount_plan_code;
+                        const hasD = dPct > 0 && (!dPlan || dPlan === selectedPlan.code);
+                        const finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
+                        return (
+                          <div style={{ fontSize: "0.9em", marginTop: "0.5rem", opacity: 0.9 }}>
+                            {t.billing.estimatedPrice || "Estimated price"}: <strong>${finalPrice.toFixed(2)} USD</strong> {days !== 30 && `(for ${days} days)`}
                           </div>
                         );
                       })()}

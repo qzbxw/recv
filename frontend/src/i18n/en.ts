@@ -637,6 +637,10 @@ function verify(payload, signature, secret) {
       promoCodeLabel: "Promo Code",
       redeemBtn: "Redeem Code",
       promoSuccess: "Promo code redeemed successfully!",
+      durationDays: "Duration (days)",
+      durationDaysHint: "Minimum 14 days",
+      durationInvalid: "Subscription duration must be at least 14 days",
+      estimatedPrice: "Estimated price",
     },
     settings: {
       title: "Profile Settings",
@@ -739,6 +743,10 @@ function verify(payload, signature, secret) {
       current: "Your current plan",
       businessNote: "Need teams, audit logs, and custom branding? Move to Business.",
       contactSupport: "Open billing",
+      durationDays: "Duration (days)",
+      durationDaysHint: "Minimum 14 days",
+      durationInvalid: "Subscription duration must be at least 14 days",
+      estimatedPrice: "Estimated price",
     },
     mcp: {
       title: "Model Context Protocol (MCP) Server",

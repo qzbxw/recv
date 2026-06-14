@@ -2417,6 +2417,27 @@ func TestHandleCreateBillingCheckoutMalformedJSON(t *testing.T) {
 	}
 }
 
+func TestHandleCreateBillingCheckoutInvalidDuration(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	server := &Server{}
+	workspace := store.Workspace{ID: 1}
+
+	router := gin.New()
+	router.Use(withWorkspaceContext(workspace))
+	router.POST("/api/billing/checkout", server.handleCreateBillingCheckout)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(stdhttp.MethodPost, "/api/billing/checkout", strings.NewReader(`{"payable_network":"TON","plan_code":"developer","subscription_days":10}`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(rec, req)
+	if rec.Code != stdhttp.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid subscription days, got %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "subscription duration must be at least 14 days") {
+		t.Fatalf("expected error message for minimum duration, got %s", rec.Body.String())
+	}
+}
+
 func TestHandleObservedTransfersMissingTxHash(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	server := &Server{}

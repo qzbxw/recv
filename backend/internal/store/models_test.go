@@ -171,7 +171,7 @@ func TestWorkspaceEffectivePlan(t *testing.T) {
 
 	expiredWorkspace := Workspace{
 		PlanCode:           PlanCodeBusiness,
-		SubscriptionEndsAt: ptrTime(now.Add(-time.Hour)),
+		SubscriptionEndsAt: ptrTime(now.Add(-8 * 24 * time.Hour)),
 	}
 	if got := expiredWorkspace.EffectivePlanCode(now); got != PlanCodeTrial {
 		t.Fatalf("expected expired subscription to fall back to trial, got %s", got)
@@ -311,6 +311,26 @@ func TestWorkspaceHasActiveSubscription(t *testing.T) {
 	}
 	if (Workspace{}).HasActiveSubscription(now) {
 		t.Fatal("expected nil subscription to be inactive")
+	}
+
+	// Test grace period for developer plan
+	expiredDev := now.Add(-24 * time.Hour) // 1 day ago
+	wsDev := Workspace{
+		PlanCode:           PlanCodeDeveloper,
+		SubscriptionEndsAt: &expiredDev,
+	}
+	if !wsDev.HasActiveSubscription(now) {
+		t.Fatal("expected developer plan to be active during 7-day grace period")
+	}
+
+	// Test expired grace period for developer plan
+	expiredDevLongAgo := now.Add(-8 * 24 * time.Hour) // 8 days ago
+	wsDevExpired := Workspace{
+		PlanCode:           PlanCodeDeveloper,
+		SubscriptionEndsAt: &expiredDevLongAgo,
+	}
+	if wsDevExpired.HasActiveSubscription(now) {
+		t.Fatal("expected developer plan to be inactive after 7-day grace period")
 	}
 }
 

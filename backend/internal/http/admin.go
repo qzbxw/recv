@@ -418,7 +418,7 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 	if len(options) == 0 {
 		options = []service.PaymentOptionInput{{Network: network, Asset: store.NormalizePaymentAsset(body.PayableAsset)}}
 	}
-	invoice, err := s.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, options, nil)
+	invoice, err := s.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, options, nil, 0)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

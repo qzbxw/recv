@@ -6,6 +6,7 @@ export async function createBillingCheckout(token: string, payload: {
   payable_asset?: string;
   payment_options?: Array<{ network: string; asset: string }>;
   plan_code?: string;
+  subscription_days?: number;
 }) {
   return request<Invoice>("/api/billing/checkout", {
     method: "POST",

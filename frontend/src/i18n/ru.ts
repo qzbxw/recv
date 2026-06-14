@@ -636,6 +636,10 @@ function verify(payload, signature, secret) {
       promoCodeLabel: "Код купона",
       redeemBtn: "Активировать",
       promoSuccess: "Промокод успешно активирован!",
+      durationDays: "Срок подписки (дней)",
+      durationDaysHint: "Минимум 14 дней",
+      durationInvalid: "Срок подписки должен быть не менее 14 дней",
+      estimatedPrice: "Ориентировочная стоимость",
     },
     settings: {
       title: "Настройки профиля",
@@ -738,6 +742,10 @@ function verify(payload, signature, secret) {
       current: "Ваш текущий тариф",
       businessNote: "Нужны команды, audit logs и кастом-брендинг? Переходите на Business.",
       contactSupport: "Открыть биллинг",
+      durationDays: "Срок подписки (дней)",
+      durationDaysHint: "Минимум 14 дней",
+      durationInvalid: "Срок подписки должен быть не менее 14 дней",
+      estimatedPrice: "Ориентировочная стоимость",
     },
     mcp: {
       title: "Model Context Protocol (MCP) Сервер",
