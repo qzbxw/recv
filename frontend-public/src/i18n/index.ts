@@ -21,4 +21,9 @@ export const PUBLIC_MARKETING_COPY = {
   en: { ...en.marketing, hero: en.hero, final: en.final, nav: en.nav, networks: en.networks }, 
   ru: { ...ru.marketing, hero: ru.hero, final: ru.final, nav: ru.nav, networks: ru.networks } 
 } as const;
-export const PUBLIC_LEGAL_COPY = { privacy: { en: en.legal.privacy, ru: ru.legal.privacy }, terms: { en: en.legal.terms, ru: ru.legal.terms } } as const;
+export const PUBLIC_LEGAL_COPY = { 
+  privacy: { en: en.legal.privacy, ru: ru.legal.privacy }, 
+  terms: { en: en.legal.terms, ru: ru.legal.terms },
+  dpa: { en: en.legal.dpa, ru: ru.legal.dpa },
+  subprocessors: { en: en.legal.subprocessors, ru: ru.legal.subprocessors }
+} as const;
