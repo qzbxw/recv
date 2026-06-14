@@ -336,7 +336,11 @@ export function AuthPortalPage() {
             <div className="alert auth-portal__alert" style={{ marginTop: '1.25rem' }}>{error}</div>
           ) : null}
 
-          <div className="auth-portal__footer-actions" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+          <p className="auth-portal__disclaimer" style={{ fontSize: '0.75rem', color: '#a0aec0', textAlign: 'center', marginTop: '1.5rem', lineHeight: '1.4', padding: '0 10px' }}>
+            {text.termsDisclaimer}
+          </p>
+
+          <div className="auth-portal__footer-actions" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
              {initData ? (
                 <button
                   type="button"

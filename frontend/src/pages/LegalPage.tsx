@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useUI } from "../lib/ui";
 import { LEGAL_COPY as COPY } from "../i18n";
 
-type LegalVariant = "privacy" | "terms";
+type LegalVariant = "privacy" | "terms" | "dpa" | "subprocessors";
 type LegalSection = {
   title: string;
   paragraphs: string[];
@@ -40,8 +40,6 @@ const LEGAL_PROFILE = {
     en: "March 13, 2026",
   },
 } as const;const legalCopy = COPY as unknown as Record<LegalVariant, Record<"ru" | "en", LegalCopy>>;
-legalCopy.privacy.en.sections = legalCopy.privacy.ru.sections;
-legalCopy.terms.en.sections = legalCopy.terms.ru.sections;
 
 export function LegalPage({ variant }: { variant: LegalVariant }) {
   const { language, setLanguage } = useUI();
@@ -148,6 +146,8 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
           <div className="lend-footer-links">
             <Link to="/privacy">Privacy</Link>
             <Link to="/terms">Terms</Link>
+            <Link to="/dpa">DPA</Link>
+            <Link to="/subprocessors">Subprocessors</Link>
             <Link to="/developers">Docs</Link>
             <Link to="/dev">API</Link>
             <Link to="/auth">Business</Link>

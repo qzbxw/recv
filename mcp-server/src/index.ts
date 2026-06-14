@@ -171,7 +171,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             workspace_name: { type: "string", description: "Optional short workspace label used in the generated workspace slug" },
             contact_email: { type: "string", description: "Optional owner/contact email for receipts and support" },
+            terms_accepted: {
+              type: "boolean",
+              description: "By invoking this onboarding operation, the agent represents that it is authorized by the Merchant to create the workspace and accept the then-current Terms of Service on the Merchant’s behalf. The Merchant remains responsible for all actions performed through credentials issued to the agent. Must be explicitly set to true."
+            }
           },
+          required: ["terms_accepted"]
         },
       },
       {
@@ -398,11 +403,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return jsonToolResult(data, response.ok);
       }
       case "bootstrap_agent_workspace": {
-        const { workspace_name = "", contact_email = "" } = (args as any) || {};
+        const { workspace_name = "", contact_email = "", terms_accepted } = (args as any) || {};
+        if (!terms_accepted) {
+          return {
+            content: [{ type: "text", text: "Error: You must accept the terms of service (set terms_accepted: true) to bootstrap an agent workspace. By invoking this onboarding operation, the agent represents that it is authorized by the Merchant to create the workspace and accept the then-current Terms of Service on the Merchant’s behalf. The Merchant remains responsible for all actions performed through credentials issued to the agent." }],
+            isError: true
+          };
+        }
         const response = await apiFetch(appApiUrl("/api/auth/agent/bootstrap"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ workspace_name, contact_email }),
+          body: JSON.stringify({ workspace_name, contact_email, terms_accepted: true }),
         });
         const data = await parseJSONResponse(response);
         if (response.ok) {

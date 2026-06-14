@@ -1,4 +1,7 @@
+"use client";
+
 import Script from "next/script";
+import { useEffect, useState } from "react";
 
 export function OptionalAnalytics({
   gtmId,
@@ -7,9 +10,32 @@ export function OptionalAnalytics({
   gtmId?: string;
   yandexMetrikaId?: string;
 }) {
+  const [consent, setConsent] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Read initial consent on mount
+    const stored = localStorage.getItem("recv_analytics_consent");
+    setConsent(stored);
+
+    const handleConsentChange = () => {
+      setConsent(localStorage.getItem("recv_analytics_consent"));
+    };
+
+    window.addEventListener("recv-consent-changed", handleConsentChange);
+    // Also listen to storage events from other tabs/windows
+    window.addEventListener("storage", handleConsentChange);
+
+    return () => {
+      window.removeEventListener("recv-consent-changed", handleConsentChange);
+      window.removeEventListener("storage", handleConsentChange);
+    };
+  }, []);
+
   const gtm = gtmId?.trim();
   const yandex = yandexMetrikaId?.trim();
 
+  // If consent is not explicitly "accepted", do not load optional analytics
+  if (consent !== "accepted") return null;
   if (!gtm && !yandex) return null;
 
   return (

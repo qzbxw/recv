@@ -2900,7 +2900,7 @@ func TestAuthHandlersWithDB(t *testing.T) {
 		body := `{"workspace_name":"test-agent-' + strconv.FormatInt(time.Now().UnixNano(), 10) + '","contact_email":"agent@test.com"}`
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(stdhttp.MethodPost, "/api/auth/agent/bootstrap",
-			strings.NewReader(`{"workspace_name":"agentws96400","contact_email":"agent@test.com"}`))
+			strings.NewReader(`{"workspace_name":"agentws96400","contact_email":"agent@test.com","terms_accepted":true}`))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(rec, req)
 		if rec.Code != stdhttp.StatusCreated {
@@ -4609,7 +4609,7 @@ func TestHandleAgentBootstrapErrorWithDB(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := withCanceledContext(httptest.NewRequest(stdhttp.MethodPost, "/api/auth/agent/bootstrap",
-		strings.NewReader(`{"workspace_name":"test-ws","contact_email":"test@example.com"}`)))
+		strings.NewReader(`{"workspace_name":"test-ws","contact_email":"test@example.com","terms_accepted":true}`)))
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(rec, req)
 	if rec.Code != stdhttp.StatusInternalServerError {

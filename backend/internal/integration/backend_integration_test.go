@@ -1106,6 +1106,7 @@ func bootstrapAgentWorkspace(t *testing.T, client *http.Client, baseURL string) 
 	status, body := doJSON(t, client, http.MethodPost, baseURL+"/api/auth/agent/bootstrap", nil, map[string]any{
 		"workspace_name": "Agent Workspace",
 		"contact_email":  "agent@example.test",
+		"terms_accepted": true,
 		"attribution": map[string]any{
 			"utm_source": "integration",
 		},

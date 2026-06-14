@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MarketingLayout } from "./marketing/MarketingLayout";
 import { PUBLIC_LEGAL_COPY as COPY } from "@/i18n";
 
-type LegalVariant = "privacy" | "terms";
+type LegalVariant = "privacy" | "terms" | "dpa" | "subprocessors";
 type LegalSection = {
   title: string;
   paragraphs: string[];
@@ -39,8 +39,6 @@ const LEGAL_PROFILE = {
     en: "March 13, 2026",
   },
 } as const;const legalCopy = COPY as unknown as Record<LegalVariant, Record<"ru" | "en", LegalCopy>>;
-legalCopy.privacy.en.sections = legalCopy.privacy.ru.sections;
-legalCopy.terms.en.sections = legalCopy.terms.ru.sections;
 
 export function LegalPage({ variant, language }: { variant: LegalVariant; language: "ru" | "en" }) {
   const copy = legalCopy[variant][language];
@@ -123,6 +121,8 @@ export function LegalPage({ variant, language }: { variant: LegalVariant; langua
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm">
             <Link href={`/${language}/privacy`} className="text-white/50 hover:text-accent transition-colors">Privacy</Link>
             <Link href={`/${language}/terms`} className="text-white/50 hover:text-accent transition-colors">Terms</Link>
+            <Link href={`/${language}/dpa`} className="text-white/50 hover:text-accent transition-colors">DPA</Link>
+            <Link href={`/${language}/subprocessors`} className="text-white/50 hover:text-accent transition-colors">Subprocessors</Link>
             <Link href={`/${language}/docs/introduction`} className="text-white/50 hover:text-accent transition-colors">Docs</Link>
             <Link href={`/${language}/dev`} className="text-white/50 hover:text-accent transition-colors">API</Link>
             <Link href={`/${language}/business`} className="text-white/50 hover:text-accent transition-colors">Business</Link>

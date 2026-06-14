@@ -1790,23 +1790,22 @@ const inv = await res.json();`
 // Advanced Analytics enabled`
     },
   },
-  legal: { privacy: {
+  legal: {
+    privacy: {
       kicker: "PRIVACY POLICY",
-      title: "PRIVACY POLICY AND DATA PROCESSING AGREEMENT",
+      title: "PRIVACY POLICY",
       summary:
         "READ THIS DOCUMENT CAREFULLY. BY ACCESSING THE RECV SOFTWARE, DASHBOARD, API, OR PUBLIC CHECKOUT PAGES, YOU EXPLICITLY CONSENT TO THE DATA PRACTICES DESCRIBED HEREIN. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY CEASE ALL USE OF THE SERVICE.",
       updatedLabel: "Last Updated",
       operatorLabel: "Effective Date",
-      metaItems: ["Last Updated: March 13, 2026", "Effective Date: March 13, 2026"],
-      draftTitle: "Document Frame",
+      metaItems: ["Last Updated: June 14, 2026", "Effective Date: June 14, 2026"],
+      draftTitle: "Service Provider and Data Controller",
       draftBody:
-        "This page preserves the provided Privacy text in English without translation.",
+        "The Service is operated by the operators of the website recv.money (“recv”, “Company”, “we”, “us”). Notices and requests may be submitted to the following contact channels:",
       draftItems: [
-        "Scope: software, dashboard, API, Telegram bots, checkout pages",
-        "Data reality: blockchain is public and immutable",
-        "Storage: strictly necessary localStorage only",
-        "Sharing: Telegram, RPC providers, cloud infrastructure, market oracles",
-        "Retention: active account + disputes + technical logs",
+        "Legal Notices: legal@recv.money",
+        "Privacy Requests: privacy@recv.money",
+        "Support: support@recv.money",
       ],
       sections: [
         {
@@ -1820,237 +1819,313 @@ const inv = await res.json();`
           title: "2. THE FUNDAMENTAL REALITY OF BLOCKCHAIN DATA (CRITICAL NOTICE)",
           paragraphs: [
             "2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TRON, Solana, Base, Arbitrum, and BSC) are decentralized, public ledgers.",
-            '2.2. No Expectation of Privacy On-Chain: Wallet addresses, transaction hashes (TXIDs), timestamps, transfer amounts, and on-chain memos/comments are inherently public, permanently recorded, and accessible to anyone globally. The Company does not control these networks and cannot erase, obfuscate, or alter on-chain data. 2.3. Exemption from Deletion Requests: Requests to invoke the "Right to be Forgotten" or data erasure under the GDPR or CCPA cannot and will not apply to cryptographic data broadcasted to and confirmed on public blockchain networks.',
+            "2.2. No Expectation of Privacy On-Chain: Wallet addresses, transaction hashes (TXIDs), timestamps, transfer amounts, and on-chain memos/comments are permanently recorded and accessible to anyone globally. The Company does not control these networks and cannot erase, obfuscate, or alter on-chain data.",
+            "2.3. Data Erasure: Data recorded on a public blockchain cannot be altered or deleted by recv. This limitation applies only to the blockchain record itself. Requests to access, correct, restrict or erase personal data stored in recv-controlled systems remain applicable subject to lawful exceptions, including security, fraud prevention, accounting, dispute and legal-retention requirements.",
           ],
         },
         {
           title: "3. CATEGORIES OF DATA WE COLLECT",
           paragraphs: [
             'To operate the "Direct-to-Wallet" routing and notification architecture, we strictly minimize data collection to the following categories:',
-            "3.1. Merchant Account Data: When a Merchant authenticates via the Telegram Mini App or Bot, we automatically collect and store:",
-            "3.2. Operational Infrastructure Data (Merchant Provided): To facilitate the Service, the Merchant must configure and input:",
-            "3.3. Customer and Transactional Metadata: When a Customer accesses a publicly generated checkout URL, we process:",
+            "3.1. Merchant Account Data: When a Merchant authenticates via the Telegram Mini App or Bot, we automatically collect and store Telegram User ID, Telegram Username, and Email address (if voluntarily provided or required for specific billing tiers).",
+            "3.2. Operational Infrastructure Data: To facilitate the Service, the Merchant must configure public blockchain destination wallet addresses, preferred default networks, webhook URL endpoints, and associated cryptographic secrets.",
+            "3.3. Customer and Transactional Metadata: When a Customer accesses a publicly generated checkout URL, we process invoice metadata (Title, Base Amount, Expiration Time), ephemeral HTTP request data (IP addresses, User-Agent strings), and captured on-chain events via our watchers (TX Hash, Amount, Destination, Observed Timestamp).",
             "NOTE: We do NOT collect Customer names, Customer emails, Customer physical addresses, or any traditional KYC/AML documentation.",
-          ],
-          bullets: [
-            "Telegram User ID (Primary unique identifier).",
-            "Telegram Username.",
-            "Email address (if voluntarily provided or required for specific billing tiers).",
-            "Subscription plan status, activation dates, and suspension flags.",
-            "Public blockchain wallet addresses (Destination Wallets).",
-            "Preferred default networks.",
-            "Webhook URL endpoints and associated cryptographic secrets (for HMAC-SHA256 signatures).",
-            "Custom API key labels and generation metadata.",
-            "Invoice metadata (e.g., Title, Base Amount in USD, Expiration Time).",
-            "Ephemeral HTTP request data (IP addresses, User-Agent strings) strictly for DDoS mitigation, rate-limiting, and security routing.",
-            "The matching algorithm parameters (e.g., Decimal Suffixes, TON Payment Comments).",
-            "Captured on-chain events via our Watchers (TX Hash, Amount, Destination, Observed Timestamp).",
           ],
         },
         {
           title: "4. STRICT LIABILITY FOR INVOICE METADATA",
           paragraphs: [
-            '4.1. Merchant Data Input: The Service allows Merchants to assign custom "Titles" to invoices. The Merchant expressly agrees NOT to input Personally Identifiable Information (PII) belonging to their Customers (e.g., "Invoice for John Doe\'s medical consultation") into the invoice title, payment comment, or webhook payloads.',
-            "4.2. Public Checkout Exposure: Merchant acknowledges that the checkout URL is accessible to anyone holding the link. The public invoice ID, invoice title, payable amount, and destination address are visible on this page. The Company assumes zero liability for PII exposed due to the Merchant's failure to anonymize invoice metadata.",
+            '4.1. Merchant Data Input: The Service allows Merchants to assign custom "Titles" to invoices. The Merchant agrees NOT to input Personally Identifiable Information (PII) belonging to their Customers into the invoice title, payment comment, or webhook payloads.',
+            "4.2. Public Checkout Exposure: Merchant acknowledges that the checkout URL is accessible to anyone holding the link. The public invoice ID, invoice title, payable amount, and destination address are visible on this page. The Company is not liable for PII exposed due to the Merchant's failure to anonymize invoice metadata.",
           ],
         },
         {
-          title: "5. LOCAL STORAGE, TOKENS, AND TRACKING",
+          title: "5. COOKIES, LOCAL STORAGE AND ANALYTICS",
           paragraphs: [
-            "5.1. Explicit Rejection of Marketing Cookies: The Company does not utilize third-party advertising cookies, cross-site tracking pixels, or invasive analytics trackers.",
-            "5.2. Functional Storage (localStorage): The frontend application utilizes browser localStorage strictly for technical and security necessities, including:",
-            "By using the Service, you consent to the use of strictly necessary localStorage mechanisms. Disabling these will render the authenticated Merchant dashboard inoperable.",
-          ],
-          bullets: [
-            "Storing JSON Web Tokens (JWT) for secure session persistence.",
-            "Managing API authentication states.",
-            "Storing minor UI/UX preferences.",
+            "We use strictly necessary storage to maintain authentication, security, language and interface preferences. This includes access tokens stored in localStorage and refresh tokens stored in Secure, HttpOnly cookies.",
+            "We also use a first-party attribution cookie named “recv_attr”. It may contain an attribution identifier, campaign parameters, referral code, landing page and referring website. Its maximum lifetime is 90 days.",
+            "Where enabled, Google Tag Manager and Yandex Metrica may receive device, browser, page-view, interaction, network and approximate location information under their respective privacy terms. These technologies are not activated for users who require prior consent until the user has provided that consent.",
+            "We collect aggregated website performance measurements, including page path, locale, navigation type, LCP, INP and CLS values.",
+            "Users may withdraw optional analytics consent at any time through our Cookie Settings. Withdrawal does not affect strictly necessary storage.",
           ],
         },
         {
-          title: "6. THIRD-PARTY SUB-PROCESSORS AND DATA SHARING",
+          title: "6. ROLES AND LEGAL BASES FOR PROCESSING",
           paragraphs: [
-            "To monitor mempools and process transactions at scale, the Service inherently relies on third-party infrastructure. You consent to the transmission of necessary technical data (such as wallet addresses and block queries) to the following categories of Sub-processors:",
-            "The Company is not responsible for the independent privacy practices of these third-party operators.",
-          ],
-          bullets: [
-            "Telegram Messenger Inc.: For authentication, bot interactions, and Merchant notifications.",
-            "RPC Node Providers: Third-party Remote Procedure Call infrastructure (e.g., TronGrid, TonCenter, and various EVM and TON node providers) used to read the blockchain.",
-            "Cloud Infrastructure: Secure database hosting (PostgreSQL) and server environments (e.g., AWS, DigitalOcean, or Cloudflare for edge routing).",
-            "Market Oracles: Third-party APIs (e.g., CoinGecko) to fetch real-time USD to Digital Asset exchange rates.",
+            "We process account, authentication, workspace, invoice, wallet, API, webhook and subscription data to perform our contract with the Merchant.",
+            "We process security logs, session information, IP addresses, user-agent data, audit events, fraud indicators and service diagnostics based on our legitimate interests in securing, maintaining and improving the Service.",
+            "We process billing and transaction records to perform the contract and comply with applicable accounting, tax, sanctions and legal obligations.",
+            "We process optional analytics and advertising attribution data based on consent where consent is required by law, and otherwise as permitted by applicable law.",
+            "For invoice and checkout data submitted by a Merchant concerning its Customers, the Merchant generally determines the purpose of processing and acts as Controller. recv acts as Processor to the extent it processes that data on the Merchant’s instructions. recv acts as an independent Controller for security, abuse prevention, service billing and compliance records.",
           ],
         },
         {
-          title: "7. DATA RETENTION AND SECURITY",
+          title: "7. DATA RETENTION",
           paragraphs: [
-            "7.1. Retention Period: We retain Merchant Account Data and Invoice Metadata for as long as the Merchant's account is active, or as required to resolve disputes, enforce our Terms of Service, and fulfill technical logging requirements (e.g., webhook delivery logs).",
-            '7.2. "As-Is" Security: While we implement industry-standard cryptographic hashing for API secrets and JWTs, no transmission over the internet or decentralized network is 100% secure. THE COMPANY DISCLAIMS ALL LIABILITY FOR UNAUTHORIZED ACCESS TO MERCHANT DASHBOARDS RESULTING FROM COMPROMISED TELEGRAM ACCOUNTS OR EXPOSED LOCAL STORAGE TOKENS ON THE MERCHANT\'S DEVICE.',
+            "We retain personal data in accordance with the following retention schedule:",
+            "• Account and workspace data: while the account is active and for up to 24 months after closure.",
+            "• Authentication codes: until used or expired, followed by deletion within 30 days.",
+            "• Active refresh sessions: until expiration or revocation; session security records may be retained for up to 12 months.",
+            "• Invoice, subscription and blockchain reconciliation records: for up to 7 years where required for accounting, tax, dispute or fraud-prevention purposes.",
+            "• Webhook delivery and API request logs: up to 12 months.",
+            "• Product analytics, UTM attribution and Web Vitals: up to 24 months.",
+            "• Backups: until overwritten under the backup rotation schedule, ordinarily within 30 days.",
+            "We may retain specific records longer where necessary to establish, exercise or defend legal claims or comply with law.",
           ],
         },
         {
-          title: "8. INTERNATIONAL AND CROSS-BORDER TRANSFERS",
+          title: "8. SECURITY",
           paragraphs: [
-            "The Service operates on a globally distributed infrastructure. By utilizing the Service, you consent to the transfer, storage, and processing of your data in jurisdictions that may have different data protection regulations than your country of residence.",
+            "API key values are stored using one-way hashes after initial issuance. Access and refresh tokens are cryptographically signed or stored as token hashes, as applicable. Webhook signing secrets must remain available to the Service to sign deliveries and are therefore stored as confidential credentials protected by access controls. No method of storage or transmission is completely secure.",
           ],
         },
         {
-          title: "9. EXEMPTION FROM REGULATORY REGIMES",
+          title: "9. YOUR PRIVACY RIGHTS",
           paragraphs: [
-            "Because the Company operates exclusively as non-custodial middleware and does not collect sensitive financial PII (such as bank account numbers, credit card details, or government-issued IDs), the Company operates outside the scope of traditional financial data privacy regulations like the Gramm-Leach-Bliley Act (GLBA) or the Payment Card Industry Data Security Standard (PCI-DSS).",
+            "Depending on applicable law, you may request access to, correction of, deletion of, restriction of, objection to, or portability of personal data processed by recv. You may also withdraw consent where processing is based on consent and lodge a complaint with a competent supervisory authority.",
+            "Submit requests to privacy@recv.money. We may verify your identity and authority before acting on a request. We will respond within the period required by applicable law.",
+            "For California Residents (CCPA/CPRA): In the preceding 12 months, we have collected the categories of personal data described in Section 3 of this Policy. We do not 'sell' or 'share' (for cross-context behavioral advertising) personal data. Residents of California have the right to know, delete, correct, opt out of sale/sharing, limit the use of sensitive personal data, and be free from discrimination for exercising these rights. To submit a request, contact privacy@recv.money.",
           ],
         },
         {
           title: "10. MODIFICATIONS TO THIS POLICY",
           paragraphs: [
-            "We reserve the right to unilaterally update this Privacy Policy at any time to reflect changes in our technical infrastructure, API capabilities, or legal obligations. Your continued use of the Service following the posting of an updated Policy constitutes your irrevocable acceptance of the changes.",
+            "We reserve the right to unilaterally update this Privacy Policy at any time. Your continued use of the Service following the posting of an updated Policy constitutes your acceptance of the changes.",
           ],
         },
       ],
-      footerNote: "The privacy document is rendered in English as provided, without translation.",
-    }, terms: {
+      footerNote: "This Privacy Policy was drafted to ensure alignment with global standards.",
+    },
+    terms: {
       kicker: "TERMS OF SERVICE",
-      title: "TERMS OF SERVICE: COMPREHENSIVE END-USER LICENSE AND USAGE AGREEMENT",
+      title: "TERMS OF SERVICE",
       summary:
-        "PLEASE READ THIS COMPREHENSIVE AGREEMENT CAREFULLY. IT CONTAINS A MANDATORY BINDING ARBITRATION CLAUSE, A CLASS ACTION WAIVER, AND EXTENSIVE DISCLAIMERS OF LIABILITY THAT MATERIALLY AFFECT YOUR LEGAL RIGHTS. BY ACCESSING, INTEGRATING, OR UTILIZING THE RECV SOFTWARE, API, OR WEBHOOKS, YOU EXPLICITLY AGREE TO BE BOUND BY THESE TERMS IN THEIR ENTIRETY.",
+        "PLEASE READ THIS COMPREHENSIVE AGREEMENT CAREFULLY. IT CONTAINS A MANDATORY BINDING ARBITRATION CLAUSE, A CLASS ACTION WAIVER, AND EXTENSIVE DISCLAIMERS OF LIABILITY THAT MATERIALLY AFFECT YOUR LEGAL RIGHTS. BY ACCESSING, INTEGRATING, OR UTILIZING THE RECV SOFTWARE, API, OR WEBHOOKS, YOU AGREE TO BE BOUND BY THESE TERMS.",
       updatedLabel: "Last Updated",
       operatorLabel: "Effective Date",
-      metaItems: ["Last Updated: March 13, 2026", "Effective Date: March 13, 2026"],
-      draftTitle: "Document Frame",
+      metaItems: ["Last Updated: June 14, 2026", "Effective Date: June 14, 2026"],
+      draftTitle: "Contracting Party",
       draftBody:
-        "This page preserves the provided Terms text in its original language mix and legal wording.",
+        "This Agreement is entered into by and between the Merchant and the operators of the website recv.money (“recv”, “Company”, “we”, “us”).",
       draftItems: [
-        'Company: recv',
-        'Scope: software, API, webhooks, blockchain monitoring',
-        'Model: non-custodial, direct-to-wallet',
-        'Dispute flow: arbitration + class action waiver',
-        'Liability cap: last three months of subscription fees',
+        "Scope: software, API, webhooks, blockchain monitoring",
+        "Model: non-custodial, direct-to-wallet",
+        "Dispute flow: arbitration in Cyprus",
       ],
       sections: [
         {
           title: "1. PREAMBLE AND ACCEPTANCE OF TERMS",
           paragraphs: [
-            '1.1. Parties to the Agreement: This Terms of Service Agreement (the "Agreement") constitutes a legally binding contract between you (acting individually or on behalf of a corporate entity, hereinafter "Merchant", "Licensee", "User", "you", or "your") and recv (hereinafter "Company", "we", "us", "our", or "Service Provider").',
+            '1.1. Parties to the Agreement: This Terms of Service Agreement (the "Agreement") constitutes a legally binding contract between you (acting individually or on behalf of a corporate entity, hereinafter "Merchant", "you", or "your") and recv (hereinafter "Company", "we", "us", "our", or "Service Provider").',
             "1.2. Capacity to Contract: By utilizing the Service via Telegram authentication or our API, you represent and warrant that you are at least eighteen (18) years of age, possess the legal capacity to enter into this Agreement, and, if acting on behalf of a legal entity, possess the requisite authority to bind said entity.",
-            "1.3. Modifications: We reserve the absolute, unilateral right to amend, modify, or append to this Agreement at any time. Continued use of the Service following the publication of any modifications constitutes your irrevocable acceptance of the amended terms.",
+            "1.3. Modifications: We reserve the right to amend or modify this Agreement at any time. Continued use of the Service following the publication of any modifications constitutes your acceptance of the amended terms.",
           ],
         },
         {
-          title: '2. STRICT DEFINITION OF THE SERVICE (THE "MERE CONDUIT" DOCTRINE)',
+          title: "2. DEFINITION OF THE SERVICE",
           paragraphs: [
             '2.1. Software as a Service (SaaS): The "Service" refers exclusively to the proprietary, non-custodial software middleware provided by the Company. This includes the dashboard, checkout page generators, smart-matching algorithms, API endpoints, webhook delivery systems, and blockchain monitoring logic (the "Watchers").',
-            "2.2. Non-Custodial Data Layer: You explicitly acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, Solana, Base, BSC-compatible chains) and visualizes this data.",
-            "2.3. Zero Financial Intermediation: The Company is strictly not a payment processor, payment gateway, money transmitter, clearinghouse, custodian, fiduciary, or financial institution. At no point in the technical architecture does the Company receive, hold, control, or possess any fiat currency, digital assets, or cryptographic private keys belonging to the Merchant or the Merchant’s end-users (\"Customers\").",
+            "2.2. Non-Custodial Data Layer: You acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, Solana, Base, BSC-compatible chains) and visualizes this data.",
+            "2.3. Zero Financial Intermediation: The Company is not a payment processor, payment gateway, money transmitter, clearinghouse, custodian, fiduciary, or financial institution. At no point in the technical architecture does the Company receive, hold, control, or possess any fiat currency, digital assets, or cryptographic private keys belonging to the Merchant or the Merchant’s end-users (\"Customers\").",
             "2.4. Direct-to-Wallet Execution: All transfers of Digital Assets occur exclusively and directly on the public blockchain from the Customer's unhosted or custodial wallet directly to the Merchant's designated destination address.",
           ],
         },
         {
-          title: "3. REGULATORY COMPLIANCE, KYC/AML, AND SANCTIONS",
+          title: "3. REGULATORY COMPLIANCE AND SANCTIONS",
           paragraphs: [
-            "3.1. Exemption from Identity Verification: Because the Company does not process, transmit, or custody funds, the Company performs no Know Your Customer (KYC), Anti-Money Laundering (AML), or Counter-Terrorism Financing (CTF) verification on Merchants or Customers.",
-            "3.2. Total Merchant Liability: The Merchant assumes 100% liability for conducting any required identity verification, regulatory compliance, and tax reporting concerning their Customers, as mandated by the Merchant's operating jurisdiction.",
-            "3.3. Sanctions and OFAC Representations: The Merchant represents and warrants that they are not located in, under the control of, or a national or resident of any country or territory subject to comprehensive economic sanctions by the United Nations, European Union, or the U.S. Office of Foreign Assets Control (OFAC). The Company assumes no duty to monitor the geopolitical status of Merchants but reserves the right to terminate access immediately if a violation is suspected.",
-            "3.4. Tax Indemnification: The Company shall not calculate, collect, remit, or report any sales, value-added (VAT), income, or other taxes arising from the Merchant's transactions. The Merchant bears sole responsibility for all tax liabilities.",
+            "3.1. Total Merchant Liability: The Merchant assumes all liability for conducting any required identity verification, regulatory compliance, and tax reporting concerning their Customers, as mandated by the Merchant's operating jurisdiction.",
+            "3.2. Sanctions and OFAC Representations: The Merchant represents and warrants that they are not located in, under the control of, or a national or resident of any country or territory subject to comprehensive economic sanctions by the United Nations, European Union, or the U.S. Office of Foreign Assets Control (OFAC).",
+            "3.3. Tax Indemnification: The Company shall not calculate, collect, remit, or report any sales, value-added (VAT), income, or other taxes arising from the Merchant's transactions. The Merchant bears sole responsibility for all tax liabilities.",
           ],
         },
         {
           title: "4. PROHIBITED CONDUCT AND ACCOUNT TERMINATION",
           paragraphs: [
-            "4.1. Strictly Prohibited Uses: The Merchant explicitly agrees NOT to utilize the Service, checkout links, or API infrastructure to facilitate the sale, distribution, or promotion of:",
-            "4.2. Unilateral Termination: The Company reserves the unappealable right to suspend, restrict, or permanently terminate any Merchant account, revoke API keys, and disable webhook functionality immediately, without prior notice or liability, if we, in our sole discretion, suspect a violation of Section 4.1 or determine that the Merchant's activities expose the Company to legal, regulatory, or reputational peril.",
-          ],
-          bullets: [
-            "Illegal narcotics, controlled substances, or drug paraphernalia.",
-            "Firearms, weapons, munitions, or explosive materials.",
-            "Illicit or non-consensual adult content.",
-            "Unlicensed or illegal gambling, lotteries, or betting platforms.",
-            "Intellectual property infringement, counterfeit goods, or software piracy.",
-            "Ponzi schemes, HYIPs, or fraudulent investment structures.",
+            "4.1. Strictly Prohibited Uses: The Merchant agrees NOT to utilize the Service, checkout links, or API infrastructure to facilitate the sale, distribution, or promotion of illegal narcotics, weapons, illicit adult content, unlicensed gambling, counterfeit goods, or fraudulent investment structures.",
+            "4.2. Termination: The Company reserves the right to suspend, restrict, or permanently terminate any Merchant account, revoke API keys, and disable webhook functionality immediately, without prior notice or liability, if we suspect a violation of Section 4.1 or determine that the Merchant's activities expose the Company to legal, regulatory, or reputational peril.",
           ],
         },
         {
-          title: "5. TECHNICAL MECHANICS, PROTOCOLS, AND USER ERROR",
+          title: "5. TECHNICAL MECHANICS AND RECONCILIATION MATCHING",
           paragraphs: [
-            "5.1. Smart-Tracking and Exactness: To facilitate automated invoice status resolution, the Service employs a Smart-Tracking matching protocol. For TRON, Base, and BSC networks, a unique decimal suffix (e.g., 0.000123) is appended to the payable amount. For the TON network, a mandatory unique payment comment (memo) is generated.",
-            "5.2. Waiver of Liability for User Error: The Company bears absolutely ZERO liability for any financial loss, delayed access to digital goods, or unfulfilled invoices arising from:",
-            "5.3. Irrevocability of Transactions: The Merchant acknowledges that blockchain transactions are mathematically immutable. The Company cannot reverse, refund, or alter any on-chain transfer. All dispute resolutions, underpayment negotiations, and refund processing are solely the responsibility of the Merchant.",
-            "5.4. Third-Party RPC Reliance: The Service’s blockchain monitoring capabilities are wholly dependent on the stability, uptime, and accuracy of third-party Remote Procedure Call (RPC) node providers (e.g., TronGrid, TonCenter) and external oracle APIs (e.g., CoinGecko for fiat/crypto exchange rates). The Company is not liable for Service degradation, delayed webhooks, or failed mempool tracking caused by external RPC outages, rate-limiting, or public network congestion.",
-          ],
-          bullets: [
-            "The Customer's failure to remit the exact mathematically generated payable amount (including the matching suffix).",
-            "The Customer's failure to include the exact required payment comment/memo on the TON network.",
-            "The Customer utilizing an incorrect or unsupported blockchain network (e.g., transmitting USDT via ERC-20 to a TRC-20 address, resulting in the permanent loss of assets).",
+            "5.1. Smart-Matching matching methods: For supported stablecoin payment options, recv may add a unique fractional suffix to the requested amount to associate an on-chain transfer with an invoice. For native TON payments, recv uses a unique payment comment. Supported matching methods may vary by network and asset and are displayed on the checkout page.",
+            "5.2. Waiver of Liability for User Error: The Company bears no liability for any financial loss, delayed access to digital goods, or unfulfilled invoices arising from the Customer's failure to remit the exact amount (including matching suffix) or correct memo/comment, or utilizing an incorrect or unsupported blockchain network.",
+            "5.3. Irrevocability of Transactions: The Merchant acknowledges that blockchain transactions are mathematically immutable. The Company cannot reverse, refund, or alter any on-chain transfer.",
+            "5.4. Third-Party RPC Reliance: The Service’s blockchain monitoring capabilities are wholly dependent on the stability, uptime, and accuracy of third-party Remote Procedure Call (RPC) node providers and external oracle APIs. The Company is not liable for Service degradation, delayed webhooks, or failed mempool tracking caused by external RPC outages.",
           ],
         },
         {
-          title: "6. API, WEBHOOKS, AND INTEGRATION SLAs",
+          title: "6. API, WEBHOOKS, AND INTEGRATION",
           paragraphs: [
             "6.1. API License: Subject to these Terms and active subscription status, the Company grants the Merchant a limited, non-exclusive, non-transferable, and revocable license to access the recv API (v1).",
-            '6.2. Webhook Delivery and Idempotency: Webhook notifications are delivered on an "at-least-once" basis. Due to network conditions, duplicate webhooks may be transmitted. The Merchant is strictly required to implement Idempotency Safety on their servers to prevent duplicate order fulfillment.',
-            "6.3. Cryptographic Verification: The Merchant must cryptographically verify all incoming webhooks using the X-recv-Signature header via HMAC-SHA256 algorithm. The Company disclaims any liability for unauthorized actions resulting from the Merchant's failure to validate webhook authenticity.",
+            "6.2. Webhook Delivery and Idempotency: Webhook notifications are delivered on an 'at-least-once' basis. The Merchant is required to implement Idempotency Safety on their servers to prevent duplicate order fulfillment.",
+            "6.3. Webhook Verification: Each webhook includes X-recv-Event, X-recv-Timestamp and X-recv-Signature headers. The signature is calculated as 'v1=' followed by HMAC-SHA256 over the exact string timestamp + '.' + raw request body. Merchant must verify the signature against the unmodified raw body, reject stale timestamps and process events idempotently.",
           ],
         },
         {
-          title: "7. SUBSCRIPTIONS, FEES, AND INTERNAL BILLING",
+          title: "7. SUBSCRIPTIONS, FEES, AND LIMITS",
           paragraphs: [
-            "7.1. Flat Fee Model: The Service operates on a flat-fee subscription basis (PRO, DEV, ENTERPRISE tiers) with a 0% turnover commission (Direct-to-Wallet).",
-            "7.2. Internal Payment Processing: Subscription invoices issued by the Company to the Merchant are generated using the Service itself. Payments are routed directly to the Company's designated corporate wallets.",
-            "7.3. No Refunds: All subscription payments made in Digital Assets are final and strictly NON-REFUNDABLE, regardless of the Merchant's actual usage of the Service, network conditions, or early termination of the account.",
+            "7.1. Paid Plans: Paid plans currently include Merchant, Developer and Business. Current prices, included features, quotas and billing periods are displayed at checkout and form part of this Agreement at the time of purchase.",
+            "7.2. Subscription Period: A subscription payment purchases access for the fixed period displayed at checkout, currently 30 days. Subscriptions do not automatically renew unless recv expressly introduces and the Merchant separately authorizes automatic renewal.",
+            "7.3. Limits: Plan limits may include invoice, API request, API key, webhook endpoint, retry, workspace and team-seat limits. Requests may be rejected or features restricted when an applicable limit is reached.",
           ],
         },
         {
-          title: "8. INTELLECTUAL PROPERTY",
+          title: "8. REFUND POLICY",
           paragraphs: [
-            "8.1. Company Ownership: All rights, title, and interest in and to the Service, the Software, the API, the design, the architecture, and the codebase remain the exclusive intellectual property of the Company.",
-            "8.2. No Transfer: This Agreement does not convey any ownership rights to the Merchant. You may not decompile, reverse engineer, disassemble, or attempt to derive the source code of the Service.",
+            "8.1. Irreversibility: Because blockchain transfers are irreversible, subscription payments cannot be automatically reversed. Except where required by applicable law, subscription fees are non-refundable after the paid plan has been activated.",
+            "8.2. Approved Refunds: If recv fails to activate the purchased plan, duplicates a charge, or materially misdescribes the purchased service, the Merchant may contact support@recv.money within 14 days. Any approved refund will be sent to a verified wallet address selected through recv’s refund-verification procedure, less unavoidable blockchain network fees.",
           ],
         },
         {
-          title: "9. DISCLAIMERS OF WARRANTY (ALL CAPS REQUIRED BY LAW)",
+          title: "9. INTELLECTUAL PROPERTY",
           paragraphs: [
-            'THE SERVICE, API, AND ALL RELATED INFRASTRUCTURE ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. THE COMPANY EXPRESSLY DISCLAIMS ALL WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THE COMPANY DOES NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, TIMELY, SECURE, ERROR-FREE, OR IMMUNE TO CYBERATTACKS, NOR DOES IT GUARANTEE THE CONTINUED EXISTENCE OR STABILITY OF ANY SPECIFIC BLOCKCHAIN NETWORK OR DIGITAL ASSET.',
+            "All rights, title, and interest in and to the Service, the Software, the API, the design, the architecture, and the codebase remain the exclusive intellectual property of the Company. You may not decompile, reverse engineer, disassemble, or attempt to derive the source code of the Service.",
           ],
         },
         {
-          title: "10. ABSOLUTE LIMITATION OF LIABILITY",
+          title: "10. DISCLAIMERS OF WARRANTY",
           paragraphs: [
-            "TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE JURISPRUDENCE, IN NO EVENT SHALL THE COMPANY, ITS FOUNDERS, CORE DEVELOPERS, DIRECTORS, OR AFFILIATES BE LIABLE FOR ANY PUNITIVE, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF PROFITS, LOSS OF REVENUE, LOSS OF DIGITAL ASSETS, LOSS OF GOODWILL, CORRUPTION OF DATA, OR BUSINESS INTERRUPTION, ARISING OUT OF OR IN CONNECTION WITH THIS AGREEMENT OR THE USE OR INABILITY TO USE THE SERVICE.",
-            'UNDER NO CIRCUMSTANCES SHALL THE COMPANY\'S TOTAL CUMULATIVE LIABILITY TO YOU FOR ANY AND ALL CLAIMS EXCEED THE TOTAL AMOUNT OF SUBSCRIPTION FEES PAID BY YOU TO THE COMPANY IN THE THREE (3) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM. IF YOU ARE ON A FREE "TRIAL" PLAN, THE COMPANY\'S AGGREGATE LIABILITY SHALL BE STRICTLY LIMITED TO ZERO DOLLARS ($0.00).',
+            'THE SERVICE, API, AND ALL RELATED INFRASTRUCTURE ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. THE COMPANY EXPRESSLY DISCLAIMS ALL WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.',
           ],
         },
         {
-          title: "11. INDEMNIFICATION",
+          title: "11. LIMITATION OF LIABILITY",
           paragraphs: [
-            "You agree to unconditionally defend, indemnify, and hold harmless the Company, its team, and affiliates from and against any claims, actions, demands, regulatory proceedings, liabilities, damages, and expenses (including reasonable legal and attorney fees) arising directly or indirectly from:",
-          ],
-          bullets: [
-            "(a) Your breach of this Agreement.",
-            "(b) Your violation of any applicable law or the rights of any third party.",
-            "(c) The nature of the products, services, or content sold by you.",
-            "(d) Any dispute between you and your Customers.",
+            "IN NO EVENT SHALL THE COMPANY, ITS FOUNDERS, CORE DEVELOPERS, DIRECTORS, OR AFFILIATES BE LIABLE FOR ANY PUNITIVE, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, LOSS OF REVENUE, LOSS OF DIGITAL ASSETS, OR CORRUPTION OF DATA.",
+            "UNDER NO CIRCUMSTANCES SHALL THE COMPANY'S TOTAL CUMULATIVE LIABILITY TO YOU FOR ANY AND ALL CLAIMS EXCEED THE TOTAL AMOUNT OF SUBSCRIPTION FEES PAID BY YOU TO THE COMPANY IN THE THREE (3) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM. IF YOU ARE ON A FREE PLAN, THE AGGREGATE LIABILITY SHALL BE STRICTLY LIMITED TO ZERO DOLLARS ($0.00).",
           ],
         },
         {
-          title: "12. FORCE MAJEURE AND BLOCKCHAIN ANOMALIES",
+          title: "12. INDEMNIFICATION",
           paragraphs: [
-            "The Company shall not be liable for any failure or delay in performance resulting from causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, catastrophic cyberattacks, sweeping governmental bans on cryptocurrencies, ISP failures, or inherent blockchain anomalies (including 51% attacks, hard forks, catastrophic smart contract bugs on underlying networks like EVM chains or TON).",
+            "You agree to defend, indemnify, and hold harmless the Company and its affiliates from and against any claims, actions, demands, liabilities, damages, and expenses arising from your breach of this Agreement, violation of law, or any dispute between you and your Customers.",
           ],
         },
         {
-          title: "13. DISPUTE RESOLUTION, ARBITRATION, AND WAIVER OF CLASS ACTION",
+          title: "13. GOVERNING LAW AND DISPUTE RESOLUTION",
           paragraphs: [
-            "13.1. Binding Arbitration: Any dispute, controversy, or claim arising out of or relating to this Agreement, or the breach thereof, shall be settled by mandatory, binding, and confidential arbitration administered by [Insert Arbitration Association/Jurisdiction, e.g., the International Chamber of Commerce (ICC) or courts of Panama/BVI], rather than in court.",
-            "13.2. Class Action Waiver: YOU AND THE COMPANY AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS OR REPRESENTATIVE PROCEEDING.",
+            "13.1. This Agreement is governed by the laws of Cyprus, without regard to its conflict-of-laws rules.",
+            "13.2. Before commencing formal proceedings, a party must send written notice describing the dispute to legal@recv.money. The parties shall attempt in good faith to resolve the dispute within thirty (30) days.",
+            "13.3. Any dispute not resolved under Section 13.2 shall be finally resolved by the competent courts of Nicosia, Cyprus, in the English language, under the rules in effect when the proceeding begins.",
+            "13.4. Nothing in this Section prevents either party from seeking urgent injunctive relief or exercising rights that cannot lawfully be waived.",
           ],
         },
         {
           title: "14. SEVERABILITY AND ENTIRE AGREEMENT",
           paragraphs: [
-            "If any provision of this Agreement is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary so that this Agreement shall otherwise remain in full force, effect, and enforceability. This Agreement constitutes the entire agreement between the parties relating to the subject matter hereof.",
+            "If any provision of this Agreement is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary so that this Agreement shall otherwise remain in full force and effect. This Agreement constitutes the entire agreement between the parties.",
+          ],
+        },
+        {
+          title: "15. LANGUAGE AND TRANSLATIONS",
+          paragraphs: [
+            "15.1. This Agreement is executed in both English and Russian languages. In the event of any conflict, discrepancy, or inconsistency between the English version and the Russian translation, the English language version shall prevail and be legally binding.",
           ],
         },
       ],
-      footerNote: "The text above is rendered without translation and preserves the supplied wording structure for publication styling.",
-    } },
+      footerNote: "The terms above form the entire agreement governing your service use.",
+    },
+    dpa: {
+      kicker: "DATA PROCESSING ADDENDUM",
+      title: "DATA PROCESSING ADDENDUM",
+      summary:
+        "This Data Processing Addendum (“DPA”) governs the processing of Customer Personal Data by recv on behalf of the Merchant in connection with the Service.",
+      updatedLabel: "Last Updated",
+      operatorLabel: "Effective Date",
+      metaItems: ["Last Updated: June 14, 2026", "Effective Date: June 14, 2026"],
+      draftTitle: "Scope of processing",
+      draftBody:
+        "This DPA applies when and to the extent recv processes Customer Personal Data solely on behalf of the Merchant. In this context, Merchant acts as Controller and recv acts as Processor.",
+      draftItems: [
+        "Controller: Merchant",
+        "Processor: recv",
+        "Standards: GDPR, global data protection laws",
+      ],
+      sections: [
+        {
+          title: "1. ROLES AND COMPLIANCE",
+          paragraphs: [
+            "1.1. Scope: When recv processes Customer Personal Data solely on behalf of the Merchant, the Merchant acts as Data Controller and recv acts as Data Processor.",
+            "1.2. Instructions: recv shall process such data only on the Merchant’s documented instructions, including as set forth in the Agreement, unless required to do so by applicable law.",
+          ],
+        },
+        {
+          title: "2. PROCESSOR OBLIGATIONS",
+          paragraphs: [
+            "2.1. Confidentiality: recv shall ensure that persons authorized to process the Customer Personal Data have committed themselves to confidentiality or are under an appropriate statutory obligation of confidentiality.",
+            "2.2. Security Measures: recv shall implement appropriate technical and organizational measures to ensure a level of security appropriate to the risk of processing Customer Personal Data.",
+            "2.3. Subprocessors: recv shall impose equivalent data protection obligations on any subprocessors it engages, and remains liable to the Merchant for the performance of subprocessors' obligations.",
+            "2.4. Data Subject Requests: recv shall assist the Merchant, taking into account the nature of the processing, by appropriate technical and organizational measures, for the fulfillment of the Merchant's obligation to respond to requests for exercising data subjects' rights.",
+            "2.5. Breach Notification: recv shall notify the Merchant of any confirmed personal data breach affecting Customer Personal Data without undue delay after becoming aware of the breach.",
+            "2.6. Deletion or Return: recv shall, at the choice of the Merchant, delete or return all Customer Personal Data to the Merchant after the end of the provision of services, unless applicable law requires storage of the personal data.",
+            "2.7. Audits: recv shall make available to the Merchant all information necessary to demonstrate compliance with these obligations and allow for and contribute to audits conducted by the Merchant or another auditor mandated by the Merchant.",
+          ],
+        },
+        {
+          title: "3. DPA SCHEDULES",
+          paragraphs: [
+            "3.1. Subject Matter and Duration: Processing of blockchain transaction routing, status confirmation, and associated notification metadata. The duration corresponds to the term of the Agreement.",
+            "3.2. Categories of Data: Transaction hashes (TXIDs), destination wallet addresses, payable amounts, timestamps, IP addresses, browser User-Agent strings, and optional custom invoice metadata (if provided by the Merchant).",
+            "3.3. Categories of Data Subjects: Customers (end-users) of the Merchant completing cryptocurrency payments via recv checkout links.",
+            "3.4. Technical and Organizational Security Measures: Standard encryption of stored database credentials, cryptographic signatures for session tokens, one-way hashing for API keys, secure access controls, and rate-limiting for edge routing protection.",
+            "3.5. Subprocessor List: The approved list of subprocessors is set forth in the Subprocessor List page.",
+            "3.6. International Data Transfers: Where transfer of data outside the EU/EEA/UK is required, recv utilizes standard contractual clauses or equivalent transfer mechanisms approved by competent regulatory authorities.",
+          ],
+        },
+      ],
+      footerNote: "This DPA is incorporated by reference into the Terms of Service.",
+    },
+    subprocessors: {
+      kicker: "SUBPROCESSOR LIST",
+      title: "APPROVED SUBPROCESSORS",
+      summary:
+        "The following is an active list of third-party subprocessors authorized to process data on behalf of recv to deliver our Service infrastructure.",
+      updatedLabel: "Last Updated",
+      operatorLabel: "Effective Date",
+      metaItems: ["Last Updated: June 14, 2026", "Effective Date: June 14, 2026"],
+      draftTitle: "Authorization",
+      draftBody:
+        "The Merchant hereby authorizes the engagement of the third-party infrastructure and service providers listed below. All listed subprocessors have entered into data processing agreements with equivalent security standards.",
+      draftItems: [
+        "Infrastructure hosting",
+        "Blockchain RPC services",
+        "Notifications & pricing",
+      ],
+      sections: [
+        {
+          title: "1. TELEGRAM MESSENGER INC.",
+          paragraphs: [
+            "• Purpose: Facilitating user authentication, bot commands, Telegram Mini App hosting, and merchant event notifications.",
+            "• Location: Globally distributed.",
+          ],
+        },
+        {
+          title: "2. REMOTE PROCEDURE CALL (RPC) NODE PROVIDERS",
+          paragraphs: [
+            "• Purpose: Querying blockchain block headers, monitoring destination wallets, and reading mempools (e.g. TonCenter, TronGrid, and default public nodes).",
+            "• Location: Globally distributed.",
+          ],
+        },
+        {
+          title: "3. CLOUD PLATFORMS AND EDGE NETWORKS",
+          paragraphs: [
+            "• Purpose: Serving server compute environments, secure database hosting, and global edge request routing.",
+            "• Location: European Union / United States.",
+          ],
+        },
+        {
+          title: "4. EXCHANGE RATE APIs AND ORACLES",
+          paragraphs: [
+            "• Purpose: Fetching public real-time cryptocurrency exchange rates (e.g. CoinGecko API) to compute USD-equivalent invoice values.",
+            "• Location: Global.",
+          ],
+        },
+      ],
+      footerNote: "Any updates to this subprocessor list will be published on this page.",
+    },
+  },
 } as const;
 
 export default en;

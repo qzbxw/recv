@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { UIProvider } from "@/components/UIProvider";
+import { CookieConsent } from "@/components/CookieConsent";
 import { OptionalAnalytics } from "@/components/OptionalAnalytics";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { LOCALES } from "@/i18n";
@@ -98,6 +99,7 @@ export default async function LocaleLayout(props: {
         <UIProvider initialLanguage={locale as "ru" | "en"}>
           {props.children}
         </UIProvider>
+        <CookieConsent language={locale as "ru" | "en"} />
         <WebVitalsReporter />
         <OptionalAnalytics
           gtmId={process.env.GTM_ID}

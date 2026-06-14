@@ -294,6 +294,10 @@ func (s *Server) handleAgentBootstrap(c *gin.Context) {
 	result, err := s.authService.BootstrapAgentWorkspace(ctx, body)
 	if err != nil {
 		metrics.IncAuthAttempt("agent_bootstrap", "failure", "bootstrap")
+		if err.Error() == "terms of service must be accepted (terms_accepted: true)" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		respondError(c, http.StatusInternalServerError, err)
 		return
 	}

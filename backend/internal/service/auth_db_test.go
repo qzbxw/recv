@@ -277,6 +277,7 @@ func TestAuthServiceBootstrapAgentWorkspaceWithAttribution(t *testing.T) {
 	result, err := svc.BootstrapAgentWorkspace(ctx, AgentBootstrapInput{
 		WorkspaceName: "Coverage Agent",
 		ContactEmail:  "AGENT@EXAMPLE.COM",
+		TermsAccepted: true,
 		Attribution: &store.AttributionInput{
 			AttributionID: "attr-agent-bootstrap",
 			TouchType:     "first",
@@ -325,7 +326,7 @@ func TestServiceCanceledContextBranches(t *testing.T) {
 	if _, err := authSvc.AuthenticateTelegramCode(canceled, TelegramCodeLoginInput{Username: workspace.Username, Code: "123456"}); err == nil {
 		t.Fatal("expected AuthenticateTelegramCode to fail with canceled context")
 	}
-	if _, err := authSvc.BootstrapAgentWorkspace(canceled, AgentBootstrapInput{WorkspaceName: "ctx"}); err == nil {
+	if _, err := authSvc.BootstrapAgentWorkspace(canceled, AgentBootstrapInput{WorkspaceName: "ctx", TermsAccepted: true}); err == nil {
 		t.Fatal("expected BootstrapAgentWorkspace to fail with canceled context")
 	}
 	if _, err := authSvc.Refresh(canceled, "refresh-token"); err == nil {

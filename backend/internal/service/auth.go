@@ -60,6 +60,7 @@ type TelegramCodeLoginInput struct {
 type AgentBootstrapInput struct {
 	WorkspaceName string                  `json:"workspace_name"`
 	ContactEmail  string                  `json:"contact_email"`
+	TermsAccepted bool                    `json:"terms_accepted"`
 	Attribution   *store.AttributionInput `json:"attribution,omitempty"`
 	RefCode       string                  `json:"ref_code,omitempty"`
 }
@@ -223,6 +224,9 @@ func (s *AuthService) AuthenticateTelegramCode(ctx context.Context, input Telegr
 }
 
 func (s *AuthService) BootstrapAgentWorkspace(ctx context.Context, input AgentBootstrapInput) (AuthResult, error) {
+	if !input.TermsAccepted {
+		return AuthResult{}, fmt.Errorf("terms of service must be accepted (terms_accepted: true)")
+	}
 	workspaceName := normalizeAgentWorkspaceName(input.WorkspaceName)
 	email := strings.TrimSpace(strings.ToLower(input.ContactEmail))
 	var lastErr error

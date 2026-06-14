@@ -12,6 +12,7 @@ const CheckoutPage = lazy(() => import("./pages/CheckoutPage").then((module) => 
 const DeveloperDocsPage = lazy(() => import("./pages/DeveloperDocsPage").then((module) => ({ default: module.DeveloperDocsPage })));
 const DeveloperPortalPage = lazy(() => import("./pages/DeveloperPortalPage").then((module) => ({ default: module.DeveloperPortalPage })));
 const SellerConsolePage = lazy(() => import("./pages/SellerConsolePage").then((module) => ({ default: module.SellerConsolePage })));
+const LegalPage = lazy(() => import("./pages/LegalPage").then((module) => ({ default: module.LegalPage })));
 
 // Public pages are now served by Next.js at frontend-public.
 // Vite SPA is mapped to /app/ namespace via Nginx.
@@ -24,6 +25,10 @@ const PAGE_TITLES = {
     developers: "recv | Портал разработчика",
     docs: "recv | Документация API",
     checkout: "recv | Оплата",
+    privacy: "recv | Политика конфиденциальности",
+    terms: "recv | Условия использования",
+    dpa: "recv | Соглашение DPA",
+    subprocessors: "recv | Список субподрядчиков",
     fallback: "recv",
   },
   en: {
@@ -33,6 +38,10 @@ const PAGE_TITLES = {
     developers: "recv | Developer Portal",
     docs: "recv | API Documentation",
     checkout: "recv | Checkout",
+    privacy: "recv | Privacy Policy",
+    terms: "recv | Terms of Service",
+    dpa: "recv | Data Processing Addendum (DPA)",
+    subprocessors: "recv | Subprocessors List",
     fallback: "recv",
   },
 } as const;
@@ -56,6 +65,14 @@ function RouteTitleManager() {
       title = titles.docs;
     } else if (path === "/developer-portal") {
       title = titles.developers;
+    } else if (path === "/privacy") {
+      title = titles.privacy;
+    } else if (path === "/terms") {
+      title = titles.terms;
+    } else if (path === "/dpa") {
+      title = titles.dpa;
+    } else if (path === "/subprocessors") {
+      title = titles.subprocessors;
     } else if (path.startsWith("/checkout/")) {
       title = titles.checkout;
     }
@@ -100,6 +117,11 @@ export default function App() {
           
           <Route path="/checkout/:publicId" element={<CheckoutPage />} />
           
+          <Route path="/privacy" element={<LegalPage variant="privacy" />} />
+          <Route path="/terms" element={<LegalPage variant="terms" />} />
+          <Route path="/dpa" element={<LegalPage variant="dpa" />} />
+          <Route path="/subprocessors" element={<LegalPage variant="subprocessors" />} />
+
           {/* All other routes redirect to the main public landing (handled by Next.js) */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
