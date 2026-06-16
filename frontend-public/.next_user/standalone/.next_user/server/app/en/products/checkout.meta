@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/[locale]/layout,_N_T_/[locale]/products/layout,_N_T_/[locale]/products/checkout/layout,_N_T_/[locale]/products/checkout/page,_N_T_/en/products/checkout"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/$d$locale/products/checkout/__PAGE__",
+    "/$d$locale/products/checkout",
+    "/$d$locale/products",
+    "/$d$locale",
+    "/_index",
+    "/_head"
+  ]
+}

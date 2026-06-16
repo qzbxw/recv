@@ -12698,3 +12698,13 @@ html {
     padding-inline: 0.75rem;
   }
 }
+
+/* Mobile Performance Optimizations */
+@media (hover: none), (max-width: 768px) {
+  .auth-portal::before, .dev-portal::before,
+  .auth-portal::after, .dev-portal::after {
+    animation: none !important;
+    display: none !important; /* Completely bypass layout/paint layers for blurred glows */
+  }
+}
+

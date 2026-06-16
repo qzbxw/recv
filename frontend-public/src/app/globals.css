@@ -10990,3 +10990,29 @@ html {
   color: rgba(255, 255, 255, 0.85);
   font-weight: 700;
 }
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px), (hover: none) {
+  /* Freeze viewport-wide background grid movement */
+  .lend-backdrop--grid {
+    animation: none !important;
+  }
+
+  /* Freeze pulse animations on heavy blur elements */
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  /* Disable expensive backdrop-filter on marquee, fallback to standard dark background */
+  .lend-marquee {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(8, 8, 8, 0.95) !important;
+  }
+
+  /* Disable floating animations of large pseudo-elements */
+  .lend-spotlight-card::before, .lend-spotlight-card::after {
+    animation: none !important;
+  }
+}
+

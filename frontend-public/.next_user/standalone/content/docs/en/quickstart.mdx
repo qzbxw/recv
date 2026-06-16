@@ -1,0 +1,138 @@
+---
+title: Quickstart
+description: Get an API key, create your first invoice, and handle a webhook — end to end with curl.
+---
+
+# Quickstart
+
+This guide takes you from zero to a paid (simulated) invoice in five steps. The base URL for every developer endpoint is:
+
+```text
+https://recv.money/v1
+```
+
+## 1. Get an API key
+
+API access requires a paid plan with the developer API enabled (**Developer** or **Business** — the Merchant and Trial plans do **not** include the API). See [Authentication](/en/docs/authentication) and [Errors](/en/docs/errors) for plan limits.
+
+1. Sign in to the [Merchant Console](/app/auth).
+2. Add at least one **payout wallet** for the network you want to charge on (e.g. a TRON address). Invoices are created against your own wallet, so this is required.
+3. Open the **Developer Portal** and create an API key. Choose the environment:
+   - **Test** keys are prefixed `test_` and create test-mode invoices that live blockchain watchers ignore.
+   - **Live** keys are prefixed `live_`.
+
+The full secret is shown **once** at creation time. Store it in an environment variable.
+
+```bash
+export RECV_API_KEY="test_xxxxxxxxxxxxxxxxxxxx"
+```
+
+## 2. Verify the key
+
+```bash
+curl https://recv.money/v1/me \
+  -H "X-API-Key: $RECV_API_KEY"
+```
+
+```json
+{
+  "workspace": { "id": 12, "username": "acme", "email": "dev@acme.com" },
+  "plan": { "code": "developer", "name": "Developer", "...": "..." },
+  "usage": { "monthly_requests": 3, "monthly_limit": 50000 },
+  "key": {
+    "id": 7,
+    "label": "Server key",
+    "prefix": "test_a1b2",
+    "environment": "test",
+    "scopes": ["invoices:read", "invoices:write"]
+  }
+}
+```
+
+## 3. Create your first invoice
+
+`base_amount_usd` is a decimal **string**. `payable_network` must be one of the [supported networks](/en/docs/networks). The optional `Idempotency-Key` header makes the create call safe to retry.
+
+```bash
+curl -X POST https://recv.money/v1/invoices \
+  -H "X-API-Key: $RECV_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-1001" \
+  -d '{
+    "title": "Order #1001",
+    "base_amount_usd": "49.00",
+    "payable_network": "TRON",
+    "expires_in_minutes": 60
+  }'
+```
+
+The `201 Created` response contains the destination address, the on-chain `payable_amount`, the hosted `checkout_url`, and a `payment_uri`:
+
+```json
+{
+  "id": 482,
+  "public_id": "pub_abcdef123",
+  "title": "Order #1001",
+  "base_amount_usd": "49.00",
+  "payable_amount": "49.000000",
+  "payable_network": "TRON",
+  "destination_address": "TQDt...",
+  "status": "awaiting_payment",
+  "mode": "test",
+  "environment": "test",
+  "expires_at": "2026-05-31T22:00:00Z",
+  "checkout_url": "/app/checkout/pub_abcdef123",
+  "payment_uri": "TQDt..."
+}
+```
+
+Send the customer to `https://recv.money{checkout_url}`, or render your own UI from the fields above.
+
+## 4. Simulate a payment (test mode)
+
+With a **test** key you can mark a test invoice as paid without sending any funds. Use the invoice `id` from step 3:
+
+```bash
+curl -X POST https://recv.money/v1/test/invoices/482/simulate-payment \
+  -H "X-API-Key: $RECV_API_KEY"
+```
+
+The invoice flips to `status: "paid"` and a webhook is queued exactly as it would be in production. (This endpoint returns `403` for `live_` keys.)
+
+## 5. Handle the webhook
+
+Configure a webhook endpoint in the Developer Portal, then verify every delivery. recv signs each request and includes the headers `X-recv-Event`, `X-recv-Timestamp`, and `X-recv-Signature`.
+
+```javascript
+const crypto = require("crypto");
+const express = require("express");
+const app = express();
+
+app.post("/recv/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const signature = req.headers["x-recv-signature"];
+  const timestamp = req.headers["x-recv-timestamp"];
+  const secret = process.env.RECV_WEBHOOK_SECRET.trim();
+
+  const expected =
+    "v1=" +
+    crypto.createHmac("sha256", secret)
+          .update(`${timestamp}.${req.body.toString()}`)
+          .digest("hex");
+
+  if (signature !== expected) return res.status(401).send("invalid signature");
+
+  const event = JSON.parse(req.body);
+  if (event.event === "invoice.paid") {
+    // fulfill the order for event.invoice.public_id
+  }
+  res.status(200).send("ok");
+});
+```
+
+See [Webhooks](/en/docs/webhooks) for the full event list, payload shapes, and a Python verifier.
+
+## Next steps
+
+- [Authentication](/en/docs/authentication) — keys, scopes, test vs live.
+- [Invoices](/en/docs/invoices) — full field reference and lifecycle.
+- [MCP / AI Agents](/en/docs/mcp) — drive recv from an AI agent.

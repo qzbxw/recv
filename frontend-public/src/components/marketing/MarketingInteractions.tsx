@@ -44,20 +44,27 @@ export function MarketingInteractions() {
     });
     mutations.observe(document.body, { childList: true, subtree: true });
 
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!(event.target instanceof Element)) return;
-      const card = event.target.closest<HTMLElement>(".lend-spotlight-card");
-      if (!card) return;
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty("--mouse-x", `${event.clientX - rect.left}px`);
-      card.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
-    };
-    document.addEventListener("mousemove", handleMouseMove, { passive: true });
+    const supportsHover = window.matchMedia("(hover: hover)").matches;
+    let handleMouseMove: (event: MouseEvent) => void;
+
+    if (supportsHover) {
+      handleMouseMove = (event: MouseEvent) => {
+        if (!(event.target instanceof Element)) return;
+        const card = event.target.closest<HTMLElement>(".lend-spotlight-card");
+        if (!card) return;
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty("--mouse-x", `${event.clientX - rect.left}px`);
+        card.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
+      };
+      document.addEventListener("mousemove", handleMouseMove, { passive: true });
+    }
 
     return () => {
       observer.disconnect();
       mutations.disconnect();
-      document.removeEventListener("mousemove", handleMouseMove);
+      if (supportsHover) {
+        document.removeEventListener("mousemove", handleMouseMove);
+      }
     };
   }, []);
 

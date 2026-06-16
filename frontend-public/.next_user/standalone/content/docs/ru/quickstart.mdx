@@ -1,0 +1,138 @@
+---
+title: Быстрый старт
+description: Получите API-ключ, создайте первый счет и обработайте вебхук — от начала до конца с curl.
+---
+
+# Быстрый старт
+
+Это руководство проведет вас от нуля до оплаченного (симулированного) счета за пять шагов. Базовый URL для всех developer-endpoint'ов:
+
+```text
+https://recv.money/v1
+```
+
+## 1. Получите API-ключ
+
+Доступ к API требует платного тарифа с включенным developer API (**Developer** или **Business** — тарифы Merchant и Trial **не** включают API). См. [Аутентификацию](/ru/docs/authentication) и [Ошибки](/ru/docs/errors) для лимитов тарифов.
+
+1. Войдите в [Консоль мерчанта](/app/auth).
+2. Добавьте хотя бы один **кошелек для выплат** для сети, в которой будете принимать оплату (например, адрес TRON). Счета создаются на ваш собственный кошелек, поэтому это обязательно.
+3. Откройте **Developer Portal** и создайте API-ключ. Выберите окружение:
+   - **Test**-ключи имеют префикс `test_` и создают тестовые счета, которые игнорируются live-воркерами блокчейна.
+   - **Live**-ключи имеют префикс `live_`.
+
+Полный секрет показывается **один раз** при создании. Сохраните его в переменной окружения.
+
+```bash
+export RECV_API_KEY="test_xxxxxxxxxxxxxxxxxxxx"
+```
+
+## 2. Проверьте ключ
+
+```bash
+curl https://recv.money/v1/me \
+  -H "X-API-Key: $RECV_API_KEY"
+```
+
+```json
+{
+  "workspace": { "id": 12, "username": "acme", "email": "dev@acme.com" },
+  "plan": { "code": "developer", "name": "Developer", "...": "..." },
+  "usage": { "monthly_requests": 3, "monthly_limit": 50000 },
+  "key": {
+    "id": 7,
+    "label": "Server key",
+    "prefix": "test_a1b2",
+    "environment": "test",
+    "scopes": ["invoices:read", "invoices:write"]
+  }
+}
+```
+
+## 3. Создайте первый счет
+
+`base_amount_usd` — это десятичная **строка**. `payable_network` должен быть одной из [поддерживаемых сетей](/ru/docs/networks). Необязательный заголовок `Idempotency-Key` делает создание безопасным для повторов.
+
+```bash
+curl -X POST https://recv.money/v1/invoices \
+  -H "X-API-Key: $RECV_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-1001" \
+  -d '{
+    "title": "Order #1001",
+    "base_amount_usd": "49.00",
+    "payable_network": "TRON",
+    "expires_in_minutes": 60
+  }'
+```
+
+Ответ `201 Created` содержит адрес назначения, сумму к оплате on-chain `payable_amount`, хостинговый `checkout_url` и `payment_uri`:
+
+```json
+{
+  "id": 482,
+  "public_id": "pub_abcdef123",
+  "title": "Order #1001",
+  "base_amount_usd": "49.00",
+  "payable_amount": "49.000000",
+  "payable_network": "TRON",
+  "destination_address": "TQDt...",
+  "status": "awaiting_payment",
+  "mode": "test",
+  "environment": "test",
+  "expires_at": "2026-05-31T22:00:00Z",
+  "checkout_url": "/app/checkout/pub_abcdef123",
+  "payment_uri": "TQDt..."
+}
+```
+
+Отправьте клиента на `https://recv.money{checkout_url}` или отрисуйте собственный UI по полям выше.
+
+## 4. Симулируйте оплату (test mode)
+
+С **test**-ключом можно пометить тестовый счет оплаченным без отправки средств. Используйте `id` счета из шага 3:
+
+```bash
+curl -X POST https://recv.money/v1/test/invoices/482/simulate-payment \
+  -H "X-API-Key: $RECV_API_KEY"
+```
+
+Счет переходит в `status: "paid"`, и вебхук ставится в очередь ровно так же, как в продакшене. (Для ключей `live_` этот endpoint возвращает `403`.)
+
+## 5. Обработайте вебхук
+
+Настройте webhook-endpoint в Developer Portal и проверяйте каждую доставку. recv подписывает каждый запрос и добавляет заголовки `X-recv-Event`, `X-recv-Timestamp` и `X-recv-Signature`.
+
+```javascript
+const crypto = require("crypto");
+const express = require("express");
+const app = express();
+
+app.post("/recv/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const signature = req.headers["x-recv-signature"];
+  const timestamp = req.headers["x-recv-timestamp"];
+  const secret = process.env.RECV_WEBHOOK_SECRET.trim();
+
+  const expected =
+    "v1=" +
+    crypto.createHmac("sha256", secret)
+          .update(`${timestamp}.${req.body.toString()}`)
+          .digest("hex");
+
+  if (signature !== expected) return res.status(401).send("invalid signature");
+
+  const event = JSON.parse(req.body);
+  if (event.event === "invoice.paid") {
+    // выполнить заказ для event.invoice.public_id
+  }
+  res.status(200).send("ok");
+});
+```
+
+См. [Webhooks](/ru/docs/webhooks) для полного списка событий, структур payload и примера верификации на Python.
+
+## Дальнейшие шаги
+
+- [Аутентификация](/ru/docs/authentication) — ключи, scopes, test vs live.
+- [Инвойсы](/ru/docs/invoices) — полный справочник полей и жизненный цикл.
+- [MCP / AI-агенты](/ru/docs/mcp) — управление recv из AI-агента.

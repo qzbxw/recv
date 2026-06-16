@@ -1,0 +1,155 @@
+---
+title: Вебхуки
+description: Как получать и проверять платежные уведомления recv.
+---
+
+# Webhooks
+
+Вебхуки позволяют получать уведомления в реальном времени при изменении статуса счета.
+
+## Настройка
+
+Настройте URL вебхука в [Developer Portal](https://recv.money/app/developer-portal). recv будет отправлять `POST`-запрос на этот URL с JSON-payload при каждом обновлении счета.
+
+## Заголовки вебхука
+
+При срабатывании события recv отправляет `POST`-запрос на ваш endpoint со следующими заголовками:
+
+- `X-recv-Event`: тип события (например, `invoice.paid`).
+- `X-recv-Timestamp`: Unix-время отправки вебхука (в секундах).
+- `X-recv-Signature`: подпись запроса (с префиксом `v1=`).
+
+## Примеры payload
+
+### Событие оплаты счета (`invoice.paid`)
+Для событий счета (`invoice.paid`, `invoice.underpaid`, `invoice.expired`, `invoice.overpaid`, `invoice.manual_review`) структура payload такова:
+
+```json
+{
+  "created_at": "2026-05-31T20:55:03.123Z",
+  "transition_id": 9845,
+  "event": "invoice.paid",
+  "classification": "manual_mark_paid",
+  "observed_amount": "149.000000",
+  "invoice": {
+    "id": 482,
+    "public_id": "pub_abcdef123",
+    "kind": "merchant",
+    "plan_code": "developer",
+    "title": "Order #9841",
+    "status": "paid",
+    "payable_amount": "149.000000",
+    "payable_network": "TRON",
+    "destination_address": "TQDt...",
+    "payment_comment": "comment_text_or_empty",
+    "tx_hash": "tx_hash_here_or_empty",
+    "paid_at": "2026-05-31T20:55:00Z"
+  },
+  "sent_at": "2026-05-31T20:55:03.124Z"
+}
+```
+
+### Событие активации подписки (`subscription.activated`)
+Когда оплачивается счет за подписку или тариф мерчанта, отправляется событие:
+
+```json
+{
+  "event": "subscription.activated",
+  "plan": {
+    "code": "developer",
+    "name": "Developer",
+    "billing_days": 30
+  },
+  "invoice_public_id": "pub_abcdef123",
+  "sent_at": "2026-05-31T20:55:03.124Z"
+}
+```
+
+## Проверка подписи
+
+Чтобы убедиться, что вебхук действительно отправлен recv, вы **обязаны** проверять заголовок `X-recv-Signature`, используя ваш **Webhook Secret** как ключ.
+
+Подпись вычисляется как: `v1=` + HMAC-SHA256 hex-дайджест строки `<Timestamp>.<Raw Body>`.
+
+### Пример проверки (Node.js / Express)
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhook(rawBody, signature, timestamp, secret) {
+  const hmac = crypto.createHmac('sha256', secret.trim());
+  hmac.update(`${timestamp}.${rawBody}`);
+  const expectedSignature = `v1=${hmac.digest('hex')}`;
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
+
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-recv-signature'];
+  const timestamp = req.headers['x-recv-timestamp'];
+  const secret = process.env.RECV_WEBHOOK_SECRET;
+
+  if (!signature || !timestamp || !verifyWebhook(req.body.toString(), signature, timestamp, secret)) {
+    return res.status(401).send('invalid signature');
+  }
+
+  const payload = JSON.parse(req.body);
+  console.log("Processed event:", payload.event);
+  res.status(200).send('OK');
+});
+```
+
+### Пример проверки (Python / Flask)
+
+```python
+import hashlib, hmac
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+SECRET = "whsec_...".encode()
+
+@app.post("/webhook")
+def webhook():
+    signature = request.headers.get("X-recv-Signature", "")
+    timestamp = request.headers.get("X-recv-Timestamp", "")
+    raw_body = request.get_data()  # точные байты
+
+    mac = hmac.new(SECRET, f"{timestamp}.".encode() + raw_body, hashlib.sha256)
+    expected = "v1=" + mac.hexdigest()
+
+    if not hmac.compare_digest(signature, expected):
+        abort(401)
+
+    event = request.get_json()
+    if event["event"] == "invoice.paid":
+        # выполнить заказ для event["invoice"]["public_id"]
+        ...
+    return "ok", 200
+```
+
+> Всегда вычисляйте HMAC по **сырым байтам запроса**, а не по повторно сериализованному JSON — повторная сериализация может изменить порядок ключей или пробелы и сломать подпись.
+
+## События
+
+| Событие | Когда отправляется |
+|---------|--------------------|
+| `invoice.paid` | Счет полностью оплачен. |
+| `invoice.underpaid` | Перевод поступил ниже суммы к оплате. |
+| `invoice.overpaid` | Перевод превысил сумму к оплате. |
+| `invoice.manual_review` | Счет требует ручной проверки. |
+| `invoice.expired` | Окно оплаты закрылось без оплаты. |
+| `subscription.activated` | Оплачен счет за тариф/подписку recv (отправляется вместе с `invoice.paid`). |
+
+## Повторные доставки (retries)
+
+recv повторяет неуспешные доставки (ответ не 2xx, таймаут или ошибка соединения). Максимум попыток задается бюджетом ретраев вашего тарифа — **3** на Developer и **5** на Business. Доставки и попытки видны в Developer Portal, где можно также переотправить вручную.
+
+## Лучшие практики
+
+- **Отвечайте 200 OK**: всегда возвращайте 200 для подтверждения получения.
+- **Идемпотентность**: обработчик должен быть идемпотентным, так как recv может повторить уведомление, не получив 200. Дедуплицируйте по `transition_id` (или `invoice.public_id` + `status`).
+- **Проверяйте подписи**: всегда проверяйте подпись для защиты от подделки.
+- **Асинхронная обработка**: подтверждайте получение сразу и обрабатывайте асинхронно во избежание таймаутов.

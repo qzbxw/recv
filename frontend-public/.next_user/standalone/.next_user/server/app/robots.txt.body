@@ -1,0 +1,24 @@
+# Content signals (search, AI input, AI training) are all allowed.
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /api/
+Disallow: /v1/
+Disallow: /internal/
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+Sitemap: https://recv.money/sitemap.xml

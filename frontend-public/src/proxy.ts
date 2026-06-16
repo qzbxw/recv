@@ -136,5 +136,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!favicon.ico|icon.png|apple-icon.png).*)"],
+  matcher: [
+    "/((?!favicon.ico|icon.png|apple-icon.png).*)",
+    "/",
+  ],
 };

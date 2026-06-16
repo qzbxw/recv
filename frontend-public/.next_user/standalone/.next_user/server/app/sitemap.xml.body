@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://recv.money/sitemaps/en/pages.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://recv.money/sitemaps/en/docs.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://recv.money/sitemaps/en/blog-1.xml</loc>
+    <lastmod>2026-05-27T09:00:00Z</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://recv.money/sitemaps/ru/pages.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://recv.money/sitemaps/ru/docs.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://recv.money/sitemaps/ru/blog-1.xml</loc>
+    <lastmod>2026-05-27T09:00:00Z</lastmod>
+  </sitemap>
+</sitemapindex>

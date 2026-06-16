@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[97367,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0t2xr05rlu96l.js"],"ViewportBoundary"]
+3:I[97367,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0t2xr05rlu96l.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+5:I[27201,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0t2xr05rlu96l.js"],"IconMark"]
+0:{"rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","link","0",{"rel":"manifest","href":"/manifest.webmanifest"}],["$","link","1",{"rel":"icon","href":"/favicon.ico?favicon.14yby3_mfalw4.ico","sizes":"64x64","type":"image/x-icon"}],["$","link","2",{"rel":"icon","href":"/icon.png?icon.02b5~7gw_anou.png","sizes":"192x192","type":"image/png"}],["$","link","3",{"rel":"apple-touch-icon","href":"/apple-icon.png?apple-icon.02b5~7gw_anou.png","sizes":"192x192","type":"image/png"}],["$","$L5","4",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"JbTLu7-5ES5Mic2NqkdJ2"}

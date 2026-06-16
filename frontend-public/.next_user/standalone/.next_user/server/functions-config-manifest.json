@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "functions": {
+    "/_middleware": {
+      "runtime": "nodejs",
+      "matchers": [
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!favicon.ico|icon.png|apple-icon.png).*))(\\.json)?[\\/#\\?]?$",
+          "originalSource": "/((?!favicon.ico|icon.png|apple-icon.png).*)"
+        }
+      ]
+    }
+  }
+}

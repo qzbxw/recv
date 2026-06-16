@@ -255,6 +255,7 @@ export function AuthPortalPage() {
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!window.matchMedia("(hover: hover)").matches) return;
     const card = cardRef.current;
     if (!card) return;
 

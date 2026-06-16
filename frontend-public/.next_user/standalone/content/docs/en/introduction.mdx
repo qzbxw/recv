@@ -1,0 +1,40 @@
+---
+title: Introduction to recv
+description: What recv is, how the non-custodial architecture works, and where the developer API and AI tooling fit.
+---
+
+# Introduction
+
+recv is a **non-custodial crypto payment gateway**. Customers pay you on-chain, the funds land **directly in your own wallet**, and recv never touches the money. Instead of taking a percentage of every transaction, recv charges a **flat subscription** — there are no turnover fees.
+
+## What recv does
+
+- **Creates invoices.** You generate a payment request for a USD amount on a specific blockchain network. recv converts the USD price into the payable on-chain amount, picks one of your payout wallets as the destination address, and returns a hosted checkout link plus a payment URI.
+- **Watches the chain.** recv's watchers observe incoming transfers to your destination addresses and match them to open invoices.
+- **Confirms and notifies.** When a matching transfer is seen, the invoice transitions (`paid`, `underpaid`, `overpaid`, `manual_review`), and recv fires a signed webhook to your endpoint.
+
+```text
+ Customer            recv                         You
+    │   pays on-chain   │                            │
+    │ ─────────────────►│  destination = YOUR wallet │
+    │                   │  (funds never touch recv) │
+    │                   │  matches transfer→invoice  │
+    │                   │ ──── signed webhook ──────►│  update order
+```
+
+## Non-custodial model
+
+You connect payout wallets per network in the Merchant Console. Every invoice is created against one of *your* addresses, so settlement is direct customer → merchant. recv's role is detection, accounting, and notification — not custody. There is no payout step, no recv-held balance, and no withdrawal flow.
+
+## Supported networks
+
+recv settles payments on **native TON, TON_USDT, TRON, Base, and BSC**. See [Supported Networks](/en/docs/networks) for the exact list and per-network notes.
+
+## Two ways to integrate
+
+1. **REST API (`/v1`).** API-key-authenticated endpoints for creating and managing invoices, plus signed webhooks for status changes. Start with the [Quickstart](/en/docs/quickstart).
+2. **MCP server (AI agents).** A Model Context Protocol server that lets AI agents (Claude Desktop, Cursor, etc.) create and check invoices, verify webhooks, and list networks as tools. See [MCP / AI Agents](/en/docs/mcp).
+
+## Getting started
+
+Create an account in the [Merchant Console](/app/auth), add a payout wallet, then issue an API key from the Developer Portal. The [Quickstart](/en/docs/quickstart) walks through it end to end with curl.

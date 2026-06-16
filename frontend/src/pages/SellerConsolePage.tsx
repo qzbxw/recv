@@ -257,6 +257,7 @@ export function SellerConsolePage() {
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (!window.matchMedia("(hover: hover)").matches) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;

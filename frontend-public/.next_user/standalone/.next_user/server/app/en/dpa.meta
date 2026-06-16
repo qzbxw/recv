@@ -1,0 +1,16 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/[locale]/layout,_N_T_/[locale]/dpa/layout,_N_T_/[locale]/dpa/page,_N_T_/en/dpa"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/$d$locale/dpa/__PAGE__",
+    "/$d$locale/dpa",
+    "/$d$locale",
+    "/_index",
+    "/_head"
+  ]
+}

@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[55710,["/_next/static/chunks/0b.jeqv67-o_-.js","/_next/static/chunks/0j2a~o~oul~j_.js","/_next/static/chunks/0vodxjd~-ij8d.js","/_next/static/chunks/061d6qx0ce9jj.js"],"BlogIndexClient"]
+3:I[97367,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0t2xr05rlu96l.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Главная\",\"item\":\"https://recv.money/ru\"},{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Блог\",\"item\":\"https://recv.money/ru/blog\"}]}"}}],["$","$L2",null,{"language":"ru","posts":[]}]],[["$","script","script-0",{"src":"/_next/static/chunks/0j2a~o~oul~j_.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0vodxjd~-ij8d.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/061d6qx0ce9jj.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"JbTLu7-5ES5Mic2NqkdJ2"}
+5:null

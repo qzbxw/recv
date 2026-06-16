@@ -145,6 +145,7 @@ function ToneBadge({ status }: { status: string }) {
 }
 
 function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
+  if (!window.matchMedia("(hover: hover)").matches) return;
   const rect = e.currentTarget.getBoundingClientRect();
   e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
   e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);

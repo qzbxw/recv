@@ -1,0 +1,158 @@
+---
+title: Webhooks
+description: How to receive and verify payment notifications.
+---
+
+# Webhooks
+
+Webhooks allow you to receive real-time notifications when an invoice's status changes.
+
+## Configuration
+
+Configure your webhook URL in the [Developer Portal](https://recv.money/app/developer-portal). recv will send a `POST` request to this URL with a JSON payload whenever an invoice is updated.
+
+## Webhook Headers
+
+Whenever an event is triggered, recv sends a `POST` request to your endpoint with the following headers:
+
+- `X-recv-Event`: The type of event (e.g., `invoice.paid`).
+- `X-recv-Timestamp`: The Unix epoch timestamp when the webhook was sent (in seconds).
+- `X-recv-Signature`: The signature of the request (prefixed with `v1=`).
+
+## Webhook Payload Examples
+
+### Invoice Paid Event (`invoice.paid`)
+For invoice events (such as `invoice.paid`, `invoice.underpaid`, `invoice.expired`, `invoice.overpaid`, `invoice.manual_review`), the payload structure is:
+
+```json
+{
+  "created_at": "2026-05-31T20:55:03.123Z",
+  "transition_id": 9845,
+  "event": "invoice.paid",
+  "classification": "manual_mark_paid",
+  "observed_amount": "149.000000",
+  "invoice": {
+    "id": 482,
+    "public_id": "pub_abcdef123",
+    "kind": "merchant",
+    "plan_code": "developer",
+    "title": "Order #9841",
+    "status": "paid",
+    "payable_amount": "149.000000",
+    "payable_network": "TRON",
+    "destination_address": "TQDt...",
+    "payment_comment": "comment_text_or_empty",
+    "tx_hash": "tx_hash_here_or_empty",
+    "paid_at": "2026-05-31T20:55:00Z"
+  },
+  "sent_at": "2026-05-31T20:55:03.124Z"
+}
+```
+
+### Subscription Activated Event (`subscription.activated`)
+When a merchant subscription or plan payment is settled, the following event is fired:
+
+```json
+{
+  "event": "subscription.activated",
+  "plan": {
+    "code": "developer",
+    "name": "Developer",
+    "billing_days": 30
+  },
+  "invoice_public_id": "pub_abcdef123",
+  "sent_at": "2026-05-31T20:55:03.124Z"
+}
+```
+
+## Verifying Signatures
+
+To ensure that a webhook was actually sent by recv, you **must** verify the `X-recv-Signature` header using your **Webhook Secret** as the key.
+
+The signature is computed as: `v1=` + HMAC-SHA256 hex digest of the string `<Timestamp>.<Raw Body>`.
+
+### Verification Example (Node.js / Express)
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhook(rawBody, signature, timestamp, secret) {
+  // Compute expected signature
+  const hmac = crypto.createHmac('sha256', secret.trim());
+  hmac.update(`${timestamp}.${rawBody}`);
+  const expectedSignature = `v1=${hmac.digest('hex')}`;
+  
+  // Perform timing-safe comparison
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
+
+// Usage in Express handler:
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-recv-signature'];
+  const timestamp = req.headers['x-recv-timestamp'];
+  const secret = process.env.RECV_WEBHOOK_SECRET;
+
+  if (!signature || !timestamp || !verifyWebhook(req.body.toString(), signature, timestamp, secret)) {
+    return res.status(401).send('invalid signature');
+  }
+
+  const payload = JSON.parse(req.body);
+  console.log("Processed event:", payload.event);
+  res.status(200).send('OK');
+});
+```
+
+### Verification Example (Python / Flask)
+
+```python
+import hashlib, hmac
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+SECRET = "whsec_...".encode()
+
+@app.post("/webhook")
+def webhook():
+    signature = request.headers.get("X-recv-Signature", "")
+    timestamp = request.headers.get("X-recv-Timestamp", "")
+    raw_body = request.get_data()  # exact bytes
+
+    mac = hmac.new(SECRET, f"{timestamp}.".encode() + raw_body, hashlib.sha256)
+    expected = "v1=" + mac.hexdigest()
+
+    if not hmac.compare_digest(signature, expected):
+        abort(401)
+
+    event = request.get_json()
+    if event["event"] == "invoice.paid":
+        # fulfill order for event["invoice"]["public_id"]
+        ...
+    return "ok", 200
+```
+
+> Always HMAC over the **raw request bytes**, not a re-serialized JSON object — re-encoding can change key order or whitespace and break the signature.
+
+## Events
+
+| Event | Fired when |
+|-------|-----------|
+| `invoice.paid` | Invoice fully paid. |
+| `invoice.underpaid` | A transfer arrived below the payable amount. |
+| `invoice.overpaid` | A transfer exceeded the payable amount. |
+| `invoice.manual_review` | Invoice needs merchant review. |
+| `invoice.expired` | Payment window closed without payment. |
+| `subscription.activated` | A recv plan/subscription invoice settled (fired alongside `invoice.paid`). |
+
+## Retries
+
+recv retries failed deliveries (non-2xx response, timeout, or connection error). The maximum number of attempts is set by your plan's webhook retry budget — **3** on Developer and **5** on Business. Deliveries and their attempts are visible in the Developer Portal, where you can also resend manually.
+
+## Best Practices
+
+- **Respond with 200 OK**: Always return a 200 status code to acknowledge receipt of the webhook.
+- **Idempotency**: Your webhook handler should be idempotent, as recv may retry the same notification if it doesn't receive a 200 response. Dedupe on `transition_id` (or `invoice.public_id` + `status`).
+- **Verify Signatures**: Always verify the signature to prevent spoofing.
+- **Async Processing**: Acknowledge the webhook immediately and process it asynchronously to avoid timeouts.

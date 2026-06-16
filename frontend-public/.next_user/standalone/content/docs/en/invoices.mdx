@@ -1,0 +1,252 @@
+---
+title: Invoices
+description: Create, fetch, list and cancel invoices — full field reference, statuses, and lifecycle.
+---
+
+# Invoices
+
+An invoice is a single payment request. You create it with a USD amount and a network; recv converts the price to the on-chain `payable_amount`, assigns one of your payout wallets as the `destination_address`, and tracks the payment until it settles.
+
+All endpoints below live under `https://recv.money/v1` and require an [API key](/en/docs/authentication).
+
+## Create an invoice
+
+```text
+POST /v1/invoices        (scope: invoices:write)
+```
+
+### Request body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | string | Yes | Label shown on checkout (e.g. `"Order #9841"`). Must be non-empty. |
+| `base_amount_usd` | string | Yes | Amount in USD as a decimal string (e.g. `"149.00"`). Must be positive. |
+| `payable_network` | string | Yes unless `payment_options` is used | Legacy single-option network. |
+| `payable_asset` | string | No | Asset for legacy single-option requests. Defaults from the network. |
+| `payment_options` | array | No | Up to two `{ "network": "...", "asset": "..." }` options, for example USDT and SOL on one invoice. |
+| `expires_in_minutes` | integer | No | Payment window in minutes. Defaults to **30** for stablecoins and **10** when any native volatile asset is present. Native volatile invoices reject values above **15**. |
+
+The invoice environment (`test`/`live`) is inherited from the API key — there is no `mode` field in the body.
+
+### Headers
+
+| Header | Purpose |
+|--------|---------|
+| `Content-Type: application/json` | Required. |
+| `Idempotency-Key` | Optional. Makes the create call safe to retry — see [Idempotency](#idempotency). |
+
+### Example (curl)
+
+```bash
+curl -X POST https://recv.money/v1/invoices \
+  -H "X-API-Key: $RECV_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-9841" \
+  -d '{
+    "title": "Premium Subscription",
+    "base_amount_usd": "100.00",
+    "payment_options": [
+      { "network": "TRON", "asset": "USDT" },
+      { "network": "SOLANA", "asset": "SOL" }
+    ]
+  }'
+```
+
+### Example (Python)
+
+```python
+import requests
+
+resp = requests.post(
+    "https://recv.money/v1/invoices",
+    headers={"X-API-Key": "YOUR_API_KEY", "Content-Type": "application/json"},
+    json={
+        "title": "Premium Subscription",
+        "base_amount_usd": "100.00",
+        "payment_options": [
+            {"network": "TRON", "asset": "USDT"},
+            {"network": "SOLANA", "asset": "SOL"},
+        ],
+    },
+)
+invoice = resp.json()
+print("Checkout:", "https://recv.money" + invoice["checkout_url"])
+```
+
+## Invoice object
+
+A `201`/`200` response returns the invoice object:
+
+```json
+{
+  "id": 482,
+  "public_id": "pub_abcdef123",
+  "title": "Premium Subscription",
+  "kind": "merchant",
+  "subscription_days": 0,
+  "plan_code": "developer",
+  "checkout_badge": "Merchant Checkout",
+  "base_amount_usd": "100.00",
+  "payable_amount": "100.000000",
+  "payable_network": "TRON",
+  "payable_asset": "USDT",
+  "payment_options": [
+    {
+      "network": "TRON",
+      "asset": "USDT",
+      "payable_amount": "100.000123",
+      "destination_address": "TQDt...",
+      "payment_comment": "",
+      "payment_uri": "TQDt...",
+      "is_default": true
+    },
+    {
+      "network": "SOLANA",
+      "asset": "SOL",
+      "payable_amount": "0.684211",
+      "destination_address": "9x...",
+      "payment_comment": "",
+      "payment_uri": "9x...",
+      "is_default": false
+    }
+  ],
+  "destination_address": "EQC...",
+  "payment_comment": "",
+  "status": "awaiting_payment",
+  "environment": "live",
+  "mode": "live",
+  "expires_at": "2026-05-31T22:00:00Z",
+  "created_at": "2026-05-31T21:00:00Z",
+  "tx_hash": null,
+  "received_amount": "0.000000",
+  "review_reason": null,
+  "finalized_at": null,
+  "checkout_url": "/app/checkout/pub_abcdef123",
+  "payment_uri": "ton://transfer/EQC...?amount=100000000000&text="
+}
+```
+
+### Field reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | Numeric invoice ID. Use this in the path of get/cancel/simulate calls. |
+| `public_id` | string | Public identifier used in the checkout URL. |
+| `title` | string | The title you supplied. |
+| `kind` | string | `merchant` for API-created invoices; `subscription` for recv plan billing. |
+| `subscription_days` | integer | Days granted by a subscription invoice; `0` for merchant invoices. |
+| `plan_code` | string | Plan associated with the invoice. |
+| `checkout_badge` | string | Badge text shown on the hosted checkout. |
+| `base_amount_usd` | string | USD price, 2 decimals. |
+| `payable_amount` | string | On-chain amount to pay, 6 decimals. |
+| `payable_network` | string | Network the customer pays on. |
+| `payable_asset` | string | Asset for the legacy/default payment option. |
+| `payment_options` | array | All payment choices available on the hosted checkout. |
+| `destination_address` | string | Your payout wallet that must receive the payment. |
+| `payment_comment` | string | Memo/comment required by some networks (empty string if none). |
+| `status` | string | Current status — see [Statuses](#statuses). |
+| `environment` / `mode` | string | `test` or `live`. Both fields carry the same value. |
+| `expires_at` | timestamp | When the payment window closes (RFC 3339). |
+| `created_at` | timestamp | Creation time. |
+| `tx_hash` | string \| null | Matching transaction hash once observed. |
+| `received_amount` | string | Total received so far, 6 decimals. |
+| `review_reason` | string \| null | Why the invoice is in `manual_review`, when applicable. |
+| `finalized_at` | timestamp \| null | When the invoice reached a terminal state. |
+| `checkout_url` | string | Relative hosted-checkout path: `https://recv.money{checkout_url}`. |
+| `payment_uri` | string | Deep-link / address for the customer's wallet. For TON, a `ton://transfer/...` URI with amount in nanotons; for other networks, the destination address. |
+
+## Statuses
+
+| Status | Meaning |
+|--------|---------|
+| `draft` | Created but not yet active. |
+| `awaiting_payment` | Open and waiting for payment. |
+| `paid` | The expected amount was received and confirmed. |
+| `expired` | The payment window closed before payment (also the state set when you cancel). |
+| `underpaid` | A transfer arrived but was less than `payable_amount`. |
+| `overpaid` | A transfer exceeded `payable_amount`. |
+| `manual_review` | Needs merchant confirmation — e.g. a payment arrived after expiry, or an overpayment. |
+
+A read of an invoice whose window has elapsed while still `awaiting_payment` is reported as `expired`.
+
+## Get an invoice
+
+```text
+GET /v1/invoices/:id     (scope: invoices:read)
+```
+
+```bash
+curl https://recv.money/v1/invoices/482 -H "X-API-Key: $RECV_API_KEY"
+```
+
+Returns the invoice object above, or `404` if it does not belong to your workspace.
+
+## List invoices
+
+```text
+GET /v1/invoices         (scope: invoices:read)
+```
+
+| Query param | Default | Notes |
+|-------------|---------|-------|
+| `page` | `1` | 1-based page number. |
+| `page_size` | `20` | Clamped to `1–100`; out-of-range values reset to 20. |
+
+```bash
+curl "https://recv.money/v1/invoices?page=1&page_size=50" \
+  -H "X-API-Key: $RECV_API_KEY"
+```
+
+```json
+{ "items": [ /* invoices */ ], "total": 134, "page": 1, "page_size": 50 }
+```
+
+## Cancel an invoice
+
+```text
+POST /v1/invoices/:id/cancel     (scope: invoices:write)
+```
+
+Cancelling sets the invoice to `expired`. Only workspace-created merchant invoices can be cancelled; subscription/plan invoices cannot (`400`).
+
+```bash
+curl -X POST https://recv.money/v1/invoices/482/cancel \
+  -H "X-API-Key: $RECV_API_KEY"
+```
+
+## Simulating payments (test mode)
+
+```text
+POST /v1/test/invoices/:id/simulate-payment     (scope: invoices:write)
+```
+
+Marks a **test** invoice as `paid` and fires webhooks, without any on-chain transfer. Requires an `test_` key and a test invoice; otherwise returns `403`/`400`.
+
+```bash
+curl -X POST https://recv.money/v1/test/invoices/482/simulate-payment \
+  -H "X-API-Key: $RECV_API_KEY"
+```
+
+## Idempotency
+
+`POST /v1/invoices` accepts an `Idempotency-Key` header. recv stores the result against the key + request body hash:
+
+- **Same key, same body** → returns the original stored response.
+- **Same key, different body** → `409 Conflict`.
+- **Same key, original still processing** → `409 Conflict`.
+
+Use a stable key per logical order (e.g. your order ID) so network retries never create duplicate invoices.
+
+## Example (Go)
+
+```go
+req, _ := http.NewRequest("GET", "https://recv.money/v1/invoices/"+id, nil)
+req.Header.Set("X-API-Key", apiKey)
+
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+
+var invoice map[string]any
+json.NewDecoder(resp.Body).Decode(&invoice)
+fmt.Println("Status:", invoice["status"])
+```

@@ -1,0 +1,11 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/src/app/[locale]/use-cases/page": [
+      "static/media/manrope_variable-s.p.00foik3c28tuj.woff2",
+      "static/media/montserrat_variable-s.p.0y9h6sjorr1mr.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}
