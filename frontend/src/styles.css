@@ -9956,85 +9956,243 @@ html {
   background: rgba(0, 0, 0, 0.3) !important;
 }
 
-.auth-portal__oauth {
+.auth-portal__oauth-grid {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  margin: 1.35rem 0 1rem;
+  margin: 1.5rem 0 1.25rem;
 }
 
 .auth-portal__oauth-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
   width: 100%;
-  min-height: 46px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  padding: 0.78rem 1rem;
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.07);
-  font-weight: 800;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  padding: 0.7rem 1rem !important;
+  color: #f7f3ea !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  font-family: "Montserrat", sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
   text-decoration: none;
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  transition: all 0.2s cubic-bezier(0.08, 0.82, 0.17, 1) !important;
 }
 
 .auth-portal__oauth-btn:hover {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(139, 92, 246, 0.4) !important;
+  background: rgba(139, 92, 246, 0.08) !important;
   transform: translateY(-1px);
 }
 
-.auth-portal__divider {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.85rem;
-  margin: 0.95rem 0 1.1rem;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 800;
+.auth-portal__oauth-btn--google:hover {
+  border-color: rgba(66, 133, 244, 0.4) !important;
+  background: rgba(66, 133, 244, 0.08) !important;
+}
+
+.auth-portal__oauth-btn--github:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.auth-portal__change-username-btn {
+  background: none;
+  border: none;
+  color: #a78bfa;
+  font-size: 0.72rem;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
 }
 
-.auth-portal__divider::before,
-.auth-portal__divider::after {
-  content: "";
-  height: 1px;
-  background: rgba(255, 255, 255, 0.12);
+.auth-portal__change-username-btn:hover {
+  color: #fff;
 }
 
-.auth-provider-mark {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+.auth-portal__input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.auth-portal__input-wrapper .dev-input {
+  width: 100%;
+  padding-left: 42px !important;
+}
+
+.auth-portal__input-icon {
+  position: absolute;
+  left: 16px;
+  color: rgba(167, 139, 250, 0.6);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.auth-portal__ref-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.auth-portal__ref-toggle {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.78rem;
+  font-family: "Manrope", sans-serif;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.auth-portal__ref-toggle:hover {
+  color: #a78bfa;
+}
+
+.auth-portal__ref-status {
+  font-size: 0.8rem;
+  margin: 6px 0 0;
+  font-weight: 500;
+}
+
+.auth-portal__ref-status--success {
+  color: #48bb78;
+}
+
+.auth-portal__ref-status--error {
+  color: #a0aec0;
+}
+
+.auth-portal__resend-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.8rem;
+  font-family: "Manrope", sans-serif;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.2s ease;
+  align-self: center;
+  display: inline-block;
+  text-decoration: underline;
+  text-decoration-style: dashed;
+}
+
+.auth-portal__resend-btn:hover {
+  color: #a78bfa;
+}
+
+.auth-portal__disclaimer-text {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.7rem;
+  color: #64748b !important;
+  text-align: center;
+  margin-top: 1.75rem;
+  line-height: 1.5;
+  padding: 0 5px;
+}
+
+.auth-portal__bot-hint-box {
+  margin-top: 1.5rem;
+  padding: 1.1rem;
+  border-radius: 12px;
+  background: rgba(139, 92, 246, 0.03) !important;
+  border: 1px solid rgba(139, 92, 246, 0.1) !important;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.auth-portal__hint-text {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.8rem;
+  color: #94a3b8 !important;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.auth-portal__bot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #a78bfa !important;
+  text-decoration: none;
+  padding: 8px 16px;
   border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 900;
-  line-height: 1;
+  background: rgba(139, 92, 246, 0.1) !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  transition: all 0.2s ease;
 }
 
-.auth-provider-mark--google {
-  color: #1f2937;
-  background: #fff;
+.auth-portal__bot-link:hover {
+  background: rgba(139, 92, 246, 0.2) !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  color: #fff !important;
+  transform: translateY(-1px);
 }
 
-.auth-provider-mark--github {
-  color: #fff;
-  background: #171b22;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+.anim-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
-.auth-provider-mark--telegram {
-  color: #fff;
-  background: #2aabee;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .auth-link-list {
   display: grid;
   gap: 0.65rem;
+}
+
+.auth-provider-mark {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.auth-provider-mark--google {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.auth-provider-mark--github {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.auth-provider-mark--telegram {
+  background: rgba(42, 171, 238, 0.1);
+  border: 1px solid rgba(42, 171, 238, 0.2);
+  color: #2aabee;
+}
+
+.auth-link-row__status--muted {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--muted) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
 }
 
 .auth-link-row {
@@ -10083,6 +10241,16 @@ html {
   background: rgba(99, 215, 157, 0.1);
   font-size: 0.75rem;
   font-weight: 900;
+}
+
+.auth-link-row .dev-btn {
+  flex: 0 0 auto !important;
+  padding: 0 16px !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  border-radius: 999px !important;
+  height: 28px !important;
+  line-height: 26px !important;
 }
 
 @media (max-width: 560px) {
@@ -11344,12 +11512,30 @@ html {
   transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+.console-dogfood-glow {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(139, 92, 246, 0.03),
+    transparent 70%
+  ) !important;
+  opacity: 0.6 !important;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
 .console-spotlight-card {
   position: relative !important;
   overflow: hidden !important;
 }
 
 .console-spotlight-card:hover .console-card-spotlight {
+  opacity: 1 !important;
+}
+
+.console-spotlight-card:hover .console-dogfood-glow {
   opacity: 1 !important;
 }
 

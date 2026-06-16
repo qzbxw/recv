@@ -31,6 +31,33 @@ declare global {
   }
 }
 
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+    </svg>
+  );
+}
+
+function GithubIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.164 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+    </svg>
+  );
+}
+
+function TelegramIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.52-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.88.03-.24.38-.49 1.05-.75 4.12-1.79 6.87-2.97 8.25-3.54 3.92-1.63 4.73-1.91 5.26-1.92.12 0 .38.03.55.17.14.11.18.27.2.42-.01.06 0 .13-.01.2z" />
+    </svg>
+  );
+}
+
 export function AuthPortalPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,11 +67,13 @@ export function AuthPortalPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
+  const [codeRequested, setCodeRequested] = useState(false);
   const [form, setForm] = useState({
     username: "",
     code: "",
   });
   const [refCode, setRefCode] = useState(() => readRefCode());
+  const [showRefCode, setShowRefCode] = useState(() => Boolean(readRefCode()));
   const [refStatus, setRefStatus] = useState<"idle" | "valid" | "invalid">("idle");
   const [refPartner, setRefPartner] = useState("");
 
@@ -159,6 +188,7 @@ export function AuthPortalPage() {
       setMessage("");
       await requestTelegramLoginCode({ username: form.username.trim() });
       setMessage(text.codeSent);
+      setCodeRequested(true);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -168,6 +198,10 @@ export function AuthPortalPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!codeRequested) {
+      void handleSendCode();
+      return;
+    }
     try {
       setLoading(true);
       setError("");
@@ -304,14 +338,14 @@ export function AuthPortalPage() {
             <p className="auth-portal__subtitle">{text.browserBody}</p>
           </div>
 
-          <div className="auth-portal__oauth">
+          <div className="auth-portal__oauth-grid">
             <a className="auth-portal__oauth-btn auth-portal__oauth-btn--google" href={getOAuthStartUrl("google", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
-              <span className="auth-provider-mark auth-provider-mark--google">G</span>
-              <span>{text.continueGoogle}</span>
+              <GoogleIcon />
+              <span>Google</span>
             </a>
             <a className="auth-portal__oauth-btn auth-portal__oauth-btn--github" href={getOAuthStartUrl("github", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
-              <span className="auth-provider-mark auth-provider-mark--github">GH</span>
-              <span>{text.continueGithub}</span>
+              <GithubIcon />
+              <span>GitHub</span>
             </a>
           </div>
 
@@ -319,20 +353,41 @@ export function AuthPortalPage() {
 
           <form className="dev-form" onSubmit={handleSubmit}>
             <div className="dev-input-group">
-              <label style={{ display: 'block', marginBottom: '8px' }}>{text.username}</label>
-              <input
-                className="dev-input"
-                type="text"
-                placeholder={text.usernamePlaceholder}
-                value={form.username}
-                onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
-                required
-              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ margin: 0 }}>{text.username}</label>
+                {codeRequested && (
+                  <button
+                    type="button"
+                    className="auth-portal__change-username-btn"
+                    onClick={() => {
+                      setCodeRequested(false);
+                      setForm((current) => ({ ...current, code: "" }));
+                      setMessage("");
+                    }}
+                  >
+                    {language === "ru" ? "изменить" : "change"}
+                  </button>
+                )}
+              </div>
+              <div className="auth-portal__input-wrapper">
+                <span className="auth-portal__input-icon">
+                  <TelegramIcon size={16} />
+                </span>
+                <input
+                  className="dev-input"
+                  type="text"
+                  placeholder={text.usernamePlaceholder}
+                  value={form.username}
+                  onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
+                  required
+                  disabled={codeRequested}
+                />
+              </div>
             </div>
 
-            <div className="dev-input-group" style={{ marginTop: '1.25rem' }}>
-              <label style={{ display: 'block', marginBottom: '8px' }}>{text.code}</label>
-              <div className="auth-portal__input-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+            {codeRequested && (
+              <div className="dev-input-group anim-fade-in" style={{ marginTop: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '8px' }}>{text.code}</label>
                 <input
                   className="dev-input"
                   type="text"
@@ -340,38 +395,71 @@ export function AuthPortalPage() {
                   placeholder={text.codePlaceholder}
                   value={form.code}
                   onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
+                  required
+                  autoFocus
                 />
-                <button 
-                  type="button" 
-                  className="dev-btn dev-btn--secondary auth-portal__send-code-btn" 
-                  disabled={sendingCode || !form.username} 
-                  onClick={() => void handleSendCode()}
+              </div>
+            )}
+
+            {!showRefCode ? (
+              <div className="auth-portal__ref-toggle-container">
+                <button
+                  type="button"
+                  className="auth-portal__ref-toggle"
+                  onClick={() => setShowRefCode(true)}
                 >
-                  {sendingCode ? text.sendingCode : text.sendCode}
+                  + {text.refCode}
                 </button>
               </div>
-            </div>
+            ) : (
+              <div className="dev-input-group anim-fade-in" style={{ marginTop: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '8px' }}>{text.refCode}</label>
+                <input
+                  className="dev-input"
+                  type="text"
+                  placeholder={text.refCodePlaceholder}
+                  value={refCode}
+                  onChange={(event) => setRefCode(event.target.value)}
+                />
+                {refStatus === "valid" ? (
+                  <p className="auth-portal__ref-status auth-portal__ref-status--success">{text.refCodeApplied} {refPartner}</p>
+                ) : null}
+                {refStatus === "invalid" ? (
+                  <p className="auth-portal__ref-status auth-portal__ref-status--error">{text.refCodeInvalid}</p>
+                ) : null}
+              </div>
+            )}
 
-            <div className="dev-input-group" style={{ marginTop: '1.25rem' }}>
-              <label style={{ display: 'block', marginBottom: '8px' }}>{text.refCode}</label>
-              <input
-                className="dev-input"
-                type="text"
-                placeholder={text.refCodePlaceholder}
-                value={refCode}
-                onChange={(event) => setRefCode(event.target.value)}
-              />
-              {refStatus === "valid" ? (
-                <p style={{ fontSize: '0.8rem', color: '#48bb78', margin: '6px 0 0' }}>{text.refCodeApplied} {refPartner}</p>
-              ) : null}
-              {refStatus === "invalid" ? (
-                <p style={{ fontSize: '0.8rem', color: '#718096', margin: '6px 0 0' }}>{text.refCodeInvalid}</p>
-              ) : null}
-            </div>
-
-            <button type="submit" className="dev-btn dev-btn--primary auth-portal__submit-btn" disabled={loading} style={{ width: '100%', marginTop: '1.5rem' }}>
-              {loading ? text.signingIn : text.loginAction}
-            </button>
+            {!codeRequested ? (
+              <button
+                type="button"
+                className="dev-btn dev-btn--primary auth-portal__submit-btn"
+                disabled={sendingCode || !form.username}
+                onClick={() => void handleSendCode()}
+                style={{ width: '100%', marginTop: '1.5rem' }}
+              >
+                {sendingCode ? text.sendingCode : text.sendCode}
+              </button>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1.5rem' }}>
+                <button
+                  type="submit"
+                  className="dev-btn dev-btn--primary auth-portal__submit-btn"
+                  disabled={loading || !form.code}
+                  style={{ width: '100%' }}
+                >
+                  {loading ? text.signingIn : text.loginAction}
+                </button>
+                <button
+                  type="button"
+                  className="auth-portal__resend-btn"
+                  disabled={sendingCode}
+                  onClick={() => void handleSendCode()}
+                >
+                  {sendingCode ? text.sendingCode : (language === "ru" ? "Отправить код повторно" : "Resend confirmation code")}
+                </button>
+              </div>
+            )}
           </form>
 
           {message ? (
@@ -381,28 +469,30 @@ export function AuthPortalPage() {
             <div className="alert auth-portal__alert" style={{ marginTop: '1.25rem' }}>{error}</div>
           ) : null}
 
-          <p className="auth-portal__disclaimer" style={{ fontSize: '0.75rem', color: '#a0aec0', textAlign: 'center', marginTop: '1.5rem', lineHeight: '1.4', padding: '0 10px' }}>
+          <p className="auth-portal__disclaimer-text">
             {text.termsDisclaimer}
           </p>
 
-          <div className="auth-portal__footer-actions" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+          <div className="auth-portal__footer-actions">
              {initData ? (
                 <button
                   type="button"
                   className="dev-btn dev-btn--secondary auth-portal__action-btn"
                   disabled={loading}
                   onClick={() => void performTelegramAuth()}
-                  style={{ width: '100%' }}
+                  style={{ width: '100%', marginTop: '1rem' }}
                 >
                   {loading ? text.signingIn : text.continueTelegram}
                 </button>
              ) : (
-                <a href={BOT_URL} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary auth-portal__action-btn auth-portal__bot-btn" style={{ width: '100%', textDecoration: 'none' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.52-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.88.03-.24.38-.49 1.05-.75 4.12-1.79 6.87-2.97 8.25-3.54 3.92-1.63 4.73-1.91 5.26-1.92.12 0 .38.03.55.17.14.11.18.27.2.42-.01.06 0 .13-.01.2z"/></svg>
-                  {text.openBot}
-                </a>
+                <div className="auth-portal__bot-hint-box">
+                  <p className="auth-portal__hint-text">{text.browserHint}</p>
+                  <a href={BOT_URL} target="_blank" rel="noreferrer" className="auth-portal__bot-link">
+                    <TelegramIcon size={14} />
+                    <span>{text.openBot}</span>
+                  </a>
+                </div>
              )}
-             <p className="auth-portal__hint" style={{ fontSize: '0.8rem', color: '#718096', textAlign: 'center', margin: 0 }}>{text.browserHint}</p>
           </div>
         </div>
 
