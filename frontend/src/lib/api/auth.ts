@@ -1,6 +1,6 @@
-import type { MeResponse, User, Workspace } from "../types";
+import type { AuthIdentity, MeResponse, User, Workspace } from "../types";
 import type { AttributionPayload } from "../attribution";
-import { request } from "./core";
+import { getApiBase, request } from "./core";
 
 export async function authenticateTelegram(payload: { init_data?: string; widget_data?: string; telegram_id?: number; username?: string; attribution?: AttributionPayload; ref_code?: string }) {
   return request<{ token: string; user: User; workspace: Workspace }>("/api/auth/telegram", {
@@ -43,6 +43,25 @@ export async function logoutAuth(refreshToken?: string) {
     method: "POST",
     body: JSON.stringify(refreshToken ? { refresh_token: refreshToken } : {}),
   });
+}
+
+export function getOAuthStartUrl(provider: "google" | "github", payload: { next?: string; ref_code?: string } = {}) {
+  const params = new URLSearchParams();
+  if (payload.next) params.set("next", payload.next);
+  if (payload.ref_code) params.set("ref_code", payload.ref_code);
+  const query = params.toString();
+  return `${getApiBase()}/api/auth/oauth/${provider}/start${query ? `?${query}` : ""}`;
+}
+
+export async function listAuthIdentities(token: string) {
+  return request<{ identities: AuthIdentity[] }>("/api/account/identities", {}, token);
+}
+
+export async function startAuthIdentityLink(token: string, provider: "google" | "github", payload: { redirect_path: string }) {
+  return request<{ url: string }>(`/api/account/identities/${provider}/link`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
 }
 
 export async function updateContactEmail(token: string, payload: { email: string }) {

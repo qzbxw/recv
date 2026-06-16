@@ -217,6 +217,41 @@ type User struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+type AuthIdentity struct {
+	ID             int64     `json:"id"`
+	UserID         int64     `json:"user_id"`
+	Provider       string    `json:"provider"`
+	ProviderUserID string    `json:"provider_user_id"`
+	Email          string    `json:"email"`
+	EmailVerified  bool      `json:"email_verified"`
+	DisplayName    string    `json:"display_name"`
+	Username       string    `json:"username"`
+	AvatarURL      string    `json:"avatar_url"`
+	LinkedAt       time.Time `json:"linked_at"`
+	LastLoginAt    time.Time `json:"last_login_at"`
+}
+
+type OAuthIdentityInput struct {
+	Provider       string
+	ProviderUserID string
+	Email          string
+	EmailVerified  bool
+	DisplayName    string
+	Username       string
+	AvatarURL      string
+}
+
+type OAuthState struct {
+	StateHash    string
+	Provider     string
+	Mode         string
+	UserID       *int64
+	RedirectPath string
+	RefCode      string
+	Attribution  *AttributionInput
+	ExpiresAt    time.Time
+}
+
 type AdminUser struct {
 	ID           int64      `json:"id"`
 	Email        string     `json:"email"`
@@ -297,7 +332,6 @@ func (w Workspace) HasActiveSubscription(now time.Time) bool {
 	}
 	return false
 }
-
 
 func (w Workspace) EffectivePlanCode(now time.Time) PlanCode {
 	if !w.HasActiveSubscription(now) {
@@ -449,16 +483,16 @@ type BlogPost struct {
 }
 
 type PromoCode struct {
-	ID           int64      `json:"id"`
-	Code         string     `json:"code"`
-	DurationDays int        `json:"duration_days"`
-	PlanCode     PlanCode   `json:"plan_code"`
-	ExpiresAt    *time.Time `json:"expires_at"`
-	MaxUses      *int       `json:"max_uses"`
-	UsesCount    int        `json:"uses_count"`
-	DiscountPercent int     `json:"discount_percent"`
-	CreatedBy    string     `json:"created_by"`
-	CreatedAt    time.Time  `json:"created_at"`
+	ID              int64      `json:"id"`
+	Code            string     `json:"code"`
+	DurationDays    int        `json:"duration_days"`
+	PlanCode        PlanCode   `json:"plan_code"`
+	ExpiresAt       *time.Time `json:"expires_at"`
+	MaxUses         *int       `json:"max_uses"`
+	UsesCount       int        `json:"uses_count"`
+	DiscountPercent int        `json:"discount_percent"`
+	CreatedBy       string     `json:"created_by"`
+	CreatedAt       time.Time  `json:"created_at"`
 }
 
 type PromoCodeRedemption struct {

@@ -1907,6 +1907,137 @@ func TestStoreGetUserByID(t *testing.T) {
 	})
 }
 
+func TestResolveOAuthLoginCreatesAndReusesIdentity(t *testing.T) {
+	ctx := context.Background()
+	st := newStoreDBTestStore(t, ctx)
+
+	input := OAuthIdentityInput{
+		Provider:       "google",
+		ProviderUserID: "google-new-user",
+		Email:          "oauth-new@example.com",
+		EmailVerified:  true,
+		DisplayName:    "OAuth Merchant",
+	}
+	user, workspace, created, err := st.ResolveOAuthLogin(ctx, input)
+	if err != nil {
+		t.Fatalf("ResolveOAuthLogin create: %v", err)
+	}
+	if !created {
+		t.Fatal("expected first oauth login to create an account")
+	}
+	if user.Email != "oauth-new@example.com" {
+		t.Fatalf("expected oauth email on user, got %q", user.Email)
+	}
+	if workspace.ID == 0 {
+		t.Fatal("expected workspace to be created")
+	}
+
+	secondUser, secondWorkspace, secondCreated, err := st.ResolveOAuthLogin(ctx, input)
+	if err != nil {
+		t.Fatalf("ResolveOAuthLogin reuse: %v", err)
+	}
+	if secondCreated {
+		t.Fatal("expected existing oauth identity to be reused")
+	}
+	if secondUser.ID != user.ID || secondWorkspace.ID != workspace.ID {
+		t.Fatalf("expected same account, got user %d/%d workspace %d/%d", secondUser.ID, user.ID, secondWorkspace.ID, workspace.ID)
+	}
+}
+
+func TestResolveOAuthLoginMergesByVerifiedEmail(t *testing.T) {
+	ctx := context.Background()
+	st := newStoreDBTestStore(t, ctx)
+
+	workspace, err := st.UpsertWorkspaceByTelegram(ctx, 84101, "emailmergeuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
+	}
+	user, err := st.UpsertUser(ctx, 84101, "emailmergeuser", "merge@example.com")
+	if err != nil {
+		t.Fatalf("UpsertUser: %v", err)
+	}
+
+	oauthUser, oauthWorkspace, created, err := st.ResolveOAuthLogin(ctx, OAuthIdentityInput{
+		Provider:       "google",
+		ProviderUserID: "google-email-merge",
+		Email:          "MERGE@example.com",
+		EmailVerified:  true,
+		DisplayName:    "Merged User",
+	})
+	if err != nil {
+		t.Fatalf("ResolveOAuthLogin merge by email: %v", err)
+	}
+	if created {
+		t.Fatal("expected verified email to merge into existing user")
+	}
+	if oauthUser.ID != user.ID {
+		t.Fatalf("expected existing user %d, got %d", user.ID, oauthUser.ID)
+	}
+	if oauthWorkspace.ID != workspace.ID {
+		t.Fatalf("expected existing workspace %d, got %d", workspace.ID, oauthWorkspace.ID)
+	}
+}
+
+func TestLinkOAuthIdentityMergesExistingProviderAccount(t *testing.T) {
+	ctx := context.Background()
+	st := newStoreDBTestStore(t, ctx)
+
+	targetWorkspace, err := st.UpsertWorkspaceByTelegram(ctx, 84201, "targetmergeuser")
+	if err != nil {
+		t.Fatalf("UpsertWorkspaceByTelegram target: %v", err)
+	}
+	targetUser, err := st.GetUserByTelegramID(ctx, 84201)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID target: %v", err)
+	}
+
+	sourceInput := OAuthIdentityInput{
+		Provider:       "github",
+		ProviderUserID: "github-linked-elsewhere",
+		Email:          "source@example.com",
+		EmailVerified:  true,
+		Username:       "sourcehub",
+	}
+	sourceUser, sourceWorkspace, created, err := st.ResolveOAuthLogin(ctx, sourceInput)
+	if err != nil {
+		t.Fatalf("ResolveOAuthLogin source: %v", err)
+	}
+	if !created || sourceUser.ID == targetUser.ID || sourceWorkspace.ID == targetWorkspace.ID {
+		t.Fatalf("expected separate source account, got source user=%d workspace=%d target user=%d workspace=%d", sourceUser.ID, sourceWorkspace.ID, targetUser.ID, targetWorkspace.ID)
+	}
+
+	linkedUser, _, merged, err := st.LinkOAuthIdentity(ctx, targetUser.ID, sourceInput)
+	if err != nil {
+		t.Fatalf("LinkOAuthIdentity: %v", err)
+	}
+	if !merged {
+		t.Fatal("expected linking existing provider identity to merge accounts")
+	}
+	if linkedUser.ID != targetUser.ID {
+		t.Fatalf("expected target user after merge, got %d", linkedUser.ID)
+	}
+
+	workspaces, err := st.ListWorkspacesForUser(ctx, targetUser.ID)
+	if err != nil {
+		t.Fatalf("ListWorkspacesForUser: %v", err)
+	}
+	seen := map[int64]bool{}
+	for _, workspace := range workspaces {
+		seen[workspace.ID] = true
+	}
+	if !seen[targetWorkspace.ID] || !seen[sourceWorkspace.ID] {
+		t.Fatalf("expected target user to keep both workspaces after merge, got %#v", seen)
+	}
+
+	resolvedUser, _, _, err := st.ResolveOAuthLogin(ctx, sourceInput)
+	if err != nil {
+		t.Fatalf("ResolveOAuthLogin after merge: %v", err)
+	}
+	if resolvedUser.ID != targetUser.ID {
+		t.Fatalf("expected provider login to resolve to target user after merge, got %d", resolvedUser.ID)
+	}
+}
+
 // TestStoreWalletOperations covers wallet listing and deactivation.
 func TestStoreWalletOperations(t *testing.T) {
 	ctx := context.Background()

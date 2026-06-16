@@ -313,6 +313,13 @@ func (m *mockHTTPStore) ListAdminWorkspaces(ctx context.Context, limit int) ([]s
 	return m.real.ListAdminWorkspaces(ctx, limit)
 }
 
+func (m *mockHTTPStore) ListAuthIdentities(ctx context.Context, userID int64) ([]store.AuthIdentity, error) {
+	if m.real == nil {
+		return nil, nil
+	}
+	return m.real.ListAuthIdentities(ctx, userID)
+}
+
 func (m *mockHTTPStore) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPublished bool) ([]store.BlogPost, int, error) {
 	return m.real.ListBlogPosts(ctx, page, pageSize, onlyPublished)
 }

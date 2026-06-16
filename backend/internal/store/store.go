@@ -238,6 +238,9 @@ func (s *Store) UpsertWorkspaceByTelegram(ctx context.Context, telegramID int64,
 	if err != nil {
 		return Workspace{}, fmt.Errorf("upsert user: %w", err)
 	}
+	if err := s.LinkTelegramIdentity(ctx, user.ID, telegramID, username); err != nil {
+		return Workspace{}, err
+	}
 
 	// 2. Find existing workspace owned by this telegram ID
 	w, err := s.GetWorkspaceByTelegramID(ctx, telegramID)

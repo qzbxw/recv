@@ -35,6 +35,23 @@ type AuthService struct {
 	accessTTL          time.Duration
 	refreshTTL         time.Duration
 	httpClient         *http.Client
+	oauth              OAuthOptions
+}
+
+type OAuthProviderConfig struct {
+	ClientID     string
+	ClientSecret string
+	AuthURL      string
+	TokenURL     string
+	UserInfoURL  string
+	EmailsURL    string
+}
+
+type OAuthOptions struct {
+	RedirectBaseURL string
+	FrontendBaseURL string
+	Google          OAuthProviderConfig
+	GitHub          OAuthProviderConfig
 }
 
 type TelegramAuthInput struct {
@@ -63,6 +80,33 @@ type AgentBootstrapInput struct {
 	TermsAccepted bool                    `json:"terms_accepted"`
 	Attribution   *store.AttributionInput `json:"attribution,omitempty"`
 	RefCode       string                  `json:"ref_code,omitempty"`
+}
+
+type OAuthStartInput struct {
+	Provider     string
+	Mode         string
+	RedirectPath string
+	UserID       *int64
+	Attribution  *store.AttributionInput
+	RefCode      string
+}
+
+type OAuthStartResult struct {
+	URL string `json:"url"`
+}
+
+type OAuthCallbackInput struct {
+	Provider string
+	Code     string
+	State    string
+}
+
+type OAuthCallbackResult struct {
+	AuthResult
+	RedirectPath string
+	Mode         string
+	Created      bool
+	Merged       bool
 }
 
 type AuthResult struct {
@@ -101,6 +145,130 @@ func NewAuthServiceWithTTL(st *store.Store, jwtSecret string, telegramBotToken s
 		accessTTL:          accessTTL,
 		refreshTTL:         refreshTTL,
 	}
+}
+
+func (s *AuthService) SetOAuthOptions(options OAuthOptions) {
+	options.RedirectBaseURL = strings.TrimRight(strings.TrimSpace(options.RedirectBaseURL), "/")
+	options.FrontendBaseURL = strings.TrimRight(strings.TrimSpace(options.FrontendBaseURL), "/")
+	options.Google = withOAuthDefaults("google", options.Google)
+	options.GitHub = withOAuthDefaults("github", options.GitHub)
+	s.oauth = options
+}
+
+func (s *AuthService) StartOAuth(ctx context.Context, input OAuthStartInput) (OAuthStartResult, error) {
+	if s.store == nil {
+		return OAuthStartResult{}, errors.New("oauth store is not configured")
+	}
+	providerName := normalizeOAuthProvider(input.Provider)
+	provider, err := s.oauthProvider(providerName)
+	if err != nil {
+		return OAuthStartResult{}, err
+	}
+	mode := strings.TrimSpace(input.Mode)
+	if mode == "" {
+		mode = "login"
+	}
+	if mode != "login" && mode != "link" {
+		return OAuthStartResult{}, errors.New("unsupported oauth mode")
+	}
+	if mode == "link" && (input.UserID == nil || *input.UserID <= 0) {
+		return OAuthStartResult{}, errors.New("active session is required to link an account")
+	}
+
+	stateToken, err := randomToken(32)
+	if err != nil {
+		return OAuthStartResult{}, err
+	}
+	redirectPath := sanitizeOAuthRedirectPath(input.RedirectPath)
+	if err := s.store.StoreOAuthState(ctx, store.OAuthState{
+		StateHash:    tokenHash(stateToken),
+		Provider:     providerName,
+		Mode:         mode,
+		UserID:       input.UserID,
+		RedirectPath: redirectPath,
+		RefCode:      input.RefCode,
+		Attribution:  input.Attribution,
+		ExpiresAt:    time.Now().UTC().Add(10 * time.Minute),
+	}); err != nil {
+		return OAuthStartResult{}, err
+	}
+
+	authURL, err := url.Parse(provider.AuthURL)
+	if err != nil {
+		return OAuthStartResult{}, fmt.Errorf("parse oauth auth url: %w", err)
+	}
+	query := authURL.Query()
+	query.Set("client_id", provider.ClientID)
+	query.Set("redirect_uri", s.oauthRedirectURI(providerName))
+	query.Set("response_type", "code")
+	query.Set("state", stateToken)
+	switch providerName {
+	case "google":
+		query.Set("scope", "openid email profile")
+		query.Set("access_type", "offline")
+		query.Set("prompt", "select_account")
+	case "github":
+		query.Set("scope", "read:user user:email")
+	}
+	authURL.RawQuery = query.Encode()
+	return OAuthStartResult{URL: authURL.String()}, nil
+}
+
+func (s *AuthService) CompleteOAuth(ctx context.Context, input OAuthCallbackInput) (OAuthCallbackResult, error) {
+	if s.store == nil {
+		return OAuthCallbackResult{}, errors.New("oauth store is not configured")
+	}
+	providerName := normalizeOAuthProvider(input.Provider)
+	if strings.TrimSpace(input.Code) == "" || strings.TrimSpace(input.State) == "" {
+		return OAuthCallbackResult{}, errors.New("oauth code and state are required")
+	}
+	state, err := s.store.ConsumeOAuthState(ctx, providerName, tokenHash(input.State))
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return OAuthCallbackResult{}, errors.New("oauth state is invalid or expired")
+		}
+		return OAuthCallbackResult{}, err
+	}
+
+	profile, err := s.fetchOAuthProfile(ctx, providerName, input.Code)
+	if err != nil {
+		return OAuthCallbackResult{}, err
+	}
+
+	var user store.User
+	var workspace store.Workspace
+	var created, merged bool
+	if state.Mode == "link" {
+		if state.UserID == nil || *state.UserID <= 0 {
+			return OAuthCallbackResult{}, errors.New("oauth link state is missing user")
+		}
+		user, workspace, merged, err = s.store.LinkOAuthIdentity(ctx, *state.UserID, profile)
+	} else {
+		user, workspace, created, err = s.store.ResolveOAuthLogin(ctx, profile)
+	}
+	if err != nil {
+		if errors.Is(err, store.ErrConflict) {
+			return OAuthCallbackResult{}, errors.New("multiple recv accounts use this email; sign in with an existing account and link the provider from settings")
+		}
+		return OAuthCallbackResult{}, err
+	}
+
+	if state.Attribution != nil {
+		_ = s.store.RecordUTMAttribution(ctx, workspace.ID, *state.Attribution)
+	}
+	_ = s.store.AttachReferralSignup(ctx, workspace.ID, state.RefCode)
+
+	authResult, err := s.issueAuthResult(user, workspace)
+	if err != nil {
+		return OAuthCallbackResult{}, err
+	}
+	return OAuthCallbackResult{
+		AuthResult:   authResult,
+		RedirectPath: state.RedirectPath,
+		Mode:         state.Mode,
+		Created:      created,
+		Merged:       merged,
+	}, nil
 }
 
 func (s *AuthService) AuthenticateTelegram(ctx context.Context, input TelegramAuthInput) (AuthResult, error) {
@@ -302,6 +470,237 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 		return err
 	}
 	return nil
+}
+
+func (s *AuthService) oauthProvider(provider string) (OAuthProviderConfig, error) {
+	var cfg OAuthProviderConfig
+	switch normalizeOAuthProvider(provider) {
+	case "google":
+		cfg = s.oauth.Google
+	case "github":
+		cfg = s.oauth.GitHub
+	default:
+		return OAuthProviderConfig{}, errors.New("unsupported oauth provider")
+	}
+	if strings.TrimSpace(cfg.ClientID) == "" || strings.TrimSpace(cfg.ClientSecret) == "" {
+		return OAuthProviderConfig{}, fmt.Errorf("%s oauth is not configured", provider)
+	}
+	if strings.TrimSpace(s.oauth.RedirectBaseURL) == "" {
+		return OAuthProviderConfig{}, errors.New("oauth redirect base url is not configured")
+	}
+	return cfg, nil
+}
+
+func withOAuthDefaults(provider string, cfg OAuthProviderConfig) OAuthProviderConfig {
+	switch provider {
+	case "google":
+		if cfg.AuthURL == "" {
+			cfg.AuthURL = "https://accounts.google.com/o/oauth2/v2/auth"
+		}
+		if cfg.TokenURL == "" {
+			cfg.TokenURL = "https://oauth2.googleapis.com/token"
+		}
+		if cfg.UserInfoURL == "" {
+			cfg.UserInfoURL = "https://openidconnect.googleapis.com/v1/userinfo"
+		}
+	case "github":
+		if cfg.AuthURL == "" {
+			cfg.AuthURL = "https://github.com/login/oauth/authorize"
+		}
+		if cfg.TokenURL == "" {
+			cfg.TokenURL = "https://github.com/login/oauth/access_token"
+		}
+		if cfg.UserInfoURL == "" {
+			cfg.UserInfoURL = "https://api.github.com/user"
+		}
+		if cfg.EmailsURL == "" {
+			cfg.EmailsURL = "https://api.github.com/user/emails"
+		}
+	}
+	return cfg
+}
+
+func (s *AuthService) oauthRedirectURI(provider string) string {
+	return strings.TrimRight(s.oauth.RedirectBaseURL, "/") + "/api/auth/oauth/" + normalizeOAuthProvider(provider) + "/callback"
+}
+
+func (s *AuthService) fetchOAuthProfile(ctx context.Context, provider string, code string) (store.OAuthIdentityInput, error) {
+	cfg, err := s.oauthProvider(provider)
+	if err != nil {
+		return store.OAuthIdentityInput{}, err
+	}
+	accessToken, err := s.exchangeOAuthCode(ctx, normalizeOAuthProvider(provider), cfg, code)
+	if err != nil {
+		return store.OAuthIdentityInput{}, err
+	}
+	switch normalizeOAuthProvider(provider) {
+	case "google":
+		return s.fetchGoogleProfile(ctx, cfg, accessToken)
+	case "github":
+		return s.fetchGitHubProfile(ctx, cfg, accessToken)
+	default:
+		return store.OAuthIdentityInput{}, errors.New("unsupported oauth provider")
+	}
+}
+
+func (s *AuthService) exchangeOAuthCode(ctx context.Context, provider string, cfg OAuthProviderConfig, code string) (string, error) {
+	form := url.Values{}
+	form.Set("client_id", cfg.ClientID)
+	form.Set("client_secret", cfg.ClientSecret)
+	form.Set("code", strings.TrimSpace(code))
+	form.Set("redirect_uri", s.oauthRedirectURI(provider))
+	if provider == "google" {
+		form.Set("grant_type", "authorization_code")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, cfg.TokenURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("build oauth token request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+	resp, err := s.oauthHTTPClient().Do(req)
+	if err != nil {
+		return "", fmt.Errorf("oauth token exchange: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= http.StatusBadRequest {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return "", fmt.Errorf("oauth token exchange failed: %s", strings.TrimSpace(string(body)))
+	}
+	var payload struct {
+		AccessToken string `json:"access_token"`
+		Error       string `json:"error"`
+		Description string `json:"error_description"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return "", fmt.Errorf("decode oauth token response: %w", err)
+	}
+	if payload.AccessToken == "" {
+		if payload.Error != "" {
+			return "", fmt.Errorf("oauth token exchange failed: %s %s", payload.Error, payload.Description)
+		}
+		return "", errors.New("oauth token response missing access_token")
+	}
+	return payload.AccessToken, nil
+}
+
+func (s *AuthService) fetchGoogleProfile(ctx context.Context, cfg OAuthProviderConfig, accessToken string) (store.OAuthIdentityInput, error) {
+	var payload struct {
+		Sub           string `json:"sub"`
+		Email         string `json:"email"`
+		EmailVerified bool   `json:"email_verified"`
+		Name          string `json:"name"`
+		Picture       string `json:"picture"`
+	}
+	if err := s.fetchOAuthJSON(ctx, cfg.UserInfoURL, accessToken, &payload); err != nil {
+		return store.OAuthIdentityInput{}, err
+	}
+	return store.OAuthIdentityInput{
+		Provider:       "google",
+		ProviderUserID: payload.Sub,
+		Email:          payload.Email,
+		EmailVerified:  payload.EmailVerified,
+		DisplayName:    payload.Name,
+		AvatarURL:      payload.Picture,
+	}, nil
+}
+
+func (s *AuthService) fetchGitHubProfile(ctx context.Context, cfg OAuthProviderConfig, accessToken string) (store.OAuthIdentityInput, error) {
+	var payload struct {
+		ID        int64  `json:"id"`
+		Login     string `json:"login"`
+		Name      string `json:"name"`
+		Email     string `json:"email"`
+		AvatarURL string `json:"avatar_url"`
+	}
+	if err := s.fetchOAuthJSON(ctx, cfg.UserInfoURL, accessToken, &payload); err != nil {
+		return store.OAuthIdentityInput{}, err
+	}
+	email := strings.TrimSpace(payload.Email)
+	emailVerified := email != ""
+	if email == "" && strings.TrimSpace(cfg.EmailsURL) != "" {
+		var emails []struct {
+			Email    string `json:"email"`
+			Primary  bool   `json:"primary"`
+			Verified bool   `json:"verified"`
+		}
+		if err := s.fetchOAuthJSON(ctx, cfg.EmailsURL, accessToken, &emails); err != nil {
+			return store.OAuthIdentityInput{}, err
+		}
+		for _, item := range emails {
+			if item.Primary && item.Verified {
+				email = item.Email
+				emailVerified = true
+				break
+			}
+		}
+		if email == "" {
+			for _, item := range emails {
+				if item.Verified {
+					email = item.Email
+					emailVerified = true
+					break
+				}
+			}
+		}
+	}
+	return store.OAuthIdentityInput{
+		Provider:       "github",
+		ProviderUserID: strconv.FormatInt(payload.ID, 10),
+		Email:          email,
+		EmailVerified:  emailVerified,
+		DisplayName:    payload.Name,
+		Username:       payload.Login,
+		AvatarURL:      payload.AvatarURL,
+	}, nil
+}
+
+func (s *AuthService) fetchOAuthJSON(ctx context.Context, endpoint string, accessToken string, target any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("build oauth profile request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Accept", "application/json")
+	resp, err := s.oauthHTTPClient().Do(req)
+	if err != nil {
+		return fmt.Errorf("fetch oauth profile: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= http.StatusBadRequest {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return fmt.Errorf("oauth profile request failed: %s", strings.TrimSpace(string(body)))
+	}
+	if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
+		return fmt.Errorf("decode oauth profile: %w", err)
+	}
+	return nil
+}
+
+func (s *AuthService) oauthHTTPClient() *http.Client {
+	if s.httpClient != nil {
+		return s.httpClient
+	}
+	return &http.Client{Timeout: 10 * time.Second}
+}
+
+func normalizeOAuthProvider(provider string) string {
+	return strings.ToLower(strings.TrimSpace(provider))
+}
+
+func sanitizeOAuthRedirectPath(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "/console"
+	}
+	if !strings.HasPrefix(value, "/") || strings.HasPrefix(value, "//") {
+		return "/console"
+	}
+	if strings.Contains(value, "\n") || strings.Contains(value, "\r") {
+		return "/console"
+	}
+	return value
 }
 
 func (s *AuthService) issueAuthResult(user store.User, workspace store.Workspace) (AuthResult, error) {

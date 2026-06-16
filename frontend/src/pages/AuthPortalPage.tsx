@@ -2,8 +2,10 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   authenticateTelegram,
+  getOAuthStartUrl,
   getStoredToken,
   loginWithTelegramCode,
+  refreshAuth,
   requestTelegramLoginCode,
   setStoredToken,
   trackEvent,
@@ -70,6 +72,36 @@ export function AuthPortalPage() {
   const hasSession = Boolean(getStoredToken());
   const [initData, setInitData] = useState(window.Telegram?.WebApp?.initData || "");
   const nextPath = sanitizeNextPath(new URLSearchParams(location.search).get("next")) || "/console";
+
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const token = hashParams.get("oauth_token");
+    const searchParams = new URLSearchParams(location.search);
+    const oauthError = hashParams.get("oauth_error") || searchParams.get("oauth_error");
+    if (token) {
+      setStoredToken(token);
+      window.history.replaceState(null, "", nextPath);
+      navigate(nextPath, { replace: true });
+      return;
+    }
+    if (searchParams.get("oauth") === "success") {
+      setLoading(true);
+      refreshAuth()
+        .then((result) => {
+          const nextToken = result.token || result.access_token || "";
+          if (!nextToken) throw new Error("OAuth session refresh failed");
+          setStoredToken(nextToken);
+          navigate(nextPath, { replace: true });
+        })
+        .catch((err) => setError((err as Error).message))
+        .finally(() => setLoading(false));
+      return;
+    }
+    if (oauthError) {
+      setError(oauthError);
+      window.history.replaceState(null, "", "/auth");
+    }
+  }, [location.search, navigate, nextPath]);
 
   useEffect(() => {
     if (!initData) {
@@ -271,6 +303,19 @@ export function AuthPortalPage() {
             <h1 className="auth-portal__title">{text.browserTitle}</h1>
             <p className="auth-portal__subtitle">{text.browserBody}</p>
           </div>
+
+          <div className="auth-portal__oauth">
+            <a className="auth-portal__oauth-btn auth-portal__oauth-btn--google" href={getOAuthStartUrl("google", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
+              <span className="auth-provider-mark auth-provider-mark--google">G</span>
+              <span>{text.continueGoogle}</span>
+            </a>
+            <a className="auth-portal__oauth-btn auth-portal__oauth-btn--github" href={getOAuthStartUrl("github", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
+              <span className="auth-provider-mark auth-provider-mark--github">GH</span>
+              <span>{text.continueGithub}</span>
+            </a>
+          </div>
+
+          <div className="auth-portal__divider"><span>{text.telegramFallback}</span></div>
 
           <form className="dev-form" onSubmit={handleSubmit}>
             <div className="dev-input-group">

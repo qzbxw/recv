@@ -19,6 +19,11 @@ type Config struct {
 	TelegramBotToken       string
 	TelegramInitMaxAge     time.Duration
 	AllowInsecureDevAuth   bool
+	GoogleOAuthClientID    string
+	GoogleOAuthSecret      string
+	GitHubOAuthClientID    string
+	GitHubOAuthSecret      string
+	OAuthRedirectBaseURL   string
 	AllowedOrigins         string
 	PublicAppURL           string
 	WatcherPollInterval    time.Duration
@@ -61,6 +66,10 @@ func Load() (Config, error) {
 		InternalToken:          os.Getenv("INTERNAL_TOKEN"),
 		TelegramBotToken:       os.Getenv("TELEGRAM_BOT_TOKEN"),
 		AllowInsecureDevAuth:   boolEnv("ALLOW_INSECURE_DEV_AUTH", false),
+		GoogleOAuthClientID:    os.Getenv("GOOGLE_OAUTH_CLIENT_ID"),
+		GoogleOAuthSecret:      os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
+		GitHubOAuthClientID:    os.Getenv("GITHUB_OAUTH_CLIENT_ID"),
+		GitHubOAuthSecret:      os.Getenv("GITHUB_OAUTH_CLIENT_SECRET"),
 		AllowedOrigins:         os.Getenv("ALLOWED_ORIGINS"),
 		PublicAppURL:           envOrDefault("PUBLIC_APP_URL", "http://localhost:3000"),
 		TronGridBaseURL:        envOrDefault("TRONGRID_BASE_URL", "https://api.trongrid.io"),
@@ -85,6 +94,7 @@ func Load() (Config, error) {
 		MediaDir:               envOrDefault("MEDIA_DIR", "./data/media"),
 	}
 	cfg.MetricsPort = envOrDefault("METRICS_PORT", defaultMetricsPort(cfg.AppRuntime))
+	cfg.OAuthRedirectBaseURL = strings.TrimRight(envOrDefault("OAUTH_REDIRECT_BASE_URL", cfg.PublicAppURL), "/")
 
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DATABASE_URL is required")

@@ -58,6 +58,7 @@ type httpStore interface {
 	ListAdminInvoices(ctx context.Context, filters store.AdminInvoiceFilters) (store.AdminInvoicePage, error)
 	ListAdminWatchers(ctx context.Context) ([]store.AdminWatcherRecord, error)
 	ListAdminWorkspaces(ctx context.Context, limit int) ([]store.AdminWorkspaceRecord, error)
+	ListAuthIdentities(ctx context.Context, userID int64) ([]store.AuthIdentity, error)
 	ListBlogPosts(ctx context.Context, page, pageSize int, onlyPublished bool) ([]store.BlogPost, int, error)
 	ListPublishedBlogPosts(ctx context.Context, page, pageSize int, locale string) ([]store.BlogPost, int, error)
 	ListPublishedBlogSitemapPosts(ctx context.Context, page, pageSize int, locale string) ([]store.BlogPost, int, error)

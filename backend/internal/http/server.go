@@ -94,6 +94,8 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	router.POST("/api/auth/agent/bootstrap", server.handleAgentBootstrap)
 	router.POST("/api/auth/telegram/request-code", server.handleTelegramCodeRequest)
 	router.POST("/api/auth/telegram/login", server.handleTelegramCodeLogin)
+	router.GET("/api/auth/oauth/:provider/start", server.handleOAuthStart)
+	router.GET("/api/auth/oauth/:provider/callback", server.handleOAuthCallback)
 	router.POST("/api/auth/refresh", server.handleAuthRefresh)
 	router.POST("/api/auth/logout", server.handleAuthLogout)
 	router.POST("/api/admin/login", server.handleAdminLogin)
@@ -125,6 +127,8 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api.GET("/me", server.handleMe)
 	api.POST("/me/contact-email", server.handleUpdateContactEmail)
 	api.POST("/me/language", server.handleUpdateLanguage)
+	api.GET("/account/identities", server.handleListAuthIdentities)
+	api.POST("/account/identities/:provider/link", server.handleOAuthLinkStart)
 	api.POST("/events", server.handleProductEvent)
 	api.GET("/developer/usage", server.handleDeveloperUsage)
 	api.GET("/developer/api-keys", server.handleListAPIKeys)
@@ -283,6 +287,75 @@ func (s *Server) handleTelegramCodeLogin(c *gin.Context) {
 
 	metrics.IncAuthAttempt("telegram_code_login", "success", "authenticated")
 	setRefreshCookie(c, "recv_refresh", result.RefreshToken, s.cfg.AppEnv)
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) handleOAuthStart(c *gin.Context) {
+	ctx := metrics.WithSource(c.Request.Context(), "public_auth")
+	redirectPath := sanitizeOAuthHTTPRedirect(c.Query("next"))
+	refCode := strings.TrimSpace(c.Query("ref_code"))
+	result, err := s.authService.StartOAuth(ctx, service.OAuthStartInput{
+		Provider:     c.Param("provider"),
+		Mode:         "login",
+		RedirectPath: redirectPath,
+		RefCode:      refCode,
+	})
+	if err != nil {
+		respondError(c, http.StatusBadRequest, err)
+		return
+	}
+	c.Redirect(http.StatusFound, result.URL)
+}
+
+func (s *Server) handleOAuthCallback(c *gin.Context) {
+	ctx := metrics.WithSource(c.Request.Context(), "public_auth")
+	if errText := strings.TrimSpace(c.Query("error")); errText != "" {
+		c.Redirect(http.StatusFound, s.oauthFailureRedirect(errText))
+		return
+	}
+	result, err := s.authService.CompleteOAuth(ctx, service.OAuthCallbackInput{
+		Provider: c.Param("provider"),
+		Code:     c.Query("code"),
+		State:    c.Query("state"),
+	})
+	if err != nil {
+		c.Redirect(http.StatusFound, s.oauthFailureRedirect(err.Error()))
+		return
+	}
+	setRefreshCookie(c, "recv_refresh", result.RefreshToken, s.cfg.AppEnv)
+	c.Redirect(http.StatusFound, s.oauthSuccessRedirect(result))
+}
+
+func (s *Server) handleListAuthIdentities(c *gin.Context) {
+	wc := workspaceFromContext(c)
+	identities, err := s.store.ListAuthIdentities(c.Request.Context(), wc.Claims.UserID)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"identities": identities})
+}
+
+func (s *Server) handleOAuthLinkStart(c *gin.Context) {
+	wc := workspaceFromContext(c)
+	var body struct {
+		RedirectPath string `json:"redirect_path"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		respondError(c, http.StatusBadRequest, err)
+		return
+	}
+	userID := wc.Claims.UserID
+	result, err := s.authService.StartOAuth(c.Request.Context(), service.OAuthStartInput{
+		Provider:     c.Param("provider"),
+		Mode:         "link",
+		RedirectPath: sanitizeOAuthHTTPRedirect(body.RedirectPath),
+		UserID:       &userID,
+	})
+	if err != nil {
+		respondError(c, http.StatusBadRequest, err)
+		return
+	}
 	c.JSON(http.StatusOK, result)
 }
 
@@ -887,6 +960,45 @@ func workspaceFromContext(c *gin.Context) workspaceContext {
 	return value.(workspaceContext)
 }
 
+func (s *Server) oauthSuccessRedirect(result service.OAuthCallbackResult) string {
+	target := strings.TrimRight(s.cfg.PublicAppURL, "/") + sanitizeOAuthHTTPRedirect(result.RedirectPath)
+	parsed, err := url.Parse(target)
+	if err != nil {
+		return strings.TrimRight(s.cfg.PublicAppURL, "/") + "/console?oauth=success"
+	}
+	values := parsed.Query()
+	values.Set("oauth", "success")
+	values.Set("oauth_mode", result.Mode)
+	if result.Created {
+		values.Set("oauth_created", "1")
+	}
+	if result.Merged {
+		values.Set("oauth_merged", "1")
+	}
+	parsed.RawQuery = values.Encode()
+	return parsed.String()
+}
+
+func (s *Server) oauthFailureRedirect(message string) string {
+	values := url.Values{}
+	values.Set("oauth_error", message)
+	return strings.TrimRight(s.cfg.PublicAppURL, "/") + "/auth?" + values.Encode()
+}
+
+func sanitizeOAuthHTTPRedirect(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "/console"
+	}
+	if !strings.HasPrefix(value, "/") || strings.HasPrefix(value, "//") {
+		return "/console"
+	}
+	if strings.Contains(value, "\n") || strings.Contains(value, "\r") {
+		return "/console"
+	}
+	return value
+}
+
 func publicInvoiceResponse(invoice store.Invoice) gin.H {
 	status := invoice.Status
 	if invoice.IsExpired(time.Now()) {
@@ -933,9 +1045,9 @@ func isWorkspaceManagedInvoice(invoice store.Invoice) bool {
 func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	var body struct {
-		PayableNetwork   string `json:"payable_network"`
-		PayableAsset     string `json:"payable_asset"`
-		PaymentOptions   []struct {
+		PayableNetwork string `json:"payable_network"`
+		PayableAsset   string `json:"payable_asset"`
+		PaymentOptions []struct {
 			Network string `json:"network"`
 			Asset   string `json:"asset"`
 		} `json:"payment_options"`

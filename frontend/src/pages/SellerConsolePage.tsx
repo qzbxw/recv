@@ -25,13 +25,16 @@ import {
   getApiBase,
   getStoredToken,
   inviteTeamMember,
+  listAuthIdentities,
   logoutAuth,
   markInvoicePaid,
   removeTeamMember,
+  refreshAuth,
   resendWebhookDelivery,
   revokeTeamInvite,
   rotateWebhookEndpointSecret,
   setStoredToken,
+  startAuthIdentityLink,
   switchWorkspace,
   updateContactEmail,
   updateLanguage,
@@ -40,7 +43,7 @@ import {
 import { ApiError, formatApiError } from "../lib/errors";
 import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus, getInvoiceStatusMeta, getInvoiceStatusTooltip, formatNetworkLabel } from "../lib/status";
-import type { APIKey, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
+import type { APIKey, AuthIdentity, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { SELLER_CONSOLE_COPY as COPY } from "../i18n";
 
@@ -68,6 +71,7 @@ type SessionState = {
   invoicePageSize: number;
   apiKeys: APIKey[];
   webhooks: WebhookEndpoint[];
+  authIdentities: AuthIdentity[];
 };
 
 type PanelKey = "overview" | "wallets" | "invoices" | "create" | "developer" | "billing" | "settings" | "team";
@@ -218,6 +222,7 @@ export function SellerConsolePage() {
   const [redeemingPromo, setRedeemingPromo] = useState(false);
   const [promoNotice, setPromoNotice] = useState("");
   const [promoError, setPromoError] = useState("");
+  const [linkingProvider, setLinkingProvider] = useState<"google" | "github" | "">("");
 
   useEffect(() => {
     window.Telegram?.WebApp?.ready?.();
@@ -233,6 +238,34 @@ export function SellerConsolePage() {
   };
 
   useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const oauthToken = hashParams.get("oauth_token");
+    if (oauthToken) {
+      setStoredToken(oauthToken);
+      window.history.replaceState(null, "", location.pathname + location.search);
+      setActivePanel("settings");
+      void loadSession(oauthToken);
+      return;
+    }
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("oauth") === "success") {
+      setLoading(true);
+      refreshAuth()
+        .then((result) => {
+          const nextToken = result.token || result.access_token || "";
+          if (!nextToken) throw new Error("OAuth session refresh failed");
+          setStoredToken(nextToken);
+          window.history.replaceState(null, "", location.pathname);
+          setActivePanel("settings");
+          void loadSession(nextToken);
+        })
+        .catch((err) => {
+          clearStoredToken();
+          setError(formatApiError(err));
+          setLoading(false);
+        });
+      return;
+    }
     const token = getStoredToken();
     if (!token) { setLoading(false); return; }
     void loadSession(token);
@@ -257,7 +290,7 @@ export function SellerConsolePage() {
   async function loadSession(token: string, options?: { silent?: boolean }) {
     try {
       if (!options?.silent) setLoading(true);
-      const [me, wallets, invoices, keys, hooks] = await Promise.all([
+      const [me, wallets, invoices, keys, hooks, identities] = await Promise.all([
         fetchMe(token),
         fetchWallets(token),
         fetchInvoices(token, {
@@ -268,6 +301,7 @@ export function SellerConsolePage() {
         }),
         fetchAPIKeys(token).catch(() => ({ items: [] })),
         fetchWebhookEndpoints(token).catch(() => ({ items: [] })),
+        listAuthIdentities(token).catch(() => ({ identities: [] })),
       ]);
       setSession({
         token,
@@ -279,6 +313,7 @@ export function SellerConsolePage() {
         invoicePageSize: invoices.page_size ?? invoiceFilters.pageSize,
         apiKeys: keys.items ?? [],
         webhooks: hooks.items ?? [],
+        authIdentities: identities.identities ?? [],
       });
       setEmailForm(me.workspace.email || "");
       if (me.workspace.language && me.workspace.language !== language) {
@@ -529,6 +564,18 @@ export function SellerConsolePage() {
     } catch (err) { setError(formatApiError(err)); }
   }
 
+  async function onLinkProvider(provider: "google" | "github") {
+    if (!session) return;
+    try {
+      setLinkingProvider(provider);
+      const result = await startAuthIdentityLink(session.token, provider, { redirect_path: "/console" });
+      window.location.href = result.url;
+    } catch (err) {
+      setLinkingProvider("");
+      setError(formatApiError(err));
+    }
+  }
+
   async function onUpgrade() {
     if (!session) return;
     if (billingForm.subscriptionDays < 14) {
@@ -673,6 +720,12 @@ export function SellerConsolePage() {
   const paidInvoices = filteredInvoices.filter(inv => inv.status === "paid");
   const paidRevenue = paidInvoices.reduce((sum, inv) => sum + (Number(inv.base_amount_usd) || 0), 0);
   const hasApi = session.me.plan.has_api;
+  const connectedProviderMap = new Map(session.authIdentities.map(identity => [identity.provider, identity]));
+  const authProviderRows = [
+    { provider: "telegram" as const, label: "Telegram", action: "", identity: connectedProviderMap.get("telegram") },
+    { provider: "google" as const, label: "Google", action: t.settings.connectGoogle, identity: connectedProviderMap.get("google") },
+    { provider: "github" as const, label: "GitHub", action: t.settings.connectGithub, identity: connectedProviderMap.get("github") },
+  ];
   const avgTicket = paidInvoices.length > 0 ? paidRevenue / paidInvoices.length : 0;
   const openValue = filteredInvoices
     .filter(inv => inv.status === "awaiting_payment" || inv.status === "underpaid")
@@ -2045,6 +2098,39 @@ export function SellerConsolePage() {
                     <button type="submit" className="dev-btn dev-btn--primary">{t.settings.save}</button>
                     {emailNotice ? <div className="alert alert--success alert--margin">{emailNotice}</div> : null}
                   </form>
+                </div>
+
+                <div className="dev-card dev-card--max-width console-spotlight-card" onMouseMove={handleMouseMove}>
+                  <div className="console-card-spotlight" />
+                  <div className="console-dogfood-glow" />
+                  <div className="dev-portal__section-header dev-portal__section-header--margin">
+                    <h3>{t.settings.connectedAccounts}</h3>
+                    <p>{t.settings.connectedAccountsHint}</p>
+                  </div>
+                  <div className="auth-link-list">
+                    {authProviderRows.map(row => {
+                      const connected = Boolean(row.identity);
+                      const detail = row.identity?.email || (row.identity?.username ? `@${row.identity.username}` : row.identity?.provider_user_id || "");
+                      return (
+                        <div key={row.provider} className="auth-link-row">
+                          <div className="auth-link-row__provider">
+                            <span className={`auth-provider-mark auth-provider-mark--${row.provider}`}>{row.provider === "github" ? "GH" : row.provider === "google" ? "G" : "TG"}</span>
+                            <div>
+                              <strong>{row.label}</strong>
+                              <span>{connected ? detail || t.settings.connected : t.settings.notConnected}</span>
+                            </div>
+                          </div>
+                          {row.provider === "telegram" || connected ? (
+                            <span className="auth-link-row__status">{t.settings.connected}</span>
+                          ) : (
+                            <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void onLinkProvider(row.provider)} disabled={linkingProvider === row.provider}>
+                              {linkingProvider === row.provider ? t.settings.linkStarted : row.action}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {hasApi && (

@@ -14,6 +14,22 @@ export type User = {
   created_at: string;
 };
 
+export type AuthProvider = "telegram" | "google" | "github";
+
+export type AuthIdentity = {
+  id?: number;
+  user_id: number;
+  provider: AuthProvider | string;
+  provider_user_id: string;
+  email: string;
+  email_verified: boolean;
+  display_name: string;
+  username: string;
+  avatar_url: string;
+  linked_at: string;
+  last_login_at: string;
+};
+
 export type Workspace = {
   id: number;
   owner_telegram_id?: number | null;

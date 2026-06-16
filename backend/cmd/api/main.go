@@ -74,6 +74,18 @@ func runAPI(ctx context.Context, deps apiDeps) error {
 	}
 
 	authService := service.NewAuthServiceWithTTL(st, cfg.JWTSecret, cfg.TelegramBotToken, cfg.AllowInsecureDevAuth, cfg.TelegramInitMaxAge, cfg.AccessTokenTTL, cfg.RefreshTokenTTL)
+	authService.SetOAuthOptions(service.OAuthOptions{
+		RedirectBaseURL: cfg.OAuthRedirectBaseURL,
+		FrontendBaseURL: cfg.PublicAppURL,
+		Google: service.OAuthProviderConfig{
+			ClientID:     cfg.GoogleOAuthClientID,
+			ClientSecret: cfg.GoogleOAuthSecret,
+		},
+		GitHub: service.OAuthProviderConfig{
+			ClientID:     cfg.GitHubOAuthClientID,
+			ClientSecret: cfg.GitHubOAuthSecret,
+		},
+	})
 	adminService := service.NewDBAdminService(st, cfg.AdminUsername, cfg.AdminPassword, cfg.AdminJWTSecret, cfg.AdminAccessTokenTTL, cfg.AdminRefreshTokenTTL, cfg.AdminBootstrapEmail, cfg.AdminBootstrapPassword, cfg.AppEnv)
 	if created, err := adminService.Bootstrap(ctx); err != nil {
 		return err

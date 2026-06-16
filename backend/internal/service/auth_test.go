@@ -299,6 +299,115 @@ func TestRequestTelegramLoginCodeRequiresBotToken(t *testing.T) {
 	}
 }
 
+func TestAuthServiceFetchGitHubProfileUsesVerifiedPrimaryEmail(t *testing.T) {
+	var tokenRequested bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/token":
+			tokenRequested = true
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected token POST, got %s", r.Method)
+			}
+			_, _ = w.Write([]byte(`{"access_token":"github-token"}`))
+		case "/user":
+			if r.Header.Get("Authorization") != "Bearer github-token" {
+				t.Fatalf("unexpected Authorization header: %q", r.Header.Get("Authorization"))
+			}
+			_, _ = w.Write([]byte(`{"id":987,"login":"octocat","name":"Octo Cat","email":"","avatar_url":"https://example.com/a.png"}`))
+		case "/emails":
+			_, _ = w.Write([]byte(`[
+				{"email":"secondary@example.com","primary":false,"verified":true},
+				{"email":"primary@example.com","primary":true,"verified":true}
+			]`))
+		default:
+			t.Fatalf("unexpected oauth test path: %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	svc := NewAuthService(nil, "secret", "", false, time.Hour)
+	svc.SetOAuthOptions(OAuthOptions{
+		RedirectBaseURL: "https://app.example.com",
+		GitHub: OAuthProviderConfig{
+			ClientID:     "client",
+			ClientSecret: "secret",
+			TokenURL:     server.URL + "/token",
+			UserInfoURL:  server.URL + "/user",
+			EmailsURL:    server.URL + "/emails",
+		},
+	})
+
+	profile, err := svc.fetchOAuthProfile(t.Context(), "github", "code")
+	if err != nil {
+		t.Fatalf("fetchOAuthProfile: %v", err)
+	}
+	if !tokenRequested {
+		t.Fatal("expected token endpoint to be called")
+	}
+	if profile.Provider != "github" || profile.ProviderUserID != "987" {
+		t.Fatalf("unexpected profile identity: %+v", profile)
+	}
+	if profile.Email != "primary@example.com" || !profile.EmailVerified {
+		t.Fatalf("expected primary verified email, got %+v", profile)
+	}
+	if profile.Username != "octocat" {
+		t.Fatalf("expected github login as username, got %q", profile.Username)
+	}
+}
+
+func TestAuthServiceFetchGoogleProfileKeepsVerificationFlag(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/token":
+			_, _ = w.Write([]byte(`{"access_token":"google-token"}`))
+		case "/userinfo":
+			_, _ = w.Write([]byte(`{"sub":"google-user","email":"user@example.com","email_verified":false,"name":"User Example"}`))
+		default:
+			t.Fatalf("unexpected oauth test path: %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	svc := NewAuthService(nil, "secret", "", false, time.Hour)
+	svc.SetOAuthOptions(OAuthOptions{
+		RedirectBaseURL: "https://app.example.com",
+		Google: OAuthProviderConfig{
+			ClientID:     "client",
+			ClientSecret: "secret",
+			TokenURL:     server.URL + "/token",
+			UserInfoURL:  server.URL + "/userinfo",
+		},
+	})
+
+	profile, err := svc.fetchOAuthProfile(t.Context(), "google", "code")
+	if err != nil {
+		t.Fatalf("fetchOAuthProfile: %v", err)
+	}
+	if profile.EmailVerified {
+		t.Fatalf("expected unverified email flag to be preserved: %+v", profile)
+	}
+	if profile.ProviderUserID != "google-user" {
+		t.Fatalf("unexpected google subject: %+v", profile)
+	}
+}
+
+func TestSanitizeOAuthRedirectPath(t *testing.T) {
+	cases := map[string]string{
+		"":                        "/console",
+		"/console?panel=settings": "/console?panel=settings",
+		"//evil.example":          "/console",
+		"https://evil.example":    "/console",
+		"/console\nSet-Cookie:x":  "/console",
+	}
+	for input, want := range cases {
+		if got := sanitizeOAuthRedirectPath(input); got != want {
+			t.Fatalf("sanitizeOAuthRedirectPath(%q) = %q, want %q", input, got, want)
+		}
+	}
+}
+
 func TestLogoutWithNilStoreReturnsError(t *testing.T) {
 	svc := NewAuthService(nil, "secret", "token", false, time.Hour)
 	err := svc.Logout(t.Context(), "any-token")
