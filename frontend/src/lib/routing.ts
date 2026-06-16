@@ -30,6 +30,10 @@ export function sanitizeNextPath(next: string | null | undefined) {
   return value;
 }
 
+export function isOAuthSessionReturn(search: string) {
+  return new URLSearchParams(search).get("oauth") === "success";
+}
+
 export function buildAuthHref(nextPath: string) {
   const params = new URLSearchParams();
   params.set("next", nextPath);

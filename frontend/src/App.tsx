@@ -3,7 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { UIProvider, useUI } from "./lib/ui";
 import { getStoredToken } from "./lib/api";
 import { captureAttribution } from "./lib/attribution";
-import { buildAuthHref } from "./lib/routing";
+import { buildAuthHref, isOAuthSessionReturn } from "./lib/routing";
 
 const AdminBlogPage = lazy(() => import("./pages/AdminBlogPage").then((module) => ({ default: module.AdminBlogPage })));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage").then((module) => ({ default: module.AdminDashboardPage })));
@@ -87,7 +87,7 @@ function ProtectedConsoleRoute() {
   const location = useLocation();
   const token = getStoredToken();
 
-  if (!token) {
+  if (!token && !isOAuthSessionReturn(location.search)) {
     const nextPath = `${location.pathname}${location.search}${location.hash}`;
     return <Navigate replace to={buildAuthHref(nextPath)} />;
   }

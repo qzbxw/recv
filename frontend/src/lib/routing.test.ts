@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildAppPath, buildAuthHref, buildCheckoutPath, buildCheckoutUrl, sanitizeNextPath } from "./routing";
+import { buildAppPath, buildAuthHref, buildCheckoutPath, buildCheckoutUrl, isOAuthSessionReturn, sanitizeNextPath } from "./routing";
 
 describe("routing helpers", () => {
   it("builds app and checkout paths under the /app namespace", () => {
@@ -23,5 +23,12 @@ describe("routing helpers", () => {
 
   it("encodes auth next paths", () => {
     expect(buildAuthHref("/console?tab=invoices")).toBe("/auth?next=%2Fconsole%3Ftab%3Dinvoices");
+  });
+
+  it("detects oauth session return searches", () => {
+    expect(isOAuthSessionReturn("?oauth=success")).toBe(true);
+    expect(isOAuthSessionReturn("?oauth=success&oauth_mode=login")).toBe(true);
+    expect(isOAuthSessionReturn("?oauth_error=denied")).toBe(false);
+    expect(isOAuthSessionReturn("")).toBe(false);
   });
 });
