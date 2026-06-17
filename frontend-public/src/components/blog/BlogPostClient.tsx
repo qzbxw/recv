@@ -124,12 +124,11 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
   // Tell the header's language switcher where each locale lives: the translated
   // post if it exists, otherwise that locale's blog index (never the landing).
   const alternates = useMemo(() => {
-    const available = post.available_locales ?? [language];
     return {
-      en: available.includes("en") ? `/en/blog/${post.slug}` : "/en/blog",
-      ru: available.includes("ru") ? `/ru/blog/${post.slug}` : "/ru/blog",
+      en: `/en/blog/${post.slug}`,
+      ru: `/ru/blog/${post.slug}`,
     };
-  }, [language, post.available_locales, post.slug]);
+  }, [post.slug]);
 
   // Structured (TipTap v2) documents replace Markdown rendering entirely.
   const structuredDoc =
