@@ -156,7 +156,7 @@ export default async function BlogPost(props: Props) {
     <>
       <JsonLd schema={blogPostSchema} />
       <JsonLd schema={breadcrumbSchema} />
-      <BlogPostClient language={language} post={post} />
+      <BlogPostClient key={`${language}-${post.slug}`} language={language} post={post} />
     </>
   );
 }

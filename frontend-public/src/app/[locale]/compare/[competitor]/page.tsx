@@ -62,6 +62,7 @@ export default async function ComparePage(props: Props) {
     <>
       {faqSchema ? <JsonLd schema={faqSchema} /> : null}
       <CompareDetailClient
+        key={`${locale}-${competitor}`}
         locale={locale}
         competitor={competitor}
         data={data}

@@ -90,6 +90,7 @@ export default async function NetworkPage(props: Props) {
     <>
       <JsonLd schema={softwareSchema} />
       <NetworkDetailClient
+        key={`${locale}-${network}`}
         locale={locale}
         network={network}
         page={page as unknown as NetworkDetailPageCopy}

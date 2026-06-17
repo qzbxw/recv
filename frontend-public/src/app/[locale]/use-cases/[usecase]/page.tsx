@@ -64,6 +64,7 @@ export default async function UseCasePage(props: Props) {
 
   return (
     <UseCasePageClient 
+      key={`${locale}-${usecase}`}
       usecase={usecase}
       locale={locale}
       copy={page}
