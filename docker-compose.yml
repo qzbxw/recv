@@ -149,7 +149,15 @@ services:
 
 volumes:
   postgres_data:
+    external: true
+    name: recv_postgres_data
   media_data:
+    external: true
+    name: recv_media_data
   caddy_data:
+    external: true
+    name: recv_caddy_data
   caddy_config:
+    external: true
+    name: recv_caddy_config
   restore_data:

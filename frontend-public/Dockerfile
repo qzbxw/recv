@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=http://localhost:3000
@@ -22,7 +22,7 @@ COPY frontend-public ./
 RUN --mount=type=cache,target=/app/.next/cache \
     npm run build
 
-FROM node:22-alpine AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
@@ -37,5 +37,5 @@ ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
 USER node
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -qO- http://127.0.0.1:3000/ >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD node -e "require('http').get('http://127.0.0.1:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"
 CMD ["node", "server.js"]
