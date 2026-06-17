@@ -17,6 +17,7 @@ export function MediaLibraryModal({
   const [uploading, setUploading] = useState(false);
   const [pendingAlt, setPendingAlt] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const canUpload = Boolean(pendingAlt.trim()) && !uploading;
 
   useEffect(() => {
     void load();
@@ -39,6 +40,14 @@ export function MediaLibraryModal({
   async function handleUpload(file: File) {
     if (!pendingAlt.trim()) {
       setError("Describe the image first: alt text is required for every upload.");
+      return;
+    }
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
+      setError("Upload a JPG, PNG, WebP, or GIF image.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Image is too large. Upload a file under 10 MiB.");
       return;
     }
     setUploading(true);
@@ -95,7 +104,7 @@ export function MediaLibraryModal({
         <div className="admin-media-upload">
           <input
             className="dev-input"
-            placeholder="Alt text for the new image (required)"
+            placeholder="Alt text first, then upload image"
             value={pendingAlt}
             onChange={(e) => setPendingAlt(e.target.value)}
             disabled={uploading}
@@ -103,7 +112,7 @@ export function MediaLibraryModal({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
             style={{ display: "none" }}
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -114,12 +123,16 @@ export function MediaLibraryModal({
           <button
             type="button"
             className="dev-btn dev-btn--primary dev-btn--compact"
-            disabled={uploading || !pendingAlt.trim()}
+            disabled={!canUpload}
             onClick={() => fileInputRef.current?.click()}
+            title={pendingAlt.trim() ? "Upload JPG, PNG, WebP, or GIF up to 10 MiB" : "Add alt text before uploading"}
           >
             {uploading ? "Uploading…" : "Upload image"}
           </button>
         </div>
+        <p className="dev-card__note-text">
+          JPG/PNG uploads are optimized automatically. WebP/GIF must be 2400 px or smaller on the longest side.
+        </p>
 
         <div className="admin-media-grid">
           {loading ? (

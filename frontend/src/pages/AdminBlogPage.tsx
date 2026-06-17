@@ -5,6 +5,7 @@ import {
   fetchAdminBlogPosts,
   createAdminBlogPost,
   updateAdminBlogPost,
+  deleteAdminBlogPost,
 } from "../lib/api";
 import { marked } from "marked";
 import { CustomSelect } from "../components/CustomSelect";
@@ -144,16 +145,47 @@ export function AdminBlogPage() {
   async function loadPosts() {
     setLoading(true);
     try {
-      const data = await fetchAdminBlogPosts(token!);
-      if (Array.isArray(data)) {
-        setPosts(data);
-      } else if (data && typeof data === "object" && "items" in data) {
-        setPosts(data.items || []);
+      const pageSize = 100;
+      const firstPage = await fetchAdminBlogPosts(token!, 1, pageSize);
+      if (Array.isArray(firstPage)) {
+        setPosts(firstPage);
+      } else {
+        const total = firstPage.total ?? firstPage.items.length;
+        const all = [...(firstPage.items || [])];
+        const pages = Math.ceil(total / pageSize);
+        for (let page = 2; page <= pages; page += 1) {
+          const data = await fetchAdminBlogPosts(token!, page, pageSize);
+          if (!Array.isArray(data)) {
+            all.push(...(data.items || []));
+          }
+        }
+        setPosts(all);
       }
       setError("");
     } catch (err) {
       setError((err as Error).message);
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteGroup(group: AdminBlogPost[]) {
+    if (!token || group.length === 0) return;
+    const primary = group.find((p) => localeOf(p) === "en") ?? group[0];
+    const label = primary.title || primary.slug || "this article";
+    const locales = group.map((post) => localeOf(post).toUpperCase()).join(", ");
+    if (!window.confirm(`Delete "${label}" and its ${group.length} translation row(s): ${locales}? This cannot be undone.`)) {
+      return;
+    }
+    setLoading(true);
+    try {
+      for (const post of group) {
+        await deleteAdminBlogPost(token, post.id);
+      }
+      await loadPosts();
+      setError("");
+    } catch (err) {
+      setError((err as Error).message);
       setLoading(false);
     }
   }
@@ -483,6 +515,7 @@ export function AdminBlogPage() {
                   </div>
                   <div className="dev-card__actions admin-actions">
                     <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => openPost(primary)}>Edit</button>
+                    <button type="button" className="dev-btn dev-btn--danger dev-btn--compact" onClick={() => void handleDeleteGroup(group)}>Delete</button>
                   </div>
                 </div>
               </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { useReveal } from "@/components/marketing/useReveal";
 
@@ -36,6 +37,63 @@ function initials(name?: string | null) {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+const BLUR_DATA_URL =
+  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDE2IDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjkiIGZpbGw9IiMxNzExMjMiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjIiIHI9IjYiIGZpbGw9IiM3YzNhZWQiIG9wYWNpdHk9Ii4zIi8+PC9zdmc+";
+
+function coverStyle(post: BlogPostSummary): CSSProperties | undefined {
+  if (!post.cover_image_width || !post.cover_image_height) return undefined;
+  return { aspectRatio: `${post.cover_image_width} / ${post.cover_image_height}` };
+}
+
+function BlogCover({
+  post,
+  featured = false,
+}: {
+  post: BlogPostSummary;
+  featured?: boolean;
+}) {
+  const imageClass = "object-cover transition-transform duration-700 group-hover:scale-105";
+  const fallback = (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <span className={`${featured ? "text-[8rem]" : "text-6xl"} font-black italic text-white/5 font-['Montserrat'] select-none`}>R</span>
+    </div>
+  );
+
+  return (
+    <div
+      className={`${featured ? "min-h-[260px] md:min-h-[420px]" : "h-44"} relative bg-gradient-to-br from-purple-600/20 via-violet-600/10 to-indigo-600/20 overflow-hidden`}
+      style={coverStyle(post)}
+    >
+      {post.cover_image_url?.startsWith("/media/") ? (
+        <Image
+          src={post.cover_image_url}
+          alt={post.cover_image_alt || post.title}
+          fill
+          priority={featured}
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
+          quality={featured ? 76 : 70}
+          sizes={featured ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"}
+          className={imageClass}
+        />
+      ) : post.cover_image_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={post.cover_image_url}
+          alt={post.cover_image_alt || post.title}
+          loading={featured ? "eager" : "lazy"}
+          fetchPriority={featured ? "high" : "low"}
+          decoding="async"
+          className={`absolute inset-0 h-full w-full ${imageClass}`}
+        />
+      ) : (
+        fallback
+      )}
+      <div className={`absolute inset-0 ${featured ? "bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/40" : "bg-gradient-to-t from-black/35 via-transparent to-transparent"}`} />
+    </div>
+  );
 }
 
 export function BlogIndexClient({
@@ -92,29 +150,7 @@ export function BlogIndexClient({
               onMouseMove={handleMouseMove}
             >
               <div className="lend-card-spotlight" />
-              <div
-                className="relative min-h-[260px] md:min-h-[420px] bg-gradient-to-br from-purple-600/20 via-violet-600/10 to-indigo-600/20 overflow-hidden"
-                style={featured.cover_image_url && !featured.cover_image_url.startsWith("/media/")
-                  ? { backgroundImage: `url(${featured.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-                  : undefined}
-              >
-                {featured.cover_image_url?.startsWith("/media/") ? (
-                  <Image
-                    src={featured.cover_image_url}
-                    alt={featured.cover_image_alt || featured.title}
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover"
-                  />
-                ) : null}
-                {!featured.cover_image_url && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[8rem] font-black italic text-white/5 font-['Montserrat'] select-none">R</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/40" />
-              </div>
+              <BlogCover post={featured} featured />
               <div className="relative z-10 p-10 md:p-14 flex flex-col justify-center">
                 <span className="text-[10px] font-bold tracking-[0.3em] text-accent/70 mb-6 block uppercase">
                   {language === "ru" ? "Свежий материал" : "Featured"}
@@ -143,27 +179,7 @@ export function BlogIndexClient({
                   onMouseMove={handleMouseMove}
                 >
                   <div className="lend-card-spotlight" />
-                  <div
-                    className="relative h-44 bg-gradient-to-br from-purple-600/20 via-violet-600/10 to-indigo-600/20 overflow-hidden"
-                    style={post.cover_image_url && !post.cover_image_url.startsWith("/media/")
-                      ? { backgroundImage: `url(${post.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-                      : undefined}
-                  >
-                    {post.cover_image_url?.startsWith("/media/") ? (
-                      <Image
-                        src={post.cover_image_url}
-                        alt={post.cover_image_alt || post.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
-                      />
-                    ) : null}
-                    {!post.cover_image_url && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-6xl font-black italic text-white/5 font-['Montserrat'] select-none">R</span>
-                      </div>
-                    )}
-                  </div>
+                  <BlogCover post={post} />
                   <div className="relative z-10 p-8 flex flex-col flex-grow">
                     <h3 className="text-xl font-bold mb-4 tracking-tight leading-snug group-hover:text-white transition-colors">{post.title}</h3>
                     {post.excerpt && <p className="opacity-50 text-sm leading-relaxed mb-6 flex-grow group-hover:opacity-70 transition-opacity line-clamp-3">{post.excerpt}</p>}

@@ -608,6 +608,9 @@ export type AdminBlogPost = {
 
 export type AdminBlogPostListResponse = {
   items: AdminBlogPost[];
+  total?: number;
+  page?: number;
+  size?: number;
 };
 
 export type AdminMedia = {

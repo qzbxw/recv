@@ -16,7 +16,8 @@ export async function GET(
   let upstream: Response;
   try {
     upstream = await fetch(`${backendApiUrl()}/media/${file}`, {
-      cache: "no-store",
+      cache: "force-cache",
+      next: { revalidate: 31_536_000 },
       signal: AbortSignal.timeout(5_000),
     });
   } catch {

@@ -201,8 +201,12 @@ export async function deleteAdminSEORedirect(token: string, id: number) {
   }, token);
 }
 
-export async function fetchAdminBlogPosts(token: string) {
-  return request<AdminBlogPost[] | AdminBlogPostListResponse>("/api/admin/blog", {}, token);
+export async function fetchAdminBlogPosts(token: string, page = 1, pageSize = 100) {
+  return request<AdminBlogPost[] | AdminBlogPostListResponse>(
+    `/api/admin/blog?page=${page}&page_size=${pageSize}`,
+    {},
+    token,
+  );
 }
 
 export async function createAdminBlogPost(token: string, payload: Partial<AdminBlogPost>) {
@@ -216,6 +220,12 @@ export async function updateAdminBlogPost(token: string, id: number, payload: Pa
   return request<AdminBlogPost>(`/api/admin/blog/${id}`, {
     method: "PUT",
     body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function deleteAdminBlogPost(token: string, id: number) {
+  return request<void>(`/api/admin/blog/${id}`, {
+    method: "DELETE",
   }, token);
 }
 

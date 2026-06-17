@@ -8,7 +8,6 @@ import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { useReveal } from "@/components/marketing/useReveal";
-import { useRegisterLocaleAlternates } from "@/components/marketing/localeAlternates";
 import { StructuredContent, TableOfContents, extractToc, extractFaq, slugifyHeading, type StructuredNode, type TocEntry } from "./StructuredContent";
 import { JsonLd } from "@/components/JsonLd";
 import React, { useMemo } from "react";
@@ -32,6 +31,9 @@ export type BlogPost = {
   available_locales?: string[] | null;
 };
 
+const COVER_BLUR_DATA_URL =
+  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDE2IDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZyI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjkiIGZpbGw9IiMxNzExMjMiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjIiIHI9IjYiIGZpbGw9IiM3YzNhZWQiIG9wYWNpdHk9Ii4zIi8+PC9zdmc+";
+
 function getReactText(children: React.ReactNode): string {
   if (!children) return "";
   if (typeof children === "string") return children;
@@ -40,7 +42,8 @@ function getReactText(children: React.ReactNode): string {
     return children.map(getReactText).join("");
   }
   if (typeof children === "object" && children !== null && "props" in children) {
-    return getReactText((children as any).props?.children);
+    const element = children as { props?: { children?: React.ReactNode } };
+    return getReactText(element.props?.children);
   }
   return "";
 }
@@ -56,7 +59,7 @@ function extractMarkdownToc(contentMd: string): TocEntry[] {
 
     const level = match[1].length === 3 ? 3 : 2;
     // Strip markdown formatting like bold, italic, code from heading text
-    let text = match[2].trim().replace(/[*_`]/g, "");
+    const text = match[2].trim().replace(/[*_`]/g, "");
     if (!text) continue;
 
     let id = slugifyHeading(text);
@@ -120,11 +123,13 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
 
   // Tell the header's language switcher where each locale lives: the translated
   // post if it exists, otherwise that locale's blog index (never the landing).
-  const available = post.available_locales ?? [language];
-  const alternates = useMemo(() => ({
-    en: available.includes("en") ? `/en/blog/${post.slug}` : "/en/blog",
-    ru: available.includes("ru") ? `/ru/blog/${post.slug}` : "/ru/blog",
-  }), [available, post.slug]);
+  const alternates = useMemo(() => {
+    const available = post.available_locales ?? [language];
+    return {
+      en: available.includes("en") ? `/en/blog/${post.slug}` : "/en/blog",
+      ru: available.includes("ru") ? `/ru/blog/${post.slug}` : "/ru/blog",
+    };
+  }, [language, post.available_locales, post.slug]);
 
   // Structured (TipTap v2) documents replace Markdown rendering entirely.
   const structuredDoc =
@@ -175,7 +180,7 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
       h2: makeHeadingRenderer(2),
       h3: makeHeadingRenderer(3),
     };
-  }, [post.content_md]);
+  }, []);
 
   return (
     <MarketingLayout language={language} alternates={alternates}>
@@ -222,11 +227,14 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
                 width={post.cover_image_width}
                 height={post.cover_image_height}
                 priority
+                placeholder="blur"
+                blurDataURL={COVER_BLUR_DATA_URL}
+                quality={78}
                 sizes="(max-width: 896px) 100vw, 896px"
                 className="lend-reveal--1 w-full h-auto rounded-3xl border border-white/10"
               />
             ) : (
-              <img src={post.cover_image_url} alt={post.cover_image_alt || post.h1 || post.title} loading="eager" className="lend-reveal--1 w-full rounded-3xl border border-white/10" />
+              <img src={post.cover_image_url} alt={post.cover_image_alt || post.h1 || post.title} loading="eager" fetchPriority="high" decoding="async" className="lend-reveal--1 w-full rounded-3xl border border-white/10" />
             )}
           </div>
         )}
