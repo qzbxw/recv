@@ -664,6 +664,7 @@ function verify(payload, signature, secret) {
       connectedAccountsHint: "Use any connected provider to access the same recv account.",
       connectGoogle: "Connect Google",
       connectGithub: "Connect GitHub",
+      connect: "Connect",
       connected: "Connected",
       notConnected: "Not connected",
       linkStarted: "Redirecting to provider...",

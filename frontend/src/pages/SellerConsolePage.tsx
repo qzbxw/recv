@@ -751,8 +751,8 @@ export function SellerConsolePage() {
   const connectedProviderMap = new Map(session.authIdentities.map(identity => [identity.provider, identity]));
   const authProviderRows = [
     { provider: "telegram" as const, label: "Telegram", action: "", identity: connectedProviderMap.get("telegram") },
-    { provider: "google" as const, label: "Google", action: t.settings.connectGoogle, identity: connectedProviderMap.get("google") },
-    { provider: "github" as const, label: "GitHub", action: t.settings.connectGithub, identity: connectedProviderMap.get("github") },
+    { provider: "google" as const, label: "Google", action: t.settings.connect, identity: connectedProviderMap.get("google") },
+    { provider: "github" as const, label: "GitHub", action: t.settings.connect, identity: connectedProviderMap.get("github") },
   ];
   const avgTicket = paidInvoices.length > 0 ? paidRevenue / paidInvoices.length : 0;
   const openValue = filteredInvoices

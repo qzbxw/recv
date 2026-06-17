@@ -663,6 +663,7 @@ function verify(payload, signature, secret) {
       connectedAccountsHint: "Любой подключенный провайдер открывает тот же recv-аккаунт.",
       connectGoogle: "Привязать Google",
       connectGithub: "Привязать GitHub",
+      connect: "Привязать",
       connected: "Подключено",
       notConnected: "Не подключено",
       linkStarted: "Перенаправляем к провайдеру...",
