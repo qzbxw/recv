@@ -3,18 +3,20 @@ import { getCopy } from "@/lib/copy";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { AttributionCapture } from "../AttributionCapture";
-import { LocaleAlternatesProvider } from "./localeAlternates";
+import { LocaleAlternatesProvider, type LocaleAlternates } from "./localeAlternates";
 import { MarketingInteractions } from "./MarketingInteractions";
 
 export function MarketingLayout({
   children,
   language,
+  alternates = null,
 }: {
   children: React.ReactNode;
   language: "ru" | "en";
+  alternates?: LocaleAlternates | null;
 }) {
   return (
-    <LocaleAlternatesProvider>
+    <LocaleAlternatesProvider initialValue={alternates}>
       <div className="lend-page min-h-screen bg-black text-white selection:bg-purple-500/30">
         <Suspense fallback={null}>
           <AttributionCapture />

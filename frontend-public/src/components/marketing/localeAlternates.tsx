@@ -11,8 +11,19 @@ type LocaleAlternatesContextValue = {
 
 const LocaleAlternatesContext = createContext<LocaleAlternatesContextValue | null>(null);
 
-export function LocaleAlternatesProvider({ children }: { children: React.ReactNode }) {
-  const [alternates, setAlternates] = useState<LocaleAlternates | null>(null);
+export function LocaleAlternatesProvider({
+  children,
+  initialValue = null,
+}: {
+  children: React.ReactNode;
+  initialValue?: LocaleAlternates | null;
+}) {
+  const [alternates, setAlternates] = useState<LocaleAlternates | null>(initialValue);
+
+  useEffect(() => {
+    setAlternates(initialValue);
+  }, [initialValue]);
+
   return (
     <LocaleAlternatesContext.Provider value={{ alternates, setAlternates }}>
       {children}

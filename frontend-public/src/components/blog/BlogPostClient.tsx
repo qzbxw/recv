@@ -121,10 +121,10 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
   // Tell the header's language switcher where each locale lives: the translated
   // post if it exists, otherwise that locale's blog index (never the landing).
   const available = post.available_locales ?? [language];
-  useRegisterLocaleAlternates({
+  const alternates = useMemo(() => ({
     en: available.includes("en") ? `/en/blog/${post.slug}` : "/en/blog",
     ru: available.includes("ru") ? `/ru/blog/${post.slug}` : "/ru/blog",
-  });
+  }), [available, post.slug]);
 
   // Structured (TipTap v2) documents replace Markdown rendering entirely.
   const structuredDoc =
@@ -178,7 +178,7 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
   }, [post.content_md]);
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} alternates={alternates}>
       {faqSchema && <JsonLd schema={faqSchema} />}
       <article className="relative pt-28 md:pt-32">
         {/* HERO */}
