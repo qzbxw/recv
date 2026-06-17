@@ -471,7 +471,21 @@ export function AuthPortalPage() {
           ) : null}
 
           <p className="auth-portal__disclaimer-text">
-            {text.termsDisclaimer}
+            {language === "ru" ? (
+              <>
+                Продолжая, вы подтверждаете, что вам исполнилось 18 лет, вы обладаете полномочиями связывать Мерчанта обязательствами, соглашаетесь с{" "}
+                <Link to="/terms" target="_blank" className="auth-portal__disclaimer-link">Условиями использования</Link>{" "}
+                и признаете{" "}
+                <Link to="/privacy" target="_blank" className="auth-portal__disclaimer-link">Политику конфиденциальности</Link>.
+              </>
+            ) : (
+              <>
+                By continuing, you confirm that you are at least 18 years old, have authority to bind the Merchant, and agree to the{" "}
+                <Link to="/terms" target="_blank" className="auth-portal__disclaimer-link">Terms of Service</Link>{" "}
+                and acknowledge the{" "}
+                <Link to="/privacy" target="_blank" className="auth-portal__disclaimer-link">Privacy Policy</Link>.
+              </>
+            )}
           </p>
 
           <div className="auth-portal__footer-actions">

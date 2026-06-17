@@ -120,6 +120,15 @@ export function CheckoutPage() {
   const statusRef = useRef("");
   const trackedCheckoutRef = useRef("");
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (!window.matchMedia("(hover: hover)").matches) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   const loadInvoice = useCallback(async (active = true) => {
     if (publicId === DEMO_PUBLIC_ID) {
       if (active) {
@@ -341,7 +350,7 @@ export function CheckoutPage() {
         </div>
       </header>
 
-      <section className={`co-card co-card--${checkoutVariant}`}>
+      <section className={`co-card co-card--${checkoutVariant}`} onMouseMove={handleMouseMove}>
         {error ? (
           <div className="co-alert" role="status">
             <span>{error}</span>
@@ -419,7 +428,7 @@ export function CheckoutPage() {
                       onClick={() => void copyValue("amount", bigAmount)}
                       title={text.copyAmount}
                     >
-                      <Icons.Copy />
+                      {copiedField === "amount" ? <Icons.Check /> : <Icons.Copy />}
                     </button>
                   </div>
                   <span className="co-copy-line__sub">{netLabel} {text.networkOnly}</span>
@@ -440,7 +449,7 @@ export function CheckoutPage() {
                         onClick={() => void copyValue("comment", commentValue)}
                         title={text.copyComment}
                       >
-                        <Icons.Copy />
+                        {copiedField === "comment" ? <Icons.Check /> : <Icons.Copy />}
                       </button>
                     </div>
                     <span className="co-copy-line__sub">{text.payloadHint}</span>
@@ -462,7 +471,7 @@ export function CheckoutPage() {
                       onClick={() => void copyValue("address", addressValue)}
                       title={text.copyAddress}
                     >
-                      <Icons.Copy />
+                      {copiedField === "address" ? <Icons.Check /> : <Icons.Copy />}
                     </button>
                   </div>
                 </div>
