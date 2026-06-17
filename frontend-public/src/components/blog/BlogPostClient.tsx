@@ -9,8 +9,9 @@ import type { Components } from "react-markdown";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { useReveal } from "@/components/marketing/useReveal";
 import { useRegisterLocaleAlternates } from "@/components/marketing/localeAlternates";
-import { StructuredContent, TableOfContents, extractToc, extractFaq, type StructuredNode } from "./StructuredContent";
+import { StructuredContent, TableOfContents, extractToc, extractFaq, slugifyHeading, type StructuredNode, type TocEntry } from "./StructuredContent";
 import { JsonLd } from "@/components/JsonLd";
+import React, { useMemo } from "react";
 
 export type BlogPost = {
   slug: string;
@@ -31,9 +32,46 @@ export type BlogPost = {
   available_locales?: string[] | null;
 };
 
-const mdComponents: Components = {
-  h2: (props) => <h2 className="text-2xl md:text-3xl font-bold tracking-tight mt-14 mb-5 text-white scroll-mt-32" {...props} />,
-  h3: (props) => <h3 className="text-xl md:text-2xl font-bold tracking-tight mt-10 mb-4 text-white/90" {...props} />,
+function getReactText(children: React.ReactNode): string {
+  if (!children) return "";
+  if (typeof children === "string") return children;
+  if (typeof children === "number") return children.toString();
+  if (Array.isArray(children)) {
+    return children.map(getReactText).join("");
+  }
+  if (typeof children === "object" && children !== null && "props" in children) {
+    return getReactText((children as React.ReactElement).props.children);
+  }
+  return "";
+}
+
+function extractMarkdownToc(contentMd: string): TocEntry[] {
+  const lines = contentMd.split(/\r?\n/);
+  const entries: TocEntry[] = [];
+  const seen = new Map<string, number>();
+
+  for (const line of lines) {
+    const match = line.match(/^(#{2,3})\s+(.+)$/);
+    if (!match) continue;
+
+    const level = match[1].length === 3 ? 3 : 2;
+    // Strip markdown formatting like bold, italic, code from heading text
+    let text = match[2].trim().replace(/[*_`]/g, "");
+    if (!text) continue;
+
+    let id = slugifyHeading(text);
+    const count = seen.get(id) ?? 0;
+    seen.set(id, count + 1);
+    if (count > 0) {
+      id = `${id}-${count + 1}`;
+    }
+
+    entries.push({ id, text, level });
+  }
+  return entries;
+}
+
+const baseMdComponents: Components = {
   p: (props) => <p className="text-base md:text-lg leading-[1.8] text-white/60 mb-6" {...props} />,
   a: (props) => <a className="text-accent font-medium underline decoration-accent/30 underline-offset-4 hover:decoration-accent transition-colors" {...props} />,
   ul: (props) => <ul className="list-none space-y-3 mb-6 pl-1" {...props} />,
@@ -107,6 +145,38 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
       }
     : null;
 
+  const markdownToc = useMemo(() => extractMarkdownToc(post.content_md), [post.content_md]);
+
+  const mdComponents = useMemo(() => {
+    const seen = new Map<string, number>();
+
+    const makeHeadingRenderer = (level: 2 | 3) => {
+      const Renderer = (props: React.HTMLAttributes<HTMLHeadingElement>) => {
+        const text = getReactText(props.children);
+        let id = slugifyHeading(text);
+        const count = seen.get(id) ?? 0;
+        seen.set(id, count + 1);
+        if (count > 0) {
+          id = `${id}-${count + 1}`;
+        }
+
+        if (level === 2) {
+          return <h2 id={id} className="text-2xl md:text-3xl font-bold tracking-tight mt-14 mb-5 text-white scroll-mt-32" {...props} />;
+        } else {
+          return <h3 id={id} className="text-xl md:text-2xl font-bold tracking-tight mt-10 mb-4 text-white/90 scroll-mt-32" {...props} />;
+        }
+      };
+      Renderer.displayName = `MarkdownHeadingH${level}`;
+      return Renderer;
+    };
+
+    return {
+      ...baseMdComponents,
+      h2: makeHeadingRenderer(2),
+      h3: makeHeadingRenderer(3),
+    };
+  }, [post.content_md]);
+
   return (
     <MarketingLayout language={language}>
       {faqSchema && <JsonLd schema={faqSchema} />}
@@ -170,7 +240,10 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
                 <StructuredContent doc={structuredDoc} language={language} />
               </>
             ) : (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{post.content_md}</ReactMarkdown>
+              <>
+                <TableOfContents entries={markdownToc} language={language} />
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{post.content_md}</ReactMarkdown>
+              </>
             )}
 
             <div className="mt-16 pt-10 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
