@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { BRAND_ICON_PATH, BRAND_LOGO_PATH } from "@/lib/seo";
 
+// Keep the public app manifest explicit for deploy previews and PWA crawlers.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "recv",
