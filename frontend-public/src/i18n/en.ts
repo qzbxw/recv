@@ -230,7 +230,7 @@ const en = {
       networks: {
         title: "Networks",
         ton: "TON",
-        ton_usdt: "TON USDT",
+        ton_usdt: "USDT on TON",
         tron: "TRON",
         solana: "Solana",
         base: "Base",
@@ -274,9 +274,9 @@ const en = {
     ogSubtitle: "Next-generation crypto payments infrastructure",
     checkoutProduct: {
       metadata: {
-        title: "Accept Crypto Payments | Non-Custodial Checkout for TON, TRC-20, TON USDT",
+        title: "Accept Crypto Payments | Non-Custodial Checkout for GRAM, TRC-20, USDT on TON",
         description: "Scale your business with the highest-converting crypto checkout. Support USDT (TRC-20, TON, Base, BSC) with 0% turnover fees. Non-custodial, secure, and Telegram-ready.",
-        keywords: "accept crypto payments, crypto checkout gateway, GRAM payments, TON payments, TRON USDT gateway, TON USDT checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout"
+        keywords: "accept crypto payments, crypto checkout gateway, GRAM payments, TON payments, TRON USDT gateway, USDT on TON checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout"
       },
       kicker: "CONVERSION ENGINE",
       title: "Checkout: The Gold Standard of Crypto UX",
@@ -603,7 +603,7 @@ const en = {
           items: [
             { name: "GRAM", body: "Native Gram transfers for simple Telegram and wallet-native payments." },
             { name: "Jettons", body: "Supported TON Jettons can be exposed as checkout options for compatible wallets." },
-            { name: "TON USDT", body: "Use stablecoin checkout on TON where the asset is enabled for your merchant setup." },
+            { name: "USDT on TON", body: "Use stablecoin checkout on TON where the asset is enabled for your merchant setup." },
           ],
         },
         why: {
@@ -735,15 +735,15 @@ const en = {
         seo: "recv enables TRON USDT payments through Checkout, API invoices, TRC-20 watcher detection, signed webhooks, direct-to-wallet settlement, and stablecoin payment flows for SaaS and business use cases.",
       },
       ton_usdt: {
-        name: "TON USDT",
+        name: "USDT on TON",
         fullName: "Tether USDT on TON",
         metadata: {
-          title: "Accept TON USDT Payments | Stablecoin Checkout on TON",
+          title: "Accept USDT on TON Payments | Stablecoin Checkout on TON",
           description: "Accept USDT stablecoin on The Open Network (TON) with recv. Hosted Checkout, API invoices, automated comment matching, and direct-to-wallet payouts.",
         },
-        kicker: "TON USDT STABLECOIN",
+        kicker: "USDT ON TON",
         hero: {
-          title: "Accept TON USDT payments with direct settlement.",
+          title: "Accept USDT on TON with direct settlement.",
           body: "Seamlessly accept Tether (USDT) on TON. recv handles payment detection and comment-based matching, sending funds directly to your non-custodial wallet.",
         },
         snapshot: {
@@ -761,21 +761,21 @@ const en = {
           title: "USDT as a native TON Jetton.",
           body: "Collect USD-pegged stablecoin payments on The Open Network, leveraging Telegram's native ecosystem without exposing buyers to price volatility.",
           items: [
-            { name: "TON USDT", body: "The official USD₮ Jetton on the TON blockchain, widely used in Telegram Wallet and Tonkeeper." },
+            { name: "USDT on TON", body: "The official USD₮ Jetton on the TON blockchain, widely used in Telegram Wallet and Tonkeeper." },
             { name: "GRAM", body: "The native TON network asset used for transaction fees (gas) when sending Jettons." },
             { name: "Direct Payouts", body: "USDT goes directly to your non-custodial TON wallet without holding periods or intermediaries." },
           ],
         },
         why: {
-          kicker: "WHY TON USDT",
+          kicker: "WHY USDT ON TON",
           title: "Stablecoin stability with Telegram-native speed.",
-          body: "TON USDT is the perfect solution for Telegram commerce. It eliminates the price volatility of GRAM while retaining the fast transaction speeds, low fees, and deep integration with Telegram chats.",
+          body: "USDT on TON is the perfect solution for Telegram commerce. It eliminates the price volatility of GRAM while retaining the fast transaction speeds, low fees, and deep integration with Telegram chats.",
         },
         mechanics: {
           kicker: "AUTOMATED DETECTOR",
           title: "Jetton transfer monitoring with custom comments.",
           steps: [
-            { title: "Create Invoice", body: "Generate a TON USDT invoice specifying the exact USDT amount and required payment comment." },
+            { title: "Create Invoice", body: "Generate a USDT on TON invoice specifying the exact USDT amount and required payment comment." },
             { title: "Present Details", body: "Checkout shows the destination TON address, QR code, and the required payment comment." },
             { title: "Watch Blockchain", body: "recv monitors TON blockchain transactions to detect matching USDT Jetton transfers with the correct comment." },
             { title: "Trigger Backend", body: "An automated webhook notifies your application when the payment is confirmed, instantly unlocking access or completing orders." },
@@ -784,12 +784,12 @@ const en = {
         limitations: {
           kicker: "LIMITATIONS AND NOTES",
           title: "Memo-based matching and transaction fees.",
-          body: "Just like GRAM payments, TON USDT matching relies on the required comment. Buyers must not modify this comment. Additionally, buyers or wallets must have GRAM to cover blockchain transaction fees (gas).",
+          body: "Just like GRAM payments, USDT on TON matching relies on the required comment. Buyers must not modify this comment. Additionally, buyers or wallets must have GRAM to cover blockchain transaction fees (gas).",
         },
         useCases: {
           kicker: "USE CASES",
           title: "Built for Telegram commerce and bots.",
-          body: "TON USDT is ideal for businesses that want stable, dollar-pegged pricing but sell products inside the Telegram ecosystem.",
+          body: "USDT on TON is ideal for businesses that want stable, dollar-pegged pricing but sell products inside the Telegram ecosystem.",
           items: [
             { name: "Telegram Mini Apps", body: "Enable one-click USDT stablecoin checkouts directly within your app or bot." },
             { name: "Digital Subscriptions", body: "Bill recurring memberships, courses, or private group access in stable dollar values." },
@@ -798,7 +798,7 @@ const en = {
         },
         related: {
           kicker: "RELATED",
-          title: "Build the TON USDT flow.",
+          title: "Build the USDT on TON flow.",
           links: [
             { kicker: "Use Case", label: "Telegram Shops", body: "Automate shop payments and orders in Telegram.", href: "/use-cases/telegram-shops" },
             { kicker: "Product", label: "Checkout", body: "Hosted payment pages with multi-network support.", href: "/products/checkout" },
@@ -806,13 +806,13 @@ const en = {
           ],
         },
         cta: {
-          title: "Start accepting TON USDT today.",
+          title: "Start accepting USDT on TON today.",
           body: "Set up stablecoin checkouts on TON, automate invoice matching via comments, and receive payments directly to your own wallet.",
           primary: { label: "Get started", href: "/app/auth" },
           secondary: { label: "View API Docs", href: "/docs" },
         },
-        seoLabel: "TON USDT payment gateway details",
-        seo: "recv supports TON USDT payments (Tether on TON) with hosted Checkout, API invoice creation, required comment matching, blockchain watchers, and direct-to-wallet settlement for Telegram bots and Mini Apps.",
+        seoLabel: "USDT on TON payment gateway details",
+        seo: "recv supports USDT on TON payments with hosted Checkout, API invoice creation, required comment matching, blockchain watchers, and direct-to-wallet settlement for Telegram bots and Mini Apps.",
       },
       solana: {
         name: "Solana",
@@ -1666,7 +1666,7 @@ const en = {
           {
             title: "Telegram Integration",
             competitor: "Basic Telegram bot integrations. Not designed for Telegram Mini App payment flows or high-frequency bot-driven commerce.",
-            recv: "Built for Telegram. TON and TON USDT support, Mini App-compatible checkout, and Telegram alert notifications out of the box."
+            recv: "Built for Telegram. GRAM and USDT on TON support, Mini App-compatible checkout, and Telegram alert notifications out of the box."
           }
         ]
       }

@@ -36,7 +36,7 @@ const sections = [
   },
   {
     title: "Supported Networks",
-    body: "payable_network accepts TON, TON_USDT, TRON, BASE, and BSC. BASE/BSC share one EVM payout-wallet bucket; TON and TON_USDT share a TON wallet; TRON uses its own wallet. You must have an active payout wallet in the matching bucket to invoice on a network.",
+    body: "payable_network accepts TON (GRAM), TON_USDT (USDT on TON), TRON, BASE, and BSC. BASE/BSC share one EVM payout-wallet bucket; TON and TON_USDT share a TON wallet; TRON uses its own wallet. You must have an active payout wallet in the matching bucket to invoice on a network.",
   },
   {
     title: "MCP / AI Agents",

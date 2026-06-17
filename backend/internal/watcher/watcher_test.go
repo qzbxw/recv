@@ -425,6 +425,9 @@ func TestPollTONUSDTFiltersJettonMasterAndDestination(t *testing.T) {
 		if r.Header.Get("X-API-Key") != "ton-api-key" {
 			t.Fatalf("expected TonCenter API key header, got %q", r.Header.Get("X-API-Key"))
 		}
+		if r.URL.Query().Get("owner_address") != "ton-destination" || r.URL.Query().Get("jetton_master") != "usdtmaster" || r.URL.Query().Get("direction") != "in" {
+			t.Fatalf("unexpected TonCenter query: %s", r.URL.RawQuery)
+		}
 		body, err := json.Marshal(map[string]any{
 			"ok": true,
 			"result": []map[string]any{
@@ -436,6 +439,7 @@ func TestPollTONUSDTFiltersJettonMasterAndDestination(t *testing.T) {
 					"amount":           "12345678",
 					"jetton_master":    "USDTMASTER",
 					"query_id":         101,
+					"comment":          "invoice-101",
 				},
 				{
 					"utime":            1710000101,
@@ -485,17 +489,20 @@ func TestPollTONUSDTFiltersJettonMasterAndDestination(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pollTON_USDT returned error: %v", err)
 	}
-	if requestedPath != "/getJettonTransfers" {
+	if requestedPath != "/api/v3/jetton/transfers" {
 		t.Fatalf("unexpected TonCenter path: %s", requestedPath)
 	}
 	if len(transfers) != 1 {
-		t.Fatalf("expected one matching TON USDT transfer, got %+v", transfers)
+		t.Fatalf("expected one matching USDT on TON transfer, got %+v", transfers)
 	}
 	if transfers[0].TxHash != "tx-ton-usdt-1" || transfers[0].DestinationAddress != "ton-destination" {
 		t.Fatalf("unexpected transfer identity: %+v", transfers[0])
 	}
+	if transfers[0].PaymentComment != "invoice-101" {
+		t.Fatalf("unexpected USDT on TON comment: %q", transfers[0].PaymentComment)
+	}
 	if !transfers[0].Amount.Equal(decimal.RequireFromString("12.345678")) {
-		t.Fatalf("unexpected TON USDT amount: %s", transfers[0].Amount)
+		t.Fatalf("unexpected USDT on TON amount: %s", transfers[0].Amount)
 	}
 }
 
@@ -505,7 +512,7 @@ func TestPollTONUSDTBoundaries(t *testing.T) {
 		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 	if _, err := w.pollTON_USDT(context.Background(), store.WatchedWallet{Address: "wallet"}); err == nil {
-		t.Fatal("expected missing TON USDT master address to fail")
+		t.Fatal("expected missing USDT on TON master address to fail")
 	}
 
 	w = &Watcher{

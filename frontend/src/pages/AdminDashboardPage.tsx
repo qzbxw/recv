@@ -69,8 +69,8 @@ const PLAN_OPTIONS = [
 ];
 
 const NETWORK_OPTIONS = [
-  { value: "TON", label: "TON" },
-  { value: "TON_USDT", label: "TON USDT" },
+  { value: "TON", label: "GRAM on TON" },
+  { value: "TON_USDT", label: "USDT on TON" },
   { value: "TRON", label: "TRON USDT" },
   { value: "BASE", label: "Base USDC" },
   { value: "BSC", label: "BSC USDT" },
@@ -1830,7 +1830,7 @@ function SettingsPanel({ token, setToast, setError }: { token: string; setToast:
 
         <form onSubmit={handleSave} className="dev-form">
           <div className="dev-input-group dev-input-group--margin">
-            <label>TON Wallet Address (for TON and TON USDT)</label>
+            <label>TON Wallet Address (for GRAM and USDT on TON)</label>
             <input
               className="dev-input"
               value={wallets.TON}

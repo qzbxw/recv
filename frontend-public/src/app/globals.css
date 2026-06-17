@@ -10991,6 +10991,79 @@ html {
   font-weight: 700;
 }
 
+.network-logo {
+  --network-logo-bg: rgba(255, 255, 255, 0.08);
+  --network-logo-fg: rgba(255, 255, 255, 0.9);
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 0.75rem;
+  background: var(--network-logo-bg);
+  color: var(--network-logo-fg);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.network-logo svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+}
+
+.network-logo--sm {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.55rem;
+}
+
+.network-logo--sm svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.network-logo--lg {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1.25rem;
+}
+
+.network-logo--lg svg {
+  width: 2.35rem;
+  height: 2.35rem;
+}
+
+.network-logo--ton {
+  --network-logo-bg: rgba(0, 136, 204, 0.14);
+  --network-logo-fg: #29a9ea;
+}
+
+.network-logo--tron {
+  --network-logo-bg: rgba(255, 6, 10, 0.13);
+  --network-logo-fg: #ff3b3f;
+}
+
+.network-logo--solana {
+  --network-logo-bg: rgba(20, 241, 149, 0.12);
+  --network-logo-fg: #14f195;
+}
+
+.network-logo--base {
+  --network-logo-bg: rgba(0, 82, 255, 0.16);
+  --network-logo-fg: #4f83ff;
+}
+
+.network-logo--arbitrum {
+  --network-logo-bg: rgba(40, 160, 240, 0.14);
+  --network-logo-fg: #28a0f0;
+}
+
+.network-logo--bsc {
+  --network-logo-bg: rgba(240, 185, 11, 0.14);
+  --network-logo-fg: #f0b90b;
+}
+
 /* Mobile Performance Optimizations */
 @media (max-width: 768px), (hover: none) {
   /* Freeze viewport-wide background grid movement */
@@ -11015,4 +11088,3 @@ html {
     animation: none !important;
   }
 }
-

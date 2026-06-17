@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
+import { NetworkLogo } from "@/components/NetworkLogo";
 
 export type HubCard = {
   title: string;
@@ -9,6 +10,7 @@ export type HubCard = {
   href: string;
   /** Optional label for the link button */
   linkLabel?: string;
+  iconSlug?: string;
 };
 
 export type HubPageProps = {
@@ -109,9 +111,12 @@ export function HubPageClient({
                 </div>
 
                 <div className="relative z-10 flex flex-col h-full">
-                  <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 mb-6 block uppercase">
-                    {String(idx + 1).padStart(2, "0")}
-                  </span>
+                  <div className="mb-6 flex items-center justify-between gap-4">
+                    {card.iconSlug ? <NetworkLogo network={card.iconSlug} /> : null}
+                    <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 block uppercase">
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                  </div>
                   <h2 className="text-xl md:text-2xl font-bold mb-4 tracking-tight group-hover:text-white transition-colors">{card.title}</h2>
                   <p className="opacity-50 text-sm md:text-base leading-relaxed group-hover:opacity-75 transition-opacity flex-1">{card.body}</p>
                   <span className="mt-8 text-xs font-bold tracking-[0.15em] uppercase text-accent/50 group-hover:text-accent transition-colors flex items-center gap-2">

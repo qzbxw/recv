@@ -123,7 +123,7 @@ export function formatNetworkLabel(network: Network) {
     case "EVM":
       return "ETHEREUM";
     case "TON_USDT":
-      return "TON USDT";
+      return "USDT on TON";
     case "SOLANA":
       return "Solana";
     case "ARBITRUM":

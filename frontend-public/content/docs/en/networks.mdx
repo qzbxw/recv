@@ -13,7 +13,7 @@ These are the values accepted for `payable_network`:
 
 | `payable_network` | Supported assets | Wallet bucket |
 |-------------------|------------------|---------------|
-| `TON` | TON | TON |
+| `TON` | GRAM | TON |
 | `TON_USDT` | USDT | TON |
 | `TRON` | USDT | TRON |
 | `SOLANA` | SOL, USDT, USDC | SOLANA |
@@ -25,7 +25,7 @@ Values are case-insensitive in the request and normalized to uppercase.
 
 ### Wallet buckets
 
-`BASE`, `ARBITRUM`, and `BSC` share a single **EVM wallet bucket** — one connected `0x…` address can serve as the destination for those EVM networks. `TON` and `TON_USDT` share a TON wallet bucket. `TRON` and `SOLANA` use their own buckets.
+`BASE`, `ARBITRUM`, and `BSC` share a single **EVM wallet bucket** — one connected `0x…` address can serve as the destination for those EVM networks. `TON` and `TON_USDT` are payment options on the TON blockchain and share a TON wallet bucket. `TRON` and `SOLANA` use their own buckets.
 
 ## Wallet networks
 
@@ -40,10 +40,10 @@ When connecting a payout wallet, the network is one of `TON`, `TRON`, `SOLANA`, 
 
 ## Amounts and precision
 
-`base_amount_usd` is a USD decimal string. Stablecoins are priced 1:1 with USD. Native TON, SOL, and BNB are converted at invoice creation, and invoices containing a native volatile asset use a shorter payment window.
+`base_amount_usd` is a USD decimal string. Stablecoins are priced 1:1 with USD. Native GRAM on TON, SOL, and BNB are converted at invoice creation, and invoices containing a native volatile asset use a shorter payment window.
 
 ## Payment comments / memos
 
-An invoice may include up to two `payment_options`. For native TON the option includes a required memo in `payment_comment`; for stablecoins and other native options matching uses the exact amount, network, asset, and destination address. Surface the exact option amount prominently in your checkout.
+An invoice may include up to two `payment_options`. For native GRAM on TON the option includes a required memo in `payment_comment`; for stablecoins and other native options matching uses the exact amount, network, asset, and destination address. Surface the exact option amount prominently in your checkout.
 
 > recv only supports the networks listed above. Do not assume any other chain is available.

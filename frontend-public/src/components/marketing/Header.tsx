@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, X, Zap, CreditCard, Code, Globe, Bot } from "lucide-react";
+import { ChevronDown, Menu, X, Zap, CreditCard, Code, Bot } from "lucide-react";
 import type { PublicCopy } from "@/lib/copy";
+import { NetworkLogo } from "@/components/NetworkLogo";
 import { useLocaleAlternates } from "./localeAlternates";
 
 /** Swap the leading /en or /ru segment of the current path to the target locale. */
@@ -106,9 +107,9 @@ export function Header({ language, nav }: { language: "ru" | "en"; nav: PublicCo
 
             {/* Use Cases Menu */}
             <div className="group relative">
-              <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+              <Link href={`/${language}/use-cases`} className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
                 {nav.useCases.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
-              </button>
+              </Link>
               <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
                 <div className="mega-menu-card rounded-2xl p-2 w-[220px] flex flex-col gap-0.5">
                   {[
@@ -127,14 +128,13 @@ export function Header({ language, nav }: { language: "ru" | "en"; nav: PublicCo
 
             {/* Networks Menu */}
             <div className="group relative">
-              <button className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+              <Link href={`/${language}/networks`} className="header-nav-btn flex items-center gap-1 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
                 {nav.networks.title} <ChevronDown className="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform" />
-              </button>
+              </Link>
               <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
                 <div className="mega-menu-card rounded-2xl p-3 w-[360px] grid grid-cols-2 gap-1">
                   {[
                     { name: nav.networks.ton, slug: "ton" },
-                    { name: nav.networks.ton_usdt, slug: "ton_usdt" },
                     { name: nav.networks.tron, slug: "tron" },
                     { name: nav.networks.solana, slug: "solana" },
                     { name: nav.networks.base, slug: "base" },
@@ -142,7 +142,7 @@ export function Header({ language, nav }: { language: "ru" | "en"; nav: PublicCo
                     { name: nav.networks.bsc, slug: "bsc" },
                   ].map((net) => (
                     <Link key={net.slug} href={`/${language}/networks/${net.slug}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 text-[11px] font-semibold text-white/60 hover:text-white transition-colors">
-                      <Globe className="w-3.5 h-3.5 opacity-40" /> {net.name}
+                      <NetworkLogo network={net.slug} className="network-logo--sm" /> {net.name}
                     </Link>
                   ))}
                 </div>
@@ -211,6 +211,7 @@ export function Header({ language, nav }: { language: "ru" | "en"; nav: PublicCo
             <div className="space-y-4">
               <div className="text-[10px] font-bold tracking-widest text-white/20 uppercase">{nav.useCases.title}</div>
               <div className="grid gap-4">
+                <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/use-cases`} className="text-2xl font-bold text-white tracking-tight">{nav.useCases.title}</Link>
                 <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/use-cases/telegram-shops`} className="text-2xl font-bold text-white tracking-tight">{nav.useCases.tgShops}</Link>
                 <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/use-cases/saas-billing`} className="text-2xl font-bold text-white tracking-tight">{nav.useCases.saas}</Link>
                 <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/use-cases/digital-goods`} className="text-2xl font-bold text-white tracking-tight">{nav.useCases.digital}</Link>

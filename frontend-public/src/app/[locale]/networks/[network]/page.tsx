@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { NetworkDetailClient, type NetworkDetailPageCopy } from "@/components/NetworkDetailClient";
 import { getCopy, normalizeLocale } from "@/i18n";
@@ -14,7 +14,6 @@ type NetworkSlug = keyof ReturnType<typeof getCopy>["marketing"]["networkPages"]
 const NETWORK_SLUGS = [
   "ton",
   "tron",
-  "ton_usdt",
   "solana",
   "base",
   "arbitrum",
@@ -37,6 +36,20 @@ export async function generateStaticParams() {
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { network, locale: rawLocale } = await props.params;
   const locale = normalizeLocale(rawLocale);
+
+  if (network === "ton_usdt") {
+    return {
+      title: `${locale === "ru" ? "USDT в TON" : "USDT on TON"} | recv`,
+      alternates: {
+        canonical: `/${locale}/networks/ton`,
+        languages: {
+          en: "/en/networks/ton",
+          ru: "/ru/networks/ton",
+          "x-default": "/en/networks/ton",
+        },
+      },
+    };
+  }
 
   if (!isNetworkSlug(network)) return { title: "Network Not Found" };
 
@@ -64,6 +77,10 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 export default async function NetworkPage(props: Props) {
   const { network, locale: rawLocale } = await props.params;
   const locale = normalizeLocale(rawLocale);
+
+  if (network === "ton_usdt") {
+    redirect(`/${locale}/networks/ton`);
+  }
 
   if (!isNetworkSlug(network)) notFound();
 

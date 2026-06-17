@@ -112,7 +112,7 @@ const WALLET_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
 
 const PAYABLE_PAYMENT_OPTIONS: Array<{ key: string; network: Network; asset: string; label: string }> = [
   { key: "TON:GRAM", network: "TON", asset: "GRAM", label: "GRAM" },
-  { key: "TON_USDT:USDT", network: "TON_USDT", asset: "USDT", label: "TON USDT" },
+  { key: "TON_USDT:USDT", network: "TON_USDT", asset: "USDT", label: "USDT on TON" },
   { key: "TRON:USDT", network: "TRON", asset: "USDT", label: "TRON USDT" },
   { key: "SOLANA:SOL", network: "SOLANA", asset: "SOL", label: "SOL" },
   { key: "SOLANA:USDT", network: "SOLANA", asset: "USDT", label: "Solana USDT" },

@@ -435,7 +435,7 @@ Idempotency-Key: telegram-order-1001
 
 | Сеть | Активы |
 |---|---|
-| TON | TON |
+| TON | GRAM |
 | TON_USDT | USDT |
 | TRON | USDT |
 | SOLANA | SOL, USDT, USDC |
@@ -454,7 +454,7 @@ Idempotency-Key: telegram-order-1001
 
 У recv кошельки сгруппированы по техническим типам:
 
-* TON и TON_USDT используют TON wallet bucket;
+* TON и TON_USDT используют TON wallet bucket, где TON — это сеть, `TON` в API означает нативный GRAM, а `TON_USDT` — USDT в TON;
 * BASE, ARBITRUM и BSC используют EVM wallet bucket;
 * TRON использует отдельный TRON-кошелек;
 * SOLANA использует отдельный Solana-кошелек.
@@ -737,7 +737,7 @@ recv:
 
 ### Можно ли принимать USDT в разных сетях?
 
-Да, в рамках поддерживаемых payment options. На момент подготовки материала это TON_USDT, TRON, SOLANA, BASE, ARBITRUM и BSC. Точный список лучше проверять в документации перед интеграцией.
+Да, в рамках поддерживаемых payment options. На момент подготовки материала это GRAM в TON, USDT в TON, TRON, SOLANA, BASE, ARBITRUM и BSC. Точный список лучше проверять в документации перед интеграцией.
 
 ### Что будет, если клиент отправит меньше?
 

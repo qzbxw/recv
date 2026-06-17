@@ -39,8 +39,8 @@ const PLAN_PRICES = {
 } as const;
 
 const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
-  { value: "TON", label: "TON" },
-  { value: "TON_USDT", label: "TON USDT" },
+  { value: "TON", label: "GRAM on TON" },
+  { value: "TON_USDT", label: "USDT on TON" },
   { value: "TRON", label: "TRON" },
   { value: "BASE", label: "BASE" },
   { value: "BSC", label: "BSC" },
@@ -293,7 +293,7 @@ export function DeveloperPortalPage() {
       params: [
         { name: "title", type: "string", desc: t.api.endpoints[2].params[0] },
         { name: "base_amount_usd", type: "decimal", desc: t.api.endpoints[2].params[1] },
-        { name: "payable_network", type: "string", desc: "TON, TON_USDT, TRON, BASE, or BSC." },
+        { name: "payable_network", type: "string", desc: "TON (GRAM), TON_USDT (USDT on TON), TRON, BASE, or BSC." },
         { name: "expires_in_minutes", type: "int", desc: t.api.endpoints[2].params[2] }
       ],
       response: {

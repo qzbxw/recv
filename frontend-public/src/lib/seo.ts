@@ -37,7 +37,6 @@ export const PUBLIC_ROUTES = [
   "/products/mcp",
   "/networks",
   "/networks/ton",
-  "/networks/ton_usdt",
   "/networks/tron",
   "/networks/solana",
   "/networks/base",

@@ -55,7 +55,7 @@ const en = {
         {
           kicker: "02",
           title: "All Liquid Chains",
-          body: "Full support for TON, TRON (USDT), TON_USDT, and popular L2 solutions (Base, Base, BSC) in a single interface.",
+          body: "Full support for GRAM and USDT on TON, TRON (USDT), and popular L2 solutions (Base, Arbitrum, BSC) in a single interface.",
         },
         {
           kicker: "03",
@@ -115,7 +115,7 @@ const en = {
         },
         {
           name: "SOL",
-          title: "TON_USDT",
+          title: "USDT on TON",
           body: "Fast, confirmation-aware monitoring for businesses that need predictable payment operations.",
         },
         {
@@ -183,7 +183,7 @@ const en = {
         },
         {
           question: "Which networks and assets are currently supported?",
-          answer: "We currently support TON, TON_USDT, TRON, Base, and BSC. We are continuously adding new liquid protocols based on business-tier demands.",
+          answer: "We currently support TON (GRAM and USDT), TRON, Base, Arbitrum, and BSC. We are continuously adding new liquid protocols based on business-tier demands.",
         },
         {
           question: "Can I automate the delivery of digital goods?",
@@ -283,7 +283,7 @@ const response = await fetch("https://api.recv.money/v1/invoices", {
   body: JSON.stringify({
     title: "Order #9921",
     base_amount_usd: "149.00",
-    payable_network: "TRON", // TON, TON_USDT, TRON, BASE, or BSC
+    payable_network: "TRON", // TON (GRAM), TON_USDT (USDT on TON), TRON, BASE, or BSC
     expires_in_minutes: 60
   })
 });
@@ -1010,7 +1010,7 @@ function verify(payload, signature, secret) {
         {
           title: "5. TECHNICAL MECHANICS AND RECONCILIATION MATCHING",
           paragraphs: [
-            "5.1. Smart-Matching matching methods: For supported stablecoin payment options, recv may add a unique fractional suffix to the requested amount to associate an on-chain transfer with an invoice. For native TON payments, recv uses a unique payment comment. Supported matching methods may vary by network and asset and are displayed on the checkout page.",
+            "5.1. Smart-Matching matching methods: For supported stablecoin payment options, recv may add a unique fractional suffix to the requested amount to associate an on-chain transfer with an invoice. For native GRAM payments on TON, recv uses a unique payment comment. Supported matching methods may vary by network and asset and are displayed on the checkout page.",
             "5.2. Waiver of Liability for User Error: The Company bears no liability for any financial loss, delayed access to digital goods, or unfulfilled invoices arising from the Customer's failure to remit the exact amount (including matching suffix) or correct memo/comment, or utilizing an incorrect or unsupported blockchain network.",
             "5.3. Irrevocability of Transactions: The Merchant acknowledges that blockchain transactions are mathematically immutable. The Company cannot reverse, refund, or alter any on-chain transfer.",
             "5.4. Third-Party RPC Reliance: The Service’s blockchain monitoring capabilities are wholly dependent on the stability, uptime, and accuracy of third-party Remote Procedure Call (RPC) node providers and external oracle APIs. The Company is not liable for Service degradation, delayed webhooks, or failed mempool tracking caused by external RPC outages.",

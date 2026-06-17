@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
+import { NetworkLogo } from "@/components/NetworkLogo";
 
 // ─── Types (mirror the i18n copy shape) ──────────────────────────────────────
 
@@ -69,6 +70,9 @@ export function NetworkDetailClient({ locale, network, page }: Props) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Copy */}
             <div>
+              <div className="lend-reveal--1 mb-5">
+                <NetworkLogo network={network} className="network-logo--lg" />
+              </div>
               <span className="lend-reveal--1 lend-section-kicker">{page.kicker}</span>
               <h1 className="lend-reveal--2 !text-4xl md:!text-5xl lg:!text-6xl font-black tracking-tighter leading-[1.05] mb-6">
                 {page.hero.title}

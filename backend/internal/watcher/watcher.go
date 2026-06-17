@@ -277,8 +277,13 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 	if usdtMaster == "" {
 		return nil, errors.New("TON_USDT_MASTER_ADDRESS is required")
 	}
-	base := strings.TrimRight(w.cfg.TonCenterBaseURL, "/")
-	endpoint := fmt.Sprintf("%s/getJettonTransfers?address=%s&limit=30", base, url.QueryEscape(wallet.Address))
+	base := tonCenterV3BaseURL(w.cfg.TonCenterBaseURL)
+	values := url.Values{}
+	values.Set("owner_address", wallet.Address)
+	values.Set("jetton_master", usdtMaster)
+	values.Set("direction", "in")
+	values.Set("limit", "30")
+	endpoint := fmt.Sprintf("%s/jetton/transfers?%s", base, values.Encode())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
@@ -302,24 +307,22 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 	}
 
 	var payload struct {
-		OK     bool `json:"ok"`
-		Result []struct {
-			UTime           int64  `json:"utime"`
-			TransactionHash string `json:"transaction_hash"`
-			Source          string `json:"source"`
-			Destination     string `json:"destination"`
-			Amount          string `json:"amount"`
-			JettonMaster    string `json:"jetton_master"`
-			QueryID         int64  `json:"query_id"`
-		} `json:"result"`
+		OK              bool                      `json:"ok"`
+		Result          []tonCenterJettonTransfer `json:"result"`
+		JettonTransfers []tonCenterJettonTransfer `json:"jetton_transfers"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
 		metrics.ObserveUpstream("toncenter", "poll_ton_usdt", "failure", time.Since(startedAt))
 		return nil, fmt.Errorf("decode toncenter jetton: %w", err)
 	}
 
+	items := payload.JettonTransfers
+	if len(items) == 0 && len(payload.Result) > 0 {
+		items = payload.Result
+	}
+
 	var transfers []store.ObservedTransfer
-	for _, item := range payload.Result {
+	for _, item := range items {
 		// Filter by USDT master and destination address
 		if !strings.EqualFold(item.JettonMaster, usdtMaster) || !strings.EqualFold(item.Destination, wallet.Address) {
 			continue
@@ -339,6 +342,7 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 			Asset:              store.AssetUSDT,
 			DestinationAddress: wallet.Address,
 			Amount:             amount,
+			PaymentComment:     strings.TrimSpace(item.Comment),
 			ObservedAt:         time.Unix(item.UTime, 0).UTC(),
 			RawPayload:         raw,
 		}
@@ -350,6 +354,31 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 	transfers = w.filterTransfersAfterCheckpoint(ctx, wallet, transfers, 0)
 	metrics.ObserveUpstream("toncenter", "poll_ton_usdt", "success", time.Since(startedAt))
 	return transfers, nil
+}
+
+type tonCenterJettonTransfer struct {
+	UTime           int64  `json:"utime"`
+	TransactionHash string `json:"transaction_hash"`
+	Source          string `json:"source"`
+	Destination     string `json:"destination"`
+	Amount          string `json:"amount"`
+	JettonMaster    string `json:"jetton_master"`
+	QueryID         int64  `json:"query_id"`
+	Comment         string `json:"comment"`
+}
+
+func tonCenterV3BaseURL(baseURL string) string {
+	base := strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	if base == "" {
+		base = "https://toncenter.com/api/v2"
+	}
+	if strings.HasSuffix(base, "/api/v2") {
+		return strings.TrimSuffix(base, "/api/v2") + "/api/v3"
+	}
+	if strings.HasSuffix(base, "/api/v3") {
+		return base
+	}
+	return base + "/api/v3"
 }
 
 // checkpointOverlapWindow is re-scanned behind the checkpoint each poll.

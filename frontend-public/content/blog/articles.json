@@ -189,7 +189,7 @@
     "slug": "ton-telegram-payments",
     "locale": "en",
     "title": "TON and Telegram payments: integration patterns",
-    "excerpt": "How Telegram shops and communities can connect an order to a TON or TON USDT invoice and unlock access after verified payment.",
+    "excerpt": "How Telegram shops and communities can connect an order to a GRAM or USDT on TON invoice and unlock access after verified payment.",
     "meta_description": "Build TON and Telegram payment flows with server-created invoices, wallet deep links, signed webhooks, and verified access or order fulfillment.",
     "published_at": "2026-04-29T09:00:00Z",
     "tags": [
@@ -220,7 +220,7 @@
     "slug": "ton-telegram-payments",
     "locale": "ru",
     "title": "Платежи TON и Telegram: схемы интеграции",
-    "excerpt": "Как Telegram-магазину или сообществу связать заказ с TON либо TON USDT инвойсом и выдать доступ после проверенной оплаты.",
+    "excerpt": "Как Telegram-магазину или сообществу связать заказ с GRAM либо USDT в TON инвойсом и выдать доступ после проверенной оплаты.",
     "meta_description": "Как построить платежи TON и Telegram через серверные инвойсы, wallet deep links, подписанные вебхуки и проверенную выдачу заказа или доступа.",
     "published_at": "2026-04-29T09:00:00Z",
     "tags": [
