@@ -40,7 +40,7 @@ function getReactText(children: React.ReactNode): string {
     return children.map(getReactText).join("");
   }
   if (typeof children === "object" && children !== null && "props" in children) {
-    return getReactText((children as React.ReactElement).props.children);
+    return getReactText((children as any).props?.children);
   }
   return "";
 }
