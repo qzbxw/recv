@@ -2137,12 +2137,12 @@ func TestAdminBillingCheckoutWithDB(t *testing.T) {
 		t.Fatalf("UpsertSystemConfig billing_wallets: %v", err)
 	}
 
-	// Set up TON rate
-	if err := sharedHTTPTestStore.UpsertSystemConfig(ctx, "ton_usdt_rate", map[string]any{
+	// Set up GRAM rate
+	if err := sharedHTTPTestStore.UpsertSystemConfig(ctx, "gram_usdt_rate", map[string]any{
 		"rate":       "3.50",
 		"updated_at": time.Now().UTC().Format(time.RFC3339),
 	}, true, "test"); err != nil {
-		t.Logf("UpsertSystemConfig ton_usdt_rate: %v (may not exist)", err)
+		t.Logf("UpsertSystemConfig gram_usdt_rate: %v (may not exist)", err)
 	}
 
 	adminService := service.NewAdminService("admin", "pass", "billing-secret", time.Hour)

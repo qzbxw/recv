@@ -35,7 +35,7 @@ type Config struct {
 	TonCenterBaseURL       string
 	TonCenterAPIKey        string
 	TonUSDTMasterAddress   string
-	TonUSDOverride         string
+	GramUSDOverride         string
 	SolanaRPCURL           string
 	EthereumRPCURL         string
 	BaseRPCURL             string
@@ -77,7 +77,7 @@ func Load() (Config, error) {
 		TonCenterBaseURL:       envOrDefault("TONCENTER_BASE_URL", "https://toncenter.com/api/v2"),
 		TonCenterAPIKey:        os.Getenv("TONCENTER_API_KEY"),
 		TonUSDTMasterAddress:   envOrDefault("TON_USDT_MASTER_ADDRESS", "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"),
-		TonUSDOverride:         os.Getenv("TON_USD_RATE"),
+		GramUSDOverride:         envOrDefault("GRAM_USD_RATE", os.Getenv("TON_USD_RATE")),
 		SolanaRPCURL:           envOrDefault("SOLANA_RPC_URL", "https://api.mainnet-beta.solana.com"),
 		EthereumRPCURL:         envOrDefault("ETHEREUM_RPC_URL", "https://eth.llamarpc.com"),
 		BaseRPCURL:             envOrDefault("BASE_RPC_URL", "https://base.llamarpc.com"),
@@ -111,7 +111,7 @@ func Load() (Config, error) {
 		}
 		// Static USD rate overrides silently freeze checkout pricing for
 		// volatile assets; they exist for dev/test only.
-		for _, name := range []string{"TON_USD_RATE", "SOL_USD_RATE", "BNB_USD_RATE"} {
+		for _, name := range []string{"GRAM_USD_RATE", "TON_USD_RATE", "SOL_USD_RATE", "BNB_USD_RATE"} {
 			if strings.TrimSpace(os.Getenv(name)) != "" {
 				return Config{}, fmt.Errorf("%s is a dev/test-only static rate override and must not be set in production", name)
 			}

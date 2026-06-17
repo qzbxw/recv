@@ -225,7 +225,7 @@ func TestPublicInvoiceResponse(t *testing.T) {
 		BaseAmountUSD:      decimal.RequireFromString("39"),
 		PayableAmount:      decimal.RequireFromString("11.250000"),
 		PayableNetwork:     store.NetworkTON,
-		PayableAsset:       store.AssetTON,
+		PayableAsset:       store.AssetGRAM,
 		DestinationAddress: "UQBuzCySn6dYEHzKoGzUPmclj9Dg_m1dA-mzeDEvuF3F9x6P",
 		PaymentComment:     &comment,
 		Status:             store.InvoiceStatusAwaitingPayment,
@@ -319,7 +319,7 @@ func TestInvoicePresentationHelpers(t *testing.T) {
 		PlanCode:           store.PlanCodeTrial,
 		SubscriptionDays:   30,
 		PayableNetwork:     store.NetworkTON,
-		PayableAsset:       store.AssetTON,
+		PayableAsset:       store.AssetGRAM,
 		DestinationAddress: "UQWallet",
 		PayableAmount:      decimal.RequireFromString("1.25"),
 		PaymentComment:     &comment,
@@ -2893,7 +2893,7 @@ func TestHandlePublicPaymentOptions(t *testing.T) {
 	if assets := byNetwork[store.NetworkSOLANA]; len(assets) != 3 {
 		t.Fatalf("expected SOLANA to list 3 assets, got %v", assets)
 	}
-	if assets := byNetwork[store.NetworkTON]; len(assets) != 1 || assets[0] != store.AssetTON {
-		t.Fatalf("expected TON to list only native TON, got %v", assets)
+	if assets := byNetwork[store.NetworkTON]; len(assets) != 1 || assets[0] != store.AssetGRAM {
+		t.Fatalf("expected TON to list only native GRAM, got %v", assets)
 	}
 }

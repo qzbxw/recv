@@ -2,7 +2,7 @@ const en = {
     hero: {
       title: "Accept Crypto Payments Direct to Your Wallets with 0% Fees.",
       body:
-        "Non-custodial crypto payment gateway for USDT, TON, and TRON. Integrate our high-performance processing API or smart checkout into Telegram bots, SaaS platforms, and global e-commerce with zero turnover fees.",
+        "Non-custodial crypto payment gateway for USDT, Gram, and TRON. Integrate our high-performance processing API or smart checkout into Telegram bots, SaaS platforms, and global e-commerce with zero turnover fees.",
       subcopy:
         "Engineered for Telegram Shops, SaaS Billing, and Digital Commerce.",
       primary: "Launch Console",
@@ -19,7 +19,7 @@ const en = {
       primary: "Demo Checkout",
       secondary: "Console",
       helper: "Flat subscription. Unlimited volume.",
-      chips: ["TON", "TRON", "SOL", "BASE"],
+      chips: ["GRAM", "TRON", "SOL", "BASE"],
     },
     bento: {
       kicker: "INFRASTRUCTURE",
@@ -99,7 +99,7 @@ const en = {
         { slug: "bsc", label: "BSC" },
       ],
       rails: [
-        { name: "TON", body: "Native TON payments for Telegram-based commerce and the growing TON ecosystem." },
+        { name: "GRAM", body: "Native Gram payments for Telegram-based commerce and the growing TON ecosystem." },
         { name: "USDT on TON", body: "USDT on TON for stablecoin payments in the TON ecosystem." },
         { name: "TRON", body: "The global standard for USDT settlement with high throughput and low costs." },
         { name: "BASE", body: "Coinbase's L2 for reliable EVM-compatible stablecoin payments." },
@@ -165,7 +165,7 @@ const en = {
         },
         {
           question: "Which networks and assets are currently supported?",
-          answer: "We currently support TON (native and USDT), TRON, Solana, Base, Arbitrum, and BSC. We are continuously adding new liquid protocols based on business-tier demands.",
+          answer: "We currently support TON (Gram and USDT), TRON, Solana, Base, Arbitrum, and BSC. We are continuously adding new liquid protocols based on business-tier demands.",
         },
         {
           question: "Can I automate the delivery of digital goods?",
@@ -405,7 +405,7 @@ const en = {
     invoicingProduct: {
       metadata: {
         title: "Professional Crypto Invoicing | B2B Billing Solution with 0% Fees",
-        description: "Issue, track, and manage professional crypto invoices. Support for USDT and native TON. Non-custodial, automated tracking, and CSV reports for accounting.",
+        description: "Issue, track, and manage professional crypto invoices. Support for USDT and native Gram. Non-custodial, automated tracking, and CSV reports for accounting.",
         keywords: "crypto invoicing for business, b2b crypto billing, freelance crypto invoices, professional usdt billing, crypto payment tracking, 0 fee crypto invoicing"
       },
       kicker: "BUSINESS GRADE",
@@ -455,7 +455,7 @@ const en = {
         },
         {
           title: "Global Multi-Currency Support",
-          body: "Bill in USD or any supported stablecoin. recv handles the real-time conversion rates, ensuring that the amount of USDT, TON, or SOL requested matches your desired fiat value at the moment the invoice is generated."
+          body: "Bill in USD or any supported stablecoin. recv handles the real-time conversion rates, ensuring that the amount of USDT, GRAM, or SOL requested matches your desired fiat value at the moment the invoice is generated."
         }
       ],
       stats: [
@@ -601,7 +601,7 @@ const en = {
           title: "TON-native assets for buyer-facing checkout.",
           body: "Use TON for Telegram-native payment flows and supported Jettons when your workspace enables them.",
           items: [
-            { name: "TON", body: "Native TON transfers for simple Telegram and wallet-native payments." },
+            { name: "GRAM", body: "Native Gram transfers for simple Telegram and wallet-native payments." },
             { name: "Jettons", body: "Supported TON Jettons can be exposed as checkout options for compatible wallets." },
             { name: "TON USDT", body: "Use stablecoin checkout on TON where the asset is enabled for your merchant setup." },
           ],
@@ -615,7 +615,7 @@ const en = {
           kicker: "CHECKOUT AND API MECHANICS",
           title: "Payment comments make TON matching reliable.",
           steps: [
-            { title: "Create invoice", body: "Checkout or API creates a TON payment request with the exact amount, asset, address, and required comment." },
+            { title: "Create invoice", body: "Checkout or API creates a Gram payment request with the exact amount, asset, address, and required comment." },
             { title: "Show payment", body: "The buyer sees a hosted page with QR, copyable address, amount, and clear comment instructions." },
             { title: "Detect transfer", body: "recv watchers match the incoming transfer by amount and required payment comment." },
             { title: "Send event", body: "Your dashboard or webhook receives the paid state for fulfillment, access, or order updates." },
@@ -646,13 +646,13 @@ const en = {
           ],
         },
         cta: {
-          title: "Launch TON checkout with direct settlement.",
-          body: "Use recv to accept TON payments, detect transfers automatically, and keep customer payments flowing directly to your wallet.",
-          primary: { label: "Start accepting TON", href: "/app/auth" },
+          title: "Launch Gram checkout with direct settlement.",
+          body: "Use recv to accept Gram payments, detect transfers automatically, and keep customer payments flowing directly to your wallet.",
+          primary: { label: "Start accepting Gram", href: "/app/auth" },
           secondary: { label: "Explore Checkout", href: "/products/checkout" },
         },
         seoLabel: "TON network payment details",
-        seo: "recv supports TON payments for Telegram commerce with hosted Checkout, API invoice creation, required payment comments, blockchain watchers, direct-to-wallet settlement, and webhooks for order or access automation.",
+        seo: "recv supports Gram payments for Telegram commerce with hosted Checkout, API invoice creation, required payment comments, blockchain watchers, direct-to-wallet settlement, and webhooks for order or access automation.",
       },
       tron: {
         name: "TRON",

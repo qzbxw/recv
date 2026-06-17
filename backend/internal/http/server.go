@@ -1097,7 +1097,7 @@ func normalizedInvoicePlanCode(invoice store.Invoice) store.PlanCode {
 }
 
 func paymentURI(invoice store.Invoice) string {
-	if invoice.PayableAsset == store.AssetTON {
+	if invoice.PayableAsset == store.AssetGRAM {
 		comment := ""
 		if invoice.PaymentComment != nil {
 			comment = *invoice.PaymentComment
@@ -1111,7 +1111,7 @@ func paymentOptionURI(option store.PaymentOption) string {
 	if option.PaymentURI != "" {
 		return option.PaymentURI
 	}
-	if option.Asset == store.AssetTON {
+	if option.Asset == store.AssetGRAM {
 		comment := ""
 		if option.PaymentComment != nil {
 			comment = *option.PaymentComment

@@ -175,6 +175,61 @@ export type SitemapEntry = {
   alternates?: Partial<Record<Locale | "x-default", string>>;
 };
 
+function frontendRoot() {
+  const cwd = process.cwd();
+  if (fs.existsSync(path.join(cwd, "src", "app"))) return cwd;
+
+  const nested = path.join(cwd, "frontend-public");
+  if (fs.existsSync(path.join(nested, "src", "app"))) return nested;
+
+  return cwd;
+}
+
+function newestMtimeIso(paths: string[]) {
+  const configured = process.env.SITE_LASTMOD || process.env.NEXT_PUBLIC_SITE_LASTMOD;
+  if (configured) {
+    const date = new Date(configured);
+    if (!Number.isNaN(date.getTime())) return date.toISOString();
+  }
+
+  let newest = 0;
+  for (const candidate of paths) {
+    try {
+      const stat = fs.statSync(candidate);
+      if (stat.isFile()) newest = Math.max(newest, stat.mtimeMs);
+    } catch {
+      // Optional source files are not always present in Next standalone output.
+    }
+  }
+
+  return newest ? new Date(newest).toISOString() : undefined;
+}
+
+function publicRouteSourcePaths(locale: Locale, route: string) {
+  const root = frontendRoot();
+  const routeParts = route.split("/").filter(Boolean);
+  const pagePath = (...parts: string[]) =>
+    path.join(root, "src", "app", "[locale]", ...parts, "page.tsx");
+  const candidates = [
+    path.join(root, "src", "i18n", `${locale}.ts`),
+    path.join(root, "src", "i18n", "index.ts"),
+    path.join(root, "package.json"),
+  ];
+
+  if (route === "") return [pagePath(), ...candidates];
+  if (routeParts[0] === "networks" && routeParts.length === 2) {
+    return [pagePath("networks", "[network]"), ...candidates];
+  }
+  if (routeParts[0] === "use-cases" && routeParts.length === 2) {
+    return [pagePath("use-cases", "[usecase]"), ...candidates];
+  }
+  if (routeParts[0] === "compare" && routeParts.length === 2) {
+    return [pagePath("compare", "[competitor]"), ...candidates];
+  }
+
+  return [pagePath(...routeParts), ...candidates];
+}
+
 export function publicPageEntries(locale?: Locale): SitemapEntry[] {
   const baseUrl = publicSiteUrl();
   const locales = locale ? [locale] : LOCALES;
@@ -182,6 +237,7 @@ export function publicPageEntries(locale?: Locale): SitemapEntry[] {
   return locales.flatMap((entryLocale) =>
     PUBLIC_ROUTES.map((route) => ({
       url: `${baseUrl}/${entryLocale}${route}`,
+      lastModified: newestMtimeIso(publicRouteSourcePaths(entryLocale, route)),
       alternates: {
         en: `${baseUrl}/en${route}`,
         ru: `${baseUrl}/ru${route}`,
@@ -194,14 +250,16 @@ export function publicPageEntries(locale?: Locale): SitemapEntry[] {
 export function documentationEntries(locale?: Locale): SitemapEntry[] {
   const baseUrl = publicSiteUrl();
   const locales = locale ? [locale] : LOCALES;
+  const root = frontendRoot();
 
   return locales.flatMap((entryLocale) =>
     getAllDocSlugs(entryLocale).map((slug) => {
       const route = `/docs/${slug.join("/")}`;
+      const docPath = path.join(root, "content", "docs", entryLocale, ...slug) + ".mdx";
       const translatedLocales = LOCALES.filter((candidate) =>
         fs.existsSync(
           path.join(
-            process.cwd(),
+            root,
             "content",
             "docs",
             candidate,
@@ -222,6 +280,12 @@ export function documentationEntries(locale?: Locale): SitemapEntry[] {
 
       return {
         url: `${baseUrl}/${entryLocale}${route}`,
+        lastModified: newestMtimeIso([
+          docPath,
+          path.join(root, "src", "app", "[locale]", "docs", "[...slug]", "page.tsx"),
+          path.join(root, "src", "i18n", `${entryLocale}.ts`),
+          path.join(root, "package.json"),
+        ]),
         alternates,
       };
     }),

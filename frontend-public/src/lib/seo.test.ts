@@ -45,7 +45,8 @@ describe("SEO generation", () => {
     expect(xml).toContain('hreflang="x-default"');
     expect(xml).not.toContain("<priority>");
     expect(xml).not.toContain("<changefreq>");
-    expect(xml).not.toContain("<lastmod>");
+    expect(englishHome?.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(xml).toContain("<lastmod>");
   });
 
   it("only links documentation translations that exist", () => {
@@ -58,7 +59,7 @@ describe("SEO generation", () => {
     expect(introduction?.alternates?.ru).toBe(
       "https://example.com/ru/docs/introduction",
     );
-    expect(introduction?.lastModified).toBeUndefined();
+    expect(introduction?.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
   it("distinguishes self canonicals from canonicalized duplicates", () => {

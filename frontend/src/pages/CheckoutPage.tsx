@@ -50,6 +50,7 @@ function createDemoInvoice(): Invoice {
     base_amount_usd: "149.00",
     payable_amount: "149 USDT",
     payable_network: "TON",
+    payable_asset: "USDT",
     destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
     payment_comment: "RECV-DEMO-149",
     status: "awaiting_payment",

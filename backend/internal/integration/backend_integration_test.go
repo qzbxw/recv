@@ -399,7 +399,7 @@ func newIntegrationEnv(t *testing.T, ctx context.Context) integrationEnv {
 		InternalToken:        "internal-secret",
 		AllowInsecureDevAuth: true,
 		TelegramInitMaxAge:   time.Hour,
-		TonUSDOverride:       "2.5",
+		GramUSDOverride:       "2.5",
 		AdminUsername:        "admin",
 		AdminPassword:        "pass",
 		AdminJWTSecret:       "admin-secret",
@@ -412,7 +412,7 @@ func newIntegrationEnv(t *testing.T, ctx context.Context) integrationEnv {
 
 	authService := service.NewAuthService(st, cfg.JWTSecret, "", cfg.AllowInsecureDevAuth, cfg.TelegramInitMaxAge)
 	adminService := service.NewAdminService(cfg.AdminUsername, cfg.AdminPassword, cfg.AdminJWTSecret, cfg.AdminAccessTokenTTL)
-	invoiceService := service.NewInvoiceService(st, cfg.TonUSDOverride)
+	invoiceService := service.NewInvoiceService(st, cfg.GramUSDOverride)
 	paymentService := service.NewPaymentService(st)
 
 	router := httpapi.NewServer(cfg, st, authService, adminService, invoiceService, paymentService)

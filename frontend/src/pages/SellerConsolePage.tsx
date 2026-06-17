@@ -111,7 +111,7 @@ const WALLET_NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
 ];
 
 const PAYABLE_PAYMENT_OPTIONS: Array<{ key: string; network: Network; asset: string; label: string }> = [
-  { key: "TON:TON", network: "TON", asset: "TON", label: "TON" },
+  { key: "TON:GRAM", network: "TON", asset: "GRAM", label: "GRAM" },
   { key: "TON_USDT:USDT", network: "TON_USDT", asset: "USDT", label: "TON USDT" },
   { key: "TRON:USDT", network: "TRON", asset: "USDT", label: "TRON USDT" },
   { key: "SOLANA:SOL", network: "SOLANA", asset: "SOL", label: "SOL" },
@@ -1097,7 +1097,7 @@ export function SellerConsolePage() {
                               <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'} dev-api-badge--micro`} title={getInvoiceStatusTooltip(inv.status, language) || undefined}>
                                 {formatInvoiceStatus(inv.status, language, true)}
                               </span>
-                              <span className="dev-resource-card__amount">{inv.payable_amount} {inv.payable_network}</span>
+                              <span className="dev-resource-card__amount">{inv.payable_amount} {inv.payable_asset || inv.payable_network}</span>
                             </div>
                           </div>
                           <div className="dev-resource-card__actions" onClick={e => e.stopPropagation()}>
@@ -1262,7 +1262,7 @@ export function SellerConsolePage() {
                           <code className="dev-card__id">{inv.public_id}</code>
                         </div>
                         <div className="dev-card__amount-col">
-                          <div className="dev-card__amount">{inv.payable_amount} <small className="dev-card__currency">{inv.payable_network}</small></div>
+                          <div className="dev-card__amount">{inv.payable_amount} <small className="dev-card__currency">{inv.payable_asset || inv.payable_network}</small></div>
                           <div className="dev-card__base">${Number(inv.base_amount_usd).toFixed(2)} {t.invoices.baseUsd}</div>
                           <div className="dev-card__date">{new Date(inv.created_at).toLocaleString()}</div>
                         </div>
@@ -1277,12 +1277,12 @@ export function SellerConsolePage() {
                             </div>
                             <div className="dev-settings-row">
                               <span className="dev-settings-row__label">{t.invoices.payable}</span>
-                              <span className="dev-settings-row__value">{inv.payable_amount} {inv.payable_network}</span>
+                              <span className="dev-settings-row__value">{inv.payable_amount} {inv.payable_asset || inv.payable_network}</span>
                             </div>
                             {Number(inv.received_amount) > 0 && (
                               <div className="dev-settings-row">
                                 <span className="dev-settings-row__label">{t.invoices.received}</span>
-                                <span className="dev-settings-row__value">{inv.received_amount} {inv.payable_network}</span>
+                                <span className="dev-settings-row__value">{inv.received_amount} {inv.payable_asset || inv.payable_network}</span>
                               </div>
                             )}
                             <div className="dev-settings-row">
@@ -1440,7 +1440,7 @@ export function SellerConsolePage() {
                     {createdInvoice ? (
                       <div className="dev-create-preview__body">
                         <QrImage value={createdInvoice.payment_uri || buildCheckoutUrl(createdInvoice.public_id)} alt={t.create.qrAlt} />
-                        <div className="dev-create-preview__amount">{createdInvoice.payable_amount} {createdInvoice.payable_network}</div>
+                        <div className="dev-create-preview__amount">{createdInvoice.payable_amount} {createdInvoice.payable_asset || createdInvoice.payable_network}</div>
                         <div className="dev-card__note-text">{t.create.scanToPay}</div>
                         <code className="dev-input dev-input--readonly-box">{buildCheckoutUrl(createdInvoice.public_id)}</code>
                         <div className="dev-form__actions-row">
@@ -1470,7 +1470,7 @@ export function SellerConsolePage() {
                             <div className="dev-resource-card__title">{inv.title}</div>
                             <div className="dev-resource-card__meta dev-resource-card__meta--row">
                               <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{formatNetworkLabel(inv.payable_network)}</span>
-                              <span className="dev-resource-card__amount">{inv.payable_amount} {inv.payable_network}</span>
+                              <span className="dev-resource-card__amount">{inv.payable_amount} {inv.payable_asset || inv.payable_network}</span>
                             </div>
                           </div>
                           <div className="dev-resource-card__actions">

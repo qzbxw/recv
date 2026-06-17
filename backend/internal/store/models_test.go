@@ -36,7 +36,7 @@ func TestPaymentAssetHelpers(t *testing.T) {
 	}
 
 	defaults := map[Network]PaymentAsset{
-		NetworkTON:      AssetTON,
+		NetworkTON:      AssetGRAM,
 		NetworkSOLANA:   AssetSOL,
 		NetworkBSC:      AssetUSDT,
 		NetworkTRON:     AssetUSDT,
@@ -52,7 +52,7 @@ func TestPaymentAssetHelpers(t *testing.T) {
 		network Network
 		asset   PaymentAsset
 	}{
-		{NetworkTON, AssetTON},
+		{NetworkTON, AssetGRAM},
 		{NetworkTON_USDT, AssetUSDT},
 		{NetworkTRON, AssetUSDT},
 		{NetworkSOLANA, AssetSOL},
@@ -77,7 +77,7 @@ func TestPaymentAssetHelpers(t *testing.T) {
 	}{
 		{NetworkTON, AssetUSDT},
 		{NetworkTRON, AssetUSDC},
-		{NetworkBASE, AssetTON},
+		{NetworkBASE, AssetGRAM},
 		{NetworkBSC, AssetUSDC},
 		{Network("DOGE"), AssetUSDT},
 	}
@@ -87,7 +87,7 @@ func TestPaymentAssetHelpers(t *testing.T) {
 		}
 	}
 
-	for _, asset := range []PaymentAsset{AssetTON, AssetSOL, AssetBNB} {
+	for _, asset := range []PaymentAsset{AssetGRAM, AssetSOL, AssetBNB} {
 		if !IsNativeAsset(asset) {
 			t.Fatalf("expected %s to be native", asset)
 		}

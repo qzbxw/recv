@@ -68,7 +68,7 @@ func (s *PaymentService) matchTransfer(ctx context.Context, transfer store.Obser
 	}
 	switch transfer.Network {
 	case store.NetworkTON:
-		if transfer.Asset != store.AssetTON || transfer.PaymentComment == "" {
+		if transfer.Asset != store.AssetGRAM || transfer.PaymentComment == "" {
 			return nil, "unmatched", store.InvoiceStatusDraft, nil
 		}
 		invoice, err := s.store.FindInvoiceByPaymentComment(ctx, transfer.DestinationAddress, transfer.Network, transfer.Asset, transfer.PaymentComment)

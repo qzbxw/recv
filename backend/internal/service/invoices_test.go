@@ -14,28 +14,28 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func TestInvoiceServiceTONRateUSDUsesOverride(t *testing.T) {
+func TestInvoiceServiceGRAMRateUSDUsesOverride(t *testing.T) {
 	service := NewInvoiceService(nil, "4.25")
 
-	rate, err := service.tonRateUSD(context.Background())
+	rate, err := service.gramRateUSD(context.Background())
 	if err != nil {
-		t.Fatalf("tonRateUSD returned error: %v", err)
+		t.Fatalf("gramRateUSD returned error: %v", err)
 	}
 	if !rate.Equal(decimal.RequireFromString("4.25")) {
 		t.Fatalf("expected rate 4.25, got %s", rate)
 	}
 }
 
-func TestInvoiceServiceTONRateUSDRejectsInvalidOverride(t *testing.T) {
+func TestInvoiceServiceGRAMRateUSDRejectsInvalidOverride(t *testing.T) {
 	service := NewInvoiceService(nil, "abc")
 
-	_, err := service.tonRateUSD(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "TON_USD_RATE") {
+	_, err := service.gramRateUSD(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "GRAM_USD_RATE") {
 		t.Fatalf("expected invalid override error, got %v", err)
 	}
 }
 
-func TestInvoiceServiceTONRateUSDFetchesFromUpstream(t *testing.T) {
+func TestInvoiceServiceGRAMRateUSDFetchesFromUpstream(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/v3/simple/price" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
@@ -48,9 +48,9 @@ func TestInvoiceServiceTONRateUSDFetchesFromUpstream(t *testing.T) {
 	service := NewInvoiceService(nil, "")
 	service.httpClient = rewriteHTTPClient(t, server)
 
-	rate, err := service.tonRateUSD(context.Background())
+	rate, err := service.gramRateUSD(context.Background())
 	if err != nil {
-		t.Fatalf("tonRateUSD returned error: %v", err)
+		t.Fatalf("gramRateUSD returned error: %v", err)
 	}
 	if !rate.Equal(decimal.RequireFromString("3.75")) {
 		t.Fatalf("expected rate 3.75, got %s", rate)
@@ -105,9 +105,9 @@ func TestInvoiceServiceNativeRateUSDUsesFreshCacheWithoutRefetch(t *testing.T) {
 	service.httpClient = rewriteHTTPClient(t, server)
 
 	for i := 0; i < 3; i++ {
-		rate, err := service.tonRateUSD(context.Background())
+		rate, err := service.gramRateUSD(context.Background())
 		if err != nil {
-			t.Fatalf("tonRateUSD call %d returned error: %v", i, err)
+			t.Fatalf("gramRateUSD call %d returned error: %v", i, err)
 		}
 		if !rate.Equal(decimal.RequireFromString("3.75")) {
 			t.Fatalf("expected rate 3.75 on call %d, got %s", i, rate)
@@ -134,18 +134,18 @@ func TestInvoiceServiceNativeRateUSDServesBoundedStaleCacheOnUpstreamFailure(t *
 	service := NewInvoiceService(nil, "")
 	service.httpClient = rewriteHTTPClient(t, server)
 
-	if _, err := service.tonRateUSD(context.Background()); err != nil {
-		t.Fatalf("initial tonRateUSD returned error: %v", err)
+	if _, err := service.gramRateUSD(context.Background()); err != nil {
+		t.Fatalf("initial gramRateUSD returned error: %v", err)
 	}
 
 	// Age the cache past the fresh window but inside the stale bound.
 	service.rateMu.Lock()
-	entry := service.rateCache[store.AssetTON]
+	entry := service.rateCache[store.AssetGRAM]
 	entry.fetchedAt = time.Now().Add(-rateCacheFreshFor - time.Minute)
-	service.rateCache[store.AssetTON] = entry
+	service.rateCache[store.AssetGRAM] = entry
 	service.rateMu.Unlock()
 
-	rate, err := service.tonRateUSD(context.Background())
+	rate, err := service.gramRateUSD(context.Background())
 	if err != nil {
 		t.Fatalf("expected stale-cache fallback, got error: %v", err)
 	}
@@ -158,17 +158,17 @@ func TestInvoiceServiceNativeRateUSDServesBoundedStaleCacheOnUpstreamFailure(t *
 
 	// Age the cache past the stale bound: the upstream failure must surface.
 	service.rateMu.Lock()
-	entry = service.rateCache[store.AssetTON]
+	entry = service.rateCache[store.AssetGRAM]
 	entry.fetchedAt = time.Now().Add(-rateCacheMaxStale - time.Minute)
-	service.rateCache[store.AssetTON] = entry
+	service.rateCache[store.AssetGRAM] = entry
 	service.rateMu.Unlock()
 
-	if _, err := service.tonRateUSD(context.Background()); err == nil || !strings.Contains(err.Error(), "rate limit") {
+	if _, err := service.gramRateUSD(context.Background()); err == nil || !strings.Contains(err.Error(), "rate limit") {
 		t.Fatalf("expected upstream error past the stale bound, got %v", err)
 	}
 }
 
-func TestInvoiceServiceTONRateUSDHandlesUpstreamError(t *testing.T) {
+func TestInvoiceServiceGRAMRateUSDHandlesUpstreamError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "rate limit", http.StatusTooManyRequests)
 	}))
@@ -177,17 +177,17 @@ func TestInvoiceServiceTONRateUSDHandlesUpstreamError(t *testing.T) {
 	service := NewInvoiceService(nil, "")
 	service.httpClient = rewriteHTTPClient(t, server)
 
-	_, err := service.tonRateUSD(context.Background())
+	_, err := service.gramRateUSD(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "rate limit") {
 		t.Fatalf("expected upstream error, got %v", err)
 	}
 }
 
-func TestInvoiceServiceCalculateTONAmountRejectsNonPositiveRate(t *testing.T) {
+func TestInvoiceServiceCalculateGRAMAmountRejectsNonPositiveRate(t *testing.T) {
 	service := NewInvoiceService(nil, "0")
 
-	_, err := service.calculateTONAmount(context.Background(), decimal.RequireFromString("10"))
-	if err == nil || !strings.Contains(err.Error(), "invalid TON/USD rate") {
+	_, err := service.calculateGRAMAmount(context.Background(), decimal.RequireFromString("10"))
+	if err == nil || !strings.Contains(err.Error(), "invalid GRAM/USD rate") {
 		t.Fatalf("expected invalid rate error, got %v", err)
 	}
 }
@@ -200,7 +200,7 @@ func TestRateConfig(t *testing.T) {
 		payloadKey  string
 		metricName  string
 	}{
-		{store.AssetTON, "TON_USD_RATE", "the-open-network", "the-open-network", "ton_rate"},
+		{store.AssetGRAM, "GRAM_USD_RATE", "the-open-network", "the-open-network", "ton_rate"},
 		{store.AssetSOL, "SOL_USD_RATE", "solana", "solana", "sol_rate"},
 		{store.AssetBNB, "BNB_USD_RATE", "binancecoin", "binancecoin", "bnb_rate"},
 	}

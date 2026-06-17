@@ -35,7 +35,7 @@ const (
 type InvoiceService struct {
 	store      *store.Store
 	httpClient *http.Client
-	tonRateEnv string
+	gramRateEnv string
 	rateMu     sync.Mutex
 	rateCache  map[store.PaymentAsset]cachedRate
 }
@@ -61,13 +61,13 @@ type PaymentOptionInput struct {
 	Asset   store.PaymentAsset
 }
 
-func NewInvoiceService(st *store.Store, tonRateEnv string) *InvoiceService {
+func NewInvoiceService(st *store.Store, gramRateEnv string) *InvoiceService {
 	return &InvoiceService{
 		store: st,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		tonRateEnv: tonRateEnv,
+		gramRateEnv: gramRateEnv,
 		rateCache:  map[store.PaymentAsset]cachedRate{},
 	}
 }
@@ -319,12 +319,12 @@ func (s *InvoiceService) buildPaymentOption(ctx context.Context, publicID string
 		err            error
 	)
 	switch request.Asset {
-	case store.AssetTON, store.AssetSOL, store.AssetBNB:
+	case store.AssetGRAM, store.AssetSOL, store.AssetBNB:
 		payableAmount, err = s.calculateNativeAmount(ctx, request.Asset, baseAmountUSD)
 		if err != nil {
 			return store.CreatePaymentOptionParams{}, err
 		}
-		if request.Asset == store.AssetTON {
+		if request.Asset == store.AssetGRAM {
 			comment := "RECV-" + publicID
 			paymentComment = &comment
 		}
@@ -396,8 +396,8 @@ func (s *InvoiceService) generateUniqueSuffixForAsset(ctx context.Context, addre
 	return decimal.Zero, errors.New("failed to generate unique matching suffix")
 }
 
-func (s *InvoiceService) calculateTONAmount(ctx context.Context, baseAmountUSD decimal.Decimal) (decimal.Decimal, error) {
-	return s.calculateNativeAmount(ctx, store.AssetTON, baseAmountUSD)
+func (s *InvoiceService) calculateGRAMAmount(ctx context.Context, baseAmountUSD decimal.Decimal) (decimal.Decimal, error) {
+	return s.calculateNativeAmount(ctx, store.AssetGRAM, baseAmountUSD)
 }
 
 func (s *InvoiceService) calculateNativeAmount(ctx context.Context, asset store.PaymentAsset, baseAmountUSD decimal.Decimal) (decimal.Decimal, error) {
@@ -411,8 +411,8 @@ func (s *InvoiceService) calculateNativeAmount(ctx context.Context, asset store.
 	return baseAmountUSD.Div(rate).Round(6), nil
 }
 
-func (s *InvoiceService) tonRateUSD(ctx context.Context) (decimal.Decimal, error) {
-	return s.nativeRateUSD(ctx, store.AssetTON)
+func (s *InvoiceService) gramRateUSD(ctx context.Context) (decimal.Decimal, error) {
+	return s.nativeRateUSD(ctx, store.AssetGRAM)
 }
 
 func (s *InvoiceService) nativeRateUSD(ctx context.Context, asset store.PaymentAsset) (decimal.Decimal, error) {
@@ -421,8 +421,8 @@ func (s *InvoiceService) nativeRateUSD(ctx context.Context, asset store.PaymentA
 		return decimal.Zero, err
 	}
 	envValue := os.Getenv(envName)
-	if asset == store.AssetTON {
-		envValue = s.tonRateEnv
+	if asset == store.AssetGRAM {
+		envValue = s.gramRateEnv
 	}
 	if strings.TrimSpace(envValue) != "" {
 		value, err := decimal.NewFromString(strings.TrimSpace(envValue))
@@ -487,7 +487,7 @@ func (s *InvoiceService) fetchUpstreamRateUSD(ctx context.Context, asset store.P
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 		metrics.ObserveUpstream("coingecko", metricName, "failure", time.Since(startedAt))
-		return decimal.Zero, fmt.Errorf("fetch ton rate failed: %s", strings.TrimSpace(string(body)))
+		return decimal.Zero, fmt.Errorf("fetch gram rate failed: %s", strings.TrimSpace(string(body)))
 	}
 
 	var payload map[string]struct {
@@ -568,8 +568,8 @@ func normalizeTTL(value int, options []PaymentOptionInput, stableDefault int) (i
 
 func rateConfig(asset store.PaymentAsset) (envName string, coinGeckoID string, payloadKey string, metricName string, err error) {
 	switch asset {
-	case store.AssetTON:
-		return "TON_USD_RATE", "the-open-network", "the-open-network", "ton_rate", nil
+	case store.AssetGRAM:
+		return "GRAM_USD_RATE", "the-open-network", "the-open-network", "ton_rate", nil
 	case store.AssetSOL:
 		return "SOL_USD_RATE", "solana", "solana", "sol_rate", nil
 	case store.AssetBNB:

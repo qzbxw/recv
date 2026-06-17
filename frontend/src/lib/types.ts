@@ -1,5 +1,5 @@
 export type Network = "TON" | "TON_USDT" | "TRON" | "EVM" | "SOLANA" | "BASE" | "ARBITRUM" | "BSC";
-export type PaymentAsset = "TON" | "USDT" | "USDC" | "SOL" | "BNB";
+export type PaymentAsset = "GRAM" | "USDT" | "USDC" | "SOL" | "BNB";
 export type InvoiceStatus = "draft" | "awaiting_payment" | "paid" | "expired" | "underpaid" | "overpaid" | "manual_review";
 export type APIKeyMode = "live" | "test";
 export type WebhookDeliveryStatus = "pending" | "delivered" | "failed" | "retrying" | "exhausted" | string;
@@ -254,6 +254,7 @@ export type AdminInvoice = {
   base_amount_usd: string;
   payable_amount: string;
   payable_network: Network;
+  payable_asset?: PaymentAsset;
   destination_address: string;
   payment_comment: string;
   status: string;

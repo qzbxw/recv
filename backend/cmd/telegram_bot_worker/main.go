@@ -60,7 +60,7 @@ func runTelegramBotWorker(ctx context.Context, deps botWorkerDeps) error {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	metrics.Init("bot", cfg.AppEnv)
-	invoiceService := service.NewInvoiceService(st, cfg.TonUSDOverride)
+	invoiceService := service.NewInvoiceService(st, cfg.GramUSDOverride)
 	deps.startMetrics(ctx, ":"+cfg.MetricsPort, logger)
 	worker := telegram.NewBotWorker(st, invoiceService, cfg.TelegramBotToken, cfg.PublicAppURL, logger)
 	if err := deps.runWorker(worker, ctx); err != nil && !errors.Is(err, context.Canceled) {

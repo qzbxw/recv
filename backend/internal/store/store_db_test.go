@@ -198,7 +198,7 @@ func TestCreateInvoiceWithMultiplePaymentOptions(t *testing.T) {
 			},
 			{
 				Network:            NetworkTON,
-				Asset:              AssetTON,
+				Asset:              AssetGRAM,
 				PayableAmount:      decimal.RequireFromString("3.000000"),
 				DestinationAddress: "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn",
 				PaymentComment:     &comment,
@@ -2923,9 +2923,9 @@ func TestStorePaymentMatchingAndCompletionFlows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateInvoice TON: %v", err)
 	}
-	foundTON, err := st.FindInvoiceByTONComment(ctx, tonWallet.Address, comment)
+	foundTON, err := st.FindInvoiceByGramComment(ctx, tonWallet.Address, comment)
 	if err != nil {
-		t.Fatalf("FindInvoiceByTONComment: %v", err)
+		t.Fatalf("FindInvoiceByGramComment: %v", err)
 	}
 	if foundTON.ID != tonInvoice.ID {
 		t.Fatalf("unexpected TON match invoice: %+v", foundTON)
@@ -3099,8 +3099,8 @@ func TestStoreCanceledContextErrorBranches(t *testing.T) {
 		})
 		return err
 	})
-	expectErr("FindInvoiceByTONComment", func() error {
-		_, err := st.FindInvoiceByTONComment(canceled, wallet.Address, "RECV-CTX")
+	expectErr("FindInvoiceByGramComment", func() error {
+		_, err := st.FindInvoiceByGramComment(canceled, wallet.Address, "RECV-CTX")
 		return err
 	})
 	expectErr("FindInvoiceByExactAmount", func() error {

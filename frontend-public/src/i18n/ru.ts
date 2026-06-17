@@ -1,6 +1,6 @@
 const ru = {
     hero: {
-      title: "Прием платежей в USDT, TON и TRON на сайте без комиссии с оборота.",
+      title: "Прием платежей в USDT, GRAM и TRON на сайте без комиссии с оборота.",
       body:
         "Non-custodial криптопроцессинг для вашего бизнеса. Автоматизируйте прием криптоплатежей напрямую на ваши кошельки через наше API или готовый Checkout для Telegram-ботов, сайтов и SaaS-платформ.",
       subcopy:
@@ -19,7 +19,7 @@ const ru = {
       primary: "Демо Оплата",
       secondary: "Консоль",
       helper: "Фиксированная подписка. Безлимитный объем.",
-      chips: ["TON", "TRON", "SOL", "BASE"],
+      chips: ["GRAM", "TRON", "SOL", "BASE"],
     },
     bento: {
       kicker: "ИНФРАСТРУКТУРА",
@@ -99,7 +99,7 @@ const ru = {
         { slug: "bsc", label: "BSC" },
       ],
       rails: [
-        { name: "TON", body: "Нативные TON-платежи для Telegram-бизнеса и быстрорастущей экосистемы TON." },
+        { name: "GRAM", body: "Нативные Gram-платежи для Telegram-бизнеса и быстрорастущей экосистемы TON." },
         { name: "USDT в TON", body: "USDT в TON для stablecoin-платежей внутри экосистемы TON." },
         { name: "TRON", body: "Глобальный стандарт для USDT-платежей с высокой пропускной способностью." },
         { name: "BASE", body: "L2 от Coinbase для надежных EVM-совместимых stablecoin-платежей." },
@@ -165,7 +165,7 @@ const ru = {
         },
         {
           question: "Какие именно сети и активы поддерживаются?",
-          answer: "В данный момент мы поддерживаем TON (нативный и USDT), TRON, Solana, Base, Arbitrum и BSC. Мы постоянно добавляем новые ликвидные протоколы по запросам наших Business-клиентов.",
+          answer: "В данный момент мы поддерживаем TON (Gram и USDT), TRON, Solana, Base, Arbitrum и BSC. Мы постоянно добавляем новые ликвидные протоколы по запросам наших Business-клиентов.",
         },
         {
           question: "Могу ли я автоматизировать выдачу цифровых товаров?",
@@ -404,7 +404,7 @@ const ru = {
     invoicingProduct: {
       metadata: {
         title: "Профессиональный крипто-инвойсинг | B2B биллинг без комиссий",
-        description: "Выставляйте и управляйте профессиональными крипто-счетами. Поддержка USDT и нативного TON. Автоматический трекинг и CSV-отчеты для бухгалтерии.",
+        description: "Выставляйте и управляйте профессиональными крипто-счетами. Поддержка USDT и нативного Gram. Автоматический трекинг и CSV-отчеты для бухгалтерии.",
         keywords: "крипто инвойсинг для бизнеса, b2b крипто биллинг, счета на оплату в крипте, профессиональный usdt биллинг, трекинг крипто платежей, инвойсы без комиссии"
       },
       kicker: "BUSINESS GRADE",
@@ -454,7 +454,7 @@ const ru = {
         },
         {
           title: "Мультивалютная поддержка",
-          body: "Выставляйте счета в USD или любых стейблкоинах. recv берет на себя расчет курсов в реальном времени, гарантируя, что сумма в USDT, TON или SOL соответствует фиатному значению в момент генерации счета."
+          body: "Выставляйте счета в USD или любых стейблкоинах. recv берет на себя расчет курсов в реальном времени, гарантируя, что сумма в USDT, GRAM или SOL соответствует фиатному значению в момент генерации счета."
         }
       ],
       stats: [
@@ -600,7 +600,7 @@ const ru = {
           title: "TON-native активы для buyer-facing checkout.",
           body: "Используйте TON для Telegram-native payment flows и поддерживаемые Jettons, если они включены в вашем workspace.",
           items: [
-            { name: "TON", body: "Нативные TON-переводы для простых Telegram и wallet-native платежей." },
+            { name: "GRAM", body: "Нативные Gram-переводы для простых Telegram и wallet-native платежей." },
             { name: "Jettons", body: "Поддерживаемые TON Jettons можно показывать как checkout options для совместимых кошельков." },
             { name: "TON USDT", body: "Stablecoin checkout в TON доступен там, где актив включен для merchant setup." },
           ],
@@ -614,7 +614,7 @@ const ru = {
           kicker: "CHECKOUT AND API MECHANICS",
           title: "Payment comments делают TON-матчинг надежным.",
           steps: [
-            { title: "Создание инвойса", body: "Checkout или API создает TON payment request с точной суммой, активом, адресом и обязательным комментарием." },
+            { title: "Создание инвойса", body: "Checkout или API создает Gram payment request с точной суммой, активом, адресом и обязательным комментарием." },
             { title: "Показ оплаты", body: "Покупатель видит hosted page с QR, копируемым адресом, суммой и понятной инструкцией по comment." },
             { title: "Детекция перевода", body: "Вотчеры recv сопоставляют входящий перевод по сумме и обязательному payment comment." },
             { title: "Отправка события", body: "Dashboard или webhook получает paid state для fulfillment, выдачи доступа или обновления заказа." },
@@ -645,13 +645,13 @@ const ru = {
           ],
         },
         cta: {
-          title: "Запустите TON checkout с прямыми выплатами.",
-          body: "Используйте recv, чтобы принимать TON-платежи, автоматически находить переводы и получать оплату напрямую на ваш кошелек.",
-          primary: { label: "Начать прием TON", href: "/app/auth" },
+          title: "Запустите Gram checkout с прямыми выплатами.",
+          body: "Используйте recv, чтобы принимать Gram-платежи, автоматически находить переводы и получать оплату напрямую на ваш кошелек.",
+          primary: { label: "Начать прием Gram", href: "/app/auth" },
           secondary: { label: "Изучить Checkout", href: "/products/checkout" },
         },
         seoLabel: "Детали TON-платежей",
-        seo: "recv поддерживает TON-платежи для Telegram commerce через hosted Checkout, API создание инвойсов, обязательные payment comments, blockchain watchers, direct-to-wallet выплаты и webhooks для автоматизации заказов или доступа.",
+        seo: "recv поддерживает Gram-платежи для Telegram commerce через hosted Checkout, API создание инвойсов, обязательные payment comments, blockchain watchers, direct-to-wallet выплаты и webhooks для автоматизации заказов или доступа.",
       },
       tron: {
         name: "TRON",

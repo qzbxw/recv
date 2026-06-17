@@ -97,10 +97,10 @@ func TestLoadRejectsUnsafeProductionAdminConfig(t *testing.T) {
 		t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 		t.Setenv("JWT_SECRET", "jwt-secret")
 		t.Setenv("ADMIN_JWT_SECRET", "admin-secret")
-		t.Setenv("TON_USD_RATE", "2.50")
+		t.Setenv("GRAM_USD_RATE", "2.50")
 
 		_, err := Load()
-		if err == nil || err.Error() != "TON_USD_RATE is a dev/test-only static rate override and must not be set in production" {
+		if err == nil || err.Error() != "GRAM_USD_RATE is a dev/test-only static rate override and must not be set in production" {
 			t.Fatalf("expected static rate override error, got %v", err)
 		}
 	})

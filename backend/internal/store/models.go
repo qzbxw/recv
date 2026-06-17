@@ -25,7 +25,7 @@ const (
 type PaymentAsset string
 
 const (
-	AssetTON  PaymentAsset = "TON"
+	AssetGRAM PaymentAsset = "GRAM"
 	AssetUSDT PaymentAsset = "USDT"
 	AssetUSDC PaymentAsset = "USDC"
 	AssetSOL  PaymentAsset = "SOL"
@@ -84,7 +84,7 @@ func NormalizePaymentAsset(value string) PaymentAsset {
 func DefaultAssetForNetwork(network Network) PaymentAsset {
 	switch network {
 	case NetworkTON:
-		return AssetTON
+		return AssetGRAM
 	case NetworkSOLANA:
 		return AssetSOL
 	case NetworkBSC:
@@ -97,7 +97,7 @@ func DefaultAssetForNetwork(network Network) PaymentAsset {
 func IsSupportedPaymentOption(network Network, asset PaymentAsset) bool {
 	switch network {
 	case NetworkTON:
-		return asset == AssetTON
+		return asset == AssetGRAM
 	case NetworkTON_USDT, NetworkTRON:
 		return asset == AssetUSDT
 	case NetworkSOLANA:
@@ -112,7 +112,7 @@ func IsSupportedPaymentOption(network Network, asset PaymentAsset) bool {
 }
 
 func IsNativeAsset(asset PaymentAsset) bool {
-	return asset == AssetTON || asset == AssetSOL || asset == AssetBNB
+	return asset == AssetGRAM || asset == AssetSOL || asset == AssetBNB
 }
 
 type PaymentOptionSupport struct {
@@ -126,7 +126,7 @@ type PaymentOptionSupport struct {
 // consumers (MCP server, docs) cannot drift from the actual support checks.
 func SupportedPaymentOptions() []PaymentOptionSupport {
 	networks := []Network{NetworkTON, NetworkTON_USDT, NetworkTRON, NetworkSOLANA, NetworkBASE, NetworkARBITRUM, NetworkBSC}
-	assets := []PaymentAsset{AssetTON, AssetUSDT, AssetUSDC, AssetSOL, AssetBNB}
+	assets := []PaymentAsset{AssetGRAM, AssetUSDT, AssetUSDC, AssetSOL, AssetBNB}
 	options := make([]PaymentOptionSupport, 0, len(networks))
 	for _, network := range networks {
 		supported := make([]PaymentAsset, 0, len(assets))

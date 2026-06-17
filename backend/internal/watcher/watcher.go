@@ -255,7 +255,7 @@ func (w *Watcher) pollTON(ctx context.Context, wallet store.WatchedWallet) ([]st
 		transfer := store.ObservedTransfer{
 			TxHash:             item.TxID.Hash,
 			Network:            wallet.PayableNetwork,
-			Asset:              store.AssetTON,
+			Asset:              store.AssetGRAM,
 			DestinationAddress: wallet.Address,
 			Amount:             amount,
 			PaymentComment:     strings.TrimSpace(item.InMsg.Message),

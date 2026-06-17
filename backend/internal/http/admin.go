@@ -633,6 +633,7 @@ func adminInvoiceResponseItems(items []store.AdminInvoiceRecord) []gin.H {
 			"base_amount_usd":     item.BaseAmountUSD.StringFixed(2),
 			"payable_amount":      item.PayableAmount.StringFixed(payableScale(item.PayableNetwork)),
 			"payable_network":     item.PayableNetwork,
+			"payable_asset":       store.DefaultAssetForNetwork(item.PayableNetwork),
 			"destination_address": item.DestinationAddress,
 			"payment_comment":     item.PaymentComment,
 			"status":              item.Status,

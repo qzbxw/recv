@@ -57,8 +57,8 @@ func TestStablecoinForOption(t *testing.T) {
 			t.Fatalf("stablecoinForOption(%s,%s) symbol=%q; want %q", tc.network, tc.asset, got.Symbol, tc.symbol)
 		}
 	}
-	if got := stablecoinForOption(store.NetworkTON, store.AssetTON); got.Symbol != "" {
-		t.Fatalf("expected native TON to have no stablecoin spec, got %+v", got)
+	if got := stablecoinForOption(store.NetworkTON, store.AssetGRAM); got.Symbol != "" {
+		t.Fatalf("expected native GRAM to have no stablecoin spec, got %+v", got)
 	}
 }
 

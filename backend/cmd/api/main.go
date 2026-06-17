@@ -92,7 +92,7 @@ func runAPI(ctx context.Context, deps apiDeps) error {
 	} else if created {
 		log.Printf("bootstrapped initial super_admin from ADMIN_BOOTSTRAP_EMAIL")
 	}
-	invoiceService := service.NewInvoiceService(st, cfg.TonUSDOverride)
+	invoiceService := service.NewInvoiceService(st, cfg.GramUSDOverride)
 	paymentService := service.NewPaymentService(st)
 
 	engine := httpapi.NewServer(cfg, st, authService, adminService, invoiceService, paymentService)

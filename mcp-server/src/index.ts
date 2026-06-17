@@ -137,8 +137,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             payable_asset: {
               type: "string",
-              description: "Optional asset for legacy single-option requests. One of: TON, USDT, USDC, SOL, BNB.",
-              enum: ["TON", "USDT", "USDC", "SOL", "BNB"],
+              description: "Optional asset for legacy single-option requests. One of: GRAM, USDT, USDC, SOL, BNB.",
+              enum: ["GRAM", "USDT", "USDC", "SOL", "BNB"],
             },
             payment_options: {
               type: "array",
@@ -147,7 +147,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 type: "object",
                 properties: {
                   network: { type: "string", enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] },
-                  asset: { type: "string", enum: ["TON", "USDT", "USDC", "SOL", "BNB"] },
+                  asset: { type: "string", enum: ["GRAM", "USDT", "USDC", "SOL", "BNB"] },
                 },
                 required: ["network", "asset"],
               },
@@ -195,14 +195,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Legacy single-option network used to pay recv for the subscription.",
               enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"],
             },
-            payable_asset: { type: "string", enum: ["TON", "USDT", "USDC", "SOL", "BNB"] },
+            payable_asset: { type: "string", enum: ["GRAM", "USDT", "USDC", "SOL", "BNB"] },
             payment_options: {
               type: "array",
               items: {
                 type: "object",
                 properties: {
                   network: { type: "string", enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] },
-                  asset: { type: "string", enum: ["TON", "USDT", "USDC", "SOL", "BNB"] },
+                  asset: { type: "string", enum: ["GRAM", "USDT", "USDC", "SOL", "BNB"] },
                 },
                 required: ["network", "asset"],
               },
@@ -346,7 +346,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{
             type: "text",
-            text: "recv supports these payment options (cached fallback):\n- TON/TON\n- TON_USDT/USDT\n- TRON/USDT\n- SOLANA/SOL, SOLANA/USDT, SOLANA/USDC\n- BASE/USDT, BASE/USDC\n- ARBITRUM/USDT, ARBITRUM/USDC\n- BSC/BNB, BSC/USDT"
+            text: "recv supports these payment options (cached fallback):\n- TON/GRAM\n- TON_USDT/USDT\n- TRON/USDT\n- SOLANA/SOL, SOLANA/USDT, SOLANA/USDC\n- BASE/USDT, BASE/USDC\n- ARBITRUM/USDT, ARBITRUM/USDC\n- BSC/BNB, BSC/USDT"
           }],
         };
       }

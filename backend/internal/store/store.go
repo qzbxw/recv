@@ -940,8 +940,8 @@ func normalizeExternalEventID(transfer ObservedTransfer) string {
 	return string(transfer.Network) + ":" + strings.TrimSpace(transfer.TxHash)
 }
 
-func (s *Store) FindInvoiceByTONComment(ctx context.Context, address string, comment string) (Invoice, error) {
-	return s.FindInvoiceByPaymentComment(ctx, address, NetworkTON, AssetTON, comment)
+func (s *Store) FindInvoiceByGramComment(ctx context.Context, address string, comment string) (Invoice, error) {
+	return s.FindInvoiceByPaymentComment(ctx, address, NetworkTON, AssetGRAM, comment)
 }
 
 func (s *Store) FindInvoiceByPaymentComment(ctx context.Context, address string, network Network, asset PaymentAsset, comment string) (Invoice, error) {
