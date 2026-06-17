@@ -7,14 +7,6 @@ import { JsonLd } from "@/components/JsonLd";
 export default function HomeClient({ language }: { language: "ru" | "en" }) {
   const copy = COPY[language];
 
-  const organizationSchema = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "recv",
-    "url": "https://recv.money",
-    "logo": "https://recv.money/logo.png"
-  };
-
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -25,19 +17,8 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
     }))
   };
 
-  const websiteSchema = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "recv",
-    "url": "https://recv.money",
-    "inLanguage": language,
-    "publisher": { "@type": "Organization", "name": "recv" }
-  };
-
   return (
     <MarketingLayout language={language}>
-      <JsonLd schema={organizationSchema} />
-      <JsonLd schema={websiteSchema} />
       <JsonLd schema={faqSchema} />
 
       {/* 1. MASSIVE HERO */}

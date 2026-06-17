@@ -6,6 +6,8 @@ import { getAllDocSlugs } from "@/lib/docs";
 
 export const SITE_NAME = "recv";
 export const DEFAULT_SITE_URL = "https://recv.money";
+export const BRAND_LOGO_PATH = "/logo-transparent.png";
+export const BRAND_ICON_PATH = "/icon-512.png";
 export const SITEMAP_PAGE_SIZE = 50_000;
 const DESCRIPTION_MIN_LENGTH = 120;
 const DESCRIPTION_MAX_LENGTH = 160;
@@ -102,6 +104,40 @@ export function backendApiUrl() {
 
 export function localizedUrl(locale: Locale, route = "") {
   return `${publicSiteUrl()}/${locale}${route}`;
+}
+
+export function absoluteBrandLogoUrl() {
+  return `${publicSiteUrl()}${BRAND_LOGO_PATH}`;
+}
+
+export function organizationJsonLd(locale?: Locale) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${publicSiteUrl()}/#organization`,
+    name: SITE_NAME,
+    url: publicSiteUrl(),
+    logo: {
+      "@type": "ImageObject",
+      url: absoluteBrandLogoUrl(),
+      width: 500,
+      height: 500,
+    },
+    image: absoluteBrandLogoUrl(),
+    ...(locale ? { inLanguage: locale } : {}),
+  };
+}
+
+export function websiteJsonLd(locale: Locale) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${publicSiteUrl()}/#website`,
+    name: SITE_NAME,
+    url: publicSiteUrl(),
+    inLanguage: locale,
+    publisher: { "@id": `${publicSiteUrl()}/#organization` },
+  };
 }
 
 // Per-URL 1200×630 social card rendered by /og. Returned entries are used

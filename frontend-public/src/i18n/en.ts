@@ -260,7 +260,7 @@ const en = {
     tryDemo: "Try Demo",
     common: {
       whyChoose: "Why choose",
-      engineered: "Direct-to-wallet settlement, signed webhooks, and zero turnover fees across TON, USDT on TON, TRON, Base, and BSC.",
+      engineered: "Direct-to-wallet settlement, signed webhooks, and zero turnover fees across GRAM, USDT on TON, TRON, Base, and BSC.",
       implementation: "IMPLEMENTATION",
       readyInMinutes: "Production-ready in minutes",
       integrateEase: "Integrate our high-performance API into your existing stack with ease.",
@@ -276,7 +276,7 @@ const en = {
       metadata: {
         title: "Accept Crypto Payments | Non-Custodial Checkout for TON, TRC-20, TON USDT",
         description: "Scale your business with the highest-converting crypto checkout. Support USDT (TRC-20, TON, Base, BSC) with 0% turnover fees. Non-custodial, secure, and Telegram-ready.",
-        keywords: "accept crypto payments, crypto checkout gateway, TON payments, TRON USDT gateway, TON USDT checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout"
+        keywords: "accept crypto payments, crypto checkout gateway, GRAM payments, TON payments, TRON USDT gateway, TON USDT checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout"
       },
       kicker: "CONVERSION ENGINE",
       title: "Checkout: The Gold Standard of Crypto UX",
@@ -325,7 +325,7 @@ const en = {
         },
         {
           title: "Cross-Chain Unified UI",
-          body: "Whether it's jetton transfers for USDT on TON or the unique memo requirements of native TON, recv abstracts the complexity. Your customers get a consistent, polished experience regardless of the underlying blockchain technology, reducing cognitive load and increasing trust."
+          body: "Whether it's jetton transfers for USDT on TON or the unique memo requirements of GRAM, recv abstracts the complexity. Your customers get a consistent, polished experience regardless of the underlying blockchain technology, reducing cognitive load and increasing trust."
         }
       ],
       stats: [
@@ -386,7 +386,7 @@ const en = {
         },
         {
           title: "Unified Chain Abstraction",
-          body: "Integrating TON, TRON, and EVM usually requires three different libraries and logic flows. recv provides a single schema for all networks. Create an invoice for TRC-20 USDT the same way you create one for native TON or USDT on TON."
+          body: "Integrating TON, TRON, and EVM usually requires three different libraries and logic flows. recv provides a single schema for all networks. Create an invoice for TRC-20 USDT the same way you create one for GRAM or USDT on TON."
         },
         {
           title: "High-Performance Watchers",
@@ -583,8 +583,8 @@ const en = {
         },
         kicker: "TON NETWORK",
         hero: {
-          title: "TON payments built for Telegram-native commerce.",
-          body: "recv turns TON transfers into clean checkout states for Telegram shops, paid communities, and mobile-first buyers while keeping funds direct to your wallet.",
+          title: "GRAM payments built for Telegram-native commerce.",
+          body: "recv turns GRAM transfers on TON into clean checkout states for Telegram shops, paid communities, and mobile-first buyers while keeping funds direct to your wallet.",
         },
         snapshot: {
           kicker: "NETWORK INVOICE",
@@ -638,10 +638,10 @@ const en = {
         },
         related: {
           kicker: "RELATED",
-          title: "Build the TON payment flow.",
+          title: "Build the GRAM payment flow.",
           links: [
             { kicker: "Use Case", label: "Telegram Shops", body: "Telegram commerce flows with checkout links and live payment states.", href: "/use-cases/telegram-shops" },
-            { kicker: "Product", label: "Checkout", body: "Hosted payment screens for TON orders.", href: "/products/checkout" },
+            { kicker: "Product", label: "Checkout", body: "Hosted payment screens for GRAM orders on TON.", href: "/products/checkout" },
             { kicker: "Plan", label: "Merchant", body: "Dashboard workflow for sellers and operators.", href: "/merchant" },
           ],
         },
@@ -762,14 +762,14 @@ const en = {
           body: "Collect USD-pegged stablecoin payments on The Open Network, leveraging Telegram's native ecosystem without exposing buyers to price volatility.",
           items: [
             { name: "TON USDT", body: "The official USD₮ Jetton on the TON blockchain, widely used in Telegram Wallet and Tonkeeper." },
-            { name: "TON", body: "The native network asset used for transaction fees (gas) when sending Jettons." },
+            { name: "GRAM", body: "The native TON network asset used for transaction fees (gas) when sending Jettons." },
             { name: "Direct Payouts", body: "USDT goes directly to your non-custodial TON wallet without holding periods or intermediaries." },
           ],
         },
         why: {
           kicker: "WHY TON USDT",
           title: "Stablecoin stability with Telegram-native speed.",
-          body: "TON USDT is the perfect solution for Telegram commerce. It eliminates the price volatility of native TON while retaining the fast transaction speeds, low fees, and deep integration with Telegram chats.",
+          body: "TON USDT is the perfect solution for Telegram commerce. It eliminates the price volatility of GRAM while retaining the fast transaction speeds, low fees, and deep integration with Telegram chats.",
         },
         mechanics: {
           kicker: "AUTOMATED DETECTOR",
@@ -784,7 +784,7 @@ const en = {
         limitations: {
           kicker: "LIMITATIONS AND NOTES",
           title: "Memo-based matching and transaction fees.",
-          body: "Just like native TON, TON USDT matching relies on the required comment. Buyers must not modify this comment. Additionally, buyers or wallets must have native TON to cover blockchain transaction fees (gas).",
+          body: "Just like GRAM payments, TON USDT matching relies on the required comment. Buyers must not modify this comment. Additionally, buyers or wallets must have GRAM to cover blockchain transaction fees (gas).",
         },
         useCases: {
           kicker: "USE CASES",
@@ -1141,7 +1141,7 @@ const en = {
         name: "Telegram Shops",
         metadata: {
           title: "Accept Crypto Payments in Telegram Bots & Mini Apps",
-          description: "Automate Telegram shop payments with TON-first checkout links, direct-to-wallet settlement, and instant order signals.",
+          description: "Automate Telegram shop payments with GRAM-first checkout links on TON, direct-to-wallet settlement, and instant order signals.",
         },
         kicker: "TELEGRAM COMMERCE",
         hero: {
@@ -1189,10 +1189,10 @@ const en = {
         },
         networks: {
           kicker: "NETWORKS",
-          title: "Optimized for TON & Stablecoins",
-          body: "Leverage the TON network for Telegram-native buyers or support USDT (TRC-20) for global stablecoin users.",
+          title: "Optimized for GRAM & Stablecoins",
+          body: "Leverage GRAM on the TON network for Telegram-native buyers or support USDT (TRC-20) for global stablecoin users.",
           items: [
-            { name: "TON", body: "The native choice for Telegram-based commerce and the growing TON ecosystem." },
+            { name: "GRAM", body: "The native currency for Telegram-based commerce and the growing TON ecosystem." },
             { name: "TRON USDT", body: "The global standard for USDT settlement with high throughput and low costs." },
             { name: "Solana / Base", body: "High-performance L1/L2 alternatives for web3-native audiences." },
           ],
@@ -1211,7 +1211,7 @@ const en = {
           kicker: "RELATED",
           title: "Build your Telegram stack.",
           links: [
-            { kicker: "Network", label: "TON Support", body: "Native payment rails for Telegram Mini Apps.", href: "/networks/ton" },
+            { kicker: "Network", label: "GRAM on TON", body: "Native payment rails for Telegram Mini Apps.", href: "/networks/ton" },
             { kicker: "Product", label: "Checkout Engine", body: "Hosted screens for every commerce flow.", href: "/products/checkout" },
             { kicker: "Plan", label: "Merchant Tier", body: "The dashboard for manual payment ops.", href: "/merchant" },
           ],
@@ -1222,7 +1222,7 @@ const en = {
           primary: { label: "Start Accepting Payments", href: "/app/auth" },
           secondary: { label: "Explore Checkout", href: "/products/checkout" },
         },
-        features: ["TON & Jetton Support", "Real-time Order Status", "Direct-to-Wallet Payouts", "Telegram Mini App Optimized"],
+        features: ["GRAM & Jetton Support", "Real-time Order Status", "Direct-to-Wallet Payouts", "Telegram Mini App Optimized"],
         seoLabel: "Telegram shop crypto payments documentation",
         seo: "recv enables Telegram shops to accept crypto payments with hosted checkout links, TON support, stablecoin networks, direct-to-wallet settlement, and real-time payment detection for order fulfillment.",
       },
@@ -1283,7 +1283,7 @@ const en = {
           items: [
             { name: "TRON USDT", body: "The industry standard for USD-denominated stablecoin billing." },
             { name: "Base / Base", body: "Optimized L2 networks for low-fee Base ecosystem payments." },
-            { name: "TON / USDT on TON", body: "High-performance options for web3-native user bases." },
+            { name: "GRAM / USDT on TON", body: "High-performance options for web3-native user bases." },
           ],
         },
         flow: {
@@ -1371,7 +1371,7 @@ const en = {
           body: "Support the assets your buyers already hold. TRON USDT is the standard for software, while TON is perfect for Telegram distributions.",
           items: [
             { name: "TRON USDT", body: "Low-fee stablecoin transfers preferred by software and gaming buyers." },
-            { name: "TON", body: "The native choice for digital assets sold within the Telegram ecosystem." },
+            { name: "GRAM", body: "The native choice for digital assets sold within the Telegram ecosystem." },
             { name: "USDT on TON", body: "Fast, confirmation-aware monitoring for high-speed digital sales." },
           ],
         },
@@ -1456,10 +1456,10 @@ const en = {
         },
         networks: {
           kicker: "NETWORKS",
-          title: "TON-First for Telegram Communities",
-          body: "TON is the native choice for Telegram members, while TRON USDT provides a stable fallback for global subscribers.",
+          title: "GRAM-First for Telegram Communities",
+          body: "GRAM on TON is the native choice for Telegram members, while TRON USDT provides a stable fallback for global subscribers.",
           items: [
-            { name: "TON", body: "The most friction-less experience for Telegram-native communities." },
+            { name: "GRAM", body: "The most friction-less experience for Telegram-native communities." },
             { name: "TRON USDT", body: "A reliable stablecoin option for USD-denominated memberships." },
             { name: "Base / Base", body: "Ideal for web3-native groups and decentralized organizations." },
           ],
@@ -1478,7 +1478,7 @@ const en = {
           kicker: "RELATED",
           title: "Connect community payments.",
           links: [
-            { kicker: "Network", label: "TON Support", body: "Native rails for Telegram memberships.", href: "/networks/ton" },
+            { kicker: "Network", label: "GRAM on TON", body: "Native rails for Telegram memberships.", href: "/networks/ton" },
             { kicker: "Use Case", label: "Telegram Shops", body: "Commerce flows for physical/digital goods.", href: "/use-cases/telegram-shops" },
             { kicker: "Plan", label: "Merchant Tier", body: "Dashboard for community operators.", href: "/merchant" },
           ],
@@ -1489,7 +1489,7 @@ const en = {
           primary: { label: "Start Accepting Payments", href: "/app/auth" },
           secondary: { label: "View Merchant", href: "/merchant" },
         },
-        features: ["TON & Jetton Native", "Automated Access Signals", "Membership Renewal Tracking", "No Percentage Fees"],
+        features: ["GRAM & Jetton Native", "Automated Access Signals", "Membership Renewal Tracking", "No Percentage Fees"],
         seoLabel: "Paid community crypto payment details",
         seo: "recv enables paid communities to accept crypto for Telegram channels and private groups, featuring TON support, automated access signals via webhooks, and 0% turnover fees.",
       },
@@ -1633,7 +1633,7 @@ const en = {
           {
             title: "Settlement Asset",
             competitor: "CoinGate defaults to fiat conversion, introducing FX risk and additional processing steps before you receive funds.",
-            recv: "Native crypto settlement. You receive exactly what was paid — USDT stays USDT, TON stays TON, in your wallet."
+            recv: "Native crypto settlement. You receive exactly what was paid — USDT stays USDT, GRAM stays GRAM, in your wallet."
           },
           {
             title: "Commission",
@@ -1741,7 +1741,7 @@ const en = {
       features: [
         { title: "Webhook Delivery", body: "Queued delivery with automated retries and HMAC signatures." },
         { title: "Real-time Monitoring", body: "Transaction monitoring updates invoice state as supported networks are observed." },
-        { title: "Unified API v1", body: "A single interface for native TON, USDT on TON, TRON, Base, and BSC." },
+        { title: "Unified API v1", body: "A single interface for GRAM, USDT on TON, TRON, Base, and BSC." },
         { title: "Idempotency", body: "Built-in protection against duplicate transactions at the API level." },
       ],
       flow: [
@@ -1949,7 +1949,7 @@ const inv = await res.json();`
         {
           title: "5. TECHNICAL MECHANICS AND RECONCILIATION MATCHING",
           paragraphs: [
-            "5.1. Smart-Matching matching methods: For supported stablecoin payment options, recv may add a unique fractional suffix to the requested amount to associate an on-chain transfer with an invoice. For native TON payments, recv uses a unique payment comment. Supported matching methods may vary by network and asset and are displayed on the checkout page.",
+            "5.1. Smart-Matching matching methods: For supported stablecoin payment options, recv may add a unique fractional suffix to the requested amount to associate an on-chain transfer with an invoice. For GRAM payments on TON, recv uses a unique payment comment. Supported matching methods may vary by network and asset and are displayed on the checkout page.",
             "5.2. Waiver of Liability for User Error: The Company bears no liability for any financial loss, delayed access to digital goods, or unfulfilled invoices arising from the Customer's failure to remit the exact amount (including matching suffix) or correct memo/comment, or utilizing an incorrect or unsupported blockchain network.",
             "5.3. Irrevocability of Transactions: The Merchant acknowledges that blockchain transactions are mathematically immutable. The Company cannot reverse, refund, or alter any on-chain transfer.",
             "5.4. Third-Party RPC Reliance: The Service’s blockchain monitoring capabilities are wholly dependent on the stability, uptime, and accuracy of third-party Remote Procedure Call (RPC) node providers and external oracle APIs. The Company is not liable for Service degradation, delayed webhooks, or failed mempool tracking caused by external RPC outages.",

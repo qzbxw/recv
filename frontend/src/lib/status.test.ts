@@ -49,8 +49,8 @@ describe("invoice status helpers", () => {
   it("formats network and payment amount labels", () => {
     expect(formatNetworkLabel("EVM")).toBe("ETHEREUM");
     expect(formatNetworkLabel("TON_USDT")).toBe("TON USDT");
-    expect(formatPaymentAmount("1.25", "TON")).toBe("1.25 TON");
-    expect(formatPaymentAmount("1.25 TON", "TON")).toBe("1.25 TON");
+    expect(formatPaymentAmount("1.25", "TON")).toBe("1.25 GRAM");
+    expect(formatPaymentAmount("1.25 GRAM", "TON")).toBe("1.25 GRAM");
   });
 
   it("calculates remaining payable amount without trailing zero noise", () => {

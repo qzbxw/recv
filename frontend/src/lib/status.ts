@@ -1,4 +1,4 @@
-import type { Invoice, InvoiceStatus, Network } from "./types";
+import type { Invoice, InvoiceStatus, Network, PaymentAsset } from "./types";
 
 export type Language = "ru" | "en";
 
@@ -133,12 +133,20 @@ export function formatNetworkLabel(network: Network) {
   }
 }
 
+export function formatPaymentAssetLabel(asset: PaymentAsset | undefined, network?: Network) {
+  if (asset) {
+    return asset;
+  }
+  return network === "TON" ? "GRAM" : network || "";
+}
+
 export function formatPaymentAmount(value: string, network?: Network) {
   const trimmed = value.trim();
-  if (!network || trimmed.toUpperCase().includes(network)) {
+  const asset = formatPaymentAssetLabel(undefined, network);
+  if (!asset || trimmed.toUpperCase().includes(asset)) {
     return trimmed;
   }
-  return `${trimmed} ${network}`;
+  return `${trimmed} ${asset}`;
 }
 
 export function calculateRemainingAmount(invoice: Invoice) {

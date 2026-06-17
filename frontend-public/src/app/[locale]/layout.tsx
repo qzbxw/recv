@@ -4,8 +4,15 @@ import { UIProvider } from "@/components/UIProvider";
 import { CookieConsent } from "@/components/CookieConsent";
 import { OptionalAnalytics } from "@/components/OptionalAnalytics";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
+import { JsonLd } from "@/components/JsonLd";
 import { LOCALES } from "@/i18n";
-import { publicSiteUrl } from "@/lib/seo";
+import {
+  BRAND_ICON_PATH,
+  BRAND_LOGO_PATH,
+  organizationJsonLd,
+  publicSiteUrl,
+  websiteJsonLd,
+} from "@/lib/seo";
 import "../tailwind.css";
 import "../globals.css";
 
@@ -60,6 +67,18 @@ export async function generateMetadata(props: {
       title: "recv | Crypto Payments Infrastructure",
       description: "Professional crypto processing with instant payouts directly to your wallets.",
     },
+    icons: {
+      icon: [
+        { url: BRAND_ICON_PATH, type: "image/png", sizes: "512x512" },
+        { url: BRAND_LOGO_PATH, type: "image/png", sizes: "500x500" },
+        { url: "/favicon.ico", sizes: "any" },
+      ],
+      apple: [
+        { url: "/apple-icon.png", type: "image/png", sizes: "192x192" },
+        { url: BRAND_LOGO_PATH, type: "image/png", sizes: "500x500" },
+      ],
+      shortcut: ["/favicon.ico"],
+    },
     robots: {
       index: true,
       follow: true,
@@ -99,6 +118,8 @@ export default async function LocaleLayout(props: {
         <UIProvider initialLanguage={locale as "ru" | "en"}>
           {props.children}
         </UIProvider>
+        <JsonLd schema={organizationJsonLd(locale as "ru" | "en")} />
+        <JsonLd schema={websiteJsonLd(locale as "ru" | "en")} />
         <CookieConsent language={locale as "ru" | "en"} />
         <WebVitalsReporter />
         <OptionalAnalytics

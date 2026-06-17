@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { BlogPostClient } from "@/components/blog/BlogPostClient";
 import { lookupPublishedBlogPost, type PublicBlogPost } from "@/lib/blog";
 import { fallbackBlogPost } from "@/lib/blog-articles";
-import { isNonSelfCanonical, publicSiteUrl } from "@/lib/seo";
+import { absoluteBrandLogoUrl, isNonSelfCanonical, publicSiteUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>;
@@ -121,7 +121,9 @@ export default async function BlogPost(props: Props) {
       "url": baseUrl,
       "logo": {
         "@type": "ImageObject",
-        "url": `${baseUrl}/logo.png`,
+        "url": absoluteBrandLogoUrl(),
+        "width": 500,
+        "height": 500,
       },
     },
   };

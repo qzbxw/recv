@@ -6,7 +6,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import Link from "next/link";
 import { PUBLIC_MARKETING_COPY } from "@/i18n";
-import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
+import { BRAND_LOGO_PATH, languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 import { getPublishedBlogPosts } from "@/lib/blog";
 import { FALLBACK_BLOG_POSTS } from "@/lib/blog-articles";
 
@@ -24,7 +24,7 @@ const AUTHORS = {
       role: "Разработка и продукт",
       expertise: ["Non-custodial платежи", "Платёжные API", "Безопасность вебхуков", "Multi-chain операции"],
     },
-    avatar: "/logo.png",
+    avatar: BRAND_LOGO_PATH,
   },
 };
 

@@ -13,14 +13,14 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const isRu = locale === "ru";
   return {
     title: isRu
-      ? "recv — крипто-платёжный шлюз для USDT, TON и TRON"
-      : "recv — Crypto Payment Gateway for USDT, TON & TRON",
+      ? "recv — крипто-платёжный шлюз для USDT, GRAM и TRON"
+      : "recv — Crypto Payment Gateway for USDT, GRAM & TRON",
     description: metadataDescription(locale, isRu
-      ? "Принимайте криптоплатежи напрямую на свои кошельки. Non-custodial checkout, API и вебхуки для USDT, TON, TRON, Solana, Base и BSC. Без комиссии с оборота."
-      : "Accept crypto payments directly to your own wallets. Non-custodial checkout, API, and webhooks for USDT, TON, TRON, Solana, Base, and BSC — with zero turnover fees."),
+      ? "Принимайте криптоплатежи напрямую на свои кошельки. Non-custodial checkout, API и вебхуки для USDT, GRAM, TRON, Solana, Base и BSC. Без комиссии с оборота."
+      : "Accept crypto payments directly to your own wallets. Non-custodial checkout, API, and webhooks for USDT, GRAM, TRON, Solana, Base, and BSC — with zero turnover fees."),
     keywords: isRu
       ? "крипто платёжный шлюз, принять криптоплатежи, USDT платежи, TON платежи, non-custodial криптоплатежи, recv, TRON платежи"
-      : "crypto payment gateway, accept crypto payments, USDT payments, TON payments, non-custodial crypto, recv, TRON payments, crypto checkout API",
+      : "crypto payment gateway, accept crypto payments, USDT payments, GRAM payments, TON payments, non-custodial crypto, recv, TRON payments, crypto checkout API",
     alternates: {
       canonical: `/${locale}`,
       languages: {
@@ -32,7 +32,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     openGraph: {
       images: socialImages(
         locale,
-        isRu ? "Крипто-платёжный шлюз для USDT, TON и TRON" : "Crypto Payment Gateway for USDT, TON & TRON",
+        isRu ? "Крипто-платёжный шлюз для USDT, GRAM и TRON" : "Crypto Payment Gateway for USDT, GRAM & TRON",
         isRu ? "Платёжная инфраструктура" : "Payments infrastructure",
       ),
     },

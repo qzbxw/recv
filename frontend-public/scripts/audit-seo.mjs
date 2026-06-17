@@ -1,5 +1,6 @@
 const baseUrl = (process.env.SEO_AUDIT_BASE_URL || "http://127.0.0.1:3000").replace(/\/+$/, "");
 const canonicalOrigin = (process.env.NEXT_PUBLIC_SITE_URL || "https://recv.money").replace(/\/+$/, "");
+const canonicalBrandLogo = `${canonicalOrigin}/logo-transparent.png`;
 
 function matches(html, pattern) {
   return [...html.matchAll(pattern)];
@@ -43,6 +44,13 @@ function pngSize(buffer) {
     width: buffer.readUInt32BE(16),
     height: buffer.readUInt32BE(20),
   };
+}
+
+function schemaLogoUrl(schema) {
+  const logo = schema?.logo;
+  if (!logo) return "";
+  if (typeof logo === "string") return logo;
+  return logo.url || "";
 }
 
 async function sitemapUrls() {
@@ -128,6 +136,10 @@ function auditHTML(url, html) {
   }
   if (schemas.some((schema) => schema?.["@type"] === "Person" || schema?.["@type"] === "LocalBusiness")) {
     failures.push("forbidden Person or LocalBusiness schema");
+  }
+  const organizations = schemas.filter((schema) => schema?.["@type"] === "Organization");
+  if (!organizations.some((schema) => schemaLogoUrl(schema) === canonicalBrandLogo)) {
+    failures.push(`missing Organization logo schema for ${canonicalBrandLogo}`);
   }
 
   const visibleText = textContent(html);

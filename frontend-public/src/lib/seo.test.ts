@@ -1,10 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 
+import manifest from "@/app/manifest";
 import { robotsBody } from "@/lib/seo";
 import {
+  absoluteBrandLogoUrl,
+  BRAND_ICON_PATH,
+  BRAND_LOGO_PATH,
   documentationEntries,
   isNonSelfCanonical,
   metadataDescription,
+  organizationJsonLd,
   publicPageEntries,
   renderSitemap,
   renderSitemapIndex,
@@ -86,6 +91,26 @@ describe("SEO generation", () => {
     expect(short.length).toBeLessThanOrEqual(160);
     expect(long.length).toBeGreaterThanOrEqual(120);
     expect(long.length).toBeLessThanOrEqual(160);
+  });
+
+  it("uses the current site logo in structured data and the web manifest", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.com/";
+    const organization = organizationJsonLd("en");
+    const webManifest = manifest();
+
+    expect(absoluteBrandLogoUrl()).toBe("https://example.com/logo-transparent.png");
+    expect(organization.logo).toEqual({
+      "@type": "ImageObject",
+      url: "https://example.com/logo-transparent.png",
+      width: 500,
+      height: 500,
+    });
+    expect(webManifest.icons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ src: BRAND_ICON_PATH, sizes: "512x512" }),
+        expect.objectContaining({ src: BRAND_LOGO_PATH, sizes: "500x500" }),
+      ]),
+    );
   });
 
   it("escapes sitemap values and creates a valid sitemap index", () => {

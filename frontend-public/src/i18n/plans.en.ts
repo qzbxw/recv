@@ -3,7 +3,7 @@ export const planSEOEn = {
     hero: {
       badge: "recv Merchant",
       title: "Non-Custodial Crypto Payment Gateway",
-      body: "Accept cryptocurrency directly to your wallet with zero turnover fees. Create payment links from the dashboard or Telegram bot for TON, USDT on TON, TRON, Base, and BSC.",
+      body: "Accept cryptocurrency directly to your wallet with zero turnover fees. Create payment links from the dashboard or Telegram bot for GRAM, USDT on TON, TRON, Base, and BSC.",
     },
     idealFor: {
       title: "Who Needs the Merchant Protocol?",
@@ -28,7 +28,7 @@ export const planSEOEn = {
       title: "Merchant Technical Specifications",
       description: "A robust, no-code environment for processing decentralized payments.",
       specs: [
-        { label: "Supported Networks", value: "TON, USDT (TON), TRON (TRC20), Solana, Base, Arbitrum, BSC" },
+        { label: "Supported Assets", value: "GRAM, USDT (TON), TRON (TRC20), Solana, Base, Arbitrum, BSC" },
         { label: "Confirmation Timing", value: "Depends on the selected network and required confirmations" },
         { label: "Integration Type", value: "No-code payment links, Telegram Bot, Dashboard UI" },
         { label: "Custody Model", value: "100% Non-custodial (Direct P2P transfer)" }
@@ -42,7 +42,7 @@ export const planSEOEn = {
       { q: "What is a non-custodial crypto gateway and how does it benefit me?", a: "A non-custodial gateway means that the payment processor never holds, touches, or routes your funds through intermediary accounts. When a customer pays, the cryptocurrency goes straight from their wallet to yours. This eliminates the risk of frozen accounts, withdrawal delays, or platform bankruptcies." },
       { q: "How do I create a crypto invoice without programming knowledge?", a: "The Merchant plan provides an intuitive web dashboard and a Telegram bot. You simply enter the required amount (in fiat or crypto) and a description. The system instantly generates a secure checkout link with QR codes that you can share with your customer via chat, email, or social media." },
       { q: "Is it really true that there are no transaction fees?", a: "Yes. recv Merchant operates on a flat monthly subscription model ($9/mo). Whether you process $100 or $100,000 in a month, you pay exactly zero percentage-based turnover fees. Your customers only pay the standard network gas fee." },
-      { q: "Which cryptocurrencies and networks are currently supported?", a: "We focus on liquid, low-fee networks. We currently support native TON and stablecoin payments across TON (USDT), TRON (TRC20), Solana, Base, Arbitrum, and Binance Smart Chain (BSC)." },
+      { q: "Which cryptocurrencies and networks are currently supported?", a: "We focus on liquid, low-fee networks. We currently support GRAM and stablecoin payments across TON (USDT), TRON (TRC20), Solana, Base, Arbitrum, and Binance Smart Chain (BSC)." },
       { q: "What happens if a customer sends the wrong amount?", a: "Our Smart Checkout UI constantly monitors the mempool. If an underpayment is detected, the invoice remains in a 'Partial' state, and the customer is prompted to send the remaining balance. If they overpay, the invoice is marked as 'Overpaid', and you receive an alert to manually resolve the excess." },
       { q: "How does recv handle customer verification?", a: "recv provides non-custodial payment infrastructure and does not make compliance decisions for your business. You remain responsible for customer verification, tax, sanctions, and other legal requirements that apply to your jurisdiction and activity." },
       { q: "How does the Telegram crypto billing bot work?", a: "By linking your Telegram account to recv, the bot becomes your mobile command center. It instantly pushes notifications for new invoices, confirmed payments, and potential underpayments, allowing you to manage your revenue stream entirely from your phone." },
@@ -68,7 +68,7 @@ export const planSEOEn = {
     deepDive: {
       title: "API Capabilities & Architecture",
       cards: [
-        { title: "Unified Multi-Chain Gateway", body: "Stop maintaining custom RPC nodes and fragile blockchain listeners. One standard REST API integration covers native TON, USDT on TON, TRON, Base, and BSC." },
+        { title: "Unified Multi-Chain Gateway", body: "Stop maintaining custom RPC nodes and fragile blockchain listeners. One standard REST API integration covers GRAM, USDT on TON, TRON, Base, and BSC." },
         { title: "Cryptographic Webhooks", body: "Payment status changes can trigger POST webhooks to your server. Payloads use HMAC-SHA256 signatures and timestamps so your backend can verify authenticity and apply replay controls." },
         { title: "Native Idempotency", body: "Never credit a user twice for the same blockchain transaction. Our core protocol enforces strict idempotency, protecting your database from duplicate processing during network congestion or micro-forks." },
         { title: "Testnet & Sandbox Mode", body: "Develop and test your integration safely using our Sandbox environment. Generate mock invoices and simulate blockchain confirmations without risking real capital." }

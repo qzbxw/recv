@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { BRAND_ICON_PATH, BRAND_LOGO_PATH } from "@/lib/seo";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -13,7 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { src: BRAND_ICON_PATH, sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: BRAND_LOGO_PATH, sizes: "500x500", type: "image/png", purpose: "any" },
     ],
   };
 }

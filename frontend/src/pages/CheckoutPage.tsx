@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { fetchPublicInvoice, trackPublicEvent } from "../lib/api";
-import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel, getInvoiceStatusMeta } from "../lib/status";
+import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel, formatPaymentAssetLabel, getInvoiceStatusMeta } from "../lib/status";
 import type { Invoice } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { CHECKOUT_COPY as COPY } from "../i18n";
@@ -369,7 +369,7 @@ export function CheckoutPage() {
             <p className="co-final__body">{finalBody}</p>
             {isOverpaid || isManualReview ? (
               <div className="co-final__note">
-                <strong>{text.underpaidReceived}: {invoice.received_amount || "0"} {formatNetworkLabel(invoice.payable_network)}</strong>
+                <strong>{text.underpaidReceived}: {invoice.received_amount || "0"} {formatPaymentAssetLabel(invoice.payable_asset, invoice.payable_network)}</strong>
                 {invoice.review_reason ? <small>{invoice.review_reason.replaceAll("_", " ")}</small> : null}
               </div>
             ) : null}
@@ -481,8 +481,8 @@ export function CheckoutPage() {
 
             {isUnderpaid ? (
               <div className="co-amount__note" style={{ borderTop: "none", marginTop: 0, paddingLeft: 0, paddingRight: 0 }}>
-                <span>{text.underpaidReceived}: <b>{invoice.received_amount || "0"} {formatNetworkLabel(invoice.payable_network)}</b></span>
-                {remainingAmount ? <span>{text.underpaidRemaining}: <b>{remainingAmount} {formatNetworkLabel(invoice.payable_network)}</b></span> : null}
+                <span>{text.underpaidReceived}: <b>{invoice.received_amount || "0"} {formatPaymentAssetLabel(invoice.payable_asset, invoice.payable_network)}</b></span>
+                {remainingAmount ? <span>{text.underpaidRemaining}: <b>{remainingAmount} {formatPaymentAssetLabel(invoice.payable_asset, invoice.payable_network)}</b></span> : null}
               </div>
             ) : null}
 

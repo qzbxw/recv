@@ -37,6 +37,7 @@ import {
 } from "../lib/api";
 import { CustomSelect } from "../components/CustomSelect";
 import { buildCheckoutUrl, buildCheckoutPath } from "../lib/routing";
+import { formatPaymentAssetLabel } from "../lib/status";
 import type {
   AdminAnalyticsResponse,
   AdminAuditEvent,
@@ -657,7 +658,7 @@ function InvoiceCard({ inv, workspaces, busyKey, runAction }: {
         </div>
         <div className="dev-card__amount-col">
           <div className="dev-card__amount">{formatMoney(inv.base_amount_usd)}</div>
-          <div className="dev-card__base">{inv.payable_amount} {inv.payable_asset || inv.payable_network}</div>
+          <div className="dev-card__base">{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</div>
           <div className="dev-card__date">{formatDateTime(inv.created_at)}</div>
         </div>
       </div>
@@ -815,7 +816,7 @@ function ReviewPanel({ queue, busyKey, runAction }: { queue: AdminInvoice[]; bus
                   </div>
                   <div className="dev-card__amount-col">
                     <div className="dev-card__amount">{formatMoney(inv.base_amount_usd)}</div>
-                    <div className="dev-card__base">recv {inv.payable_amount} {inv.payable_asset || inv.payable_network}</div>
+                    <div className="dev-card__base">recv {inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</div>
                     <div className="dev-card__date">{formatDateTime(inv.created_at)}</div>
                   </div>
                 </div>
@@ -2115,4 +2116,3 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
     </div>
   );
 }
-
