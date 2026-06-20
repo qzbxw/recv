@@ -126,7 +126,7 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if len(keyboard.InlineKeyboard) != 2 {
 		t.Fatalf("expected recv row to be appended, got %#v", keyboard.InlineKeyboard)
 	}
-	if keyboard.InlineKeyboard[1][0].URL != "https://recv.test/app" {
+	if keyboard.InlineKeyboard[1][0].URL != "https://recv.test/app/console" {
 		t.Fatalf("unexpected recv button URL: %q", keyboard.InlineKeyboard[1][0].URL)
 	}
 
@@ -170,6 +170,9 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if got := worker.appURL("/checkout/INV123"); got != "https://recv.test/app/checkout/INV123" {
 		t.Fatalf("unexpected app URL: %q", got)
 	}
+	if got := worker.siteURL("/ru/pricing"); got != "https://recv.test/ru/pricing" {
+		t.Fatalf("unexpected site URL: %q", got)
+	}
 	if got := shortAddress("0x1111111111111111111111111111111111111111"); got != "0x1111...111111" {
 		t.Fatalf("unexpected short address: %q", got)
 	}
@@ -191,8 +194,8 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if networks := payableNetworksForWallet(store.NetworkSOLANA); len(networks) != 1 || networks[0] != store.NetworkSOLANA {
 		t.Fatalf("expected 1 SOLANA payable network, got %#v", networks)
 	}
-	if networks := payableNetworksForWallet(store.NetworkTON); len(networks) != 1 || networks[0] != store.NetworkTON {
-		t.Fatalf("expected 1 TON payable network (default case), got %#v", networks)
+	if networks := payableNetworksForWallet(store.NetworkTON); len(networks) != 2 || networks[0] != store.NetworkTON || networks[1] != store.NetworkTON_USDT {
+		t.Fatalf("expected TON payable networks for GRAM and USDT, got %#v", networks)
 	}
 	if got := networkButtonLabel(store.NetworkBASE); got != "BASE / USDT" {
 		t.Fatalf("unexpected network label: %q", got)
@@ -772,6 +775,26 @@ func TestHandleCallbackScreenUpgrade(t *testing.T) {
 	// Test screen:upgrade callback
 	if err := worker.handleCallback(ctx, botCallback("screen:upgrade", messageID, chatID, user)); err != nil {
 		t.Fatalf("screen:upgrade callback returned error: %v", err)
+	}
+	if err := worker.handleCallback(ctx, botCallback("plan:select:developer", messageID, chatID, user)); err != nil {
+		t.Fatalf("plan select callback returned error: %v", err)
+	}
+	if err := worker.handleCallback(ctx, botCallback("plan:network:developer:TON", messageID, chatID, user)); err != nil {
+		t.Fatalf("developer checkout callback returned error: %v", err)
+	}
+	workspace, err := st.GetWorkspaceByTelegramID(ctx, user.ID)
+	if err != nil {
+		t.Fatalf("GetWorkspaceByTelegramID: %v", err)
+	}
+	invoices, total, err := st.ListInvoices(ctx, workspace.ID, store.ListInvoicesFilter{Limit: 10})
+	if err != nil {
+		t.Fatalf("ListInvoices: %v", err)
+	}
+	if total != 1 || len(invoices) != 1 {
+		t.Fatalf("expected one developer subscription invoice, total=%d invoices=%+v", total, invoices)
+	}
+	if invoices[0].Kind != store.InvoiceKindSubscription || invoices[0].PlanCode != store.PlanCodeDeveloper {
+		t.Fatalf("expected developer subscription invoice, got %+v", invoices[0])
 	}
 }
 

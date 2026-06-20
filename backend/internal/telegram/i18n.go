@@ -9,30 +9,35 @@ type botCopy struct {
 	lang string
 
 	// Home
-	homeTitle       string
-	homeWorkspace   string // %s username
-	homeWallets     string // %d count
-	homeLatest      string // %s latest line
-	homeNoInvoices  string
-	homeTagline     string
-	homeProActive   string // %s = formatted date
-	homeTrialLeft   string // %d remaining
+	homeTitle      string
+	homeWorkspace  string // %s username
+	homePlan       string // %s plan label
+	homeWallets    string // %d count
+	homeLatest     string // %s latest line
+	homeNoInvoices string
+	homeTagline    string
+	homePlanActive string // %s plan, %s = formatted date
+	homeTrialLeft  string // %d remaining
 
 	// Buttons
-	btnNewInvoice  string
-	btnWallets     string
-	btnUnlockPRO   string
-	btnExtendPRO   string
-	btnHome        string
-	btnBack        string
-	btnCancel      string
-	btnLanguage    string
-	btnOpenCheckout string
-	btnOpenRecv    string
-	btnSetWallet   string // %s = network label
-	btnDisable     string // %s = network label
+	btnNewInvoice      string
+	btnRecentInvoices  string
+	btnWallets         string
+	btnPlans           string
+	btnExtendPlan      string
+	btnHome            string
+	btnBack            string
+	btnCancel          string
+	btnLanguage        string
+	btnOpenCheckout    string
+	btnOpenConsole     string
+	btnPricing         string
+	btnDocs            string
+	btnSetWallet       string // %s = network label
+	btnDisable         string // %s = network label
 	btnNewInvoiceShort string
-	minuteSuffix   string // e.g. "min" / "мин"
+	btnPayPlan         string // %s = plan name
+	minuteSuffix       string // e.g. "min" / "мин"
 
 	// Login
 	loginTitle string
@@ -40,6 +45,11 @@ type botCopy struct {
 
 	// Unknown command / fallback
 	unknownCommand string
+
+	// Recent invoices
+	invoicesTitle string
+	invoicesEmpty string
+	invoiceLine   string // public id, title, amount, network, status
 
 	// Wallets
 	walletsTitle      string
@@ -64,29 +74,33 @@ type botCopy struct {
 	invoiceTrialReached string
 
 	// Upgrade
-	upgradeTitle   string
-	upgradeBody    string
-	upgradePrice   string // %s = price label
-	upgradePickNet string
-	checkoutCreated string // %s id, %s amount, %s network
+	plansTitle      string
+	plansBody       string
+	plansCurrent    string // %s plan, %s date
+	planLine        string // %s name, %s price, %s features
+	planMerchant    string
+	planDeveloper   string
+	planBusiness    string
+	planPickNetwork string // %s plan name, %s price, %s features
+	checkoutCreated string // %s plan, %s id, %s amount, %s network
 
 	// Manual-review callbacks
-	markedPaid     string // %s id
-	keptUnderpaid  string // %s id
-	keptReview     string // %s id
+	markedPaid    string // %s id
+	keptUnderpaid string // %s id
+	keptReview    string // %s id
 
 	// Language screen
 	languageTitle string
 
 	// Callback toasts (answerCallbackQuery)
-	toastWalletDisabled  string
-	toastActionFailed    string
-	toastWaitingTopUp    string
-	toastMarkedPaid      string
-	toastLeftReview      string
-	toastUpgradeCreated  string
-	toastLanguageSet     string
-	toastUnknownAction   string
+	toastWalletDisabled      string
+	toastActionFailed        string
+	toastWaitingTopUp        string
+	toastMarkedPaid          string
+	toastLeftReview          string
+	toastPlanCheckoutCreated string
+	toastLanguageSet         string
+	toastUnknownAction       string
 }
 
 var enCopy = botCopy{
@@ -94,32 +108,41 @@ var enCopy = botCopy{
 
 	homeTitle:      "<b>recv</b> — payments on autopilot",
 	homeWorkspace:  "Workspace · %s",
+	homePlan:       "Plan · %s",
 	homeWallets:    "Payout wallets · %d",
 	homeLatest:     "Last invoice · %s",
 	homeNoInvoices: "No invoices yet — let's fix that.",
-	homeTagline:    "Spin up a payment link, manage payouts, or go PRO. Everything lives here.",
-	homeProActive:  "⭐ PRO active until %s",
+	homeTagline:    "Payment links, wallets, plan, recent invoices — the whole counter fits in this chat.",
+	homePlanActive: "⭐ %s active until %s",
 	homeTrialLeft:  "Trial · %d free invoices left",
 
 	btnNewInvoice:      "＋ New invoice",
+	btnRecentInvoices:  "🧾 Recent",
 	btnWallets:         "👛 Wallets",
-	btnUnlockPRO:       "⭐ Unlock PRO",
-	btnExtendPRO:       "⭐ Extend PRO",
+	btnPlans:           "⭐ Plans",
+	btnExtendPlan:      "⭐ Extend plan",
 	btnHome:            "← Home",
 	btnBack:            "← Back",
 	btnCancel:          "✕ Cancel",
 	btnLanguage:        "🌐 Language",
 	btnOpenCheckout:    "💳 Open checkout",
-	btnOpenRecv:        "↗ Open recv",
+	btnOpenConsole:     "↗ Console",
+	btnPricing:         "Plans on site",
+	btnDocs:            "Docs",
 	btnSetWallet:       "Set %s",
 	btnDisable:         "Remove %s",
 	btnNewInvoiceShort: "＋ One more",
+	btnPayPlan:         "Pay for %s",
 	minuteSuffix:       "min",
 
 	loginTitle: "🔑 <b>Sign in on the web</b>",
 	loginSteps: "1. Open the recv sign-in page in your browser.\n2. Type your @username.\n3. Tap “Get code”.\n4. Paste the code we send you here. Done.",
 
-	unknownCommand: "Not a command I know. Try /invoice for a payment link, /wallets to manage payouts, or /upgrade to go PRO.",
+	unknownCommand: "I know /invoice, /invoices, /wallets, /plans and /language. Or just use the buttons — faster.",
+
+	invoicesTitle: "🧾 <b>Recent invoices</b>",
+	invoicesEmpty: "No invoices yet. Create one here and send the checkout link wherever the buyer is.",
+	invoiceLine:   "<b>%s</b> · %s\n%s %s · %s",
 
 	walletsTitle:      "👛 <b>Payout wallets</b>",
 	walletsEmpty:      "No wallets yet. Add one and money lands straight in your pocket — recv never touches it.",
@@ -139,13 +162,17 @@ var enCopy = botCopy{
 	invoiceTitleEmpty:   "A title can't be empty — send a few words.",
 	invoiceAmountBad:    "That's not a valid amount. Send a positive number in USD, like 49.90.",
 	invoiceCreated:      "✅ <b>Invoice %s is live</b>\n\n%s\n%s %s · expires in %d min\n\nShare the checkout link below.",
-	invoiceTrialReached: "You're out of free invoices. Unlock PRO and keep the links flowing.",
+	invoiceTrialReached: "The trial links are spent. Pick Merchant for simple payment links, or Developer if you want API and webhooks too.",
 
-	upgradeTitle:    "⭐ <b>recv PRO</b>",
-	upgradeBody:     "Unlimited invoices for 30 days. No turnover fees, ever.",
-	upgradePrice:    "Price · %s",
-	upgradePickNet:  "Pick how you'd like to pay:",
-	checkoutCreated: "✅ <b>PRO checkout ready</b>\n\n%s\n%s %s · 30 days of unlimited invoices\n\nPay below and you're in.",
+	plansTitle:      "⭐ <b>recv plans</b>",
+	plansBody:       "0% turnover fees. Funds go straight to your wallet. Pick the amount of machinery you need.",
+	plansCurrent:    "Current · %s until %s",
+	planLine:        "<b>%s</b> · $%s / 30 days\n%s",
+	planMerchant:    "Payment links, Telegram flow, manual review.",
+	planDeveloper:   "Full API, webhooks, idempotency, MCP tools.",
+	planBusiness:    "Teams, audit logs, higher limits, priority workflow.",
+	planPickNetwork: "<b>%s</b> · $%s / 30 days\n\n%s\n\nChoose the network for this payment:",
+	checkoutCreated: "✅ <b>%s checkout is ready</b>\n\nInvoice %s\n%s %s · 30 days\n\nPay below. After confirmation the plan turns on automatically.",
 
 	markedPaid:    "✅ Invoice %s marked as paid. Nice.",
 	keptUnderpaid: "⏳ Invoice %s left open. We'll watch for the top-up.",
@@ -153,14 +180,14 @@ var enCopy = botCopy{
 
 	languageTitle: "🌐 <b>Language</b>\n\nThis applies everywhere — bot, app and payment alerts stay in sync.",
 
-	toastWalletDisabled: "Wallet removed",
-	toastActionFailed:   "Something went wrong",
-	toastWaitingTopUp:   "Watching for top-up",
-	toastMarkedPaid:     "Marked as paid",
-	toastLeftReview:     "Left in review",
-	toastUpgradeCreated: "Checkout ready",
-	toastLanguageSet:    "Language updated",
-	toastUnknownAction:  "Unknown action",
+	toastWalletDisabled:      "Wallet removed",
+	toastActionFailed:        "Something went wrong",
+	toastWaitingTopUp:        "Watching for top-up",
+	toastMarkedPaid:          "Marked as paid",
+	toastLeftReview:          "Left in review",
+	toastPlanCheckoutCreated: "Checkout ready",
+	toastLanguageSet:         "Language updated",
+	toastUnknownAction:       "Unknown action",
 }
 
 var ruCopy = botCopy{
@@ -168,32 +195,41 @@ var ruCopy = botCopy{
 
 	homeTitle:      "<b>recv</b> — платежи на автопилоте",
 	homeWorkspace:  "Воркспейс · %s",
+	homePlan:       "План · %s",
 	homeWallets:    "Кошельки для выплат · %d",
 	homeLatest:     "Последний счёт · %s",
 	homeNoInvoices: "Счетов пока нет — сейчас исправим.",
-	homeTagline:    "Создайте ссылку на оплату, настройте выплаты или подключите PRO. Всё здесь.",
-	homeProActive:  "⭐ PRO активен до %s",
+	homeTagline:    "Ссылки на оплату, кошельки, тариф, последние счета — вся касса прямо в чате.",
+	homePlanActive: "⭐ %s активен до %s",
 	homeTrialLeft:  "Пробный период · осталось %d бесплатных счетов",
 
 	btnNewInvoice:      "＋ Новый счёт",
+	btnRecentInvoices:  "🧾 Последние",
 	btnWallets:         "👛 Кошельки",
-	btnUnlockPRO:       "⭐ Подключить PRO",
-	btnExtendPRO:       "⭐ Продлить PRO",
+	btnPlans:           "⭐ Тарифы",
+	btnExtendPlan:      "⭐ Продлить тариф",
 	btnHome:            "← Домой",
 	btnBack:            "← Назад",
 	btnCancel:          "✕ Отмена",
 	btnLanguage:        "🌐 Язык",
 	btnOpenCheckout:    "💳 Открыть оплату",
-	btnOpenRecv:        "↗ Открыть recv",
+	btnOpenConsole:     "↗ Консоль",
+	btnPricing:         "Тарифы на сайте",
+	btnDocs:            "Документация",
 	btnSetWallet:       "Указать %s",
 	btnDisable:         "Убрать %s",
 	btnNewInvoiceShort: "＋ Ещё один",
+	btnPayPlan:         "Оплатить %s",
 	minuteSuffix:       "мин",
 
 	loginTitle: "🔑 <b>Вход через браузер</b>",
 	loginSteps: "1. Откройте страницу входа recv в браузере.\n2. Введите свой @username.\n3. Нажмите «Получить код».\n4. Вставьте код, который придёт сюда. Готово.",
 
-	unknownCommand: "Не знаю такую команду. Попробуйте /invoice для ссылки на оплату, /wallets для выплат или /upgrade для PRO.",
+	unknownCommand: "Я понимаю /invoice, /invoices, /wallets, /plans и /language. Но кнопками быстрее.",
+
+	invoicesTitle: "🧾 <b>Последние счета</b>",
+	invoicesEmpty: "Счетов пока нет. Создайте первый здесь и отправьте покупателю ссылку на оплату.",
+	invoiceLine:   "<b>%s</b> · %s\n%s %s · %s",
 
 	walletsTitle:      "👛 <b>Кошельки для выплат</b>",
 	walletsEmpty:      "Кошельков пока нет. Добавьте — деньги пойдут напрямую вам, recv их не касается.",
@@ -213,13 +249,17 @@ var ruCopy = botCopy{
 	invoiceTitleEmpty:   "Название не может быть пустым — пришлите пару слов.",
 	invoiceAmountBad:    "Это не похоже на сумму. Пришлите положительное число в USD, например 49.90.",
 	invoiceCreated:      "✅ <b>Счёт %s создан</b>\n\n%s\n%s %s · истекает через %d мин\n\nСсылка на оплату — ниже.",
-	invoiceTrialReached: "Бесплатные счета закончились. Подключите PRO — и продолжайте.",
+	invoiceTrialReached: "Пробные ссылки закончились. Берите Merchant для обычных оплат или Developer, если нужны API и вебхуки.",
 
-	upgradeTitle:    "⭐ <b>recv PRO</b>",
-	upgradeBody:     "Безлимит счетов на 30 дней. Без комиссий с оборота. Никогда.",
-	upgradePrice:    "Цена · %s",
-	upgradePickNet:  "Выберите, чем оплатить:",
-	checkoutCreated: "✅ <b>Счёт на PRO готов</b>\n\n%s\n%s %s · 30 дней безлимита\n\nОплатите ниже — и вы в деле.",
+	plansTitle:      "⭐ <b>Тарифы recv</b>",
+	plansBody:       "0% комиссии с оборота. Деньги идут сразу на ваш кошелёк. Выберите уровень под вашу механику.",
+	plansCurrent:    "Сейчас · %s до %s",
+	planLine:        "<b>%s</b> · $%s / 30 дней\n%s",
+	planMerchant:    "Платёжные ссылки, Telegram-flow, ручная проверка.",
+	planDeveloper:   "Полный API, вебхуки, идемпотентность, MCP-инструменты.",
+	planBusiness:    "Команды, audit logs, высокие лимиты, приоритетный workflow.",
+	planPickNetwork: "<b>%s</b> · $%s / 30 дней\n\n%s\n\nВыберите сеть для оплаты:",
+	checkoutCreated: "✅ <b>Счёт на %s готов</b>\n\nИнвойс %s\n%s %s · 30 дней\n\nОплатите ниже. После подтверждения тариф включится автоматически.",
 
 	markedPaid:    "✅ Счёт %s отмечен оплаченным. Отлично.",
 	keptUnderpaid: "⏳ Счёт %s оставлен открытым. Ждём доплату.",
@@ -227,14 +267,14 @@ var ruCopy = botCopy{
 
 	languageTitle: "🌐 <b>Язык</b>\n\nПрименяется везде — бот, приложение и уведомления об оплате синхронизированы.",
 
-	toastWalletDisabled: "Кошелёк убран",
-	toastActionFailed:   "Что-то пошло не так",
-	toastWaitingTopUp:   "Ждём доплату",
-	toastMarkedPaid:     "Отмечено оплаченным",
-	toastLeftReview:     "Оставлено на проверке",
-	toastUpgradeCreated: "Счёт готов",
-	toastLanguageSet:    "Язык обновлён",
-	toastUnknownAction:  "Неизвестное действие",
+	toastWalletDisabled:      "Кошелёк убран",
+	toastActionFailed:        "Что-то пошло не так",
+	toastWaitingTopUp:        "Ждём доплату",
+	toastMarkedPaid:          "Отмечено оплаченным",
+	toastLeftReview:          "Оставлено на проверке",
+	toastPlanCheckoutCreated: "Счёт готов",
+	toastLanguageSet:         "Язык обновлён",
+	toastUnknownAction:       "Неизвестное действие",
 }
 
 func copyFor(language string) botCopy {

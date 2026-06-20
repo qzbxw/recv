@@ -285,10 +285,12 @@ func (b *BotWorker) handleCommand(ctx context.Context, workspace store.Workspace
 		return err
 	case "/invoice":
 		return b.renderInvoiceWalletPicker(ctx, workspace, message.Chat.ID, 0)
+	case "/invoices", "/recent":
+		return b.renderRecentInvoices(ctx, workspace, message.Chat.ID, 0)
 	case "/wallets":
 		return b.renderWallets(ctx, workspace, message.Chat.ID, 0, "")
-	case "/upgrade":
-		return b.renderUpgrade(ctx, workspace, message.Chat.ID, 0, "")
+	case "/upgrade", "/plans", "/billing":
+		return b.renderPlans(ctx, workspace, message.Chat.ID, 0, "")
 	case "/language", "/lang":
 		return b.renderLanguage(ctx, workspace, message.Chat.ID, 0)
 	default:
@@ -323,8 +325,10 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		err = b.renderWallets(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "")
 	case data == "screen:invoice":
 		err = b.renderInvoiceWalletPicker(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
+	case data == "screen:invoices":
+		err = b.renderRecentInvoices(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
 	case data == "screen:upgrade":
-		err = b.renderUpgrade(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "")
+		err = b.renderPlans(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "")
 	case data == "screen:language":
 		err = b.renderLanguage(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
 	case strings.HasPrefix(data, "lang:set:"):
@@ -419,15 +423,43 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			break
 		}
 		err = b.finishInvoiceWizard(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, minutes)
-	case strings.HasPrefix(data, "upgrade:network:"):
-		network := store.Network(strings.TrimPrefix(data, "upgrade:network:"))
-		invoice, createErr := b.invoiceService.CreateSubscriptionInvoice(ctx, workspace, network)
+	case strings.HasPrefix(data, "plan:select:"):
+		planCode := store.NormalizePlanCode(strings.TrimPrefix(data, "plan:select:"))
+		if planCode == store.PlanCodeTrial {
+			err = fmt.Errorf("trial plan does not require checkout")
+			break
+		}
+		err = b.renderPlanNetworkPicker(ctx, workspace, planCode, query.Message.Chat.ID, query.Message.MessageID)
+	case strings.HasPrefix(data, "plan:network:"):
+		parts := strings.Split(data, ":")
+		if len(parts) != 4 {
+			err = fmt.Errorf("invalid plan network callback")
+			break
+		}
+		planCode := store.NormalizePlanCode(parts[2])
+		network := store.Network(parts[3])
+		invoice, createErr := b.invoiceService.CreatePlanInvoice(ctx, workspace, planCode, network)
 		if createErr != nil {
 			err = createErr
 			break
 		}
-		callbackText = c.toastUpgradeCreated
-		checkoutText := fmt.Sprintf(c.checkoutCreated, esc(invoice.PublicID), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)))
+		plan := store.ResolvePlan(planCode)
+		callbackText = c.toastPlanCheckoutCreated
+		checkoutText := fmt.Sprintf(c.checkoutCreated, esc(plan.Name), esc(invoice.PublicID), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)))
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, checkoutText, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnOpenCheckout, URL: b.appURL("/checkout/" + invoice.PublicID)}},
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
+	case strings.HasPrefix(data, "upgrade:network:"):
+		network := store.Network(strings.TrimPrefix(data, "upgrade:network:"))
+		invoice, createErr := b.invoiceService.CreatePlanInvoice(ctx, workspace, store.PlanCodeMerchant, network)
+		if createErr != nil {
+			err = createErr
+			break
+		}
+		plan := store.ResolvePlan(store.PlanCodeMerchant)
+		callbackText = c.toastPlanCheckoutCreated
+		checkoutText := fmt.Sprintf(c.checkoutCreated, esc(plan.Name), esc(invoice.PublicID), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)))
 		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, checkoutText, b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: c.btnOpenCheckout, URL: b.appURL("/checkout/" + invoice.PublicID)}},
 			{{Text: c.btnHome, CallbackData: "nav:home"}},
@@ -569,7 +601,7 @@ func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Wor
 	})
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "trial limit reached") {
-			return b.renderUpgrade(ctx, workspace, chatID, messageID, c.invoiceTrialReached)
+			return b.renderPlans(ctx, workspace, chatID, messageID, c.invoiceTrialReached)
 		}
 		return err
 	}
@@ -585,6 +617,7 @@ func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Wor
 
 func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
 	c := copyFor(workspace.Language)
+	now := time.Now()
 	wallets, err := b.store.ListWallets(ctx, workspace.ID)
 	if err != nil {
 		return err
@@ -598,6 +631,7 @@ func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, c
 		c.homeTitle,
 		"",
 		fmt.Sprintf(c.homeWorkspace, "<code>"+esc(workspaceHandle(workspace))+"</code>"),
+		fmt.Sprintf(c.homePlan, esc(workspace.EffectivePlan(now).Name)),
 		fmt.Sprintf(c.homeWallets, len(wallets)),
 	}
 	if len(invoices) > 0 {
@@ -607,24 +641,32 @@ func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, c
 		lines = append(lines, c.homeNoInvoices)
 	}
 
-	now := time.Now()
 	if workspace.HasActiveSubscription(now) && workspace.SubscriptionEndsAt != nil {
-		lines = append(lines, "", fmt.Sprintf(c.homeProActive, workspace.SubscriptionEndsAt.Format("2006-01-02")))
+		lines = append(lines, "", fmt.Sprintf(c.homePlanActive, esc(workspace.EffectivePlan(now).Name), workspace.SubscriptionEndsAt.Format("2006-01-02")))
+	} else {
+		remaining := service.TrialInvoiceLimit - workspace.FreeInvoicesUsed
+		if remaining < 0 {
+			remaining = 0
+		}
+		lines = append(lines, "", fmt.Sprintf(c.homeTrialLeft, remaining))
 	}
 	lines = append(lines, "", c.homeTagline)
 
-	proButton := tgInlineKeyboardButton{Text: c.btnUnlockPRO, CallbackData: "screen:upgrade"}
+	planButton := tgInlineKeyboardButton{Text: c.btnPlans, CallbackData: "screen:upgrade"}
 	if workspace.HasActiveSubscription(now) {
-		proButton = tgInlineKeyboardButton{Text: c.btnExtendPRO, CallbackData: "screen:upgrade"}
+		planButton = tgInlineKeyboardButton{Text: c.btnExtendPlan, CallbackData: "screen:upgrade"}
 	}
 
 	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard([][]tgInlineKeyboardButton{
 		{
 			{Text: c.btnNewInvoice, CallbackData: "screen:invoice"},
-			{Text: c.btnWallets, CallbackData: "screen:wallets"},
+			{Text: c.btnRecentInvoices, CallbackData: "screen:invoices"},
 		},
 		{
-			proButton,
+			{Text: c.btnWallets, CallbackData: "screen:wallets"},
+			planButton,
+		},
+		{
 			{Text: c.btnLanguage, CallbackData: "screen:language"},
 		},
 	}))
@@ -645,6 +687,44 @@ func (b *BotWorker) renderLanguage(ctx context.Context, workspace store.Workspac
 		},
 		{{Text: c.btnHome, CallbackData: "nav:home"}},
 	}))
+}
+
+func (b *BotWorker) renderRecentInvoices(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
+	invoices, _, err := b.store.ListInvoices(ctx, workspace.ID, store.ListInvoicesFilter{Limit: 5})
+	if err != nil {
+		return err
+	}
+
+	lines := []string{c.invoicesTitle}
+	rows := [][]tgInlineKeyboardButton{}
+	if len(invoices) == 0 {
+		lines = append(lines, "", c.invoicesEmpty)
+	} else {
+		for _, invoice := range invoices {
+			lines = append(
+				lines,
+				"",
+				fmt.Sprintf(
+					c.invoiceLine,
+					esc(invoice.PublicID),
+					esc(invoice.Title),
+					esc(invoice.PayableAmount.StringFixed(6)),
+					esc(string(invoice.PayableNetwork)),
+					esc(invoiceStatusLabel(c.lang, invoice.Status)),
+				),
+			)
+			rows = append(rows, []tgInlineKeyboardButton{{
+				Text: c.btnOpenCheckout + " · " + invoice.PublicID,
+				URL:  b.appURL("/checkout/" + invoice.PublicID),
+			}})
+		}
+	}
+	rows = append(rows, []tgInlineKeyboardButton{
+		{Text: c.btnNewInvoiceShort, CallbackData: "screen:invoice"},
+		{Text: c.btnHome, CallbackData: "nav:home"},
+	})
+	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard(rows))
 }
 
 func workspaceTelegramLabel(telegramID *int64) string {
@@ -719,31 +799,52 @@ func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, workspace sto
 	return b.sendOrEdit(ctx, chatID, messageID, c.invoicePickWallet, b.recvKeyboard(rows))
 }
 
-func (b *BotWorker) renderUpgrade(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, note string) error {
+func (b *BotWorker) renderPlans(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, note string) error {
 	c := copyFor(workspace.Language)
 	lines := []string{
-		c.upgradeTitle,
+		c.plansTitle,
 		"",
-		c.upgradeBody,
-		fmt.Sprintf(c.upgradePrice, "39 USDT"),
+		c.plansBody,
 	}
 	if note != "" {
 		lines = append(lines, "", esc(note))
 	}
 	if workspace.HasActiveSubscription(time.Now()) {
-		lines = append(lines, "", fmt.Sprintf(c.homeProActive, workspace.SubscriptionEndsAt.Format("2006-01-02")))
+		lines = append(lines, "", fmt.Sprintf(c.plansCurrent, esc(workspace.EffectivePlan(time.Now()).Name), workspace.SubscriptionEndsAt.Format("2006-01-02")))
 	}
-	lines = append(lines, "", c.upgradePickNet)
+	for _, plan := range store.ListPaidPlans() {
+		lines = append(lines, "", fmt.Sprintf(c.planLine, esc(plan.Name), esc(plan.PriceUSDString), esc(planDescription(c, plan.Code))))
+	}
 
-	rows := make([][]tgInlineKeyboardButton, 0, 7)
-	for _, network := range []store.Network{store.NetworkTRON, store.NetworkSOLANA, store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC, store.NetworkTON} {
+	rows := make([][]tgInlineKeyboardButton, 0, 6)
+	for _, plan := range store.ListPaidPlans() {
 		rows = append(rows, []tgInlineKeyboardButton{{
-			Text:         networkButtonLabel(network),
-			CallbackData: "upgrade:network:" + string(network),
+			Text:         fmt.Sprintf("%s · $%s", fmt.Sprintf(c.btnPayPlan, plan.Name), plan.PriceUSDString),
+			CallbackData: "plan:select:" + string(plan.Code),
 		}})
 	}
+	rows = append(rows, []tgInlineKeyboardButton{
+		{Text: c.btnPricing, URL: b.siteURL("/" + c.lang + "/pricing")},
+		{Text: c.btnDocs, URL: b.siteURL("/" + c.lang + "/docs")},
+	})
 	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnHome, CallbackData: "nav:home"}})
 	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard(rows))
+}
+
+func (b *BotWorker) renderPlanNetworkPicker(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
+	plan := store.ResolvePlan(planCode)
+	text := fmt.Sprintf(c.planPickNetwork, esc(plan.Name), esc(plan.PriceUSDString), esc(planDescription(c, plan.Code)))
+
+	rows := make([][]tgInlineKeyboardButton, 0, 8)
+	for _, network := range []store.Network{store.NetworkTRON, store.NetworkSOLANA, store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC, store.NetworkTON, store.NetworkTON_USDT} {
+		rows = append(rows, []tgInlineKeyboardButton{{
+			Text:         networkButtonLabel(network),
+			CallbackData: fmt.Sprintf("plan:network:%s:%s", plan.Code, network),
+		}})
+	}
+	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnBack, CallbackData: "screen:upgrade"}})
+	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard(rows))
 }
 
 func (b *BotWorker) notificationKeyboard(raw json.RawMessage) *tgInlineKeyboardMarkup {
@@ -772,7 +873,7 @@ func (b *BotWorker) notificationKeyboard(raw json.RawMessage) *tgInlineKeyboardM
 }
 
 func (b *BotWorker) recvKeyboard(rows [][]tgInlineKeyboardButton) *tgInlineKeyboardMarkup {
-	recvRow := []tgInlineKeyboardButton{{Text: "recv", URL: b.appURL("")}}
+	recvRow := []tgInlineKeyboardButton{{Text: copyFor("").btnOpenConsole, URL: b.appURL("/console")}}
 	rows = append(rows, recvRow)
 	return &tgInlineKeyboardMarkup{InlineKeyboard: rows}
 }
@@ -983,6 +1084,20 @@ func (b *BotWorker) appURL(path string) string {
 	return base + cleanPath
 }
 
+func (b *BotWorker) siteURL(path string) string {
+	base := strings.TrimRight(strings.TrimSpace(b.publicAppURL), "/")
+	if base == "" {
+		base = "http://localhost:3000"
+	}
+	if strings.HasSuffix(base, "/app") {
+		base = strings.TrimSuffix(base, "/app")
+	}
+	if path == "" {
+		return base
+	}
+	return base + "/" + strings.TrimLeft(path, "/")
+}
+
 func shortAddress(address string) string {
 	if len(address) <= 14 {
 		return address
@@ -1005,6 +1120,8 @@ func payableNetworksForWallet(network store.Network) []store.Network {
 	switch network {
 	case store.NetworkEVM:
 		return []store.Network{store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC, store.NetworkEVM}
+	case store.NetworkTON:
+		return []store.Network{store.NetworkTON, store.NetworkTON_USDT}
 	case store.NetworkSOLANA:
 		return []store.Network{store.NetworkSOLANA}
 	default:
@@ -1014,8 +1131,12 @@ func payableNetworksForWallet(network store.Network) []store.Network {
 
 func networkButtonLabel(network store.Network) string {
 	switch network {
+	case store.NetworkTON:
+		return "TON / GRAM"
 	case store.NetworkTRON:
 		return "TRON / USDT"
+	case store.NetworkTON_USDT:
+		return "TON / USDT"
 	case store.NetworkSOLANA:
 		return "SOLANA / USDT"
 	case store.NetworkEVM:
@@ -1028,6 +1149,54 @@ func networkButtonLabel(network store.Network) string {
 		return "BSC / USDT"
 	default:
 		return string(network)
+	}
+}
+
+func planDescription(c botCopy, planCode store.PlanCode) string {
+	switch store.NormalizePlanCode(string(planCode)) {
+	case store.PlanCodeDeveloper:
+		return c.planDeveloper
+	case store.PlanCodeBusiness:
+		return c.planBusiness
+	default:
+		return c.planMerchant
+	}
+}
+
+func invoiceStatusLabel(lang string, status store.InvoiceStatus) string {
+	if lang == "ru" {
+		switch status {
+		case store.InvoiceStatusAwaitingPayment:
+			return "ждёт оплату"
+		case store.InvoiceStatusPaid:
+			return "оплачен"
+		case store.InvoiceStatusExpired:
+			return "истёк"
+		case store.InvoiceStatusUnderpaid:
+			return "недоплата"
+		case store.InvoiceStatusOverpaid:
+			return "переплата"
+		case store.InvoiceStatusManualReview:
+			return "ручная проверка"
+		default:
+			return string(status)
+		}
+	}
+	switch status {
+	case store.InvoiceStatusAwaitingPayment:
+		return "awaiting payment"
+	case store.InvoiceStatusPaid:
+		return "paid"
+	case store.InvoiceStatusExpired:
+		return "expired"
+	case store.InvoiceStatusUnderpaid:
+		return "underpaid"
+	case store.InvoiceStatusOverpaid:
+		return "overpaid"
+	case store.InvoiceStatusManualReview:
+		return "manual review"
+	default:
+		return string(status)
 	}
 }
 
