@@ -8,6 +8,7 @@ type JsonLdValue =
   | string
   | number
   | boolean
+  | undefined
   | null
   | JsonLdValue[]
   | { [key: string]: JsonLdValue };
@@ -105,7 +106,9 @@ export function softwareApplicationJsonLd({
   applicationCategory?: string;
   applicationSubCategory?: string;
 }) {
-  const features = Array.isArray(featureList) ? featureList.join(", ") : featureList;
+  const features: string | undefined = typeof featureList === "string"
+    ? featureList
+    : featureList?.join(", ");
   return stripUndefined({
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
