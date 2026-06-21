@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { UIProvider, useUI } from "./lib/ui";
 import { getStoredToken } from "./lib/api";
-import { captureAttribution } from "./lib/attribution";
+import { captureAttribution, trackUTMPageView } from "./lib/attribution";
 import { buildAuthHref, isOAuthSessionReturn } from "./lib/routing";
 
 const AdminBlogPage = lazy(() => import("./pages/AdminBlogPage").then((module) => ({ default: module.AdminBlogPage })));
@@ -96,9 +96,17 @@ function ProtectedConsoleRoute() {
 }
 
 export default function App() {
+  const location = useLocation();
+
   useEffect(() => {
     captureAttribution();
-  }, []);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    const path = `${location.pathname}${location.search}`;
+    const timer = window.setTimeout(() => trackUTMPageView(path, document.title), 0);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname, location.search]);
 
   return (
     <UIProvider>

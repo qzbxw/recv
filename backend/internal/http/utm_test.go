@@ -36,3 +36,33 @@ func TestNormalizeUTMVisitRejectsInvalidPayloads(t *testing.T) {
 		}
 	}
 }
+
+func TestNormalizeUTMEvent(t *testing.T) {
+	event, err := normalizeUTMEvent(utmEventInput{
+		AttributionID: " visitor-1 ",
+		EventName:     " docs_open ",
+		Source:        " tg ",
+		Path:          "/ru/docs/quickstart?utm_source=tg",
+		Title:         " Quickstart ",
+	})
+	if err != nil {
+		t.Fatalf("normalizeUTMEvent returned error: %v", err)
+	}
+	if event.AttributionID != "visitor-1" || event.EventName != "docs_open" || event.Path != "/ru/docs/quickstart?utm_source=tg" || event.Title != "Quickstart" {
+		t.Fatalf("unexpected normalized event: %+v", event)
+	}
+}
+
+func TestNormalizeUTMEventRejectsInvalidPayloads(t *testing.T) {
+	tests := []utmEventInput{
+		{EventName: " ", Path: "/ru"},
+		{EventName: "page_view", Path: " "},
+		{EventName: "page_view", Path: "https://evil.example/path"},
+		{EventName: "page_view", Path: "no-leading-slash"},
+	}
+	for _, input := range tests {
+		if _, err := normalizeUTMEvent(input); err == nil {
+			t.Fatalf("expected invalid payload to fail: %+v", input)
+		}
+	}
+}

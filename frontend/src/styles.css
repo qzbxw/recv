@@ -1846,6 +1846,20 @@
   background: rgba(255, 255, 255, 0.025);
 }
 
+.admin-sales-table--journeys {
+  min-width: 1180px;
+}
+
+.admin-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .admin-table-primary {
   display: grid;
   gap: 0.1rem;
@@ -1860,6 +1874,41 @@
   text-align: center;
   color: rgba(255, 255, 255, 0.56);
   padding: 2rem 1rem;
+}
+
+.admin-muted-line {
+  display: block;
+  max-width: 420px;
+  margin-top: 0.25rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.admin-journey-list {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 280px;
+}
+
+.admin-journey-event {
+  display: grid;
+  gap: 0.15rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid rgba(124, 58, 237, 0.45);
+}
+
+.admin-journey-event strong {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.admin-journey-event span {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
 }
 
 .admin-pagination {
@@ -1889,6 +1938,10 @@
 }
 
 @media (max-width: 900px) {
+  .admin-grid--two {
+    grid-template-columns: 1fr;
+  }
+
   .admin-login-panel,
   .admin-topbar,
   .admin-sales-head {

@@ -795,48 +795,6 @@ func TestHandlerValidationBranches(t *testing.T) {
 	})
 }
 
-func TestAdminVerifyTOTPErrorPaths(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	adminService := service.NewAdminService("admin", "pass", "secret", time.Hour)
-	server := &Server{adminService: adminService}
-
-	t.Run("rejects malformed json body", func(t *testing.T) {
-		// Arrange
-		router := gin.New()
-		router.POST("/api/admin/login/verify-totp", server.handleAdminVerifyTOTP)
-
-		// Act
-		recorder := httptest.NewRecorder()
-		request := httptest.NewRequest(stdhttp.MethodPost, "/api/admin/login/verify-totp", strings.NewReader(`{`))
-		request.Header.Set("Content-Type", "application/json")
-		router.ServeHTTP(recorder, request)
-
-		// Assert
-		if recorder.Code != stdhttp.StatusBadRequest {
-			t.Fatalf("expected 400, got %d", recorder.Code)
-		}
-	})
-
-	t.Run("rejects invalid challenge token", func(t *testing.T) {
-		// Arrange
-		router := gin.New()
-		router.POST("/api/admin/login/verify-totp", server.handleAdminVerifyTOTP)
-
-		// Act
-		recorder := httptest.NewRecorder()
-		request := httptest.NewRequest(stdhttp.MethodPost, "/api/admin/login/verify-totp",
-			strings.NewReader(`{"challenge_token":"invalid-token","code":"123456"}`))
-		request.Header.Set("Content-Type", "application/json")
-		router.ServeHTTP(recorder, request)
-
-		// Assert
-		if recorder.Code != stdhttp.StatusUnauthorized {
-			t.Fatalf("expected 401 for invalid challenge token, got %d", recorder.Code)
-		}
-	})
-}
-
 func TestAdminRefreshErrorPaths(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -2606,23 +2564,6 @@ func TestHandleCancelAndMarkPaidWithAPIInvoice(t *testing.T) {
 			t.Fatalf("expected 400 for malformed json, got %d", rec.Code)
 		}
 	})
-}
-
-func TestHandleAdminVerifyTOTPMalformedJSON(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	adminService := service.NewAdminService("admin", "pass", "secret", time.Hour)
-	server := &Server{adminService: adminService}
-
-	router := gin.New()
-	router.POST("/api/admin/login/verify-totp", server.handleAdminVerifyTOTP)
-
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(stdhttp.MethodPost, "/api/admin/login/verify-totp", strings.NewReader(`{bad`))
-	req.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(rec, req)
-	if rec.Code != stdhttp.StatusBadRequest {
-		t.Fatalf("expected 400 for malformed json, got %d", rec.Code)
-	}
 }
 
 func TestHandleAdminLogout(t *testing.T) {

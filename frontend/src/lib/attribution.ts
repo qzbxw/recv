@@ -13,6 +13,13 @@ export type AttributionPayload = {
   ref_code?: string;
 };
 
+type UTMEventPayload = {
+  event_name: string;
+  path?: string;
+  title?: string;
+  properties?: Record<string, unknown>;
+};
+
 // sanitizeRefCode mirrors the backend referral code rules so obviously broken
 // values never reach the cookie.
 export function sanitizeRefCode(value: string | null | undefined) {
@@ -61,6 +68,41 @@ function reportVisit(payload: AttributionPayload, search: string) {
     keepalive: true,
     credentials: "omit",
   }).catch(() => undefined);
+}
+
+export function trackUTMEvent(payload: UTMEventPayload) {
+  const attr = readAttribution();
+  if (!attr?.attribution_id) return;
+  const path = payload.path || `${window.location.pathname}${window.location.search}`;
+  const body = JSON.stringify({
+    attribution_id: attr.attribution_id,
+    event_name: payload.event_name,
+    source: attr.source || "",
+    medium: attr.medium || "",
+    campaign: attr.campaign || "",
+    term: attr.term || "",
+    content: attr.content || "",
+    path,
+    title: payload.title || document.title || "",
+    referrer: attr.referrer || "",
+    properties: payload.properties || {},
+  });
+  const url = `${getApiBase()}/api/public/utm-event`;
+  if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: "application/json" }))) {
+    return;
+  }
+  void fetch(url, {
+    method: "POST",
+    body,
+    headers: { "Content-Type": "application/json" },
+    keepalive: true,
+    credentials: "omit",
+  }).catch(() => undefined);
+}
+
+export function trackUTMPageView(path: string, title?: string) {
+  const eventName = path.includes("/docs") || path.includes("/developers") ? "docs_page_view" : path.startsWith("/app") || ["/auth", "/console", "/developer-portal"].some((prefix) => path.startsWith(prefix)) ? "app_open" : "page_view";
+  trackUTMEvent({ event_name: eventName, path, title });
 }
 
 // captureAttribution mirrors AttributionCapture on the public site: ads can

@@ -128,7 +128,11 @@ func NewBotWorker(st *store.Store, invoiceService *service.InvoiceService, token
 		// Seller webhook endpoints get a much tighter budget than Telegram
 		// long-polling so one slow endpoint cannot stall the delivery batch.
 		webhookClient: &http.Client{
-			Timeout: 15 * time.Second,
+			Timeout:   15 * time.Second,
+			Transport: safeWebhookTransport(),
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
 		},
 	}
 }

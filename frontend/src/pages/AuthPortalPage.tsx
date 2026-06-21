@@ -12,7 +12,7 @@ import {
   validateReferralCode,
 } from "../lib/api";
 import { sanitizeNextPath } from "../lib/routing";
-import { readAttribution, readRefCode, sanitizeRefCode } from "../lib/attribution";
+import { readAttribution, readRefCode, sanitizeRefCode, trackUTMEvent } from "../lib/attribution";
 import { useUI } from "../lib/ui";
 import { AUTH_COPY as COPY } from "../i18n";
 
@@ -171,6 +171,7 @@ export function AuthPortalPage() {
       if (!sessionInitData) {
         throw new Error("No Telegram session found");
       }
+      trackUTMEvent({ event_name: "signup_start", properties: { method: "telegram_init_data" } });
       const result = await authenticateTelegram({ init_data: sessionInitData, attribution: readAttribution(), ref_code: sanitizeRefCode(refCode) });
       setStoredToken(result.token);
       void trackEvent(result.token, { event_name: "signup_completed", source: "auth", properties: { method: "telegram_init_data" } }).catch(() => undefined);
@@ -206,6 +207,7 @@ export function AuthPortalPage() {
       setLoading(true);
       setError("");
       setMessage("");
+      trackUTMEvent({ event_name: "signup_start", properties: { method: "telegram_code" } });
       const result = await loginWithTelegramCode({
         username: form.username.trim(),
         code: form.code.trim(),
@@ -237,6 +239,7 @@ export function AuthPortalPage() {
         throw new Error(text.devTelegramId);
       }
 
+      trackUTMEvent({ event_name: "signup_start", properties: { method: "dev" } });
       const result = await authenticateTelegram({
         username,
         telegram_id: telegramId,

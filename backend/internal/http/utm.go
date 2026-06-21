@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -23,18 +24,29 @@ type utmVisitInput struct {
 	Referrer      string `json:"referrer"`
 }
 
+type utmEventInput struct {
+	AttributionID string          `json:"attribution_id"`
+	EventName     string          `json:"event_name" binding:"required"`
+	Source        string          `json:"source"`
+	Medium        string          `json:"medium"`
+	Campaign      string          `json:"campaign"`
+	Term          string          `json:"term"`
+	Content       string          `json:"content"`
+	Path          string          `json:"path" binding:"required"`
+	Title         string          `json:"title"`
+	Referrer      string          `json:"referrer"`
+	Properties    json.RawMessage `json:"properties"`
+}
+
 func normalizeUTMVisit(input utmVisitInput) (store.AttributionInput, error) {
 	source := strings.TrimSpace(input.Source)
 	if source == "" {
 		return store.AttributionInput{}, fmt.Errorf("source is required")
 	}
 
-	landingPath := strings.TrimSpace(input.LandingPath)
-	if landingPath != "" {
-		parsed, err := url.Parse(landingPath)
-		if err != nil || parsed.IsAbs() || !strings.HasPrefix(parsed.Path, "/") {
-			return store.AttributionInput{}, fmt.Errorf("landing_path must be a local path")
-		}
+	landingPath, err := normalizeLocalPath(input.LandingPath, "landing_path")
+	if err != nil {
+		return store.AttributionInput{}, err
 	}
 
 	return store.AttributionInput{
@@ -50,7 +62,50 @@ func normalizeUTMVisit(input utmVisitInput) (store.AttributionInput, error) {
 	}, nil
 }
 
+func normalizeUTMEvent(input utmEventInput) (store.UTMEventInput, error) {
+	eventName := strings.TrimSpace(input.EventName)
+	if eventName == "" {
+		return store.UTMEventInput{}, fmt.Errorf("event_name is required")
+	}
+	path, err := normalizeLocalPath(input.Path, "path")
+	if err != nil {
+		return store.UTMEventInput{}, err
+	}
+	if path == "" {
+		return store.UTMEventInput{}, fmt.Errorf("path is required")
+	}
+	return store.UTMEventInput{
+		AttributionID: strings.TrimSpace(input.AttributionID),
+		EventName:     eventName,
+		Source:        strings.TrimSpace(input.Source),
+		Medium:        strings.TrimSpace(input.Medium),
+		Campaign:      strings.TrimSpace(input.Campaign),
+		Term:          strings.TrimSpace(input.Term),
+		Content:       strings.TrimSpace(input.Content),
+		Path:          path,
+		Title:         strings.TrimSpace(input.Title),
+		Referrer:      strings.TrimSpace(input.Referrer),
+		Properties:    input.Properties,
+	}, nil
+}
+
+func normalizeLocalPath(value string, field string) (string, error) {
+	path := strings.TrimSpace(value)
+	if path == "" {
+		return "", nil
+	}
+	parsed, err := url.Parse(path)
+	if err != nil || parsed.IsAbs() || !strings.HasPrefix(parsed.Path, "/") {
+		return "", fmt.Errorf("%s must be a local path", field)
+	}
+	return path, nil
+}
+
 func (s *Server) handlePublicUTMVisit(c *gin.Context) {
+	if !s.allowIPRate(c, "public_utm_visit", 60, time.Minute) {
+		return
+	}
+	limitJSONBody(c, publicWriteJSONBodyLimitBytes)
 	var input utmVisitInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid utm visit payload"})
@@ -62,6 +117,28 @@ func (s *Server) handlePublicUTMVisit(c *gin.Context) {
 		return
 	}
 	if err := s.store.RecordUTMVisit(c.Request.Context(), visit); err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (s *Server) handlePublicUTMEvent(c *gin.Context) {
+	if !s.allowIPRate(c, "public_utm_event", 120, time.Minute) {
+		return
+	}
+	limitJSONBody(c, publicWriteJSONBodyLimitBytes)
+	var input utmEventInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid utm event payload"})
+		return
+	}
+	event, err := normalizeUTMEvent(input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := s.store.RecordUTMEvent(c.Request.Context(), event); err != nil {
 		respondError(c, http.StatusInternalServerError, err)
 		return
 	}

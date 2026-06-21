@@ -2,17 +2,12 @@ package service
 
 import (
 	"context"
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha1" // #nosec G505 -- TOTP/HOTP requires HMAC-SHA1 per RFC 6238.
 	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/base32"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -46,25 +41,12 @@ type AdminClaims struct {
 	jwt.RegisteredClaims
 }
 
-type adminChallengeClaims struct {
-	UserID        int64  `json:"user_id"`
-	Email         string `json:"email"`
-	TOTPSetup     bool   `json:"totp_setup"`
-	ChallengeType string `json:"challenge_type"`
-	jwt.RegisteredClaims
-}
-
 type AdminLoginResult struct {
-	Token             string   `json:"token,omitempty"`
-	RefreshToken      string   `json:"refresh_token,omitempty"`
-	Username          string   `json:"username,omitempty"`
-	Email             string   `json:"email,omitempty"`
-	Roles             []string `json:"roles,omitempty"`
-	MFARequired       bool     `json:"mfa_required,omitempty"`
-	TOTPSetupRequired bool     `json:"totp_setup_required,omitempty"`
-	TOTPSecret        string   `json:"totp_secret,omitempty"`
-	ChallengeToken    string   `json:"challenge_token,omitempty"`
-	RecoveryCodes     []string `json:"recovery_codes,omitempty"`
+	Token        string   `json:"token,omitempty"`
+	RefreshToken string   `json:"refresh_token,omitempty"`
+	Username     string   `json:"username,omitempty"`
+	Email        string   `json:"email,omitempty"`
+	Roles        []string `json:"roles,omitempty"`
 }
 
 type AdminSessionInput struct {
@@ -165,7 +147,7 @@ func (s *AdminService) StartLoginWithSession(ctx context.Context, username strin
 		return AdminLoginResult{}, errors.New("invalid admin credentials")
 	}
 
-	result, err := s.issueAdminSession(ctx, admin, input, nil)
+	result, err := s.issueAdminSession(ctx, admin, input)
 	if err != nil {
 		return AdminLoginResult{}, err
 	}
@@ -173,63 +155,7 @@ func (s *AdminService) StartLoginWithSession(ctx context.Context, username strin
 	return result, nil
 }
 
-func (s *AdminService) VerifyTOTP(ctx context.Context, challengeToken string, code string, input AdminSessionInput) (AdminLoginResult, error) {
-	if s.store == nil {
-		return AdminLoginResult{}, errors.New("admin MFA is not configured")
-	}
-	claims, err := s.parseChallengeToken(challengeToken)
-	if err != nil {
-		metrics.IncAuthAttempt("admin_mfa", "failure", "challenge")
-		return AdminLoginResult{}, err
-	}
-	admin, err := s.store.GetAdminUserByID(ctx, claims.UserID)
-	if err != nil || !admin.IsActive {
-		metrics.IncAuthAttempt("admin_mfa", "failure", "admin_user")
-		return AdminLoginResult{}, errors.New("invalid admin MFA challenge")
-	}
-	code = strings.TrimSpace(code)
-	valid := validateTOTP(admin.TOTPSecret, code, time.Now().UTC())
-	if !valid {
-		var consumed bool
-		consumed, err = s.store.ConsumeAdminRecoveryCode(ctx, admin.ID, tokenHash(strings.ToUpper(code)))
-		if err != nil {
-			return AdminLoginResult{}, err
-		}
-		valid = consumed
-	}
-	if !valid {
-		metrics.IncAuthAttempt("admin_mfa", "failure", "code")
-		return AdminLoginResult{}, errors.New("invalid admin MFA code")
-	}
-
-	recoveryCodes := []string(nil)
-	if claims.TOTPSetup || !admin.TOTPEnabled {
-		if err := s.store.SetAdminTOTPSecret(ctx, admin.ID, admin.TOTPSecret, true); err != nil {
-			return AdminLoginResult{}, err
-		}
-		recoveryCodes, err = generateRecoveryCodes(10)
-		if err != nil {
-			return AdminLoginResult{}, err
-		}
-		hashes := make([]string, 0, len(recoveryCodes))
-		for _, code := range recoveryCodes {
-			hashes = append(hashes, tokenHash(code))
-		}
-		if err := s.store.StoreAdminRecoveryCodes(ctx, admin.ID, hashes); err != nil {
-			return AdminLoginResult{}, err
-		}
-		admin.TOTPEnabled = true
-	}
-
-	result, err := s.issueAdminSession(ctx, admin, input, recoveryCodes)
-	if err != nil {
-		return AdminLoginResult{}, err
-	}
-	metrics.IncAuthAttempt("admin_mfa", "success", "verified")
-	return result, nil
-}
-
-func (s *AdminService) issueAdminSession(ctx context.Context, admin store.AdminUser, input AdminSessionInput, recoveryCodes []string) (AdminLoginResult, error) {
+func (s *AdminService) issueAdminSession(ctx context.Context, admin store.AdminUser, input AdminSessionInput) (AdminLoginResult, error) {
 	refreshToken, err := randomToken(32)
 	if err != nil {
 		return AdminLoginResult{}, err
@@ -243,7 +169,7 @@ func (s *AdminService) issueAdminSession(ctx context.Context, admin store.AdminU
 		return AdminLoginResult{}, err
 	}
 	_ = s.store.MarkAdminLogin(ctx, admin.ID)
-	return AdminLoginResult{Token: token, RefreshToken: refreshToken, Username: admin.Email, Email: admin.Email, Roles: admin.Roles, RecoveryCodes: recoveryCodes}, nil
+	return AdminLoginResult{Token: token, RefreshToken: refreshToken, Username: admin.Email, Email: admin.Email, Roles: admin.Roles}, nil
 }
 
 func (s *AdminService) Refresh(ctx context.Context, refreshToken string) (AdminLoginResult, error) {
@@ -391,108 +317,6 @@ func (s *AdminService) issueLegacyToken() (string, error) {
 		return "", fmt.Errorf("sign admin token: %w", err)
 	}
 	return signed, nil
-}
-
-func (s *AdminService) issueChallengeToken(admin store.AdminUser, setup bool) (string, error) {
-	now := time.Now().UTC()
-	claims := adminChallengeClaims{
-		UserID:        admin.ID,
-		Email:         admin.Email,
-		TOTPSetup:     setup,
-		ChallengeType: "admin_mfa",
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        randomAdminID(),
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(5 * time.Minute)),
-			Subject:   strconv.FormatInt(admin.ID, 10),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signed, err := token.SignedString(s.jwtSecret)
-	if err != nil {
-		return "", fmt.Errorf("sign admin MFA challenge: %w", err)
-	}
-	return signed, nil
-}
-
-func (s *AdminService) parseChallengeToken(tokenString string) (adminChallengeClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &adminChallengeClaims{}, func(token *jwt.Token) (any, error) {
-		if token.Method != jwt.SigningMethodHS256 {
-			return nil, fmt.Errorf("unexpected signing method: %s", token.Method.Alg())
-		}
-		return s.jwtSecret, nil
-	})
-	if err != nil {
-		return adminChallengeClaims{}, fmt.Errorf("parse admin MFA challenge: %w", err)
-	}
-	claims, ok := token.Claims.(*adminChallengeClaims)
-	if !ok || !token.Valid || claims.ChallengeType != "admin_mfa" {
-		return adminChallengeClaims{}, errors.New("invalid admin MFA challenge")
-	}
-	return *claims, nil
-}
-
-func generateTOTPSecret() (string, error) {
-	var buf [20]byte
-	if _, err := rand.Read(buf[:]); err != nil {
-		return "", fmt.Errorf("generate TOTP secret: %w", err)
-	}
-	return strings.TrimRight(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(buf[:]), "="), nil
-}
-
-func validateTOTP(secret string, code string, now time.Time) bool {
-	code = strings.TrimSpace(code)
-	if len(code) != 6 {
-		return false
-	}
-	for _, char := range code {
-		if char < '0' || char > '9' {
-			return false
-		}
-	}
-	for offset := -1; offset <= 1; offset++ {
-		expected, err := totpCode(secret, now.Add(time.Duration(offset)*30*time.Second))
-		if err == nil && subtle.ConstantTimeCompare([]byte(expected), []byte(code)) == 1 {
-			return true
-		}
-	}
-	return false
-}
-
-func totpCode(secret string, t time.Time) (string, error) {
-	decoded, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(strings.ToUpper(strings.TrimSpace(secret)))
-	if err != nil {
-		return "", err
-	}
-	unixTime := t.Unix()
-	if unixTime < 0 {
-		return "", errors.New("TOTP time is before Unix epoch")
-	}
-	counter := uint64(unixTime / 30)
-	var msg [8]byte
-	binary.BigEndian.PutUint64(msg[:], counter)
-	mac := hmac.New(sha1.New, decoded)
-	_, _ = mac.Write(msg[:])
-	sum := mac.Sum(nil)
-	offset := sum[len(sum)-1] & 0x0f
-	value := (uint32(sum[offset])&0x7f)<<24 |
-		(uint32(sum[offset+1])&0xff)<<16 |
-		(uint32(sum[offset+2])&0xff)<<8 |
-		(uint32(sum[offset+3]) & 0xff)
-	code := value % uint32(math.Pow10(6))
-	return fmt.Sprintf("%06d", code), nil
-}
-
-func generateRecoveryCodes(count int) ([]string, error) {
-	codes := make([]string, 0, count)
-	for i := 0; i < count; i++ {
-		token, err := randomToken(8)
-		if err != nil {
-			return nil, err
-		}
-		codes = append(codes, strings.ToUpper(token[:4]+"-"+token[4:8]+"-"+token[8:12]))
-	}
-	return codes, nil
 }
 
 func randomAdminID() string {

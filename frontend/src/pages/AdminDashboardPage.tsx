@@ -1478,6 +1478,40 @@ function PartnersPanel({ token, setToast, setError }: {
   );
 }
 
+function UTMPathTable({ title, rows, empty }: {
+  title: string;
+  rows: UTMReport["top_pages"];
+  empty: string;
+}) {
+  return (
+    <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+      <div className="console-card-spotlight" />
+      <div className="dev-portal__section-header dev-portal__section-header--margin">
+        <h3>{title}</h3>
+      </div>
+      <div className="admin-table-wrap">
+        <table className="admin-sales-table">
+          <thead><tr><th>Path</th><th>Visitors</th><th>Events</th><th>Signup visitors</th></tr></thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.path}>
+                <td>
+                  <strong>{row.title || row.path}</strong>
+                  {row.title && <span className="admin-muted-line">{row.path}</span>}
+                </td>
+                <td>{row.visitors}</td>
+                <td>{row.events}</td>
+                <td>{row.signup_visitors}</td>
+              </tr>
+            ))}
+            {rows.length === 0 && <tr><td colSpan={4} className="admin-table-empty">{empty}</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, setToast }: {
   analytics: AdminAnalyticsResponse | null;
   webVitals: WebVitalsReport | null;
@@ -1492,6 +1526,15 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
     if (!metric) return "No data";
     return name === "CLS" ? metric.p75.toFixed(3) : `${Math.round(metric.p75)} ms`;
   };
+  const campaigns = utmReport?.campaigns || [];
+  const leads = utmReport?.leads || [];
+  const totalUnique = campaigns.reduce((sum, row) => sum + row.unique_visitors, 0);
+  const totalSignupStarts = campaigns.reduce((sum, row) => sum + (row.signup_starts || 0), 0);
+  const totalSignups = campaigns.reduce((sum, row) => sum + row.signups, 0);
+  const totalDocsOpened = campaigns.reduce((sum, row) => sum + (row.docs_opened || 0), 0);
+  const totalAppOpens = campaigns.reduce((sum, row) => sum + (row.app_opens || 0), 0);
+  const startedToSignup = totalSignupStarts > 0 ? `${((totalSignups / totalSignupStarts) * 100).toFixed(1)}%` : "—";
+  const visitorToSignup = totalUnique > 0 ? `${((totalSignups / totalUnique) * 100).toFixed(1)}%` : "—";
   return (
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Analytics" subtitle="Revenue, conversion and reliability metrics across the platform.">
@@ -1527,17 +1570,28 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
         })}
       </div>
       <UTMLinkBuilder setToast={setToast} />
+      <div className="dev-portal__section-header dev-portal__section-header--margin">
+        <h3>Lead journey funnel</h3>
+        <span className="dev-card__note-text">UTM visitors, docs activity, app opens and signup completion, rolling 28 days</span>
+      </div>
+      <div className="dev-metrics-grid">
+        <MetricCard label="UTM visitors" value={String(totalUnique)} meta={`${campaigns.reduce((sum, row) => sum + row.visits, 0)} tracked visits`} />
+        <MetricCard label="Docs opened" value={String(totalDocsOpened)} meta="docs page views and docs clicks" />
+        <MetricCard label="App opens" value={String(totalAppOpens)} meta="auth, console and app route opens" />
+        <MetricCard label="Signup starts" value={String(totalSignupStarts)} meta={`${startedToSignup} start to signup`} />
+        <MetricCard label="Signups" value={String(totalSignups)} meta={`${visitorToSignup} visitor to signup`} />
+      </div>
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
         <div className="dev-portal__section-header dev-portal__section-header--margin">
           <h3>Campaign tracking (UTM)</h3>
-          <span className="dev-card__note-text">Ad clicks → signups → paid subscriptions, rolling 28 days. Tag links with utm_source / utm_medium / utm_campaign.</span>
+          <span className="dev-card__note-text">Ad clicks, behavior events, docs opens, signup starts, signups and paid subscriptions.</span>
         </div>
         <div className="admin-table-wrap">
           <table className="admin-sales-table">
-            <thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Visits</th><th>Unique</th><th>Signups</th><th>CR</th><th>Paying</th><th>Revenue</th></tr></thead>
+            <thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Visits</th><th>Unique</th><th>Events</th><th>Docs</th><th>App</th><th>Starts</th><th>Signups</th><th>CR</th><th>Paying</th><th>Revenue</th></tr></thead>
             <tbody>
-              {(utmReport?.campaigns || []).map((row) => {
+              {campaigns.map((row) => {
                 const cr = row.unique_visitors > 0 ? `${((row.signups / row.unique_visitors) * 100).toFixed(1)}%` : "—";
                 return (
                   <tr key={`${row.source}|${row.medium}|${row.campaign}`}>
@@ -1546,6 +1600,10 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
                     <td>{row.campaign || "—"}</td>
                     <td>{row.visits}</td>
                     <td>{row.unique_visitors}</td>
+                    <td>{row.events || 0}</td>
+                    <td>{row.docs_opened || 0}</td>
+                    <td>{row.app_opens || 0}</td>
+                    <td>{row.signup_starts || 0}</td>
                     <td>{row.signups}</td>
                     <td>{cr}</td>
                     <td>{row.paying_workspaces}</td>
@@ -1553,7 +1611,59 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
                   </tr>
                 );
               })}
-              {(utmReport?.campaigns || []).length === 0 && <tr><td colSpan={9} className="admin-table-empty">No campaign traffic yet. Add ?utm_source=…&utm_campaign=… to your ad links.</td></tr>}
+              {campaigns.length === 0 && <tr><td colSpan={13} className="admin-table-empty">No campaign traffic yet. Add ?utm_source=…&utm_campaign=… to your ad links.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="admin-grid admin-grid--two">
+        <UTMPathTable title="Top pages before signup" rows={utmReport?.top_pages || []} empty="No attributed page activity yet." />
+        <UTMPathTable title="Docs opened by leads" rows={utmReport?.top_docs || []} empty="No attributed docs activity yet." />
+      </div>
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Recent attributed leads</h3>
+          <span className="dev-card__note-text">Latest visitors with UTM/ref attribution and their first 30 tracked actions.</span>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table admin-sales-table--journeys">
+            <thead><tr><th>Lead</th><th>Campaign</th><th>Status</th><th>Activity</th><th>Timeline</th></tr></thead>
+            <tbody>
+              {leads.map((lead) => (
+                <tr key={lead.attribution_id}>
+                  <td>
+                    <strong>{lead.workspace_name || lead.workspace_email || lead.attribution_id.slice(0, 12)}</strong>
+                    <span className="admin-muted-line">{lead.workspace_id ? `Workspace #${lead.workspace_id}` : "Anonymous visitor"}</span>
+                    <span className="admin-muted-line">{formatDateTime(lead.first_seen_at)} → {formatDateTime(lead.last_seen_at)}</span>
+                  </td>
+                  <td>
+                    <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{lead.source || "—"}</span>
+                    <span className="admin-muted-line">{[lead.medium, lead.campaign].filter(Boolean).join(" / ") || "No campaign"}</span>
+                    <span className="admin-muted-line">{lead.landing_path || "No landing path"}</span>
+                  </td>
+                  <td>
+                    <ToneBadge status={lead.signed_up_at ? "paid" : lead.signup_started ? "awaiting_payment" : "draft"} />
+                    <span className="admin-muted-line">{lead.signed_up_at ? `Signed up ${formatDateTime(lead.signed_up_at)}` : lead.signup_started ? "Signup started" : "Browsing only"}</span>
+                  </td>
+                  <td>
+                    <span>{lead.event_count} events</span>
+                    <span className="admin-muted-line">{lead.docs_opened} docs · {lead.app_opens} app opens</span>
+                  </td>
+                  <td>
+                    <div className="admin-journey-list">
+                      {(lead.timeline || []).slice(0, 8).map((event) => (
+                        <span key={`${event.event_name}|${event.path}|${event.created_at}`} className="admin-journey-event">
+                          <strong>{event.event_name.replace(/_/g, " ")}</strong>
+                          <span>{event.path || event.title || "n/a"}</span>
+                        </span>
+                      ))}
+                      {(lead.timeline || []).length === 0 && <span className="admin-muted-line">No events after landing.</span>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {leads.length === 0 && <tr><td colSpan={5} className="admin-table-empty">No attributed lead journeys yet.</td></tr>}
             </tbody>
           </table>
         </div>

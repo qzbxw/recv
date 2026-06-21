@@ -388,6 +388,10 @@ func (m *mockHTTPStore) RecordProductEvent(ctx context.Context, input store.Prod
 	return m.real.RecordProductEvent(ctx, input)
 }
 
+func (m *mockHTTPStore) RecordUTMEvent(ctx context.Context, event store.UTMEventInput) error {
+	return m.real.RecordUTMEvent(ctx, event)
+}
+
 func (m *mockHTTPStore) RecordWebVital(ctx context.Context, vital store.WebVital) error {
 	return m.real.RecordWebVital(ctx, vital)
 }

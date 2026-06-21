@@ -27,6 +27,7 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 		return
 	}
 
+	limitJSONBody(c, authJSONBodyLimitBytes)
 	var body struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -60,34 +61,13 @@ func (s *Server) handleAdminLogin(c *gin.Context) {
 		return
 	}
 	if s.store != nil {
-		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login", "admin", username, gin.H{"ip": c.ClientIP(), "mfa_required": false})
+		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), username, "admin_login", "admin", username, gin.H{"ip": c.ClientIP()})
 	}
 
 	c.Request = c.Request.WithContext(ctx)
 	if result.RefreshToken != "" {
 		setRefreshCookie(c, "recv_admin_refresh", result.RefreshToken, s.cfg.AppEnv)
 	}
-	c.JSON(http.StatusOK, result)
-}
-
-func (s *Server) handleAdminVerifyTOTP(c *gin.Context) {
-	var body struct {
-		ChallengeToken string `json:"challenge_token"`
-		Code           string `json:"code"`
-	}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	result, err := s.adminService.VerifyTOTP(c.Request.Context(), body.ChallengeToken, body.Code, service.AdminSessionInput{UserAgent: c.Request.UserAgent(), IPAddress: c.ClientIP()})
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		return
-	}
-	if s.store != nil {
-		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), result.Email, "admin_mfa_verified", "admin", result.Email, gin.H{"ip": c.ClientIP(), "recovery_codes_issued": len(result.RecoveryCodes)})
-	}
-	setRefreshCookie(c, "recv_admin_refresh", result.RefreshToken, s.cfg.AppEnv)
 	c.JSON(http.StatusOK, result)
 }
 

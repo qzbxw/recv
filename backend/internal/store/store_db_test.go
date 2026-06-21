@@ -2700,12 +2700,6 @@ func TestStoreAdminAndRefreshSessionFlows(t *testing.T) {
 		t.Fatalf("expected missing admin ErrNotFound, got %v", err)
 	}
 
-	if err := st.SetAdminTOTPSecret(ctx, admin.ID, " secret ", true); err != nil {
-		t.Fatalf("SetAdminTOTPSecret: %v", err)
-	}
-	if err := st.SetAdminTOTPSecret(ctx, 999999, "secret", true); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("expected missing totp admin ErrNotFound, got %v", err)
-	}
 	if err := st.MarkAdminLogin(ctx, admin.ID); err != nil {
 		t.Fatalf("MarkAdminLogin: %v", err)
 	}
@@ -2713,8 +2707,8 @@ func TestStoreAdminAndRefreshSessionFlows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetAdminUserByID: %v", err)
 	}
-	if !admin.TOTPEnabled || admin.TOTPSecret != "secret" || admin.LastLoginAt == nil {
-		t.Fatalf("expected TOTP and login fields to be updated: %+v", admin)
+	if admin.LastLoginAt == nil {
+		t.Fatalf("expected login fields to be updated: %+v", admin)
 	}
 
 	session, err := st.CreateAdminSession(ctx, admin.ID, "refresh-hash", time.Now().Add(time.Hour), "agent", "127.0.0.1")
@@ -2750,24 +2744,6 @@ func TestStoreAdminAndRefreshSessionFlows(t *testing.T) {
 	}
 	if err := st.RevokeAdminSession(ctx, 999999); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected missing admin session ErrNotFound, got %v", err)
-	}
-
-	if err := st.StoreAdminRecoveryCodes(ctx, admin.ID, []string{"code-1", "code-2"}); err != nil {
-		t.Fatalf("StoreAdminRecoveryCodes: %v", err)
-	}
-	consumed, err := st.ConsumeAdminRecoveryCode(ctx, admin.ID, "code-1")
-	if err != nil {
-		t.Fatalf("ConsumeAdminRecoveryCode: %v", err)
-	}
-	if !consumed {
-		t.Fatal("expected recovery code to be consumed")
-	}
-	consumed, err = st.ConsumeAdminRecoveryCode(ctx, admin.ID, "code-1")
-	if err != nil {
-		t.Fatalf("ConsumeAdminRecoveryCode second: %v", err)
-	}
-	if consumed {
-		t.Fatal("expected used recovery code to stay consumed")
 	}
 
 	user, workspace, err := st.CreateAgentWorkspace(ctx, 93001, "agent-workspace", "agent@example.com")
@@ -3724,57 +3700,6 @@ func TestLimitStringHelper(t *testing.T) {
 	}
 }
 
-// TestConsumeAdminRecoveryCodePaths exercises recovery code lifecycle.
-func TestConsumeAdminRecoveryCodePaths(t *testing.T) {
-	ctx := context.Background()
-	st := newStoreDBTestStore(t, ctx)
-
-	// Bootstrap admin first (takes email and password hash)
-	_, _, err := st.EnsureBootstrapAdmin(ctx, "rcodeadmin@example.com", "pass123")
-	if err != nil {
-		t.Fatalf("EnsureBootstrapAdmin: %v", err)
-	}
-	admin, err := st.GetAdminUserByEmail(ctx, "rcodeadmin@example.com")
-	if err != nil {
-		t.Fatalf("GetAdminUserByEmail: %v", err)
-	}
-
-	codes := []string{"CODE1111", "CODE2222", "CODE3333"}
-	if err := st.StoreAdminRecoveryCodes(ctx, admin.ID, codes); err != nil {
-		t.Fatalf("StoreAdminRecoveryCodes: %v", err)
-	}
-
-	t.Run("consume valid code", func(t *testing.T) {
-		ok, err := st.ConsumeAdminRecoveryCode(ctx, admin.ID, "CODE1111")
-		if err != nil {
-			t.Fatalf("ConsumeAdminRecoveryCode: %v", err)
-		}
-		if !ok {
-			t.Fatal("expected code to be consumed")
-		}
-	})
-
-	t.Run("consume already-used code returns false", func(t *testing.T) {
-		ok, err := st.ConsumeAdminRecoveryCode(ctx, admin.ID, "CODE1111")
-		if err != nil {
-			t.Fatalf("ConsumeAdminRecoveryCode used: %v", err)
-		}
-		if ok {
-			t.Fatal("expected false for already-used code")
-		}
-	})
-
-	t.Run("consume nonexistent code returns false", func(t *testing.T) {
-		ok, err := st.ConsumeAdminRecoveryCode(ctx, admin.ID, "BADCODE")
-		if err != nil {
-			t.Fatalf("ConsumeAdminRecoveryCode nonexistent: %v", err)
-		}
-		if ok {
-			t.Fatal("expected false for nonexistent code")
-		}
-	})
-}
-
 // TestEnsureBootstrapAdminIdempotent verifies bootstrap admin can be called twice.
 func TestEnsureBootstrapAdminIdempotent(t *testing.T) {
 	ctx := context.Background()
@@ -3914,9 +3839,6 @@ func TestAuthSessionErrorPaths(t *testing.T) {
 		}
 	}
 
-	expectErr("StoreAdminRecoveryCodes", func() error {
-		return st.StoreAdminRecoveryCodes(canceled, 1, []string{"hash1", "hash2"})
-	})
 	expectErr("CreateRefreshSession", func() error {
 		return st.CreateRefreshSession(canceled, user.ID, workspace.ID, "testhash", time.Now().Add(time.Hour), "", "")
 	})
@@ -3928,9 +3850,6 @@ func TestAuthSessionErrorPaths(t *testing.T) {
 		_, _, err := st.EnsureBootstrapAdmin(canceled, "boot@example.com", "passhash")
 		return err
 	})
-	expectErr("SetAdminTOTPSecret", func() error {
-		return st.SetAdminTOTPSecret(canceled, 1, "secret", true)
-	})
 	expectErr("CreateAdminSession", func() error {
 		_, err := st.CreateAdminSession(canceled, 1, "refreshhash", time.Now().Add(time.Hour), "useragent", "127.0.0.1")
 		return err
@@ -3941,9 +3860,6 @@ func TestAuthSessionErrorPaths(t *testing.T) {
 	})
 	expectErr("RevokeAdminSession", func() error {
 		return st.RevokeAdminSession(canceled, 1)
-	})
-	expectErr("StoreAdminRecoveryCodesForExisting", func() error {
-		return st.StoreAdminRecoveryCodes(canceled, 99999, []string{"x"})
 	})
 	expectErr("ListAdminUserRoles", func() error {
 		_, err := st.ListAdminUserRoles(canceled, 1)

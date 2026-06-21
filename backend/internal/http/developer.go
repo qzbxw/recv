@@ -162,6 +162,9 @@ func (s *Server) handleListAPIKeys(c *gin.Context) {
 
 func (s *Server) handleCreateAPIKey(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	plan := wc.Workspace.EffectivePlan(time.Now())
 	if !plan.HasAPI {
 		c.JSON(http.StatusForbidden, gin.H{"error": "current plan does not include API keys"})
@@ -220,6 +223,9 @@ func (s *Server) handleCreateAPIKey(c *gin.Context) {
 
 func (s *Server) handleDeleteAPIKey(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	keyID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid API key id"})
@@ -251,6 +257,9 @@ func (s *Server) handleListWebhookEndpoints(c *gin.Context) {
 
 func (s *Server) handleCreateWebhookEndpoint(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	plan := wc.Workspace.EffectivePlan(time.Now())
 	if !plan.HasWebhooks {
 		c.JSON(http.StatusForbidden, gin.H{"error": "current plan does not include webhooks"})
@@ -294,6 +303,9 @@ func (s *Server) handleCreateWebhookEndpoint(c *gin.Context) {
 
 func (s *Server) handleRotateWebhookEndpointSecret(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	endpointID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid webhook endpoint id"})
@@ -318,6 +330,9 @@ func (s *Server) handleRotateWebhookEndpointSecret(c *gin.Context) {
 
 func (s *Server) handleDeleteWebhookEndpoint(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	endpointID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid webhook endpoint id"})
@@ -592,6 +607,9 @@ func (s *Server) handleListWebhookDeliveries(c *gin.Context) {
 
 func (s *Server) handleResendWebhookDelivery(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	deliveryID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid webhook delivery id"})

@@ -8,7 +8,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -35,7 +38,7 @@ func (b *BotWorker) flushWebhookDeliveries(ctx context.Context) error {
 			_ = b.store.RecordWebhookDeliveryAttempt(ctx, delivery.ID, delivery.EndpointID, delivery.Attempts, attempt)
 			statusCode := attempt.StatusCode
 			requestErr := errorFromString(attempt.Error)
-			if requestErr != nil || statusCode >= http.StatusBadRequest {
+			if requestErr != nil || statusCode >= http.StatusMultipleChoices {
 				message := ""
 				if requestErr != nil {
 					message = requestErr.Error()
@@ -61,6 +64,9 @@ func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, s
 	if err != nil {
 		return store.WebhookAttemptResult{Status: "failure", Error: err.Error(), Duration: time.Since(startedAt)}
 	}
+	if err := validateWebhookDeliveryURL(req.URL); err != nil {
+		return store.WebhookAttemptResult{Status: "failure", Error: err.Error(), Duration: time.Since(startedAt)}
+	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "recv-webhooks/1.0")
 	req.Header.Set("X-recv-Event", eventType)
@@ -83,6 +89,9 @@ func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, s
 	if resp.StatusCode >= http.StatusBadRequest {
 		result = "failure"
 	}
+	if resp.StatusCode >= http.StatusMultipleChoices && resp.StatusCode < http.StatusBadRequest {
+		result = "failure"
+	}
 	metrics.ObserveUpstream("seller_webhook", eventType, result, time.Since(startedAt))
 	return store.WebhookAttemptResult{
 		StatusCode:      resp.StatusCode,
@@ -90,6 +99,52 @@ func (b *BotWorker) sendWebhookDelivery(ctx context.Context, targetURL string, s
 		Duration:        time.Since(startedAt),
 		ResponseSnippet: strings.TrimSpace(responseBody.String()),
 	}
+}
+
+func validateWebhookDeliveryURL(target *url.URL) error {
+	if target == nil || target.Hostname() == "" {
+		return fmt.Errorf("webhook url host is required")
+	}
+	if target.Scheme != "https" && target.Scheme != "http" {
+		return fmt.Errorf("webhook url must use http or https")
+	}
+	if os.Getenv("APP_ENV") == "production" && target.Scheme != "https" {
+		return fmt.Errorf("webhook url must use https in production")
+	}
+	return nil
+}
+
+func safeWebhookTransport() http.RoundTripper {
+	dialer := &net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DialContext = func(ctx context.Context, network string, address string) (net.Conn, error) {
+		host, port, err := net.SplitHostPort(address)
+		if err != nil {
+			return nil, err
+		}
+		if os.Getenv("APP_ENV") != "production" {
+			return dialer.DialContext(ctx, network, address)
+		}
+		ips, err := net.DefaultResolver.LookupIP(ctx, "ip", host)
+		if err != nil {
+			return nil, err
+		}
+		for _, ip := range ips {
+			if isBlockedWebhookIP(ip) {
+				return nil, fmt.Errorf("webhook target resolves to a blocked IP range")
+			}
+		}
+		if len(ips) == 0 {
+			return nil, fmt.Errorf("webhook target did not resolve")
+		}
+		return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
+	}
+	return transport
+}
+
+func isBlockedWebhookIP(ip net.IP) bool {
+	metadataIP := net.ParseIP("169.254.169.254")
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() || ip.Equal(metadataIP)
 }
 
 func errorFromString(message string) error {

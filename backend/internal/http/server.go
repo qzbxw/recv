@@ -49,6 +49,11 @@ type workspaceContext struct {
 	Workspace store.Workspace
 }
 
+const (
+	authJSONBodyLimitBytes        = 64 << 10
+	publicWriteJSONBodyLimitBytes = 64 << 10
+)
+
 // respondError writes a JSON error response. For 5xx statuses it logs the
 // underlying error server-side and returns a generic message, so internal
 // details (SQL, driver, schema) never reach clients. For 4xx it surfaces the
@@ -70,6 +75,26 @@ func abortError(c *gin.Context, status int, err error) {
 		return
 	}
 	c.AbortWithStatusJSON(status, gin.H{"error": err.Error()})
+}
+
+func limitJSONBody(c *gin.Context, maxBytes int64) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBytes)
+}
+
+func (s *Server) allowIPRate(c *gin.Context, scope string, limit int, window time.Duration) bool {
+	if s.store == nil {
+		return true
+	}
+	_, allowed, err := s.store.AllowRateLimit(c.Request.Context(), "ip:"+scope+":"+c.ClientIP(), limit, window)
+	if err != nil {
+		abortError(c, http.StatusInternalServerError, err)
+		return false
+	}
+	if !allowed {
+		c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "rate limit exceeded"})
+		return false
+	}
+	return true
 }
 
 func NewServer(cfg config.Config, st *store.Store, authService *service.AuthService, adminService *service.AdminService, invoiceService *service.InvoiceService, paymentService *service.PaymentService) *gin.Engine {
@@ -99,7 +124,6 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	router.POST("/api/auth/refresh", server.handleAuthRefresh)
 	router.POST("/api/auth/logout", server.handleAuthLogout)
 	router.POST("/api/admin/login", server.handleAdminLogin)
-	router.POST("/api/admin/login/verify-totp", server.handleAdminVerifyTOTP)
 	router.POST("/api/admin/refresh", server.handleAdminRefresh)
 	router.POST("/api/admin/logout", server.handleAdminLogout)
 	router.GET("/api/public/invoices/:public_id", server.handlePublicInvoice)
@@ -107,6 +131,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	router.POST("/api/public/events", server.handlePublicProductEvent)
 	router.POST("/api/public/web-vitals", server.handlePublicWebVital)
 	router.POST("/api/public/utm-visit", server.handlePublicUTMVisit)
+	router.POST("/api/public/utm-event", server.handlePublicUTMEvent)
 	router.GET("/api/public/referral-codes/:code", server.handlePublicReferralCode)
 	router.GET("/api/public/seo/redirect", server.handlePublicResolveSEORedirect)
 
@@ -231,6 +256,10 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 
 func (s *Server) handleTelegramAuth(c *gin.Context) {
 	ctx := metrics.WithSource(c.Request.Context(), "public_auth")
+	if !s.allowIPRate(c, "auth_telegram", 10, time.Minute) {
+		return
+	}
+	limitJSONBody(c, authJSONBodyLimitBytes)
 	var body service.TelegramAuthInput
 	if err := c.ShouldBindJSON(&body); err != nil {
 		metrics.IncAuthAttempt("telegram", "failure", "invalid_payload")
@@ -252,6 +281,10 @@ func (s *Server) handleTelegramAuth(c *gin.Context) {
 
 func (s *Server) handleTelegramCodeRequest(c *gin.Context) {
 	ctx := metrics.WithSource(c.Request.Context(), "public_auth")
+	if !s.allowIPRate(c, "auth_telegram_code_request", 10, time.Minute) {
+		return
+	}
+	limitJSONBody(c, authJSONBodyLimitBytes)
 	var body service.TelegramCodeRequestInput
 	if err := c.ShouldBindJSON(&body); err != nil {
 		metrics.IncAuthAttempt("telegram_code_request", "failure", "invalid_payload")
@@ -271,6 +304,10 @@ func (s *Server) handleTelegramCodeRequest(c *gin.Context) {
 
 func (s *Server) handleTelegramCodeLogin(c *gin.Context) {
 	ctx := metrics.WithSource(c.Request.Context(), "public_auth")
+	if !s.allowIPRate(c, "auth_telegram_code_login", 10, time.Minute) {
+		return
+	}
+	limitJSONBody(c, authJSONBodyLimitBytes)
 	var body service.TelegramCodeLoginInput
 	if err := c.ShouldBindJSON(&body); err != nil {
 		metrics.IncAuthAttempt("telegram_code_login", "failure", "invalid_payload")
@@ -361,6 +398,10 @@ func (s *Server) handleOAuthLinkStart(c *gin.Context) {
 
 func (s *Server) handleAgentBootstrap(c *gin.Context) {
 	ctx := metrics.WithSource(c.Request.Context(), "agent_bootstrap")
+	if !s.allowIPRate(c, "auth_agent_bootstrap", 10, time.Minute) {
+		return
+	}
+	limitJSONBody(c, authJSONBodyLimitBytes)
 	var body service.AgentBootstrapInput
 	if err := c.ShouldBindJSON(&body); err != nil {
 		metrics.IncAuthAttempt("agent_bootstrap", "failure", "invalid_payload")
@@ -424,6 +465,10 @@ func (s *Server) handleProductEvent(c *gin.Context) {
 }
 
 func (s *Server) handlePublicProductEvent(c *gin.Context) {
+	if !s.allowIPRate(c, "public_events", 60, time.Minute) {
+		return
+	}
+	limitJSONBody(c, publicWriteJSONBodyLimitBytes)
 	var body store.ProductEventInput
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event payload"})
@@ -471,6 +516,9 @@ func (s *Server) handleMe(c *gin.Context) {
 
 func (s *Server) handleUpdateContactEmail(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	var body struct {
 		Email string `json:"email"`
 	}
@@ -500,6 +548,9 @@ func (s *Server) handleUpdateContactEmail(c *gin.Context) {
 
 func (s *Server) handleUpdateLanguage(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	var body struct {
 		Language string `json:"language"`
 	}
@@ -530,6 +581,9 @@ func (s *Server) handleListWallets(c *gin.Context) {
 
 func (s *Server) handleCreateWallet(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	var body struct {
 		Network     string            `json:"network"`
 		Address     string            `json:"address"`
@@ -565,6 +619,9 @@ func (s *Server) handleCreateWallet(c *gin.Context) {
 
 func (s *Server) handleDeleteWallet(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	walletID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid wallet id"})
@@ -615,6 +672,9 @@ func (s *Server) handleListInvoices(c *gin.Context) {
 
 func (s *Server) handleCreateInvoice(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	var body struct {
 		Title          string `json:"title"`
 		BaseAmountUSD  string `json:"base_amount_usd"`
@@ -675,6 +735,9 @@ func (s *Server) handleGetInvoice(c *gin.Context) {
 
 func (s *Server) handleCancelInvoice(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	invoiceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invoice id"})
@@ -707,6 +770,9 @@ func (s *Server) handleCancelInvoice(c *gin.Context) {
 
 func (s *Server) handleMarkInvoicePaid(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	invoiceID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invoice id"})
@@ -1044,6 +1110,9 @@ func isWorkspaceManagedInvoice(invoice store.Invoice) bool {
 
 func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	var body struct {
 		PayableNetwork string `json:"payable_network"`
 		PayableAsset   string `json:"payable_asset"`

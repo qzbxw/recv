@@ -418,9 +418,53 @@ export type UTMReport = {
     campaign: string;
     visits: number;
     unique_visitors: number;
+    events: number;
+    docs_opened: number;
+    app_opens: number;
+    signup_starts: number;
     signups: number;
     paying_workspaces: number;
     paid_usd: string;
+  }>;
+  top_pages: Array<{
+    path: string;
+    title: string;
+    visitors: number;
+    events: number;
+    signup_visitors: number;
+  }>;
+  top_docs: Array<{
+    path: string;
+    title: string;
+    visitors: number;
+    events: number;
+    signup_visitors: number;
+  }>;
+  leads: Array<{
+    attribution_id: string;
+    source: string;
+    medium: string;
+    campaign: string;
+    term: string;
+    content: string;
+    landing_path: string;
+    referrer: string;
+    first_seen_at: string;
+    last_seen_at: string;
+    event_count: number;
+    docs_opened: number;
+    app_opens: number;
+    signup_started: boolean;
+    workspace_id?: number;
+    workspace_name?: string;
+    workspace_email?: string;
+    signed_up_at?: string;
+    timeline: Array<{
+      event_name: string;
+      path: string;
+      title: string;
+      created_at: string;
+    }>;
   }>;
 };
 

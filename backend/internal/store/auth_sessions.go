@@ -34,10 +34,10 @@ func (s *Store) EnsureBootstrapAdmin(ctx context.Context, email string, password
 	if err := tx.QueryRow(ctx, `
 		INSERT INTO admin_users (email, display_name, password_hash)
 		VALUES ($1, $2, $3)
-		RETURNING id, email, display_name, password_hash, COALESCE(totp_secret, ''), totp_enabled, is_active, created_at, updated_at, last_login_at
+		RETURNING id, email, display_name, password_hash, is_active, created_at, updated_at, last_login_at
 	`, email, email, passwordHash).Scan(
-		&admin.ID, &admin.Email, &admin.DisplayName, &admin.PasswordHash, &admin.TOTPSecret, &admin.TOTPEnabled,
-		&admin.IsActive, &admin.CreatedAt, &admin.UpdatedAt, &admin.LastLoginAt,
+		&admin.ID, &admin.Email, &admin.DisplayName, &admin.PasswordHash, &admin.IsActive,
+		&admin.CreatedAt, &admin.UpdatedAt, &admin.LastLoginAt,
 	); err != nil {
 		return AdminUser{}, false, fmt.Errorf("insert bootstrap admin: %w", err)
 	}
@@ -56,7 +56,7 @@ func (s *Store) EnsureBootstrapAdmin(ctx context.Context, email string, password
 
 func (s *Store) GetAdminUserByEmail(ctx context.Context, email string) (AdminUser, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, email, display_name, password_hash, COALESCE(totp_secret, ''), totp_enabled, is_active, created_at, updated_at, last_login_at
+		SELECT id, email, display_name, password_hash, is_active, created_at, updated_at, last_login_at
 		FROM admin_users
 		WHERE email = $1
 	`, strings.TrimSpace(strings.ToLower(email)))
@@ -65,7 +65,7 @@ func (s *Store) GetAdminUserByEmail(ctx context.Context, email string) (AdminUse
 
 func (s *Store) GetAdminUserByID(ctx context.Context, id int64) (AdminUser, error) {
 	row := s.pool.QueryRow(ctx, `
-		SELECT id, email, display_name, password_hash, COALESCE(totp_secret, ''), totp_enabled, is_active, created_at, updated_at, last_login_at
+		SELECT id, email, display_name, password_hash, is_active, created_at, updated_at, last_login_at
 		FROM admin_users
 		WHERE id = $1
 	`, id)
@@ -75,8 +75,8 @@ func (s *Store) GetAdminUserByID(ctx context.Context, id int64) (AdminUser, erro
 func (s *Store) scanAdminUser(ctx context.Context, row pgx.Row) (AdminUser, error) {
 	var admin AdminUser
 	if err := row.Scan(
-		&admin.ID, &admin.Email, &admin.DisplayName, &admin.PasswordHash, &admin.TOTPSecret, &admin.TOTPEnabled,
-		&admin.IsActive, &admin.CreatedAt, &admin.UpdatedAt, &admin.LastLoginAt,
+		&admin.ID, &admin.Email, &admin.DisplayName, &admin.PasswordHash, &admin.IsActive,
+		&admin.CreatedAt, &admin.UpdatedAt, &admin.LastLoginAt,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return AdminUser{}, ErrNotFound
@@ -111,23 +111,6 @@ func (s *Store) ListAdminUserRoles(ctx context.Context, adminUserID int64) ([]st
 		roles = append(roles, role)
 	}
 	return roles, rows.Err()
-}
-
-func (s *Store) SetAdminTOTPSecret(ctx context.Context, adminUserID int64, secret string, enabled bool) error {
-	tag, err := s.pool.Exec(ctx, `
-		UPDATE admin_users
-		SET totp_secret = $2,
-		    totp_enabled = $3,
-		    updated_at = NOW()
-		WHERE id = $1
-	`, adminUserID, strings.TrimSpace(secret), enabled)
-	if err != nil {
-		return fmt.Errorf("set admin totp secret: %w", err)
-	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
 }
 
 func (s *Store) MarkAdminLogin(ctx context.Context, adminUserID int64) error {
@@ -195,35 +178,6 @@ func (s *Store) RevokeAdminSession(ctx context.Context, sessionID int64) error {
 		return ErrNotFound
 	}
 	return nil
-}
-
-func (s *Store) StoreAdminRecoveryCodes(ctx context.Context, adminUserID int64, codeHashes []string) error {
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-	if _, err := tx.Exec(ctx, `DELETE FROM admin_recovery_codes WHERE admin_user_id = $1 AND used_at IS NULL`, adminUserID); err != nil {
-		return err
-	}
-	for _, hash := range codeHashes {
-		if _, err := tx.Exec(ctx, `INSERT INTO admin_recovery_codes (admin_user_id, code_hash) VALUES ($1, $2)`, adminUserID, hash); err != nil {
-			return err
-		}
-	}
-	return tx.Commit(ctx)
-}
-
-func (s *Store) ConsumeAdminRecoveryCode(ctx context.Context, adminUserID int64, codeHash string) (bool, error) {
-	tag, err := s.pool.Exec(ctx, `
-		UPDATE admin_recovery_codes
-		SET used_at = NOW()
-		WHERE admin_user_id = $1 AND code_hash = $2 AND used_at IS NULL
-	`, adminUserID, codeHash)
-	if err != nil {
-		return false, fmt.Errorf("consume admin recovery code: %w", err)
-	}
-	return tag.RowsAffected() > 0, nil
 }
 
 func (s *Store) CreateRefreshSession(ctx context.Context, userID int64, workspaceID int64, refreshTokenHash string, expiresAt time.Time, userAgent string, ipAddress string) error {

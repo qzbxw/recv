@@ -75,6 +75,7 @@ type httpStore interface {
 	RecordAPIRequest(ctx context.Context, workspaceID int64, keyID int64, method string, path string, statusCode int) error
 	RecordAdminAuditEvent(ctx context.Context, actor string, action string, targetType string, targetID string, metadata any) error
 	RecordProductEvent(ctx context.Context, input store.ProductEventInput) error
+	RecordUTMEvent(ctx context.Context, event store.UTMEventInput) error
 	RecordWebVital(ctx context.Context, vital store.WebVital) error
 	RecordUTMVisit(ctx context.Context, attr store.AttributionInput) error
 	GetUTMReport(ctx context.Context, from time.Time, to time.Time) (store.UTMReport, error)

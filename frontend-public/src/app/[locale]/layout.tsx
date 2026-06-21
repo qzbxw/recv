@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import localFont from "next/font/local";
 import { UIProvider } from "@/components/UIProvider";
 import { CookieConsent } from "@/components/CookieConsent";
 import { OptionalAnalytics } from "@/components/OptionalAnalytics";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
+import { UTMEventTracker } from "@/components/UTMEventTracker";
 import { JsonLd } from "@/components/JsonLd";
 import { LOCALES } from "@/i18n";
 import {
@@ -128,6 +130,9 @@ export default async function LocaleLayout(props: {
         <JsonLd schema={organizationJsonLd(normalizedLocale)} />
         <JsonLd schema={websiteJsonLd(normalizedLocale)} />
         <CookieConsent language={normalizedLocale} />
+        <Suspense fallback={null}>
+          <UTMEventTracker />
+        </Suspense>
         <WebVitalsReporter />
         <OptionalAnalytics
           gtmId={process.env.GTM_ID}

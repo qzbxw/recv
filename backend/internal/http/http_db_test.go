@@ -2,11 +2,7 @@ package http
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha1"
 	"crypto/sha256"
-	"encoding/base32"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -2081,7 +2077,7 @@ func TestAdminBlogHandlersWithDB(t *testing.T) {
 func TestAdminRevokeSessionWithDB(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// Use in-memory admin service (no TOTP flow needed) to test session revoke endpoint
+	// Use in-memory admin service to test session revoke endpoint.
 	adminService := service.NewAdminService("admin", "pass", "revoke-secret", time.Hour)
 	server := &Server{
 		store:        sharedHTTPTestStore,
@@ -3613,9 +3609,9 @@ func TestAdminPasswordLoginIssuesSession(t *testing.T) {
 	adminSvc := service.NewDBAdminService(
 		sharedHTTPTestStore,
 		"", "",
-		"totp-jwt-secret",
+		"admin-login-jwt-secret",
 		time.Minute, time.Hour,
-		"totptest@example.com", "totppass", "super_admin",
+		"adminlogin@example.com", "adminpass", "super_admin",
 	)
 	if _, err := adminSvc.Bootstrap(ctx); err != nil {
 		t.Fatalf("Bootstrap: %v", err)
@@ -3631,7 +3627,7 @@ func TestAdminPasswordLoginIssuesSession(t *testing.T) {
 	loginRouter := gin.New()
 	loginRouter.POST("/api/admin/login", server.handleAdminLogin)
 	loginReq := httptest.NewRequest(stdhttp.MethodPost, "/api/admin/login",
-		strings.NewReader(`{"username":"totptest@example.com","password":"totppass"}`))
+		strings.NewReader(`{"username":"adminlogin@example.com","password":"adminpass"}`))
 	loginReq.Header.Set("Content-Type", "application/json")
 	loginRouter.ServeHTTP(loginRec, loginReq)
 
@@ -3649,36 +3645,9 @@ func TestAdminPasswordLoginIssuesSession(t *testing.T) {
 	if refresh, _ := loginResp["refresh_token"].(string); refresh == "" {
 		t.Fatalf("expected admin refresh token, got: %+v", loginResp)
 	}
-	if mfaRequired, _ := loginResp["mfa_required"].(bool); mfaRequired {
-		t.Fatalf("expected admin login without MFA challenge, got: %+v", loginResp)
-	}
-	if challengeToken, _ := loginResp["challenge_token"].(string); challengeToken != "" {
-		t.Fatalf("did not expect challenge token in password login response, got: %+v", loginResp)
-	}
 	if len(loginRec.Result().Cookies()) == 0 {
 		t.Fatalf("expected admin refresh cookie to be set")
 	}
-}
-
-// computeTOTPCode generates a TOTP code from a base32-encoded secret.
-func computeTOTPCode(secret string, t time.Time) (string, error) {
-	decoded, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(strings.ToUpper(strings.TrimSpace(secret)))
-	if err != nil {
-		return "", err
-	}
-	counter := uint64(t.Unix() / 30)
-	var msg [8]byte
-	binary.BigEndian.PutUint64(msg[:], counter)
-	mac := hmac.New(sha1.New, decoded)
-	mac.Write(msg[:])
-	sum := mac.Sum(nil)
-	offset := sum[len(sum)-1] & 0x0f
-	value := (uint32(sum[offset])&0x7f)<<24 |
-		(uint32(sum[offset+1])&0xff)<<16 |
-		(uint32(sum[offset+2])&0xff)<<8 |
-		(uint32(sum[offset+3]) & 0xff)
-	code := value % 1000000
-	return fmt.Sprintf("%06d", code), nil
 }
 
 // TestAuthMiddlewareWithDB covers the workspace-lookup and blocked-workspace branches.

@@ -11,6 +11,9 @@ import (
 
 func (s *Server) handleRedeemPromoCode(c *gin.Context) {
 	wc := workspaceFromContext(c)
+	if !s.requireWorkspaceManager(c, wc) {
+		return
+	}
 	var body struct {
 		Code string `json:"code"`
 	}

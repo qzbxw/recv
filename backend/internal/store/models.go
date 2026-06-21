@@ -257,8 +257,6 @@ type AdminUser struct {
 	Email        string     `json:"email"`
 	DisplayName  string     `json:"display_name"`
 	PasswordHash string     `json:"-"`
-	TOTPSecret   string     `json:"-"`
-	TOTPEnabled  bool       `json:"totp_enabled"`
 	IsActive     bool       `json:"is_active"`
 	Roles        []string   `json:"roles"`
 	CreatedAt    time.Time  `json:"created_at"`

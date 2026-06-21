@@ -16,6 +16,27 @@ func canManageTeam(role store.MemberRole) bool {
 	return role == store.RoleOwner || role == store.RoleAdmin
 }
 
+func (s *Server) requireWorkspaceManager(c *gin.Context, wc workspaceContext) bool {
+	if s.store == nil {
+		respondError(c, http.StatusInternalServerError, errors.New("store unavailable"))
+		return false
+	}
+	if wc.Claims.UserID == 0 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "owner or admin role required"})
+		return false
+	}
+	role, err := s.store.GetWorkspaceMemberRole(c.Request.Context(), wc.Workspace.ID, wc.Claims.UserID)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return false
+	}
+	if !canManageTeam(role) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "owner or admin role required"})
+		return false
+	}
+	return true
+}
+
 func validMemberRole(raw string) (store.MemberRole, bool) {
 	switch store.MemberRole(strings.ToLower(strings.TrimSpace(raw))) {
 	case store.RoleOwner:

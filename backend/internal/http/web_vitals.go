@@ -68,6 +68,10 @@ func normalizeWebVital(input webVitalInput) (store.WebVital, error) {
 }
 
 func (s *Server) handlePublicWebVital(c *gin.Context) {
+	if !s.allowIPRate(c, "public_web_vitals", 60, time.Minute) {
+		return
+	}
+	limitJSONBody(c, publicWriteJSONBodyLimitBytes)
 	var input webVitalInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid web vital payload"})

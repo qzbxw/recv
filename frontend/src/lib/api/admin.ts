@@ -27,14 +27,7 @@ import type {
 import { getApiBase, request } from "./core";
 
 export async function loginAdmin(payload: { username: string; password: string }) {
-  return request<{ token?: string; username?: string; email?: string; roles?: string[]; mfa_required?: boolean; totp_setup_required?: boolean; totp_secret?: string; challenge_token?: string; recovery_codes?: string[] }>("/api/admin/login", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function verifyAdminTotp(payload: { challenge_token: string; code: string }) {
-  return request<{ token: string; username: string; email?: string; roles?: string[]; recovery_codes?: string[] }>("/api/admin/login/verify-totp", {
+  return request<{ token?: string; username?: string; email?: string; roles?: string[] }>("/api/admin/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });

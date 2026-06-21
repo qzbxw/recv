@@ -240,7 +240,6 @@ func TestBackendBoundaryFlowsWithEmbeddedPostgres(t *testing.T) {
 	assertJSONStatus(t, client, http.MethodGet, env.server.URL+"/api/me", nil, nil, http.StatusUnauthorized)
 	assertJSONStatus(t, client, http.MethodGet, env.server.URL+"/api/admin/overview", nil, nil, http.StatusUnauthorized)
 	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/admin/login", nil, map[string]any{"username": "admin", "password": "wrong"}, http.StatusUnauthorized)
-	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/api/admin/login/verify-totp", nil, map[string]any{"challenge_token": "bad", "code": "000000"}, http.StatusUnauthorized)
 	assertJSONStatus(t, client, http.MethodGet, env.server.URL+"/api/public/invoices/missing", nil, nil, http.StatusNotFound)
 	assertJSONStatus(t, client, http.MethodPost, env.server.URL+"/internal/watchers/base", nil, map[string]any{"events": []any{}}, http.StatusForbidden)
 	assertJSONStatus(t, client, http.MethodGet, env.server.URL+"/v1/me", map[string]string{"Authorization": "Bearer nope"}, nil, http.StatusUnauthorized)
@@ -399,7 +398,7 @@ func newIntegrationEnv(t *testing.T, ctx context.Context) integrationEnv {
 		InternalToken:        "internal-secret",
 		AllowInsecureDevAuth: true,
 		TelegramInitMaxAge:   time.Hour,
-		GramUSDOverride:       "2.5",
+		GramUSDOverride:      "2.5",
 		AdminUsername:        "admin",
 		AdminPassword:        "pass",
 		AdminJWTSecret:       "admin-secret",
