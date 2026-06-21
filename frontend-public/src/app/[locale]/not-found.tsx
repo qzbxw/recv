@@ -33,7 +33,7 @@ export default function NotFound() {
       };
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} path={pathname || `/${language}`}>
       <section className="min-h-[70vh] grid place-items-center px-6 pb-24 text-center relative z-10">
         <div className="max-w-2xl">
           <span className="lend-section-kicker justify-center mx-auto">404</span>

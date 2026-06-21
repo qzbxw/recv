@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { NetworkDetailClient, type NetworkDetailPageCopy } from "@/components/NetworkDetailClient";
 import { getCopy, normalizeLocale } from "@/i18n";
+import { softwareApplicationJsonLd } from "@/lib/geo";
 import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
@@ -87,21 +88,13 @@ export default async function NetworkPage(props: Props) {
   const copy = getCopy(locale);
   const page = copy.marketing.networkPages[network];
 
-  const softwareSchema = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
+  const softwareSchema = softwareApplicationJsonLd({
+    locale,
+    pathname: `/${locale}/networks/${network}`,
     name: `recv ${page.name} Payment Gateway`,
-    operatingSystem: "Web",
-    applicationCategory: "PaymentApplication",
     description: page.metadata.description,
-    offers: {
-      "@type": "Offer",
-      availability: "https://schema.org/InStock",
-      price: "0",
-      priceCurrency: "USD",
-    },
-    featureList: page.assets.items.map((a) => a.name).join(", "),
-  };
+    featureList: page.assets.items.map((a) => a.name),
+  });
 
   return (
     <>

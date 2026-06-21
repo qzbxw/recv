@@ -55,6 +55,12 @@ export async function generateMetadata(props: {
         "ru": "/ru",
         "x-default": "/en",
       },
+      types: {
+        "application/rss+xml": [
+          { url: "/rss.xml", title: "recv RSS" },
+          { url: `/${locale}/rss.xml`, title: `recv ${locale === "ru" ? "RU" : "EN"} RSS` },
+        ],
+      },
     },
     openGraph: {
       type: "website",
@@ -107,6 +113,7 @@ export default async function LocaleLayout(props: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await props.params;
+  const normalizedLocale = locale as "ru" | "en";
 
   return (
     <html
@@ -115,12 +122,12 @@ export default async function LocaleLayout(props: {
       className={`${manrope.variable} ${montserrat.variable}`}
     >
       <body suppressHydrationWarning>
-        <UIProvider initialLanguage={locale as "ru" | "en"}>
+        <UIProvider initialLanguage={normalizedLocale}>
           {props.children}
         </UIProvider>
-        <JsonLd schema={organizationJsonLd(locale as "ru" | "en")} />
-        <JsonLd schema={websiteJsonLd(locale as "ru" | "en")} />
-        <CookieConsent language={locale as "ru" | "en"} />
+        <JsonLd schema={organizationJsonLd(normalizedLocale)} />
+        <JsonLd schema={websiteJsonLd(normalizedLocale)} />
+        <CookieConsent language={normalizedLocale} />
         <WebVitalsReporter />
         <OptionalAnalytics
           gtmId={process.env.GTM_ID}

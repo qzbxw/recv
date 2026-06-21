@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { getCopy } from "@/i18n";
+import { schemaId } from "@/lib/geo";
 
 const TIER_LINKS = {
   trial: "auth",
@@ -30,7 +31,7 @@ export function PricingClient({ locale }: { locale: string }) {
   const isRu = locale === "ru";
 
   return (
-    <MarketingLayout language={locale as "en" | "ru"}>
+    <MarketingLayout language={locale as "en" | "ru"} path="/pricing" mainEntityId={schemaId(`/${locale}/pricing`, "product")}>
       {/* HERO */}
       <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">

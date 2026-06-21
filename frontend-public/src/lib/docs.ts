@@ -2,7 +2,17 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
-const docsDirectory = path.join(process.cwd(), "content/docs");
+function contentRoot() {
+  const cwd = process.cwd();
+  if (fs.existsSync(path.join(cwd, "content", "docs"))) return cwd;
+
+  const nested = path.join(cwd, "frontend-public");
+  if (fs.existsSync(path.join(nested, "content", "docs"))) return nested;
+
+  return cwd;
+}
+
+const docsDirectory = path.join(contentRoot(), "content/docs");
 
 export function getDocBySlug(slug: string[], locale: string) {
   const fullPath = path.join(docsDirectory, locale, ...slug) + ".mdx";

@@ -10,6 +10,7 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { useReveal } from "@/components/marketing/useReveal";
 import { StructuredContent, TableOfContents, extractToc, extractFaq, slugifyHeading, type StructuredNode, type TocEntry } from "./StructuredContent";
 import { JsonLd } from "@/components/JsonLd";
+import { schemaId } from "@/lib/geo";
 import React, { useMemo } from "react";
 
 export type BlogPost = {
@@ -182,7 +183,7 @@ export function BlogPostClient({ language, post }: { language: "en" | "ru"; post
   }, []);
 
   return (
-    <MarketingLayout language={language} alternates={alternates}>
+    <MarketingLayout language={language} path={`/blog/${post.slug}`} alternates={alternates} pageType="ItemPage" mainEntityId={schemaId(`/${language}/blog/${post.slug}`, "article")}>
       {faqSchema && <JsonLd schema={faqSchema} />}
       <article className="relative pt-28 md:pt-32">
         {/* HERO */}

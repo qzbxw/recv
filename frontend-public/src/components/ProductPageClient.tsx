@@ -12,6 +12,7 @@ import {
 import { MarketingLayout } from "./marketing/MarketingLayout";
 import { JsonLd } from "./JsonLd";
 import { getCopy, Locale } from "@/i18n";
+import { schemaId, softwareApplicationJsonLd } from "@/lib/geo";
 import "./marketing/plans/plans.css";
 
 export type ProductVariant = "checkoutProduct" | "apiProduct" | "invoicingProduct" | "mcpProduct";
@@ -368,6 +369,8 @@ export function ProductPageClient({ variant, language }: { variant: ProductVaria
   const product = getProduct(fullCopy, variant);
   const text = productContent[language][variant];
   const commonText = productContent[language];
+  const productSlug = variant === "checkoutProduct" ? "checkout" : variant === "apiProduct" ? "api" : variant === "mcpProduct" ? "mcp" : "invoicing";
+  const pathname = `/${language}/products/${productSlug}`;
 
 
 
@@ -391,30 +394,22 @@ export function ProductPageClient({ variant, language }: { variant: ProductVaria
         "@type": "ListItem",
         "position": 3,
         "name": product.title,
-        "item": `https://recv.money/${language}/products/${variant === "checkoutProduct" ? "checkout" : variant === "apiProduct" ? "api" : variant === "mcpProduct" ? "mcp" : "invoicing"}`
+        "item": `https://recv.money${pathname}`
       }
     ]
   };
 
-  const applicationSchema = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": product.title,
-    "description": product.metadata.description,
-    "operatingSystem": "Web",
-    "applicationCategory": "BusinessApplication",
-    "applicationSubCategory": "PaymentGateway",
-    "offers": {
-      "@type": "Offer",
-      "price": "0.00",
-      "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock",
-    },
-    "featureList": product.bento.items.map(i => i.title).join(", ")
-  };
+  const applicationSchema = softwareApplicationJsonLd({
+    locale: language,
+    pathname,
+    name: product.title,
+    description: product.metadata.description,
+    featureList: product.bento.items.map((i) => i.title),
+    applicationCategory: "BusinessApplication",
+  });
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} path={pathname} pageType="ItemPage" mainEntityId={schemaId(pathname, "software")}>
       <JsonLd schema={breadcrumbSchema} />
       <JsonLd schema={applicationSchema} />
 

@@ -9,6 +9,7 @@ import { PUBLIC_MARKETING_COPY } from "@/i18n";
 import { BRAND_LOGO_PATH, languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 import { getPublishedBlogPosts } from "@/lib/blog";
 import { FALLBACK_BLOG_POSTS } from "@/lib/blog-articles";
+import { schemaId } from "@/lib/geo";
 
 const AUTHORS = {
   "recv-core": {
@@ -74,6 +75,7 @@ export default async function AuthorPage(props: Props) {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": schemaId(`/${locale}/blog/author/${slug}`, "profile"),
     name: data.name,
     description: data.bio,
     url: `${baseUrl}/${locale}/blog/author/${slug}`,
@@ -81,7 +83,7 @@ export default async function AuthorPage(props: Props) {
   };
 
   return (
-    <MarketingLayout language={lang}>
+    <MarketingLayout language={lang} path={`/blog/author/${slug}`} pageType="ProfilePage" mainEntityId={schemaId(`/${locale}/blog/author/${slug}`, "profile")}>
       <JsonLd schema={organizationSchema} />
       <BreadcrumbJsonLd
         items={[

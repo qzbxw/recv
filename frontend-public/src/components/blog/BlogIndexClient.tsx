@@ -114,7 +114,7 @@ export function BlogIndexClient({
   };
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} path="/blog">
       {/* HERO */}
       <section className="lend-hero--centered relative overflow-hidden" ref={reveal}>
         <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse pointer-events-none" />

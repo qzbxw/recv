@@ -14,6 +14,8 @@ const PASSTHROUGH_PREFIXES = [
   "/rss.xml",
   "/llms.txt",
   "/llms-full.txt",
+  "/ai-context.json",
+  "/agent-actions.json",
   "/openapi.json",
 ];
 const REDIRECT_CACHE_TTL_MS = 60_000;

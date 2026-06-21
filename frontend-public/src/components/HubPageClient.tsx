@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { NetworkLogo } from "@/components/NetworkLogo";
+import { schemaId } from "@/lib/geo";
 
 export type HubCard = {
   title: string;
@@ -45,9 +46,10 @@ export function HubPageClient({
 
 
   const gridCols = cards.length % 3 === 0 ? "lg:grid-cols-3" : "lg:grid-cols-2";
+  const pathname = `/${language}${path}`;
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} path={path} pageType="CollectionPage" mainEntityId={schemaId(pathname, "item-list")}>
       <BreadcrumbJsonLd
         items={[
           { name: language === "ru" ? "Главная" : "Home", href: `/${language}` },

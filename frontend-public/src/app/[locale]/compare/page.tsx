@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { HubPageClient } from "@/components/HubPageClient";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { JsonLd } from "@/components/JsonLd";
+import { itemListJsonLd } from "@/lib/geo";
 import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
@@ -45,18 +46,16 @@ export default async function CompareHubPage(props: Props) {
     linkLabel: locale === "ru" ? "Сравнить →" : "See comparison →",
   }));
 
-  const siteListSchema = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
+  const siteListSchema = itemListJsonLd({
+    locale,
+    pathname: `/${locale}/compare`,
     name: hub.title,
     description: hub.description,
-    itemListElement: hub.items.map((item, idx) => ({
-      "@type": "ListItem",
-      position: idx + 1,
+    items: hub.items.map((item) => ({
       name: item.title,
-      url: `https://recv.money/${locale}/compare/${item.slug}`,
+      url: `/${locale}/compare/${item.slug}`,
     })),
-  };
+  });
 
   return (
     <>

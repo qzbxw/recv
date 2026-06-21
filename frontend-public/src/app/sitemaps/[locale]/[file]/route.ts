@@ -26,6 +26,7 @@ type BlogSitemapResponse = {
 };
 
 export const revalidate = 3600;
+export const runtime = "nodejs";
 
 function fallbackBlogEntries(locale: SitemapLocale, page: number) {
   const baseUrl = publicSiteUrl();

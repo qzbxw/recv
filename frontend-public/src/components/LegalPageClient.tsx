@@ -44,7 +44,7 @@ export function LegalPage({ variant, language }: { variant: LegalVariant; langua
   const copy = legalCopy[variant][language];
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} path={`/${variant}`}>
       {/* HERO */}
       <section className="relative overflow-hidden pb-12 is-revealed">
         <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-full bg-radial-gradient from-accent/12 via-transparent to-transparent blur-[120px] opacity-40 pointer-events-none" />

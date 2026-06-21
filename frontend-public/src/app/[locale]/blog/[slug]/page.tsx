@@ -4,7 +4,8 @@ import { JsonLd } from "@/components/JsonLd";
 import { BlogPostClient } from "@/components/blog/BlogPostClient";
 import { lookupPublishedBlogPost, type PublicBlogPost } from "@/lib/blog";
 import { fallbackBlogPost } from "@/lib/blog-articles";
-import { absoluteBrandLogoUrl, isNonSelfCanonical, publicSiteUrl } from "@/lib/seo";
+import { publisherSchema, schemaId } from "@/lib/geo";
+import { isNonSelfCanonical, publicSiteUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>;
@@ -94,12 +95,14 @@ export default async function BlogPost(props: Props) {
   }
   const baseUrl = publicSiteUrl();
   const canonical = post.canonical_url || `${baseUrl}/${language}/blog/${post.slug}`;
+  const selfPath = `/${language}/blog/${post.slug}`;
   const authorURL = `${baseUrl}/${language}/blog/author/${post.author_slug || authorSlug(post.author)}`;
   const socialImage = `${baseUrl}/og/blog/${language}/${post.slug}`;
 
   const blogPostSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
+    "@id": schemaId(selfPath, "article"),
     "headline": post.h1 || post.title,
     "description": post.meta_description || post.excerpt,
     "image": [socialImage],
@@ -108,24 +111,14 @@ export default async function BlogPost(props: Props) {
     "inLanguage": language,
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": canonical,
+      "@id": post.canonical_url ? canonical : schemaId(selfPath, "webpage"),
     },
     "author": {
       "@type": "Organization",
       "name": post.author || "Recv Core Team",
       "url": authorURL,
     },
-    "publisher": {
-      "@type": "Organization",
-      "name": "recv",
-      "url": baseUrl,
-      "logo": {
-        "@type": "ImageObject",
-        "url": absoluteBrandLogoUrl(),
-        "width": 500,
-        "height": 500,
-      },
-    },
+    "publisher": publisherSchema(),
   };
   const breadcrumbSchema = {
     "@context": "https://schema.org",

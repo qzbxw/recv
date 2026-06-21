@@ -1,5 +1,8 @@
 import {
   backendApiUrl,
+  documentationEntries,
+  newestSitemapLastModified,
+  publicPageEntries,
   publicSiteUrl,
   renderSitemapIndex,
   SITEMAP_PAGE_SIZE,
@@ -13,12 +16,16 @@ type BlogSitemapResponse = {
 };
 
 export const revalidate = 3600;
+export const runtime = "nodejs";
 
 export async function GET() {
   const baseUrl = publicSiteUrl();
   const sitemaps: Array<{ url: string; lastModified?: string }> = [];
 
   for (const locale of ["en", "ru"] as const) {
+    const pageEntries = publicPageEntries(locale);
+    const docEntries = documentationEntries(locale);
+    const fallbackBlogPages = Math.ceil(FALLBACK_BLOG_POSTS[locale].length / SITEMAP_PAGE_SIZE);
     let blogPages = 0;
     let blogLastModified: string | undefined;
 
@@ -36,13 +43,24 @@ export async function GET() {
         blogLastModified = data.updated_at;
       }
     } catch {
-      blogPages = Math.ceil(FALLBACK_BLOG_POSTS[locale].length / SITEMAP_PAGE_SIZE);
+      blogPages = fallbackBlogPages;
       blogLastModified = FALLBACK_BLOG_POSTS[locale][0]?.updated_at || undefined;
     }
 
+    if (blogPages === 0 && fallbackBlogPages > 0) {
+      blogPages = fallbackBlogPages;
+      blogLastModified = blogLastModified || FALLBACK_BLOG_POSTS[locale][0]?.updated_at || undefined;
+    }
+
     sitemaps.push(
-      { url: `${baseUrl}/sitemaps/${locale}/pages.xml` },
-      { url: `${baseUrl}/sitemaps/${locale}/docs.xml` },
+      {
+        url: `${baseUrl}/sitemaps/${locale}/pages.xml`,
+        lastModified: newestSitemapLastModified(pageEntries),
+      },
+      {
+        url: `${baseUrl}/sitemaps/${locale}/docs.xml`,
+        lastModified: newestSitemapLastModified(docEntries),
+      },
       ...Array.from({ length: blogPages }, (_, index) => ({
         url: `${baseUrl}/sitemaps/${locale}/blog-${index + 1}.xml`,
         lastModified: blogLastModified,

@@ -12,7 +12,7 @@ export const SITEMAP_PAGE_SIZE = 50_000;
 const DESCRIPTION_MIN_LENGTH = 120;
 const DESCRIPTION_MAX_LENGTH = 160;
 
-export const PUBLIC_ROUTES = [
+const CORE_ROUTES = [
   "",
   "/dev",
   "/merchant",
@@ -26,6 +26,8 @@ export const PUBLIC_ROUTES = [
   "/help",
   "/privacy",
   "/terms",
+  "/dpa",
+  "/subprocessors",
   "/blog",
   "/blog/author/recv-core",
   "/status",
@@ -35,6 +37,9 @@ export const PUBLIC_ROUTES = [
   "/products/invoicing",
   "/products/api",
   "/products/mcp",
+] as const;
+
+const NETWORK_ROUTES = [
   "/networks",
   "/networks/ton",
   "/networks/tron",
@@ -42,11 +47,17 @@ export const PUBLIC_ROUTES = [
   "/networks/base",
   "/networks/arbitrum",
   "/networks/bsc",
+] as const;
+
+const USE_CASE_ROUTES = [
   "/use-cases",
   "/use-cases/telegram-shops",
   "/use-cases/saas-billing",
   "/use-cases/digital-goods",
   "/use-cases/paid-communities",
+] as const;
+
+const COMPARE_ROUTES = [
   "/compare",
   "/compare/nowpayments",
   "/compare/recv-vs-manual",
@@ -55,6 +66,13 @@ export const PUBLIC_ROUTES = [
   "/compare/bitpay",
   "/compare/coingate",
   "/compare/cryptomus",
+] as const;
+
+export const PUBLIC_ROUTES = [
+  ...CORE_ROUTES,
+  ...NETWORK_ROUTES,
+  ...USE_CASE_ROUTES,
+  ...COMPARE_ROUTES,
 ] as const;
 
 export function publicSiteUrl() {
@@ -109,12 +127,21 @@ export function absoluteBrandLogoUrl() {
   return `${publicSiteUrl()}${BRAND_LOGO_PATH}`;
 }
 
+function envList(value: string | undefined) {
+  return (value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export function organizationJsonLd(locale?: Locale) {
+  const sameAs = envList(process.env.NEXT_PUBLIC_ORG_SAME_AS);
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${publicSiteUrl()}/#organization`,
     name: SITE_NAME,
+    description: "Non-custodial cryptocurrency payment infrastructure for hosted checkout, invoicing, API integrations, signed webhooks, and direct-to-wallet settlement.",
     url: publicSiteUrl(),
     logo: {
       "@type": "ImageObject",
@@ -123,6 +150,22 @@ export function organizationJsonLd(locale?: Locale) {
       height: 500,
     },
     image: absoluteBrandLogoUrl(),
+    areaServed: "Worldwide",
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        email: "support@recv.money",
+        contactType: "customer support",
+        availableLanguage: ["en", "ru"],
+      },
+      {
+        "@type": "ContactPoint",
+        email: "legal@recv.money",
+        contactType: "legal",
+        availableLanguage: ["en", "ru"],
+      },
+    ],
+    ...(sameAs.length ? { sameAs } : {}),
     ...(locale ? { inLanguage: locale } : {}),
   };
 }
@@ -389,6 +432,15 @@ export function renderSitemapIndex(
 ${items}
 </sitemapindex>
 `;
+}
+
+export function newestSitemapLastModified(entries: SitemapEntry[]) {
+  const newest = entries
+    .map((entry) => entry.lastModified ? Date.parse(entry.lastModified) : 0)
+    .filter((timestamp) => Number.isFinite(timestamp))
+    .reduce((max, timestamp) => Math.max(max, timestamp), 0);
+
+  return newest ? new Date(newest).toISOString() : undefined;
 }
 
 export function xmlResponse(body: string, cacheSeconds = 3600) {

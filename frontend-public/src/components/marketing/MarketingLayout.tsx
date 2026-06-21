@@ -3,20 +3,55 @@ import { getCopy } from "@/lib/copy";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { AttributionCapture } from "../AttributionCapture";
+import { JsonLd } from "../JsonLd";
 import { LocaleAlternatesProvider, type LocaleAlternates } from "./localeAlternates";
 import { MarketingInteractions } from "./MarketingInteractions";
+import { webPageJsonLd } from "@/lib/geo";
+
+type PageType = "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage" | "ProfilePage" | "ItemPage";
+
+function localizedPath(language: "ru" | "en", path?: string) {
+  if (!path || path === "/") return `/${language}`;
+  if (path === `/${language}` || path.startsWith(`/${language}/`)) return path;
+  return `/${language}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function inferredPageType(pathname: string): PageType {
+  if (pathname.endsWith("/about")) return "AboutPage";
+  if (pathname.endsWith("/contact")) return "ContactPage";
+  if (/\/blog\/author\//.test(pathname)) return "ProfilePage";
+  if (/\/(?:products|networks|use-cases|compare|blog)$/.test(pathname)) return "CollectionPage";
+  if (/\/(?:products|networks|use-cases|compare|docs|blog)\//.test(pathname)) return "ItemPage";
+  return "WebPage";
+}
 
 export function MarketingLayout({
   children,
   language,
+  path,
   alternates = null,
+  pageType,
+  mainEntityId,
 }: {
   children: React.ReactNode;
   language: "ru" | "en";
+  path?: string;
   alternates?: LocaleAlternates | null;
+  pageType?: PageType;
+  mainEntityId?: string;
 }) {
+  const pathname = localizedPath(language, path);
+
   return (
     <LocaleAlternatesProvider initialValue={alternates}>
+      <JsonLd
+        schema={webPageJsonLd({
+          locale: language,
+          pathname,
+          type: pageType || inferredPageType(pathname),
+          mainEntity: mainEntityId ? { "@id": mainEntityId } : undefined,
+        })}
+      />
       <div className="lend-page min-h-screen bg-black text-white selection:bg-purple-500/30">
         <Suspense fallback={null}>
           <AttributionCapture />

@@ -45,7 +45,7 @@ export function StatusPageClient({ language }: { language: "ru" | "en" }) {
 
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} path="/status">
       {/* HERO */}
       <section className="lend-hero--centered relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">

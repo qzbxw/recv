@@ -1,5 +1,5 @@
 import { getAllDocSlugs, getDocBySlug } from "@/lib/docs";
-import { publicSiteUrl, textResponse } from "@/lib/seo";
+import { PUBLIC_ROUTES, publicSiteUrl, textResponse } from "@/lib/seo";
 
 function localeDocuments(locale: "en" | "ru", baseUrl: string) {
   return getAllDocSlugs(locale)
@@ -23,14 +23,21 @@ export async function GET() {
   const baseUrl = publicSiteUrl();
   const englishDocuments = localeDocuments("en", baseUrl);
   const russianDocuments = localeDocuments("ru", baseUrl);
+  const routeIndex = PUBLIC_ROUTES.map((route) => `- ${baseUrl}/en${route} | ${baseUrl}/ru${route}`).join("\n");
 
   const body = `# recv: Full Developer Context
 
 Canonical site: ${baseUrl}
 API base URL: ${baseUrl}/v1
 OpenAPI: ${baseUrl}/openapi.json
+AI context graph: ${baseUrl}/ai-context.json
+Agent action map: ${baseUrl}/agent-actions.json
 
 recv is a non-custodial crypto payment gateway. It creates payment invoices, monitors supported blockchains, settles funds directly to merchant wallets, and sends signed webhook notifications. This file contains the English developer documentation intended for retrieval and agent context.
+
+## Canonical public route pairs
+
+${routeIndex}
 
 ## English documentation
 

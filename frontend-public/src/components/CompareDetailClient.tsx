@@ -35,7 +35,7 @@ export function CompareDetailClient({
 
 
   return (
-    <MarketingLayout language={locale as "en" | "ru"}>
+    <MarketingLayout language={locale as "en" | "ru"} path={`/compare/${competitor}`}>
       <BreadcrumbJsonLd
         items={[
           { name: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },

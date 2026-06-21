@@ -1,6 +1,7 @@
 import { publicSiteUrl } from "@/lib/seo";
 
 export const revalidate = 3600;
+export const runtime = "nodejs";
 
 export async function GET(
   _request: Request,

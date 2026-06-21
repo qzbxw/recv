@@ -53,6 +53,28 @@ function schemaLogoUrl(schema) {
   return logo.url || "";
 }
 
+function schemaTypes(schema) {
+  const type = schema?.["@type"];
+  return Array.isArray(type) ? type : [type].filter(Boolean);
+}
+
+function flattenSchemas(value) {
+  if (!value || typeof value !== "object") return [];
+  const items = Array.isArray(value) ? value.flatMap(flattenSchemas) : [value];
+  if (value["@graph"]) items.push(...flattenSchemas(value["@graph"]));
+  return items;
+}
+
+function walkObjects(value, visit) {
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    for (const item of value) walkObjects(item, visit);
+    return;
+  }
+  visit(value);
+  for (const item of Object.values(value)) walkObjects(item, visit);
+}
+
 async function sitemapUrls() {
   const { response, body } = await fetchText(`${baseUrl}/sitemap.xml`);
   if (!response.ok) throw new Error(`sitemap index returned ${response.status}`);
@@ -141,8 +163,81 @@ function auditHTML(url, html) {
   if (!organizations.some((schema) => schemaLogoUrl(schema) === canonicalBrandLogo)) {
     failures.push(`missing Organization logo schema for ${canonicalBrandLogo}`);
   }
-
+  const webPages = schemas.filter((schema) =>
+    schemaTypes(schema).some((type) => typeof type === "string" && type.endsWith("Page")),
+  );
+  const canonicalNoHash = canonical?.replace(/#.*$/, "");
   const visibleText = textContent(html);
+
+  for (const anchor of matches(html, /<a\b[^>]*>/gi)) {
+    if (!/\bhref=/i.test(anchor[0])) failures.push("anchor without href");
+  }
+  for (const button of matches(html, /<button\b([^>]*)>([\s\S]*?)<\/button>/gi)) {
+    const attrs = button[1];
+    const label = textContent(button[2]);
+    if (!label && !/\b(?:aria-label|title)=["'][^"']+["']/i.test(attrs)) {
+      failures.push("button without accessible name");
+    }
+  }
+  const labelFors = new Set(matches(html, /<label\b[^>]*\bfor=["']([^"']+)["'][^>]*>/gi).map((match) => match[1]));
+  for (const control of matches(html, /<(input|select|textarea)\b([^>]*)>/gi)) {
+    const attrs = control[2];
+    const type = attrs.match(/\btype=["']([^"']+)["']/i)?.[1]?.toLowerCase();
+    if (type === "hidden") continue;
+    const id = attrs.match(/\bid=["']([^"']+)["']/i)?.[1];
+    if (
+      !/\b(?:aria-label|aria-labelledby|title)=["'][^"']+["']/i.test(attrs) &&
+      !(id && labelFors.has(id))
+    ) {
+      failures.push(`${control[1]} without accessible name`);
+    }
+  }
+
+  if (!webPages.length) {
+    failures.push("missing WebPage schema");
+  }
+  if (
+    canonicalNoHash &&
+    !webPages.some((schema) =>
+      schema?.["@id"] === `${canonicalNoHash}#webpage` &&
+      schema?.url === canonicalNoHash &&
+      schema?.isPartOf?.["@id"] === `${canonicalOrigin}/#website` &&
+      schema?.publisher?.["@id"] === `${canonicalOrigin}/#organization`
+    )
+  ) {
+    failures.push("WebPage schema is not linked to canonical website graph");
+  }
+
+  const flattenedSchemas = schemas.flatMap(flattenSchemas);
+  const schemaIds = new Set(flattenedSchemas.map((schema) => schema?.["@id"]).filter(Boolean));
+  for (const pageSchema of flattenedSchemas.filter((schema) =>
+    schemaTypes(schema).some((type) => typeof type === "string" && type.endsWith("Page")),
+  )) {
+    const mainEntityId = pageSchema?.mainEntity?.["@id"];
+    if (mainEntityId && !schemaIds.has(mainEntityId)) {
+      failures.push(`WebPage mainEntity points to missing @id: ${mainEntityId}`);
+    }
+  }
+
+  for (const schema of flattenedSchemas) {
+    walkObjects(schema, (node) => {
+      if (node.aggregateRating && !/\b(?:rating|rated|отзыв|рейтинг)\b/i.test(visibleText)) {
+        failures.push("aggregateRating schema is not backed by visible rating text");
+      }
+      if (node.review && !/\b(?:review|отзыв)\b/i.test(visibleText)) {
+        failures.push("review schema is not backed by visible review text");
+      }
+      if (
+        node["@type"] === "Offer" &&
+        String(node.price) === "0" &&
+        !/(?:\/pricing$|\/pricing\/)/.test(path) &&
+        !/\b(?:free|trial|0%|бесплат|пробн)\b/i.test(visibleText)
+      ) {
+        failures.push("Offer.price=0 appears outside a visible free/pricing context");
+      }
+    });
+  }
+
   for (const faq of schemas.filter((schema) => schema?.["@type"] === "FAQPage")) {
     for (const question of faq.mainEntity || []) {
       if (question?.name && !visibleText.includes(question.name)) {
@@ -155,7 +250,7 @@ function auditHTML(url, html) {
     }
   }
 
-  for (const article of schemas.filter((schema) => schema?.["@type"] === "BlogPosting")) {
+  for (const article of flattenedSchemas.filter((schema) => schemaTypes(schema).includes("BlogPosting"))) {
     if (article.author?.["@type"] !== "Organization") failures.push("BlogPosting author is not Organization");
     if (!article.publisher?.logo?.url) failures.push("BlogPosting publisher logo is missing");
     if (!article.datePublished || !article.dateModified) failures.push("BlogPosting dates are incomplete");
@@ -179,6 +274,40 @@ if (privateUrls.length) {
 }
 
 const errors = [];
+
+async function auditMachineEndpoint(pathname) {
+  const { response, body } = await fetchText(`${baseUrl}${pathname}`);
+  if (response.status !== 200) {
+    errors.push(`${pathname}: HTTP ${response.status}`);
+    return null;
+  }
+  const robots = response.headers.get("x-robots-tag") || "";
+  if (!/\bnoindex\b/i.test(robots)) {
+    errors.push(`${pathname}: missing X-Robots-Tag noindex`);
+  }
+  try {
+    return JSON.parse(body);
+  } catch (error) {
+    errors.push(`${pathname}: invalid JSON: ${error.message}`);
+    return null;
+  }
+}
+
+const aiContext = await auditMachineEndpoint("/ai-context.json");
+await auditMachineEndpoint("/agent-actions.json");
+for (const entry of aiContext?.public_routes || []) {
+  if (privatePattern.test(entry.path || "") || privatePattern.test(new URL(entry.url).pathname)) {
+    errors.push(`/ai-context.json: private URL in public_routes: ${entry.url || entry.path}`);
+  }
+}
+for (const entry of aiContext?.localized_route_pairs || []) {
+  for (const value of [entry.en, entry.ru, entry.x_default]) {
+    if (value && privatePattern.test(new URL(value).pathname)) {
+      errors.push(`/ai-context.json: private URL in localized_route_pairs: ${value}`);
+    }
+  }
+}
+
 const seenTitles = new Map();
 const socialImages = new Set();
 for (const url of urls) {

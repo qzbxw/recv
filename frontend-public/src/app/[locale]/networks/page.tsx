@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { HubPageClient } from "@/components/HubPageClient";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { JsonLd } from "@/components/JsonLd";
+import { itemListJsonLd } from "@/lib/geo";
 import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
@@ -54,18 +55,16 @@ export default async function NetworksHubPage(props: Props) {
     iconSlug: net.slug,
   }));
 
-  const siteListSchema = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
+  const siteListSchema = itemListJsonLd({
+    locale,
+    pathname: `/${locale}/networks`,
     name: copy.marketing.networksHub.title,
     description: copy.marketing.networksHub.description,
-    itemListElement: networks.map((net, idx) => ({
-      "@type": "ListItem",
-      position: idx + 1,
+    items: networks.map((net) => ({
       name: net.name,
-      url: `https://recv.money/${locale}/networks/${net.slug}`,
+      url: `/${locale}/networks/${net.slug}`,
     })),
-  };
+  });
 
   return (
     <>

@@ -5,6 +5,7 @@ import { JsonLd } from "./JsonLd";
 import { PUBLIC_MARKETING_COPY, PUBLIC_PLAN_COPY } from "@/i18n";
 import { planSEOEn } from "@/i18n/plans.en";
 import { planSEORu } from "@/i18n/plans.ru";
+import { schemaId, softwareApplicationJsonLd } from "@/lib/geo";
 import "./marketing/plans/plans.css";
 
 export type Variant = "merchant" | "developer" | "business";
@@ -40,19 +41,27 @@ export function PlanPage({ variant, language }: { variant: Variant; language: "r
     developer: "29.00",
     business: "79.00",
   };
+  const pathMap = {
+    merchant: "merchant",
+    developer: "dev",
+    business: "business",
+  };
 
   const applicationSchema = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": seoText.hero.badge,
-    "operatingSystem": "Web",
-    "applicationCategory": "BusinessApplication",
-    "offers": {
+    ...softwareApplicationJsonLd({
+      locale: language,
+      pathname: `/${language}/${pathMap[variant]}`,
+      name: seoText.hero.badge,
+      description: seoText.hero.body,
+      featureList: seoText.deepDive.cards.map((item) => item.title),
+      applicationCategory: "BusinessApplication",
+    }),
+    offers: {
       "@type": "Offer",
       "price": priceMap[variant],
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock"
-    }
+    },
   };
 
   const faqSchema = {
@@ -69,7 +78,7 @@ export function PlanPage({ variant, language }: { variant: Variant; language: "r
   };
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} path={`/${pathMap[variant]}`} mainEntityId={schemaId(`/${language}/${pathMap[variant]}`, "software")}>
       <JsonLd schema={applicationSchema} />
       <JsonLd schema={faqSchema} />
 

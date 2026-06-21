@@ -18,7 +18,7 @@ export default function HomeClient({ language }: { language: "ru" | "en" }) {
   };
 
   return (
-    <MarketingLayout language={language}>
+    <MarketingLayout language={language} path="/">
       <JsonLd schema={faqSchema} />
 
       {/* 1. MASSIVE HERO */}

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import manifest from "@/app/manifest";
+import { GET as sitemapFileGET } from "@/app/sitemaps/[locale]/[file]/route";
 import { robotsBody } from "@/lib/seo";
 import {
   absoluteBrandLogoUrl,
@@ -9,7 +10,9 @@ import {
   documentationEntries,
   isNonSelfCanonical,
   metadataDescription,
+  newestSitemapLastModified,
   organizationJsonLd,
+  PUBLIC_ROUTES,
   publicPageEntries,
   renderSitemap,
   renderSitemapIndex,
@@ -52,6 +55,10 @@ describe("SEO generation", () => {
     expect(xml).not.toContain("<changefreq>");
     expect(englishHome?.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(xml).toContain("<lastmod>");
+    expect(PUBLIC_ROUTES).toContain("/dpa");
+    expect(PUBLIC_ROUTES).toContain("/subprocessors");
+    expect(entries.some((entry) => entry.url === "https://example.com/en/dpa")).toBe(true);
+    expect(entries.some((entry) => entry.url === "https://example.com/ru/subprocessors")).toBe(true);
   });
 
   it("only links documentation translations that exist", () => {
@@ -118,9 +125,34 @@ describe("SEO generation", () => {
     expect(sitemap).toContain("x=1&amp;y=2");
 
     const index = renderSitemapIndex([
-      { url: "https://example.com/sitemaps/pages.xml" },
+      {
+        url: "https://example.com/sitemaps/pages.xml",
+        lastModified: "2026-06-21T00:00:00.000Z",
+      },
     ]);
     expect(index).toContain("<sitemapindex");
     expect(index).toContain("<loc>https://example.com/sitemaps/pages.xml</loc>");
+    expect(index).toContain("<lastmod>2026-06-21T00:00:00.000Z</lastmod>");
+    expect(newestSitemapLastModified([
+      { url: "https://example.com/old", lastModified: "2026-06-20T00:00:00.000Z" },
+      { url: "https://example.com/new", lastModified: "2026-06-21T00:00:00.000Z" },
+    ])).toBe("2026-06-21T00:00:00.000Z");
+  });
+
+  it("serves the English page sitemap route as crawlable XML", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.com";
+    const response = await sitemapFileGET(
+      new Request("https://example.com/sitemaps/en/pages.xml"),
+      { params: Promise.resolve({ locale: "en", file: "pages.xml" }) },
+    );
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("application/xml");
+    expect(body).toContain("<urlset");
+    expect(body).toContain("<loc>https://example.com/en</loc>");
+    expect(body).toContain("<loc>https://example.com/en/dpa</loc>");
+    expect(body).toContain("<loc>https://example.com/en/subprocessors</loc>");
+    expect(body).toContain('hreflang="ru"');
   });
 });

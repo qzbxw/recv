@@ -45,6 +45,8 @@ ${docsSection(baseUrl)}
 ## Machine-readable resources
 - [OpenAPI specification](${baseUrl}/openapi.json): Current REST API schema.
 - [Full LLM documentation](${baseUrl}/llms-full.txt): Combined English product and developer documentation.
+- [AI context graph](${baseUrl}/ai-context.json): Canonical routes, localized docs, and retrieval resource map.
+- [Agent action map](${baseUrl}/agent-actions.json): Public actions, contact points, auth, demo, and API resource links.
 - [Human-readable documentation](${baseUrl}/en/docs/introduction): Rendered documentation entry point.
 - [RSS feed](${baseUrl}/en/rss.xml): English product and engineering updates.
 - [Sitemap index](${baseUrl}/sitemap.xml): Canonical indexable pages.

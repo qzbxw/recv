@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { docsMdxComponents } from "@/components/docs/mdxComponents";
 import { getCopy, normalizeLocale } from "@/i18n";
+import { schemaId, techArticleJsonLd } from "@/lib/geo";
 import Link from "next/link";
 
 const DOC_ORDER = ["introduction", "quickstart", "authentication", "invoices", "webhooks", "errors", "mcp", "networks"];
@@ -91,19 +92,15 @@ export default async function DocPage(props: {
   const prevDoc = currentIndex > 0 ? allSlugs[currentIndex - 1] : null;
   const nextDoc = currentIndex >= 0 && currentIndex < allSlugs.length - 1 ? allSlugs[currentIndex + 1] : null;
 
-  const articleSchema = {
-    "@context": "https://schema.org",
-    "@type": "TechArticle",
+  const articleSchema = techArticleJsonLd({
+    locale,
+    pathname: `/${locale}/docs/${slug.join("/")}`,
     headline: doc.data.title as string,
     description: metadataDescription(locale, (doc.data.description as string) || (doc.data.title as string)),
-    inLanguage: locale,
-    url: `https://recv.money/${locale}/docs/${slug.join("/")}`,
-    author: { "@type": "Organization", name: "recv" },
-    publisher: { "@type": "Organization", name: "recv" },
-  };
+  });
 
   return (
-    <MarketingLayout language={locale}>
+    <MarketingLayout language={locale} path={`/docs/${slug.join("/")}`} pageType="ItemPage" mainEntityId={schemaId(`/${locale}/docs/${slug.join("/")}`, "article")}>
       <JsonLd schema={articleSchema} />
       <BreadcrumbJsonLd
         items={[

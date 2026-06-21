@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { HubPageClient } from "@/components/HubPageClient";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { JsonLd } from "@/components/JsonLd";
+import { itemListJsonLd } from "@/lib/geo";
 import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
@@ -76,18 +77,16 @@ export default async function UseCasesHubPage(props: Props) {
     linkLabel: locale === "ru" ? "Изучить кейс →" : "Read use case →",
   }));
 
-  const siteListSchema = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
+  const siteListSchema = itemListJsonLd({
+    locale,
+    pathname: `/${locale}/use-cases`,
     name: hub.title,
     description: hub.description,
-    itemListElement: useCases.map((uc, idx) => ({
-      "@type": "ListItem",
-      position: idx + 1,
+    items: useCases.map((uc) => ({
       name: uc.title,
-      url: `https://recv.money/${locale}/use-cases/${uc.slug}`,
+      url: `/${locale}/use-cases/${uc.slug}`,
     })),
-  };
+  });
 
   return (
     <>

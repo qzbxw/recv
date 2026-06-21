@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { NetworkLogo } from "@/components/NetworkLogo";
+import { schemaId } from "@/lib/geo";
 
 // ─── Types (mirror the i18n copy shape) ──────────────────────────────────────
 
@@ -42,7 +43,7 @@ export function NetworkDetailClient({ locale, network, page }: Props) {
 
 
   return (
-    <MarketingLayout language={locale as "en" | "ru"}>
+    <MarketingLayout language={locale as "en" | "ru"} path={`/networks/${network}`} pageType="ItemPage" mainEntityId={schemaId(`/${locale}/networks/${network}`, "software")}>
       <BreadcrumbJsonLd
         items={[
           { name: locale === "ru" ? "Главная" : "Home", href: `/${locale}` },

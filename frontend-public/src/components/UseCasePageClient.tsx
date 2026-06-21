@@ -9,6 +9,7 @@ import { MarketingLayout } from "./marketing/MarketingLayout";
 import { JsonLd } from "./JsonLd";
 import { BreadcrumbJsonLd } from "./BreadcrumbJsonLd";
 import { Locale } from "@/i18n";
+import { schemaId, softwareApplicationJsonLd } from "@/lib/geo";
 import "./marketing/plans/plans.css";
 
 type LinkCopy = {
@@ -132,24 +133,16 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
 
 
 
-  const softwareSchema = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
+  const softwareSchema = softwareApplicationJsonLd({
+    locale,
+    pathname: `/${locale}/use-cases/${usecase}`,
     name: `recv ${copy.name}`,
-    applicationCategory: "PaymentApplication",
-    operatingSystem: "Web",
     description: copy.metadata.description,
     featureList: copy.features,
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-      availability: "https://schema.org/InStock",
-    },
-  };
+  });
 
   return (
-    <MarketingLayout language={locale}>
+    <MarketingLayout language={locale} path={`/use-cases/${usecase}`} pageType="ItemPage" mainEntityId={schemaId(`/${locale}/use-cases/${usecase}`, "software")}>
       <JsonLd schema={softwareSchema} />
       <BreadcrumbJsonLd
         items={[

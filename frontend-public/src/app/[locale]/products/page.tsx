@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { HubPageClient } from "@/components/HubPageClient";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { JsonLd } from "@/components/JsonLd";
+import { itemListJsonLd } from "@/lib/geo";
 import { metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
@@ -68,18 +69,16 @@ export default async function ProductsHubPage(props: Props) {
     },
   ];
 
-  const siteListSchema = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
+  const siteListSchema = itemListJsonLd({
+    locale,
+    pathname: `/${locale}/products`,
     name: hub.title,
     description: hub.description,
-    itemListElement: cards.map((card, idx) => ({
-      "@type": "ListItem",
-      position: idx + 1,
+    items: cards.map((card) => ({
       name: card.title,
-      url: `https://recv.money/${locale}/products/${card.slug}`,
+      url: `/${locale}/products/${card.slug}`,
     })),
-  };
+  });
 
   return (
     <>

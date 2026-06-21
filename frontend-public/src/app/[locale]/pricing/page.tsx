@@ -2,7 +2,8 @@ import { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { PricingClient } from "@/components/PricingClient";
-import { metadataDescription, socialImages } from "@/lib/seo";
+import { productJsonLd } from "@/lib/geo";
+import { metadataDescription, publicSiteUrl, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -50,6 +51,7 @@ export default async function PricingPage(props: Props) {
   const { locale: rawLocale } = await props.params;
   const locale = normalizeLocale(rawLocale);
   const copy = getCopy(locale);
+  const baseUrl = publicSiteUrl();
   const tiers = ["merchant", "developer", "business"] as const;
 
   const offers = tiers
@@ -62,22 +64,21 @@ export default async function PricingPage(props: Props) {
         name: item.name,
         price: numeric,
         priceCurrency: "USD",
-        url: `https://recv.money/${locale}/${tierLinks[tier]}`,
+        url: `${baseUrl}/${locale}/${tierLinks[tier]}`,
         availability: "https://schema.org/InStock",
       };
     })
-    .filter(Boolean);
+    .filter((offer): offer is NonNullable<typeof offer> => offer !== null);
 
-  const productSchema = {
-    "@context": "https://schema.org",
-    "@type": "Product",
+  const productSchema = productJsonLd({
+    locale,
+    pathname: `/${locale}/pricing`,
     name: "recv Crypto Payment Gateway",
     description: locale === "ru"
       ? "Non-custodial крипто-платёжный шлюз с прямым зачислением на кошельки и без комиссии с оборота."
       : "Non-custodial crypto payment gateway with direct-to-wallet settlement and no turnover fees.",
-    brand: { "@type": "Brand", name: "recv" },
     offers,
-  };
+  });
 
   return (
     <>

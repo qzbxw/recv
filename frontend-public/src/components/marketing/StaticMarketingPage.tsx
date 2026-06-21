@@ -69,7 +69,7 @@ export function StaticMarketingPage({
   const gridCols = points.length % 4 === 0 ? "lg:grid-cols-2" : "lg:grid-cols-3";
 
   return (
-    <MarketingLayout language={locale}>
+    <MarketingLayout language={locale} path={path}>
       <JsonLd schema={breadcrumbSchema} />
 
       {/* HERO */}
