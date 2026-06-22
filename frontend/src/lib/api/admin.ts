@@ -131,8 +131,11 @@ export async function fetchAdminWebVitals(token: string) {
   return request<WebVitalsReport>("/api/admin/analytics/web-vitals", {}, token);
 }
 
-export async function fetchAdminUTMReport(token: string) {
-  return request<UTMReport>("/api/admin/analytics/utm", {}, token);
+export async function fetchAdminUTMReport(token: string, days = 365) {
+  const to = new Date();
+  const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000);
+  const search = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
+  return request<UTMReport>(`/api/admin/analytics/utm?${search.toString()}`, {}, token);
 }
 
 export async function fetchReferralPartners(token: string) {

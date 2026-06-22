@@ -105,6 +105,33 @@ export function trackUTMPageView(path: string, title?: string) {
   trackUTMEvent({ event_name: eventName, path, title });
 }
 
+function isTelegramBotHref(href: string) {
+  if (!href) return false;
+  try {
+    const url = new URL(href, window.location.origin);
+    return url.hostname === "t.me" && url.pathname.replace(/^\/+/, "").toLowerCase() === "recvmoney_bot";
+  } catch {
+    return false;
+  }
+}
+
+export function installUTMLinkClickTracking() {
+  function handleClick(event: MouseEvent) {
+    const target = event.target instanceof Element ? event.target.closest("a[href]") : null;
+    if (!(target instanceof HTMLAnchorElement)) return;
+    const href = target.getAttribute("href") || "";
+    if (!isTelegramBotHref(href)) return;
+    trackUTMEvent({
+      event_name: "bot_open",
+      path: `${window.location.pathname}${window.location.search}`,
+      properties: { href },
+    });
+  }
+
+  document.addEventListener("click", handleClick, { capture: true });
+  return () => document.removeEventListener("click", handleClick, { capture: true });
+}
+
 // captureAttribution mirrors AttributionCapture on the public site: ads can
 // link straight into /app/* (e.g. /app/auth), so the SPA must also persist the
 // recv_attr cookie and count the landing as a campaign visit.

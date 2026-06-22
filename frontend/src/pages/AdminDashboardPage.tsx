@@ -1504,10 +1504,11 @@ function PartnersPanel({ token, setToast, setError }: {
   );
 }
 
-function UTMPathTable({ title, rows, empty }: {
+function UTMPathTable({ title, rows, empty, activityLabel }: {
   title: string;
   rows: UTMReport["top_pages"];
   empty: string;
+  activityLabel?: string;
 }) {
   return (
     <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
@@ -1517,7 +1518,7 @@ function UTMPathTable({ title, rows, empty }: {
       </div>
       <div className="admin-table-wrap">
         <table className="admin-sales-table">
-          <thead><tr><th>Path</th><th>Visitors</th><th>Events</th><th>Signup visitors</th></tr></thead>
+          <thead><tr><th>Path</th><th>Visitors</th><th>{activityLabel || "Events"}</th><th>Signup visitors</th></tr></thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.path}>
@@ -1546,6 +1547,7 @@ function UTMBehaviorDetail({ row }: { row: UTMReport["campaigns"][number] }) {
       <span><strong>{row.events || 0}</strong> events</span>
       <span><strong>{row.docs_opened || 0}</strong> docs opened</span>
       <span><strong>{row.app_opens || 0}</strong> app opens</span>
+      <span><strong>{row.bot_opens || 0}</strong> bot opens</span>
       <span><strong>{row.signup_starts || 0}</strong> signup starts</span>
       <span><strong>{signupStartCR}</strong> start to signup</span>
       <span><strong>{docsPerVisitor}</strong> docs / visitor</span>
@@ -1574,6 +1576,7 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
   const totalSignups = campaigns.reduce((sum, row) => sum + row.signups, 0);
   const totalDocsOpened = campaigns.reduce((sum, row) => sum + (row.docs_opened || 0), 0);
   const totalAppOpens = campaigns.reduce((sum, row) => sum + (row.app_opens || 0), 0);
+  const totalBotOpens = campaigns.reduce((sum, row) => sum + (row.bot_opens || 0), 0);
   const startedToSignup = totalSignupStarts > 0 ? `${((totalSignups / totalSignupStarts) * 100).toFixed(1)}%` : "—";
   const visitorToSignup = totalUnique > 0 ? `${((totalSignups / totalUnique) * 100).toFixed(1)}%` : "—";
   return (
@@ -1613,12 +1616,13 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
       <UTMLinkBuilder setToast={setToast} />
       <div className="dev-portal__section-header dev-portal__section-header--margin">
         <h3>Lead journey funnel</h3>
-        <span className="dev-card__note-text">UTM visitors, docs activity, app opens and signup completion, rolling 28 days</span>
+        <span className="dev-card__note-text">UTM visitors, docs activity, app and bot opens, and signup completion, rolling 365 days</span>
       </div>
       <div className="dev-metrics-grid">
         <MetricCard label="UTM visitors" value={String(totalUnique)} meta={`${campaigns.reduce((sum, row) => sum + row.visits, 0)} tracked visits`} />
         <MetricCard label="Docs opened" value={String(totalDocsOpened)} meta="docs page views and docs clicks" />
         <MetricCard label="App opens" value={String(totalAppOpens)} meta="auth, console and app route opens" />
+        <MetricCard label="Bot opens" value={String(totalBotOpens)} meta="Telegram bot clicks and /start opens" />
         <MetricCard label="Signup starts" value={String(totalSignupStarts)} meta={`${startedToSignup} start to signup`} />
         <MetricCard label="Signups" value={String(totalSignups)} meta={`${visitorToSignup} visitor to signup`} />
       </div>
@@ -1655,6 +1659,7 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
         </div>
       </div>
       <div className="admin-grid admin-grid--two">
+        <UTMPathTable title="Top campaign landings" rows={utmReport?.top_landings || []} empty="No attributed landings yet." activityLabel="Visits" />
         <UTMPathTable title="Top pages before signup" rows={utmReport?.top_pages || []} empty="No attributed page activity yet." />
         <UTMPathTable title="Docs opened by leads" rows={utmReport?.top_docs || []} empty="No attributed docs activity yet." />
       </div>

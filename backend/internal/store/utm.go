@@ -69,6 +69,7 @@ type UTMCampaignStats struct {
 	Events           int64           `json:"events"`
 	DocsOpened       int64           `json:"docs_opened"`
 	AppOpens         int64           `json:"app_opens"`
+	BotOpens         int64           `json:"bot_opens"`
 	SignupStarts     int64           `json:"signup_starts"`
 	Signups          int64           `json:"signups"`
 	PayingWorkspaces int64           `json:"paying_workspaces"`
@@ -113,12 +114,13 @@ type UTMLeadJourney struct {
 }
 
 type UTMReport struct {
-	From      time.Time          `json:"from"`
-	To        time.Time          `json:"to"`
-	Campaigns []UTMCampaignStats `json:"campaigns"`
-	TopPages  []UTMPathStats     `json:"top_pages"`
-	TopDocs   []UTMPathStats     `json:"top_docs"`
-	Leads     []UTMLeadJourney   `json:"leads"`
+	From        time.Time          `json:"from"`
+	To          time.Time          `json:"to"`
+	Campaigns   []UTMCampaignStats `json:"campaigns"`
+	TopLandings []UTMPathStats     `json:"top_landings"`
+	TopPages    []UTMPathStats     `json:"top_pages"`
+	TopDocs     []UTMPathStats     `json:"top_docs"`
+	Leads       []UTMLeadJourney   `json:"leads"`
 }
 
 // GetUTMReport aggregates the acquisition funnel per (source, medium,
@@ -137,7 +139,8 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 		WITH visits AS (
 			SELECT source, medium, campaign,
 			       COUNT(*) AS visits,
-			       COUNT(DISTINCT NULLIF(attribution_id, '')) AS unique_visitors
+			       COUNT(DISTINCT NULLIF(attribution_id, '')) AS unique_visitors,
+			       COUNT(*) FILTER (WHERE landing_path = '/tg-bot') AS bot_visits
 			FROM utm_visits
 			WHERE created_at >= $1 AND created_at < $2
 			GROUP BY source, medium, campaign
@@ -146,6 +149,7 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 			       COUNT(*) AS events,
 			       COUNT(*) FILTER (WHERE event_name IN ('docs_open', 'docs_page_view')) AS docs_opened,
 			       COUNT(*) FILTER (WHERE event_name = 'app_open') AS app_opens,
+			       COUNT(*) FILTER (WHERE event_name = 'bot_open') AS bot_opens,
 			       COUNT(*) FILTER (WHERE event_name = 'signup_start') AS signup_starts
 			FROM utm_events
 			WHERE created_at >= $1 AND created_at < $2
@@ -181,6 +185,7 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 		       COALESCE(e.events, 0),
 		       COALESCE(e.docs_opened, 0),
 		       COALESCE(e.app_opens, 0),
+		       COALESCE(e.bot_opens, 0) + COALESCE(v.bot_visits, 0),
 		       COALESCE(e.signup_starts, 0),
 		       COALESCE(s.signups, 0),
 		       COALESCE(s.paying_workspaces, 0),
@@ -199,13 +204,17 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 	report := UTMReport{From: from, To: to, Campaigns: []UTMCampaignStats{}}
 	for rows.Next() {
 		var item UTMCampaignStats
-		if err := rows.Scan(&item.Source, &item.Medium, &item.Campaign, &item.Visits, &item.UniqueVisitors, &item.Events, &item.DocsOpened, &item.AppOpens, &item.SignupStarts, &item.Signups, &item.PayingWorkspaces, &item.PaidUSD); err != nil {
+		if err := rows.Scan(&item.Source, &item.Medium, &item.Campaign, &item.Visits, &item.UniqueVisitors, &item.Events, &item.DocsOpened, &item.AppOpens, &item.BotOpens, &item.SignupStarts, &item.Signups, &item.PayingWorkspaces, &item.PaidUSD); err != nil {
 			return UTMReport{}, fmt.Errorf("scan utm campaign stats: %w", err)
 		}
 		report.Campaigns = append(report.Campaigns, item)
 	}
 	if err := rows.Err(); err != nil {
 		return UTMReport{}, fmt.Errorf("iterate utm campaign stats: %w", err)
+	}
+	topLandings, err := s.getUTMLandingStats(ctx, from, to)
+	if err != nil {
+		return UTMReport{}, err
 	}
 	topPages, err := s.getUTMPathStats(ctx, from, to, false)
 	if err != nil {
@@ -219,10 +228,49 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 	if err != nil {
 		return UTMReport{}, err
 	}
+	report.TopLandings = topLandings
 	report.TopPages = topPages
 	report.TopDocs = topDocs
 	report.Leads = leads
 	return report, nil
+}
+
+func (s *Store) getUTMLandingStats(ctx context.Context, from, to time.Time) ([]UTMPathStats, error) {
+	rows, err := s.pool.Query(ctx, `
+		WITH signup_attrs AS (
+			SELECT DISTINCT attribution_id
+			FROM utm_attributions
+			WHERE attribution_id <> '' AND created_at >= $1 AND created_at < $2
+		)
+		SELECT landing_path,
+		       '' AS title,
+		       COUNT(DISTINCT NULLIF(v.attribution_id, '')) AS visitors,
+		       COUNT(*) AS visits,
+		       COUNT(DISTINCT v.attribution_id) FILTER (WHERE s.attribution_id IS NOT NULL) AS signup_visitors
+		FROM utm_visits v
+		LEFT JOIN signup_attrs s ON s.attribution_id = v.attribution_id
+		WHERE v.created_at >= $1 AND v.created_at < $2 AND landing_path <> ''
+		GROUP BY landing_path
+		ORDER BY visits DESC, visitors DESC
+		LIMIT 12
+	`, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("get utm landing stats: %w", err)
+	}
+	defer rows.Close()
+
+	items := []UTMPathStats{}
+	for rows.Next() {
+		var item UTMPathStats
+		if err := rows.Scan(&item.Path, &item.Title, &item.Visitors, &item.Events, &item.SignupVisitors); err != nil {
+			return nil, fmt.Errorf("scan utm landing stats: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate utm landing stats: %w", err)
+	}
+	return items, nil
 }
 
 func (s *Store) getUTMPathStats(ctx context.Context, from, to time.Time, docsOnly bool) ([]UTMPathStats, error) {

@@ -17,6 +17,7 @@ func TestUTMVisitsAndReport(t *testing.T) {
 		{AttributionID: "vis-1", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", LandingPath: "/ru"},
 		{AttributionID: "vis-1", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", LandingPath: "/ru/pricing"},
 		{AttributionID: "vis-2", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", LandingPath: "/ru"},
+		{AttributionID: "bot-vis-1", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", LandingPath: "/tg-bot"},
 	} {
 		if err := st.RecordUTMVisit(ctx, visit); err != nil {
 			t.Fatalf("RecordUTMVisit: %v", err)
@@ -30,6 +31,7 @@ func TestUTMVisitsAndReport(t *testing.T) {
 		{AttributionID: "vis-1", EventName: "page_view", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", Path: "/ru", Title: "Home"},
 		{AttributionID: "vis-1", EventName: "docs_open", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", Path: "/ru/docs/quickstart", Title: "Quickstart"},
 		{AttributionID: "vis-1", EventName: "app_open", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", Path: "/app/auth", Title: "Sign in"},
+		{AttributionID: "vis-1", EventName: "bot_open", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", Path: "/ru", Title: "Home"},
 		{AttributionID: "vis-1", EventName: "signup_start", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", Path: "/app/auth", Title: "Sign in"},
 		{AttributionID: "vis-3", EventName: "page_view", Source: "tg_channel_b", Medium: "organic", Campaign: "events-only", Path: "/ru/help", Title: "Help"},
 	} {
@@ -83,13 +85,13 @@ func TestUTMVisitsAndReport(t *testing.T) {
 	if eventOnly.Visits != 0 || eventOnly.Events != 1 || eventOnly.Signups != 0 {
 		t.Fatalf("unexpected event-only campaign stats: %+v", eventOnly)
 	}
-	if found.Visits != 3 {
-		t.Fatalf("expected 3 visits, got %d", found.Visits)
+	if found.Visits != 4 {
+		t.Fatalf("expected 4 visits, got %d", found.Visits)
 	}
-	if found.UniqueVisitors != 2 {
-		t.Fatalf("expected 2 unique visitors, got %d", found.UniqueVisitors)
+	if found.UniqueVisitors != 3 {
+		t.Fatalf("expected 3 unique visitors, got %d", found.UniqueVisitors)
 	}
-	if found.Events != 4 || found.DocsOpened != 1 || found.AppOpens != 1 || found.SignupStarts != 1 {
+	if found.Events != 5 || found.DocsOpened != 1 || found.AppOpens != 1 || found.BotOpens != 2 || found.SignupStarts != 1 {
 		t.Fatalf("unexpected event funnel stats: %+v", found)
 	}
 	if found.Signups != 1 {
@@ -107,7 +109,7 @@ func TestUTMVisitsAndReport(t *testing.T) {
 	if report.Leads[0].WorkspaceID == nil || *report.Leads[0].WorkspaceID != workspace.ID {
 		t.Fatalf("expected lead workspace %d, got %+v", workspace.ID, report.Leads[0].WorkspaceID)
 	}
-	if len(report.Leads[0].Timeline) != 4 {
-		t.Fatalf("expected 4 timeline events, got %+v", report.Leads[0].Timeline)
+	if len(report.Leads[0].Timeline) != 5 {
+		t.Fatalf("expected 5 timeline events, got %+v", report.Leads[0].Timeline)
 	}
 }

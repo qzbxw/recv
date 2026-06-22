@@ -421,10 +421,18 @@ export type UTMReport = {
     events: number;
     docs_opened: number;
     app_opens: number;
+    bot_opens: number;
     signup_starts: number;
     signups: number;
     paying_workspaces: number;
     paid_usd: string;
+  }>;
+  top_landings: Array<{
+    path: string;
+    title: string;
+    visitors: number;
+    events: number;
+    signup_visitors: number;
   }>;
   top_pages: Array<{
     path: string;

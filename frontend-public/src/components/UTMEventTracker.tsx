@@ -95,6 +95,16 @@ function pageEventName(path: string) {
   return "page_view";
 }
 
+function isTelegramBotHref(href: string) {
+  if (!href) return false;
+  try {
+    const url = new URL(href, window.location.origin);
+    return url.hostname === "t.me" && url.pathname.replace(/^\/+/, "").toLowerCase() === "recvmoney_bot";
+  } catch {
+    return false;
+  }
+}
+
 export function UTMEventTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -114,8 +124,10 @@ export function UTMEventTracker() {
       const attr = readCookie();
       if (!attr?.attribution_id) return;
       const href = target.getAttribute("href") || "";
-      if (!href.startsWith("/app") && !href.includes("/docs")) return;
-      sendUTMEvent(attr, href.startsWith("/app") ? "app_open" : "docs_open", `${pathname}${window.location.search}`, { href });
+      const isBotHref = isTelegramBotHref(href);
+      if (!isBotHref && !href.startsWith("/app") && !href.includes("/docs")) return;
+      const eventName = isBotHref ? "bot_open" : href.startsWith("/app") ? "app_open" : "docs_open";
+      sendUTMEvent(attr, eventName, `${pathname}${window.location.search}`, { href });
     }
 
     document.addEventListener("click", handleClick, { capture: true });
