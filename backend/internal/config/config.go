@@ -147,12 +147,12 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("REFRESH_TOKEN_TTL: %w", err)
 	}
 	cfg.RefreshTokenTTL = refreshTTL
-	adminAccessTTL, err := time.ParseDuration(envOrDefault("ADMIN_ACCESS_TOKEN_TTL", "15m"))
+	adminAccessTTL, err := time.ParseDuration(envOrDefault("ADMIN_ACCESS_TOKEN_TTL", "720h"))
 	if err != nil {
 		return Config{}, fmt.Errorf("ADMIN_ACCESS_TOKEN_TTL: %w", err)
 	}
 	cfg.AdminAccessTokenTTL = adminAccessTTL
-	adminRefreshTTL, err := time.ParseDuration(envOrDefault("ADMIN_REFRESH_TOKEN_TTL", "12h"))
+	adminRefreshTTL, err := time.ParseDuration(envOrDefault("ADMIN_REFRESH_TOKEN_TTL", "720h"))
 	if err != nil {
 		return Config{}, fmt.Errorf("ADMIN_REFRESH_TOKEN_TTL: %w", err)
 	}

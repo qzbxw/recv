@@ -47,7 +47,8 @@ services:
       ADMIN_BOOTSTRAP_EMAIL: admin@example.com
       ADMIN_BOOTSTRAP_PASSWORD: admin
       ADMIN_JWT_SECRET: dev-admin-secret
-      ADMIN_SESSION_TTL: 12h
+      ADMIN_ACCESS_TOKEN_TTL: 720h
+      ADMIN_REFRESH_TOKEN_TTL: 720h
       PUBLIC_APP_URL: http://localhost:3000
     # Ports are internal only, accessed via gateway
 
