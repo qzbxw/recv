@@ -562,8 +562,23 @@ func adminDailySalesResponse(items []store.AdminDailySalesPoint) []gin.H {
 }
 
 func adminNetworkBreakdownResponse(items []store.AdminNetworkBreakdown) []gin.H {
-	out := make([]gin.H, 0, len(items))
+	byNetwork := make(map[store.Network]store.AdminNetworkBreakdown, len(items))
 	for _, item := range items {
+		byNetwork[item.Network] = item
+	}
+	networks := []store.Network{
+		store.NetworkTON,
+		store.NetworkTON_USDT,
+		store.NetworkTRON,
+		store.NetworkSOLANA,
+		store.NetworkBASE,
+		store.NetworkARBITRUM,
+		store.NetworkBSC,
+	}
+	out := make([]gin.H, 0, len(networks))
+	for _, network := range networks {
+		item := byNetwork[network]
+		item.Network = network
 		out = append(out, gin.H{
 			"network":     item.Network,
 			"paid_usd":    item.PaidUSD.StringFixed(2),
@@ -575,8 +590,23 @@ func adminNetworkBreakdownResponse(items []store.AdminNetworkBreakdown) []gin.H 
 }
 
 func adminStatusBreakdownResponse(items []store.AdminStatusBreakdown) []gin.H {
-	out := make([]gin.H, 0, len(items))
+	byStatus := make(map[store.InvoiceStatus]store.AdminStatusBreakdown, len(items))
 	for _, item := range items {
+		byStatus[item.Status] = item
+	}
+	statuses := []store.InvoiceStatus{
+		store.InvoiceStatusDraft,
+		store.InvoiceStatusAwaitingPayment,
+		store.InvoiceStatusPaid,
+		store.InvoiceStatusExpired,
+		store.InvoiceStatusUnderpaid,
+		store.InvoiceStatusOverpaid,
+		store.InvoiceStatusManualReview,
+	}
+	out := make([]gin.H, 0, len(statuses))
+	for _, status := range statuses {
+		item := byStatus[status]
+		item.Status = status
 		out = append(out, gin.H{
 			"status": item.Status,
 			"count":  item.Count,

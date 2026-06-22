@@ -13643,3 +13643,259 @@ html, body {
   font-family: var(--font-mono, monospace);
 }
 
+/* Admin operations cleanup */
+.admin-ops .dev-portal__body {
+  max-width: min(1440px, 100%) !important;
+  gap: 1.4rem !important;
+  padding: 1.75rem 2rem 4rem !important;
+}
+
+.admin-ops .dev-portal__section { gap: 1.15rem !important; }
+
+.admin-ops .dev-portal__hero--compact {
+  padding: 0 0 0.25rem !important;
+  gap: 0.55rem !important;
+}
+
+.admin-ops .dev-portal__hero--compact h1 { font-size: clamp(1.9rem, 3vw, 2.65rem) !important; }
+.admin-ops .dev-portal__hero--compact p {
+  max-width: 760px !important;
+  font-size: 0.98rem !important;
+}
+
+.admin-ops .dev-metrics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important;
+  gap: 0.75rem !important;
+  margin-bottom: 0 !important;
+}
+
+.admin-ops .dev-metric-item {
+  min-height: 112px;
+  padding: 1rem 1.05rem !important;
+  border-radius: 8px !important;
+  background: rgba(18, 18, 22, 0.72) !important;
+  border-color: rgba(255, 255, 255, 0.075) !important;
+}
+
+.admin-ops .dev-metric-value { font-size: 1.45rem !important; }
+.admin-ops .dev-analytics-panel { gap: 0.9rem !important; }
+
+.admin-ops .dev-analytics-col,
+.admin-ops .dev-card {
+  border-radius: 8px !important;
+  padding: 1.15rem !important;
+  background: rgba(12, 12, 14, 0.68) !important;
+  border-color: rgba(255, 255, 255, 0.075) !important;
+  min-width: 0;
+}
+
+.admin-ops .dev-resource-list {
+  gap: 0.75rem !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.admin-ops .dev-resource-card,
+.admin-ops .dev-card--invoice,
+.admin-ops .dev-resource-list > .dev-card {
+  border: 1px solid rgba(255, 255, 255, 0.055) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.012) !important;
+  padding: 1rem 1.1rem !important;
+}
+
+.admin-ops .dev-card__head {
+  gap: 1rem !important;
+  margin-bottom: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.admin-ops .dev-card__title { line-height: 1.2; }
+
+.admin-ops .admin-actions,
+.admin-ops .dev-card__actions {
+  gap: 0.45rem !important;
+  margin-top: 0.65rem !important;
+}
+
+.admin-ops .dev-btn,
+.admin-ops .custom-select__button,
+.admin-ops .multi-select__button {
+  border-radius: 8px !important;
+}
+
+.admin-ops .admin-manage {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.admin-ops .admin-manage__controls { align-items: stretch; }
+.admin-ops .admin-manage__controls .multi-select { min-width: min(360px, 100%); }
+
+.admin-ops .admin-wallet-input {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+}
+
+.admin-insight-grid,
+.admin-lead-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.admin-insight-card,
+.admin-lead-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem !important;
+  border-radius: 8px !important;
+  background: rgba(16, 16, 20, 0.76) !important;
+  border-color: rgba(255, 255, 255, 0.075) !important;
+}
+
+.admin-insight-card__head,
+.admin-lead-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.admin-insight-card__head strong,
+.admin-lead-card__head strong {
+  color: #fff;
+  font-size: 1rem;
+}
+
+.admin-insight-card__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.admin-insight-card__metrics span,
+.admin-lead-card span,
+.admin-lead-card small,
+.admin-insight-card small {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.8rem;
+}
+
+.admin-insight-card p,
+.admin-lead-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.86rem;
+}
+
+.admin-details {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.admin-ops .admin-grid,
+.admin-ops .admin-table-wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-ops .admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-details > summary {
+  cursor: pointer;
+  list-style: none;
+  width: fit-content;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.admin-details > summary::-webkit-details-marker { display: none; }
+
+.admin-details[open] > summary {
+  margin-bottom: 0.75rem;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .admin-ops:not(.is-menu-open) .dev-portal__sidebar {
+    transform: translateX(-110%) !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+
+  .admin-ops.is-menu-open .dev-portal__sidebar {
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+  }
+
+  .admin-ops .dev-portal__sidebar {
+    z-index: 1100 !important;
+  }
+
+  .admin-ops .dev-portal__nav-backdrop {
+    z-index: 1090 !important;
+  }
+
+  .admin-ops .dev-portal__body {
+    padding:
+      calc(60px + var(--console-safe-top) + 1.25rem)
+      0.875rem
+      calc(3rem + var(--console-safe-bottom)) !important;
+  }
+
+  .admin-ops .dev-metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-ops .admin-toolbar.dev-toolbar {
+    align-items: stretch !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .admin-ops .admin-toolbar.dev-toolbar > .dev-input {
+    width: 100% !important;
+  }
+
+  .admin-ops .dev-toolbar__meta {
+    align-self: flex-start;
+  }
+
+  .admin-ops .admin-manage__row {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  .admin-ops .admin-manage__label,
+  .admin-ops .admin-manage__controls,
+  .admin-ops .admin-manage__controls > *,
+  .admin-ops .admin-manage__controls .custom-select,
+  .admin-ops .admin-manage__controls .dev-btn,
+  .admin-ops .admin-manage__controls .dev-input {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .admin-ops .admin-manage__controls {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+}

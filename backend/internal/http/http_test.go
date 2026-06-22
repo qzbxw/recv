@@ -401,7 +401,7 @@ func TestWatcherPathAndDeveloperUtilityBranches(t *testing.T) {
 func TestWorkspaceHandlersValidationBranches(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1}
 
 	t.Run("update contact email rejects invalid address", func(t *testing.T) {
@@ -570,7 +570,7 @@ func TestPublicAndInternalHandlersValidationBranches(t *testing.T) {
 func TestDeveloperHandlersValidationBranches(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	trialWorkspace := store.Workspace{ID: 1}
 
 	t.Run("create api key rejects unsupported plan", func(t *testing.T) {
@@ -760,7 +760,7 @@ func TestAbortErrorWith5xxHidesInternalDetails(t *testing.T) {
 
 func TestHandlerValidationBranches(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 
 	t.Run("handleUpdateContactEmail rejects non-email string", func(t *testing.T) {
 		workspace := store.Workspace{ID: 1}
@@ -1101,7 +1101,7 @@ func TestAdminRevokeSessionForbiddenForNonSuperAdmin(t *testing.T) {
 
 func TestDeveloperHandlerAdditionalValidationBranches(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	proWorkspace := store.Workspace{ID: 1, PlanCode: store.PlanCodeDeveloper}
 
 	t.Run("handleResendWebhookDelivery rejects invalid id", func(t *testing.T) {
@@ -1511,7 +1511,13 @@ func TestTeamRoleHelpers(t *testing.T) {
 
 func withWorkspaceContext(workspace store.Workspace) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      1,
+				WorkspaceID: workspace.ID,
+			},
+			Workspace: workspace,
+		})
 		c.Next()
 	}
 }
@@ -1878,7 +1884,7 @@ func TestWriteAdminStoreErrorPaths(t *testing.T) {
 
 func TestUpdateContactEmailMalformedJSON(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1}
 
 	router := gin.New()
@@ -1896,7 +1902,7 @@ func TestUpdateContactEmailMalformedJSON(t *testing.T) {
 
 func TestListWalletsAndCreateWalletMalformedJSON(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1}
 
 	t.Run("createWallet rejects malformed json", func(t *testing.T) {
@@ -1943,7 +1949,7 @@ func TestListWalletsAndCreateWalletMalformedJSON(t *testing.T) {
 
 func TestCreateInvoiceMalformedJSON(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1}
 
 	router := gin.New()
@@ -1961,7 +1967,7 @@ func TestCreateInvoiceMalformedJSON(t *testing.T) {
 
 func TestCreateWebhookEndpointValidation(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 
 	t.Run("validates malformed json for trial webhook access", func(t *testing.T) {
 		trialWorkspace := store.Workspace{ID: 1, PlanCode: store.PlanCodeTrial}
@@ -1999,7 +2005,7 @@ func TestCreateWebhookEndpointValidation(t *testing.T) {
 
 func TestCreateAPIKeyValidation(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 
 	t.Run("rejects plan without API access (trial)", func(t *testing.T) {
 		// Trial workspace does not include API access → 403 before any store call
@@ -2158,14 +2164,24 @@ func TestAdminResponseHelpers(t *testing.T) {
 			{Network: store.NetworkBASE, PaidUSD: decimal.RequireFromString("50"), PaidCount: 3, TotalCount: 5},
 		}
 		result := adminNetworkBreakdownResponse(items)
-		if len(result) != 1 {
-			t.Fatalf("expected 1 item, got %d", len(result))
+		if len(result) != 7 {
+			t.Fatalf("expected all 7 payable networks, got %d", len(result))
 		}
-		if result[0]["network"] != store.NetworkBASE {
-			t.Fatalf("unexpected network: %v", result[0]["network"])
+		var base gin.H
+		for _, row := range result {
+			if row["network"] == store.NetworkBASE {
+				base = row
+				break
+			}
 		}
-		if result[0]["paid_count"] != 3 {
-			t.Fatalf("unexpected paid_count: %v", result[0]["paid_count"])
+		if base == nil {
+			t.Fatal("expected BASE row")
+		}
+		if base["paid_count"] != 3 {
+			t.Fatalf("unexpected paid_count: %v", base["paid_count"])
+		}
+		if result[0]["network"] != store.NetworkTON {
+			t.Fatalf("expected stable network order starting with TON, got %v", result[0]["network"])
 		}
 	})
 
@@ -2174,14 +2190,24 @@ func TestAdminResponseHelpers(t *testing.T) {
 			{Status: store.InvoiceStatusPaid, Count: 10, USD: decimal.RequireFromString("200")},
 		}
 		result := adminStatusBreakdownResponse(items)
-		if len(result) != 1 {
-			t.Fatalf("expected 1 item, got %d", len(result))
+		if len(result) != 7 {
+			t.Fatalf("expected all 7 invoice statuses, got %d", len(result))
 		}
-		if result[0]["status"] != store.InvoiceStatusPaid {
-			t.Fatalf("unexpected status: %v", result[0]["status"])
+		var paid gin.H
+		for _, row := range result {
+			if row["status"] == store.InvoiceStatusPaid {
+				paid = row
+				break
+			}
 		}
-		if result[0]["count"] != 10 {
-			t.Fatalf("unexpected count: %v", result[0]["count"])
+		if paid == nil {
+			t.Fatal("expected paid row")
+		}
+		if paid["count"] != 10 {
+			t.Fatalf("unexpected count: %v", paid["count"])
+		}
+		if result[0]["status"] != store.InvoiceStatusDraft {
+			t.Fatalf("expected stable status order starting with draft, got %v", result[0]["status"])
 		}
 	})
 
@@ -2369,7 +2395,7 @@ func TestHandleTeamVariants(t *testing.T) {
 
 func TestHandleCreateBillingCheckoutMalformedJSON(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1}
 
 	router := gin.New()
@@ -2387,7 +2413,7 @@ func TestHandleCreateBillingCheckoutMalformedJSON(t *testing.T) {
 
 func TestHandleCreateBillingCheckoutInvalidDuration(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1}
 
 	router := gin.New()
@@ -2701,7 +2727,7 @@ func TestHandleAPICancelInvoiceValidation(t *testing.T) {
 
 func TestHandleCreateWalletInvalidAddress(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1}
 
 	router := gin.New()
@@ -2720,7 +2746,7 @@ func TestHandleCreateWalletInvalidAddress(t *testing.T) {
 
 func TestHandleDeleteAPIKeyInvalidID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1, PlanCode: store.PlanCodeDeveloper}
 
 	router := gin.New()
@@ -2736,7 +2762,7 @@ func TestHandleDeleteAPIKeyInvalidID(t *testing.T) {
 
 func TestHandleDeleteWebhookEndpointInvalidID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	server := &Server{}
+	server := &Server{store: &mockHTTPStore{}}
 	workspace := store.Workspace{ID: 1, PlanCode: store.PlanCodeDeveloper}
 
 	router := gin.New()

@@ -5,7 +5,30 @@ import (
 	"time"
 )
 
+func cleanEnv(t *testing.T) {
+	t.Helper()
+	keys := []string{
+		"APP_ENV", "APP_RUNTIME", "HTTP_PORT", "METRICS_PORT", "DATABASE_URL",
+		"JWT_SECRET", "INTERNAL_TOKEN", "TELEGRAM_BOT_TOKEN", "TELEGRAM_INIT_MAX_AGE_SECONDS",
+		"ALLOW_INSECURE_DEV_AUTH", "GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET",
+		"GITHUB_OAUTH_CLIENT_ID", "GITHUB_OAUTH_CLIENT_SECRET", "ALLOWED_ORIGINS",
+		"PUBLIC_APP_URL", "TRONGRID_BASE_URL", "TRONGRID_API_KEY", "TONCENTER_BASE_URL",
+		"TONCENTER_API_KEY", "TON_USDT_MASTER_ADDRESS", "GRAM_USD_RATE", "TON_USD_RATE",
+		"SOL_USD_RATE", "BNB_USD_RATE", "SOLANA_RPC_URL", "ETHEREUM_RPC_URL", "BASE_RPC_URL",
+		"ARBITRUM_RPC_URL", "BSC_RPC_URL", "ADMIN_USERNAME", "ADMIN_PASSWORD",
+		"ADMIN_BOOTSTRAP_EMAIL", "ADMIN_BOOTSTRAP_PASSWORD", "ADMIN_JWT_SECRET",
+		"POSTHOG_KEY", "POSTHOG_HOST", "SENTRY_DSN_BACKEND", "MEDIA_DIR",
+		"WATCHER_POLL_INTERVAL", "WATCHER_GRACE_WINDOW", "WATCHER_BACKFILL_BLOCKS",
+		"EVM_CONFIRMATION_DEPTH", "ACCESS_TOKEN_TTL", "REFRESH_TOKEN_TTL",
+		"ADMIN_ACCESS_TOKEN_TTL", "ADMIN_REFRESH_TOKEN_TTL", "OAUTH_REDIRECT_BASE_URL",
+	}
+	for _, k := range keys {
+		t.Setenv(k, "")
+	}
+}
+
 func TestLoadRequiresDatabaseURL(t *testing.T) {
+	cleanEnv(t)
 	t.Setenv("DATABASE_URL", "")
 	t.Setenv("JWT_SECRET", "secret")
 
@@ -16,6 +39,7 @@ func TestLoadRequiresDatabaseURL(t *testing.T) {
 }
 
 func TestLoadRequiresJWTSecret(t *testing.T) {
+	cleanEnv(t)
 	t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 	t.Setenv("JWT_SECRET", "")
 
@@ -26,6 +50,7 @@ func TestLoadRequiresJWTSecret(t *testing.T) {
 }
 
 func TestLoadAppliesDefaultsAndParsesDurations(t *testing.T) {
+	cleanEnv(t)
 	t.Setenv("APP_RUNTIME", "watcher")
 	t.Setenv("DATABASE_URL", "postgres://localhost/recv")
 	t.Setenv("JWT_SECRET", "secret")
@@ -66,6 +91,7 @@ func TestLoadAppliesDefaultsAndParsesDurations(t *testing.T) {
 }
 
 func TestLoadRejectsUnsafeProductionAdminConfig(t *testing.T) {
+	cleanEnv(t)
 	t.Run("dev admin credentials are production-only error", func(t *testing.T) {
 		t.Setenv("APP_ENV", "production")
 		t.Setenv("DATABASE_URL", "postgres://localhost/recv")
@@ -119,6 +145,7 @@ func TestLoadRejectsUnsafeProductionAdminConfig(t *testing.T) {
 }
 
 func TestLoadRejectsInvalidDurations(t *testing.T) {
+	cleanEnv(t)
 	baseEnv := func(t *testing.T) {
 		t.Helper()
 		t.Setenv("DATABASE_URL", "postgres://localhost/recv")

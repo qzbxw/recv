@@ -24,7 +24,7 @@ export function MultiSelect<T extends string>({
   values,
   options,
   onChange,
-  maxSelected = 2,
+  maxSelected,
   ariaLabel,
   placeholder = "Select options...",
   disabled = false,
@@ -101,10 +101,11 @@ export function MultiSelect<T extends string>({
         onChange(values.filter(v => v !== optValue));
       }
     } else {
+      const selectionLimit = maxSelected ?? options.length;
       let nextValues = [...values, optValue];
-      if (nextValues.length > maxSelected) {
+      if (selectionLimit > 0 && nextValues.length > selectionLimit) {
         // If limit exceeded, drop the oldest checked option to maintain max limit
-        nextValues = nextValues.slice(-maxSelected);
+        nextValues = nextValues.slice(-selectionLimit);
       }
       onChange(nextValues);
     }

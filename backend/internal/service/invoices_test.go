@@ -92,6 +92,32 @@ func TestInvoiceServiceNativeRateUSDFetchesBNBFromUpstream(t *testing.T) {
 	}
 }
 
+func TestNormalizePaymentOptionInputsAllowsMoreThanTwoOptions(t *testing.T) {
+	service := NewInvoiceService(nil, "")
+
+	options, err := service.normalizePaymentOptionInputs(store.NetworkTON, "", "", []PaymentOptionInput{
+		{Network: store.NetworkTON, Asset: store.AssetGRAM},
+		{Network: store.NetworkTRON, Asset: store.AssetUSDT},
+		{Network: store.NetworkBASE, Asset: store.AssetUSDC},
+	})
+	if err != nil {
+		t.Fatalf("normalizePaymentOptionInputs returned error: %v", err)
+	}
+	if len(options) != 3 {
+		t.Fatalf("expected three payment options, got %#v", options)
+	}
+}
+
+func TestNormalizePaymentOptionInputsRejectsMoreThanSupportedOptions(t *testing.T) {
+	service := NewInvoiceService(nil, "")
+	requested := make([]PaymentOptionInput, maxSupportedPaymentOptions()+1)
+
+	_, err := service.normalizePaymentOptionInputs(store.NetworkTON, "", "", requested)
+	if err == nil || !strings.Contains(err.Error(), "payment_options must contain 1 to") {
+		t.Fatalf("expected payment option count error, got %v", err)
+	}
+}
+
 func TestInvoiceServiceNativeRateUSDUsesFreshCacheWithoutRefetch(t *testing.T) {
 	calls := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

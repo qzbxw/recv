@@ -40,8 +40,10 @@ import {
 } from "../lib/api";
 import { ApiError } from "../lib/errors";
 import { CustomSelect } from "../components/CustomSelect";
+import { MultiSelect } from "../components/MultiSelect";
 import { buildCheckoutUrl, buildCheckoutPath } from "../lib/routing";
-import { formatPaymentAssetLabel } from "../lib/status";
+import { formatNetworkLabel, formatPaymentAssetLabel } from "../lib/status";
+import { PAYABLE_PAYMENT_OPTIONS } from "../lib/paymentOptions";
 import type {
   AdminAnalyticsResponse,
   AdminAuditEvent,
@@ -72,14 +74,6 @@ const PLAN_OPTIONS = [
   { value: "business", label: "Business" },
 ];
 
-const NETWORK_OPTIONS = [
-  { value: "TON", label: "GRAM on TON" },
-  { value: "TON_USDT", label: "USDT on TON" },
-  { value: "TRON", label: "TRON USDT" },
-  { value: "BASE", label: "Base USDC" },
-  { value: "BSC", label: "BSC USDT" },
-];
-
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "awaiting_payment", label: "Awaiting payment" },
@@ -102,6 +96,8 @@ const GROUP_BY_OPTIONS = [
   { value: "plan", label: "By plan" },
   { value: "mode", label: "By mode" },
 ];
+
+const SUPPORTED_PAYABLE_NETWORKS = ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] as const;
 
 function formatMoney(value: string | number | null | undefined) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
@@ -127,6 +123,18 @@ function statusTone(status: string): string {
 
 function prettyStatus(status: string) {
   return status.replace(/_/g, " ");
+}
+
+function adminWorkspaceLabel(inv: AdminInvoice) {
+  return inv.workspace_username ? `@${inv.workspace_username}` : inv.workspace_name || `Workspace #${inv.workspace_id}`;
+}
+
+function adminWorkspaceMeta(inv: AdminInvoice) {
+  return [adminWorkspaceLabel(inv), inv.workspace_email || inv.user_email].filter(Boolean).join(" · ");
+}
+
+function adminNetworkLabel(network: string) {
+  return formatNetworkLabel(network as import("../lib/types").Network);
 }
 
 const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
@@ -540,6 +548,8 @@ function OverviewPanel({ overview, busyKey, runAction, onGoto }: {
   }
   const totalStatus = overview.invoices.total || 1;
   const maxNet = (overview.network_breakdown || []).reduce((m, n) => Math.max(m, Number(n.paid_usd)), 0) || 1;
+  const watcherByNetwork = new Map((overview.watcher_health || []).map((w) => [w.payable_network || w.poll_network, w]));
+  const watcherRows = SUPPORTED_PAYABLE_NETWORKS.map((network) => ({ network, watcher: watcherByNetwork.get(network) }));
   const metricCards = [
     { label: "Gross paid", value: formatMoney(overview.revenue.gross_paid_usd), meta: `${overview.invoices.paid} paid invoices` },
     { label: "Open volume", value: formatMoney(overview.revenue.open_invoice_usd), meta: `${overview.invoices.manual_review} in review` },
@@ -599,7 +609,7 @@ function OverviewPanel({ overview, busyKey, runAction, onGoto }: {
             {(overview.network_breakdown || []).map((item) => (
               <div key={item.network} className="dev-breakdown__row">
                 <div className="dev-breakdown__head">
-                  <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{item.network}</span>
+                  <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{adminNetworkLabel(item.network)}</span>
                   <span className="dev-breakdown__label">{item.paid_count} paid</span>
                   <span className="dev-breakdown__value">{formatMoney(item.paid_usd)}</span>
                 </div>
@@ -630,7 +640,7 @@ function OverviewPanel({ overview, busyKey, runAction, onGoto }: {
                     <div className="dev-resource-card__title">{inv.title}</div>
                     <div className="dev-resource-card__meta dev-resource-card__meta--row">
                       <ToneBadge status={inv.status} />
-                      <span>{inv.workspace_name || `#${inv.workspace_id}`}</span>
+                      <span>{adminWorkspaceLabel(inv)}</span>
                       <span className="dev-resource-card__amount">{formatMoney(inv.base_amount_usd)}</span>
                     </div>
                   </div>
@@ -653,20 +663,21 @@ function OverviewPanel({ overview, busyKey, runAction, onGoto }: {
             <p>Watcher freshness & webhook retries</p>
           </div>
           <div className="dev-resource-list">
-            {(overview.watcher_health || []).slice(0, 6).map((w) => {
-              const stale = w.freshness_seconds > 600;
+            {watcherRows.map(({ network, watcher }) => {
+              const stale = !watcher || watcher.freshness_seconds > 600;
               return (
-                <div key={`${w.poll_network}-${w.destination_address}`} className="dev-resource-card">
+                <div key={network} className="dev-resource-card">
                   <div className="dev-resource-card__info">
                     <div className="dev-resource-card__title">
-                      <span className={`dev-status-dot dev-status-dot--${stale ? "danger" : "success"}`} /> {w.poll_network}
+                      <span className={`dev-status-dot dev-status-dot--${stale ? "danger" : "success"}`} /> {adminNetworkLabel(network)}
                     </div>
-                    <div className="dev-resource-card__meta">block {w.last_block} · {Math.round(w.freshness_seconds / 60)}m ago</div>
+                    <div className="dev-resource-card__meta">
+                      {watcher ? `block ${watcher.last_block} · ${Math.round(watcher.freshness_seconds / 60)}m ago` : "not reporting yet"}
+                    </div>
                   </div>
                 </div>
               );
             })}
-            {(overview.watcher_health || []).length === 0 && <div className="dev-portal__empty-state">No watcher data.</div>}
           </div>
         </div>
       </div>
@@ -698,13 +709,13 @@ function InvoiceCard({ inv, workspaces, busyKey, runAction }: {
         <div>
           <div className="dev-card__status-row">
             <ToneBadge status={inv.status} />
-            <span className="dev-api-badge dev-api-badge--secondary">{inv.payable_network}</span>
+            <span className="dev-api-badge dev-api-badge--secondary">{adminNetworkLabel(inv.payable_network)}</span>
             <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{inv.kind}</span>
           </div>
           <h3 className="dev-card__title">{inv.title}</h3>
           <code className="dev-card__id">{inv.public_id}</code>
           <div className="dev-resource-card__meta admin-invoice-ws">
-            {inv.workspace_name || `Workspace #${inv.workspace_id}`}{inv.user_email ? ` · ${inv.user_email}` : ""}
+            {adminWorkspaceMeta(inv)}
           </div>
         </div>
         <div className="dev-card__amount-col">
@@ -782,17 +793,32 @@ function PlanChanger({ workspaceId, busy, runAction }: { workspaceId: number; bu
 
 function BillingCheckout({ workspaceId, busy, runAction }: { workspaceId: number; busy: boolean; runAction: ActionRunner }) {
   const [plan, setPlan] = useState("merchant");
-  const [network, setNetwork] = useState("TON");
+  const [optionKeys, setOptionKeys] = useState<string[]>(["TRON:USDT"]);
   const [url, setUrl] = useState("");
   const tok = () => getStoredAdminToken() || "";
+  const selectedOptions = optionKeys
+    .map((key) => PAYABLE_PAYMENT_OPTIONS.find((option) => option.key === key))
+    .filter((option): option is (typeof PAYABLE_PAYMENT_OPTIONS)[number] => Boolean(option));
   return (
     <div className="admin-manage__row admin-manage__form">
       <span className="admin-manage__label">Billing checkout</span>
       <div className="admin-manage__controls">
         <CustomSelect value={plan} options={PLAN_OPTIONS.filter((p) => p.value !== "trial")} ariaLabel="Plan" onChange={setPlan} />
-        <CustomSelect value={network} options={NETWORK_OPTIONS} ariaLabel="Network" onChange={setNetwork} />
-        <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void runAction(`bill-${workspaceId}`, async () => {
-          const r = await createAdminBillingCheckout(tok(), workspaceId, { plan_code: plan, payable_network: network });
+        <MultiSelect
+          values={optionKeys}
+          options={PAYABLE_PAYMENT_OPTIONS.map((option) => ({ value: option.key, label: option.label }))}
+          ariaLabel="Payment methods"
+          placeholder="Payment methods"
+          onChange={setOptionKeys}
+        />
+        <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy || selectedOptions.length === 0} onClick={() => void runAction(`bill-${workspaceId}`, async () => {
+          const primary = selectedOptions[0];
+          const r = await createAdminBillingCheckout(tok(), workspaceId, {
+            plan_code: plan,
+            payable_network: primary.network,
+            payable_asset: primary.asset,
+            payment_options: selectedOptions.map((option) => ({ network: option.network, asset: option.asset })),
+          });
           setUrl(buildCheckoutUrl(r.invoice.public_id));
           return { result: `Checkout created for ${r.plan.name}` };
         })}>
@@ -897,12 +923,12 @@ function ReviewPanel({ queue, busyKey, runAction }: { queue: AdminInvoice[]; bus
                   <div>
                     <div className="dev-card__status-row">
                       <ToneBadge status={inv.status} />
-                      <span className="dev-api-badge dev-api-badge--secondary">{inv.payable_network}</span>
+                      <span className="dev-api-badge dev-api-badge--secondary">{adminNetworkLabel(inv.payable_network)}</span>
                       {inv.classification && <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{inv.classification}</span>}
                     </div>
                     <h3 className="dev-card__title">{inv.title}</h3>
                     <code className="dev-card__id">{inv.public_id}</code>
-                    <div className="dev-resource-card__meta admin-invoice-ws">{inv.workspace_name || `#${inv.workspace_id}`}{inv.user_email ? ` · ${inv.user_email}` : ""}</div>
+                    <div className="dev-resource-card__meta admin-invoice-ws">{adminWorkspaceMeta(inv)}</div>
                   </div>
                   <div className="dev-card__amount-col">
                     <div className="dev-card__amount">{formatMoney(inv.base_amount_usd)}</div>
@@ -1643,6 +1669,10 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
   const totalBotOpens = campaigns.reduce((sum, row) => sum + (row.bot_opens || 0), 0);
   const startedToSignup = totalSignupStarts > 0 ? `${((totalSignups / totalSignupStarts) * 100).toFixed(1)}%` : "—";
   const visitorToSignup = totalUnique > 0 ? `${((totalSignups / totalUnique) * 100).toFixed(1)}%` : "—";
+  const topCampaigns = [...campaigns]
+    .sort((a, b) => b.signups - a.signups || Number(b.paid_usd) - Number(a.paid_usd) || b.unique_visitors - a.unique_visitors)
+    .slice(0, 6);
+  const recentLeads = leads.slice(0, 8);
   return (
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Analytics" subtitle="Revenue, conversion and reliability metrics across the platform.">
@@ -1690,11 +1720,41 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
         <MetricCard label="Signup starts" value={String(totalSignupStarts)} meta={`${startedToSignup} start to signup`} />
         <MetricCard label="Signups" value={String(totalSignups)} meta={`${visitorToSignup} visitor to signup`} />
       </div>
-      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+      <div className="admin-insight-grid">
+        {topCampaigns.map((row) => {
+          const cr = row.unique_visitors > 0 ? `${((row.signups / row.unique_visitors) * 100).toFixed(1)}%` : "—";
+          const behavior = [
+            row.bot_opens ? `${row.bot_opens} bot opens` : "",
+            row.docs_opened ? `${row.docs_opened} docs` : "",
+            row.app_opens ? `${row.app_opens} app opens` : "",
+          ].filter(Boolean).join(" · ") || "No post-click activity";
+          return (
+            <article key={`${row.source}|${row.medium}|${row.campaign}`} className="admin-insight-card console-spotlight-card" onMouseMove={handleMouseMove}>
+              <div className="console-card-spotlight" />
+              <div className="admin-insight-card__head">
+                <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{row.source || "Direct"}</span>
+                <strong>{row.campaign || "No campaign"}</strong>
+              </div>
+              <div className="admin-insight-card__metrics">
+                <span>{row.unique_visitors} visitors</span>
+                <span>{row.signups} signups</span>
+                <span>{cr} CR</span>
+              </div>
+              <p>{behavior}</p>
+              <small>{row.paying_workspaces} paying · {formatMoney(row.paid_usd)}</small>
+            </article>
+          );
+        })}
+        {topCampaigns.length === 0 && <div className="dev-card dev-portal__empty-large">No campaign traffic yet.</div>}
+      </div>
+
+      <details className="admin-details">
+        <summary>Campaign table</summary>
+        <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
         <div className="dev-portal__section-header dev-portal__section-header--margin">
-          <h3>Campaign tracking (classic + journey)</h3>
-          <span className="dev-card__note-text">Old funnel columns first, with post-click behavior folded into one detail column.</span>
+          <h3>Campaign tracking</h3>
+          <span className="dev-card__note-text">Full campaign table with post-click behavior.</span>
         </div>
         <div className="admin-table-wrap">
           <table className="admin-sales-table admin-sales-table--utm">
@@ -1722,11 +1782,34 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
           </table>
         </div>
       </div>
-      <div className="admin-grid admin-grid--two">
-        <UTMPathTable title="Top campaign landings" rows={utmReport?.top_landings || []} empty="No attributed landings yet." activityLabel="Visits" />
-        <UTMPathTable title="Top pages before signup" rows={utmReport?.top_pages || []} empty="No attributed page activity yet." />
-        <UTMPathTable title="Docs opened by leads" rows={utmReport?.top_docs || []} empty="No attributed docs activity yet." />
+      </details>
+
+      <details className="admin-details">
+        <summary>Top paths</summary>
+        <div className="admin-grid admin-grid--two">
+          <UTMPathTable title="Top campaign landings" rows={utmReport?.top_landings || []} empty="No attributed landings yet." activityLabel="Visits" />
+          <UTMPathTable title="Top pages before signup" rows={utmReport?.top_pages || []} empty="No attributed page activity yet." />
+          <UTMPathTable title="Docs opened by leads" rows={utmReport?.top_docs || []} empty="No attributed docs activity yet." />
+        </div>
+      </details>
+
+      <div className="admin-lead-grid">
+        {recentLeads.map((lead) => (
+          <article key={lead.attribution_id} className="admin-lead-card console-spotlight-card" onMouseMove={handleMouseMove}>
+            <div className="console-card-spotlight" />
+            <div className="admin-lead-card__head">
+              <strong>{lead.workspace_name || lead.workspace_email || lead.attribution_id.slice(0, 12)}</strong>
+              <ToneBadge status={lead.signed_up_at ? "paid" : lead.signup_started ? "awaiting_payment" : "draft"} />
+            </div>
+            <span>{[lead.source, lead.medium, lead.campaign].filter(Boolean).join(" / ") || "No campaign"}</span>
+            <small>{lead.landing_path || "No landing path"}</small>
+            <p>{lead.event_count} events · {lead.docs_opened} docs · {lead.app_opens} app opens</p>
+          </article>
+        ))}
       </div>
+
+      <details className="admin-details">
+        <summary>Recent lead journeys</summary>
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
         <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1775,6 +1858,9 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
           </table>
         </div>
       </div>
+      </details>
+      <details className="admin-details">
+        <summary>Breakdown by {groupBy}</summary>
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
         <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1799,6 +1885,7 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
           </table>
         </div>
       </div>
+      </details>
     </div>
   );
 }
@@ -2048,9 +2135,9 @@ function SettingsPanel({ token, setToast, setError }: { token: string; setToast:
 
         <form onSubmit={handleSave} className="dev-form">
           <div className="dev-input-group dev-input-group--margin">
-            <label>TON Wallet Address (for GRAM and USDT on TON)</label>
+            <label>TON wallet (GRAM + TON USDT)</label>
             <input
-              className="dev-input"
+              className="dev-input admin-wallet-input"
               value={wallets.TON}
               onChange={e => setWallets({ ...wallets, TON: e.target.value })}
               placeholder="e.g. UQAS_ton_wallet_addr..."
@@ -2059,9 +2146,9 @@ function SettingsPanel({ token, setToast, setError }: { token: string; setToast:
           </div>
 
           <div className="dev-input-group dev-input-group--margin">
-            <label>EVM Wallet Address (for BASE USDC, BSC USDT, and EVM networks)</label>
+            <label>EVM wallet (Base, Arbitrum, BSC)</label>
             <input
-              className="dev-input"
+              className="dev-input admin-wallet-input"
               value={wallets.EVM}
               onChange={e => setWallets({ ...wallets, EVM: e.target.value })}
               placeholder="e.g. 0xDEADBEEF..."
@@ -2070,9 +2157,9 @@ function SettingsPanel({ token, setToast, setError }: { token: string; setToast:
           </div>
 
           <div className="dev-input-group dev-input-group--margin">
-            <label>TRON Wallet Address (for TRON USDT)</label>
+            <label>TRON wallet (TRON USDT)</label>
             <input
-              className="dev-input"
+              className="dev-input admin-wallet-input"
               value={wallets.TRON}
               onChange={e => setWallets({ ...wallets, TRON: e.target.value })}
               placeholder="e.g. TX_tron_wallet_addr..."
@@ -2081,9 +2168,9 @@ function SettingsPanel({ token, setToast, setError }: { token: string; setToast:
           </div>
 
           <div className="dev-input-group dev-input-group--margin">
-            <label>Solana Wallet Address (for SOL, Solana USDT, and Solana USDC)</label>
+            <label>Solana wallet (SOL, USDT, USDC)</label>
             <input
-              className="dev-input"
+              className="dev-input admin-wallet-input"
               value={wallets.SOLANA}
               onChange={e => setWallets({ ...wallets, SOLANA: e.target.value })}
               placeholder="e.g. SOL_wallet_addr..."

@@ -30,6 +30,10 @@ func TestPromoCodeAPI(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
 	}
+	user, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, 81001)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID: %v", err)
+	}
 
 	// Helper to make request
 	router := gin.New()
@@ -48,6 +52,11 @@ func TestPromoCodeAPI(t *testing.T) {
 	})
 	router.POST("/api/billing/promo-code/redeem", func(c *gin.Context) {
 		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      user.ID,
+				WorkspaceID: ws.ID,
+				TelegramID:  81001,
+			},
 			Workspace: ws,
 		})
 		server.handleRedeemPromoCode(c)

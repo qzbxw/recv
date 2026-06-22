@@ -273,6 +273,9 @@ func (m *mockHTTPStore) GetWorkspaceMemberRole(ctx context.Context, workspaceID,
 	if m.failGetWorkspaceMemberRoleAt > 0 && m.getWorkspaceMemberRoleCallN == m.failGetWorkspaceMemberRoleAt {
 		return "", m.mockErr("GetWorkspaceMemberRole")
 	}
+	if m.real == nil {
+		return store.RoleOwner, nil
+	}
 	return m.real.GetWorkspaceMemberRole(ctx, workspaceID, userID)
 }
 

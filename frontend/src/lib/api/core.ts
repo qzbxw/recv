@@ -71,6 +71,10 @@ async function requestWithRetry<T>(path: string, init: RequestInit = {}, token?:
     headers.set("Content-Type", "application/json");
   }
   if (activeToken) {
+    const tokenKind = path.startsWith("/api/admin/") ? "admin" : "seller";
+    if (allowRefresh && canRefreshForPath(path) && isJwtExpiringSoon(activeToken)) {
+      activeToken = await refreshAccessToken(tokenKind) || activeToken;
+    }
     headers.set("Authorization", `Bearer ${activeToken}`);
   }
 
@@ -103,6 +107,18 @@ async function requestWithRetry<T>(path: string, init: RequestInit = {}, token?:
 
 function canRefreshForPath(path: string) {
   return !path.includes("/login") && !path.includes("/logout") && !path.includes("/refresh") && !path.includes("/public/");
+}
+
+function isJwtExpiringSoon(token: string) {
+  const [, payload] = token.split(".");
+  if (!payload) return false;
+  try {
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = JSON.parse(window.atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "="))) as { exp?: number };
+    return typeof decoded.exp === "number" && decoded.exp * 1000 <= Date.now() + 30_000;
+  } catch {
+    return false;
+  }
 }
 
 function refreshAccessToken(kind: "seller" | "admin") {

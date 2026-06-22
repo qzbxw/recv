@@ -69,7 +69,13 @@ export async function fetchAdminInvoices(token: string, params: {
   return request<AdminInvoiceListResponse>(`/api/admin/invoices${suffix}`, {}, token);
 }
 
-export async function createAdminBillingCheckout(token: string, workspaceId: number, payload: { payable_network: string; plan_code?: string; base_amount_usd?: string }) {
+export async function createAdminBillingCheckout(token: string, workspaceId: number, payload: {
+  payable_network: string;
+  payable_asset?: string;
+  payment_options?: Array<{ network: string; asset: string }>;
+  plan_code?: string;
+  base_amount_usd?: string;
+}) {
   return request<AdminBillingCheckoutResponse>(`/api/admin/workspaces/${workspaceId}/billing-checkout`, {
     method: "POST",
     body: JSON.stringify(payload),

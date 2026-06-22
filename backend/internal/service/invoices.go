@@ -516,8 +516,9 @@ func (s *InvoiceService) normalizePaymentOptionInputs(defaultNetwork store.Netwo
 		}
 		requested = []PaymentOptionInput{{Network: legacyNetwork, Asset: legacyAsset}}
 	}
-	if len(requested) == 0 || len(requested) > 2 {
-		return nil, errors.New("payment_options must contain 1 or 2 options")
+	maxOptions := maxSupportedPaymentOptions()
+	if len(requested) == 0 || len(requested) > maxOptions {
+		return nil, fmt.Errorf("payment_options must contain 1 to %d options", maxOptions)
 	}
 	seen := map[string]struct{}{}
 	normalized := make([]PaymentOptionInput, 0, len(requested))
@@ -544,6 +545,14 @@ func (s *InvoiceService) normalizePaymentOptionInputs(defaultNetwork store.Netwo
 		normalized = append(normalized, option)
 	}
 	return normalized, nil
+}
+
+func maxSupportedPaymentOptions() int {
+	total := 0
+	for _, option := range store.SupportedPaymentOptions() {
+		total += len(option.Assets)
+	}
+	return total
 }
 
 func normalizeTTL(value int, options []PaymentOptionInput, stableDefault int) (int, error) {

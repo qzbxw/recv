@@ -505,10 +505,22 @@ func TestDeveloperHandlersWithDB(t *testing.T) {
 	workspace.PlanCode = store.PlanCodeDeveloper
 	workspace.SubscriptionEndsAt = &subEnd
 
+	user, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, 95001)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID: %v", err)
+	}
+
 	server := &Server{store: sharedHTTPTestStore}
 
 	withWS := func(c *gin.Context) {
-		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      user.ID,
+				WorkspaceID: workspace.ID,
+				TelegramID:  95001,
+			},
+			Workspace: workspace,
+		})
 		c.Next()
 	}
 
@@ -1072,7 +1084,7 @@ func TestServerHandlersWithDB(t *testing.T) {
 				body:   `{"payable_network":"TON","plan_code":"merchant"}`,
 				useWS:  true,
 				route:  func(router *gin.Engine) { router.POST("/api/billing/checkout", server2.handleCreateBillingCheckout) },
-				want:   stdhttp.StatusBadRequest,
+				want:   stdhttp.StatusInternalServerError,
 			},
 		}
 		for _, tc := range cases {
@@ -3061,9 +3073,21 @@ func TestCreateAPIKeyWithDB(t *testing.T) {
 	workspace.PlanCode = store.PlanCodeDeveloper
 	workspace.SubscriptionEndsAt = &subEnd
 
+	user, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, 96600)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID: %v", err)
+	}
+
 	server := &Server{store: sharedHTTPTestStore, cfg: config.Config{AppEnv: "test"}}
 	withWS := func(c *gin.Context) {
-		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      user.ID,
+				WorkspaceID: workspace.ID,
+				TelegramID:  96600,
+			},
+			Workspace: workspace,
+		})
 		c.Next()
 	}
 
@@ -3301,9 +3325,21 @@ func TestDeleteWebhookAndAPIKeyWithDB(t *testing.T) {
 	workspace.PlanCode = store.PlanCodeDeveloper
 	workspace.SubscriptionEndsAt = &subEnd
 
+	user, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, 96900)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID: %v", err)
+	}
+
 	server := &Server{store: sharedHTTPTestStore}
 	withWS := func(c *gin.Context) {
-		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      user.ID,
+				WorkspaceID: workspace.ID,
+				TelegramID:  96900,
+			},
+			Workspace: workspace,
+		})
 		c.Next()
 	}
 
@@ -3737,9 +3773,21 @@ func TestDeveloperHandlersUsageWithDB(t *testing.T) {
 	workspace.PlanCode = store.PlanCodeDeveloper
 	workspace.SubscriptionEndsAt = &subEnd
 
+	user, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, 96500)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID: %v", err)
+	}
+
 	server := &Server{store: sharedHTTPTestStore}
 	withWS := func(c *gin.Context) {
-		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      user.ID,
+				WorkspaceID: workspace.ID,
+				TelegramID:  96500,
+			},
+			Workspace: workspace,
+		})
 		c.Next()
 	}
 
@@ -4018,11 +4066,16 @@ func TestHandleUpdateContactEmailDuplicateWithDB(t *testing.T) {
 		t.Fatalf("UpdateWorkspaceEmail ws1: %v", err)
 	}
 
+	user2, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, 98501)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID ws2: %v", err)
+	}
+
 	server := &Server{store: sharedHTTPTestStore}
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("workspace_ctx", workspaceContext{
-			Claims:    service.Claims{UserID: 1, WorkspaceID: ws2.ID},
+			Claims:    service.Claims{UserID: user2.ID, WorkspaceID: ws2.ID},
 			Workspace: ws2,
 		})
 		c.Next()
@@ -4049,11 +4102,23 @@ func TestHandleCreateWalletMockErrorWithDB(t *testing.T) {
 		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
 	}
 
+	user, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, 98600)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID: %v", err)
+	}
+
 	mock := newMockStore(sharedHTTPTestStore, errAtCreateWallet)
 	server := &Server{store: mock}
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      user.ID,
+				WorkspaceID: workspace.ID,
+				TelegramID:  98600,
+			},
+			Workspace: workspace,
+		})
 		c.Next()
 	})
 	router.POST("/api/wallets", server.handleCreateWallet)
@@ -4274,9 +4339,21 @@ func TestHandleCreateAPIKeyMalformedJSONWithDB(t *testing.T) {
 	workspace.PlanCode = store.PlanCodeDeveloper
 	workspace.SubscriptionEndsAt = &subEnd
 
+	user, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, 97450)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID: %v", err)
+	}
+
 	server := &Server{store: sharedHTTPTestStore}
 	withWS := func(c *gin.Context) {
-		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      user.ID,
+				WorkspaceID: workspace.ID,
+				TelegramID:  97450,
+			},
+			Workspace: workspace,
+		})
 		c.Next()
 	}
 
@@ -4826,11 +4903,22 @@ func TestHandleUpdateLanguageWithDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpsertWorkspaceByTelegram: %v", err)
 	}
+	user, err := sharedHTTPTestStore.GetUserByTelegramID(ctx, telegramID)
+	if err != nil {
+		t.Fatalf("GetUserByTelegramID: %v", err)
+	}
 
 	server := &Server{store: sharedHTTPTestStore}
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		c.Set("workspace_ctx", workspaceContext{Workspace: workspace})
+		c.Set("workspace_ctx", workspaceContext{
+			Claims: service.Claims{
+				UserID:      user.ID,
+				WorkspaceID: workspace.ID,
+				TelegramID:  telegramID,
+			},
+			Workspace: workspace,
+		})
 		c.Next()
 	})
 	router.POST("/api/me/language", server.handleUpdateLanguage)

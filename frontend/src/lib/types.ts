@@ -246,8 +246,10 @@ export type AdminInvoice = {
   id: number;
   public_id: string;
   workspace_id: number;
-  workspace_name: string;
-  user_email: string;
+  workspace_username: string;
+  workspace_email: string;
+  workspace_name?: string;
+  user_email?: string;
   kind: "merchant" | "subscription";
   plan_code: string;
   title: string;
