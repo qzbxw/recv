@@ -385,6 +385,15 @@ export function SellerConsolePage() {
     void loadSession(session.token, { silent: true });
   }, [invoiceFilters.page, invoiceFilters.pageSize, invoiceFilters.status, invoiceFilters.query]);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      clearStoredToken();
+      navigate(buildAuthHref(location.pathname), { replace: true });
+    };
+    window.addEventListener("recv_seller_unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("recv_seller_unauthorized", handleUnauthorized);
+  }, [navigate, location.pathname]);
+
   const handleCopy = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedId(id);

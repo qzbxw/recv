@@ -243,6 +243,14 @@ export function AdminDashboardPage() {
   }, [token]);
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      resetAdminSession("Admin session expired. Sign in again.");
+    };
+    window.addEventListener("recv_admin_unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("recv_admin_unauthorized", handleUnauthorized);
+  }, [resetAdminSession]);
+
+  useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 4000);
     return () => clearTimeout(t);

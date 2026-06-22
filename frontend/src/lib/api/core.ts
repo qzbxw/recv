@@ -56,12 +56,22 @@ export async function request<T>(path: string, init: RequestInit = {}, token?: s
 }
 
 async function requestWithRetry<T>(path: string, init: RequestInit = {}, token?: string, allowRefresh = true): Promise<T> {
+  let activeToken = token;
+  const isAuthRequired = !path.includes("/login") && !path.includes("/logout") && !path.includes("/refresh") && !path.includes("/public/");
+  if (isAuthRequired) {
+    if (path.startsWith("/api/admin/")) {
+      activeToken = getStoredAdminToken() || token;
+    } else {
+      activeToken = getStoredToken() || token;
+    }
+  }
+
   const headers = new Headers(init.headers);
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
+  if (activeToken) {
+    headers.set("Authorization", `Bearer ${activeToken}`);
   }
 
   const response = await fetch(`${getApiBase()}${path}`, {
@@ -71,11 +81,15 @@ async function requestWithRetry<T>(path: string, init: RequestInit = {}, token?:
   });
 
   if (!response.ok) {
-    if (response.status === 401 && allowRefresh && token && canRefreshForPath(path)) {
+    if (response.status === 401 && allowRefresh && activeToken && canRefreshForPath(path)) {
       const refreshedToken = await refreshAccessToken(path.startsWith("/api/admin/") ? "admin" : "seller");
       if (refreshedToken) {
         return requestWithRetry<T>(path, init, refreshedToken, false);
       }
+    }
+    if (response.status === 401 && activeToken && canRefreshForPath(path)) {
+      const eventName = path.startsWith("/api/admin/") ? "recv_admin_unauthorized" : "recv_seller_unauthorized";
+      window.dispatchEvent(new CustomEvent(eventName));
     }
     const payload = (await response.json().catch(() => ({ error: "Request failed" }))) as { error?: string };
     throw new ApiError(response.status, payload.error || `Request failed: ${response.status}`, payload.error);
