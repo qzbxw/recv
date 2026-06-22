@@ -1850,6 +1850,25 @@
   min-width: 1180px;
 }
 
+.admin-sales-table--utm {
+  min-width: 1220px;
+}
+
+.admin-utm-detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(110px, 1fr));
+  gap: 0.35rem 0.65rem;
+  min-width: 260px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.admin-utm-detail strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 800;
+}
+
 .admin-grid {
   display: grid;
   gap: 1rem;

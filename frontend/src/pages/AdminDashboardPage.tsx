@@ -1512,6 +1512,21 @@ function UTMPathTable({ title, rows, empty }: {
   );
 }
 
+function UTMBehaviorDetail({ row }: { row: UTMReport["campaigns"][number] }) {
+  const signupStartCR = (row.signup_starts || 0) > 0 ? `${((row.signups / row.signup_starts) * 100).toFixed(1)}%` : "—";
+  const docsPerVisitor = row.unique_visitors > 0 ? (row.docs_opened / row.unique_visitors).toFixed(1) : "0";
+  return (
+    <div className="admin-utm-detail">
+      <span><strong>{row.events || 0}</strong> events</span>
+      <span><strong>{row.docs_opened || 0}</strong> docs opened</span>
+      <span><strong>{row.app_opens || 0}</strong> app opens</span>
+      <span><strong>{row.signup_starts || 0}</strong> signup starts</span>
+      <span><strong>{signupStartCR}</strong> start to signup</span>
+      <span><strong>{docsPerVisitor}</strong> docs / visitor</span>
+    </div>
+  );
+}
+
 function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, setToast }: {
   analytics: AdminAnalyticsResponse | null;
   webVitals: WebVitalsReport | null;
@@ -1584,12 +1599,12 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
         <div className="dev-portal__section-header dev-portal__section-header--margin">
-          <h3>Campaign tracking (UTM)</h3>
-          <span className="dev-card__note-text">Ad clicks, behavior events, docs opens, signup starts, signups and paid subscriptions.</span>
+          <h3>Campaign tracking (classic + journey)</h3>
+          <span className="dev-card__note-text">Old funnel columns first, with post-click behavior folded into one detail column.</span>
         </div>
         <div className="admin-table-wrap">
-          <table className="admin-sales-table">
-            <thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Visits</th><th>Unique</th><th>Events</th><th>Docs</th><th>App</th><th>Starts</th><th>Signups</th><th>CR</th><th>Paying</th><th>Revenue</th></tr></thead>
+          <table className="admin-sales-table admin-sales-table--utm">
+            <thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Visits</th><th>Unique</th><th>Signups</th><th>CR</th><th>Paying</th><th>Revenue</th><th>Behavior detail</th></tr></thead>
             <tbody>
               {campaigns.map((row) => {
                 const cr = row.unique_visitors > 0 ? `${((row.signups / row.unique_visitors) * 100).toFixed(1)}%` : "—";
@@ -1600,18 +1615,15 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
                     <td>{row.campaign || "—"}</td>
                     <td>{row.visits}</td>
                     <td>{row.unique_visitors}</td>
-                    <td>{row.events || 0}</td>
-                    <td>{row.docs_opened || 0}</td>
-                    <td>{row.app_opens || 0}</td>
-                    <td>{row.signup_starts || 0}</td>
                     <td>{row.signups}</td>
                     <td>{cr}</td>
                     <td>{row.paying_workspaces}</td>
                     <td>{formatMoney(row.paid_usd)}</td>
+                    <td><UTMBehaviorDetail row={row} /></td>
                   </tr>
                 );
               })}
-              {campaigns.length === 0 && <tr><td colSpan={13} className="admin-table-empty">No campaign traffic yet. Add ?utm_source=…&utm_campaign=… to your ad links.</td></tr>}
+              {campaigns.length === 0 && <tr><td colSpan={10} className="admin-table-empty">No campaign traffic yet. Add ?utm_source=…&utm_campaign=… to your ad links.</td></tr>}
             </tbody>
           </table>
         </div>
