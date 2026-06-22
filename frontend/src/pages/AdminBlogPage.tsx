@@ -112,7 +112,7 @@ function BlogShell({ title, subtitle, actions, error, onDismissError, children }
       <div className="admin-blog__shell">
         <header className="dev-portal__header portal-animate-in admin-blog__header">
           <div className="admin-blog__brand">
-            <Link to="/" style={{ textDecoration: "none" }}><strong>recv<span className="brand-dot">.</span></strong></Link>
+            <Link to="/admin" style={{ textDecoration: "none" }}><strong>recv<span className="brand-dot">.</span></strong></Link>
             <span className="dev-api-badge dev-api-badge--post dev-api-badge--micro">Content</span>
           </div>
           <div className="dev-portal__header-actions">{actions}</div>
@@ -480,6 +480,7 @@ export function AdminBlogPage() {
       subtitle={`${groups.length} articles · ${posts.length} translations. Create, edit and publish content.`}
       actions={
         <>
+          <Link to="/admin" className="dev-btn dev-btn--secondary dev-btn--compact">Back to dashboard</Link>
           <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void loadPosts()} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>
           <button
             type="button"

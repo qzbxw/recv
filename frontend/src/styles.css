@@ -13627,3 +13627,19 @@ html[data-low-power-ui="true"] .lend-pricing-card:hover {
 html, body {
   overscroll-behavior-y: none;
 }
+
+/* Admin Pagination Styles */
+.admin-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 12px;
+}
+.admin-pagination__info {
+  font-size: 0.9rem;
+  color: var(--muted, #8b949e);
+  font-family: var(--font-mono, monospace);
+}
+

@@ -62,8 +62,8 @@ import type {
 
 type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings" | "promocodes";
 
-type Filters = { status: string; kind: string; query: string };
-const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "" };
+type Filters = { status: string; kind: string; query: string; page: number; page_size: number };
+const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "", page: 1, page_size: 50 };
 
 const PLAN_OPTIONS = [
   { value: "trial", label: "Trial" },
@@ -198,49 +198,58 @@ export function AdminDashboardPage() {
     if (message) setError(message);
   }, []);
 
-  const loadDashboard = useCallback(async (activeToken: string, nextFilters: Filters) => {
+  const loadPanelData = useCallback(async (panel: PanelKey, tok: string, nextFilters: Filters) => {
     setLoading(true);
     setError("");
     try {
-      const nextOverview = await fetchAdminOpsOverview(activeToken);
-      const currentToken = getStoredAdminToken() || activeToken;
-      if (currentToken !== activeToken) {
-        setToken(currentToken);
+      if (panel === "overview" || panel === "review" || panel === "webhooks") {
+        const nextOverview = await fetchAdminOpsOverview(tok);
+        setOverview(nextOverview);
+      } else if (panel === "invoices") {
+        const [nextInvoices, nextWorkspaces] = await Promise.all([
+          fetchAdminInvoices(tok, nextFilters),
+          fetchAdminWorkspaces(tok).catch(() => ({ items: [] })),
+        ]);
+        setInvoiceList(nextInvoices);
+        setWorkspaces(nextWorkspaces.items || []);
+      } else if (panel === "workspaces") {
+        const nextWorkspaces = await fetchAdminWorkspaces(tok);
+        setWorkspaces(nextWorkspaces.items || []);
+      } else if (panel === "analytics") {
+        const [nextAnalytics, nextVitals, nextUTM] = await Promise.all([
+          fetchAdminAnalytics(tok, { group_by: analyticsGroupBy }),
+          fetchAdminWebVitals(tok).catch(() => null),
+          fetchAdminUTMReport(tok).catch(() => null),
+        ]);
+        setAnalytics(nextAnalytics);
+        setWebVitals(nextVitals);
+        setUtmReport(nextUTM);
+      } else if (panel === "audit") {
+        const nextAuditEvents = await fetchAdminAuditEvents(tok);
+        setAuditEvents(nextAuditEvents.items || []);
+      } else if (panel === "content") {
+        const [nextSEO, nextRedirects] = await Promise.all([
+          fetchAdminSEOTargets(tok),
+          fetchAdminSEORedirects(tok).catch(() => ({ items: [] })),
+        ]);
+        setSeoTargets(nextSEO.items || []);
+        setSeoRedirects(nextRedirects.items || []);
       }
-      const [nextInvoices, nextAnalytics, nextVitals, nextUTM, nextAuditEvents, nextSEO, nextWorkspaces, nextRedirects] = await Promise.all([
-        fetchAdminInvoices(currentToken, { page: 1, page_size: 50, ...nextFilters }),
-        fetchAdminAnalytics(currentToken, { group_by: analyticsGroupBy }),
-        fetchAdminWebVitals(currentToken).catch(() => null),
-        fetchAdminUTMReport(currentToken).catch(() => null),
-        fetchAdminAuditEvents(currentToken),
-        fetchAdminSEOTargets(currentToken),
-        fetchAdminWorkspaces(currentToken).catch(() => ({ items: [] })),
-        fetchAdminSEORedirects(currentToken).catch(() => ({ items: [] })),
-      ]);
-      setOverview(nextOverview);
-      setInvoiceList(nextInvoices);
-      setAnalytics(nextAnalytics);
-      setWebVitals(nextVitals);
-      setUtmReport(nextUTM);
-      setAuditEvents(nextAuditEvents.items || []);
-      setSeoTargets(nextSEO.items || []);
-      setWorkspaces(nextWorkspaces.items || []);
-      setSeoRedirects(nextRedirects.items || []);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         resetAdminSession("Admin session expired. Sign in again.");
         return;
       }
-      setError(err instanceof Error ? err.message : "Failed to load admin dashboard");
+      setError(err instanceof Error ? err.message : `Failed to load ${panel} data`);
     } finally {
       setLoading(false);
     }
   }, [analyticsGroupBy, resetAdminSession]);
 
   useEffect(() => {
-    if (token) void loadDashboard(token, filters);
+    if (token) void loadPanelData(activePanel, token, filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, activePanel]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -285,13 +294,13 @@ export function AdminDashboardPage() {
     try {
       const response = await fn();
       setToast(response.result || "Done");
-      await loadDashboard(token, filters);
+      await loadPanelData(activePanel, token, filters);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Admin action failed");
     } finally {
       setBusyKey("");
     }
-  }, [token, filters, loadDashboard]);
+  }, [token, filters, activePanel, loadPanelData]);
 
   function handleNavClick(key: PanelKey) {
     setActivePanel(key);
@@ -299,8 +308,11 @@ export function AdminDashboardPage() {
   }
 
   async function applyFilters(next: Filters) {
-    setFilters(next);
-    if (token) await loadDashboard(token, next);
+    // If status, kind, or query changed, reset page to 1
+    const resetPage = next.status !== filters.status || next.kind !== filters.kind || next.query !== filters.query;
+    const finalFilters = resetPage ? { ...next, page: 1 } : next;
+    setFilters(finalFilters);
+    if (token) await loadPanelData("invoices", token, finalFilters);
   }
 
   async function reloadAnalytics(groupBy: "date" | "network" | "plan" | "mode") {
@@ -419,7 +431,7 @@ export function AdminDashboardPage() {
                 <span>Last snapshot</span>
                 <strong>{overview ? formatDateTime(overview.generated_at) : "Loading…"}</strong>
               </div>
-              <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact admin-refresh-btn" onClick={() => void loadDashboard(token, filters)} disabled={loading}>
+              <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact admin-refresh-btn" onClick={() => void loadPanelData(activePanel, token, filters)} disabled={loading}>
                 {ICONS.refresh}<span>{loading ? "Refreshing…" : "Refresh"}</span>
               </button>
             </div>
@@ -473,7 +485,7 @@ export function AdminDashboardPage() {
                 targets={seoTargets}
                 redirects={seoRedirects}
                 token={token}
-                onChanged={() => loadDashboard(token, filters)}
+                onChanged={() => loadPanelData("content", token, filters)}
                 setToast={setToast}
                 setError={setError}
               />
@@ -674,6 +686,11 @@ function InvoiceCard({ inv, workspaces, busyKey, runAction }: {
   const ws = workspaces.find((w) => w.workspace.id === inv.workspace_id);
   const isBlocked = ws?.workspace.is_blocked ?? false;
   const busy = !!busyKey;
+
+  const showMarkPaid = ["awaiting_payment", "underpaid", "manual_review", "overpaid"].includes(inv.status);
+  const showExpire = ["awaiting_payment", "underpaid"].includes(inv.status);
+  const showRefresh = !["paid", "expired", "cancelled"].includes(inv.status);
+
   return (
     <div className="dev-card dev-card--invoice console-spotlight-card" onMouseMove={handleMouseMove}>
       <div className="console-card-spotlight" />
@@ -699,15 +716,21 @@ function InvoiceCard({ inv, workspaces, busyKey, runAction }: {
 
       <div className="dev-card__actions admin-actions">
         <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--compact dev-btn--centered">Open checkout</a>
-        <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void runAction(`rf-${inv.id}`, () => refreshAdminInvoiceStatus(tok(), inv.id))}>
-          {busyKey === `rf-${inv.id}` ? "…" : "Refresh status"}
-        </button>
-        <button className="dev-btn dev-btn--secondary dev-btn--compact dev-btn--success-color" disabled={busy} onClick={() => void runAction(`mp-${inv.id}`, () => reviewAdminInvoice(tok(), inv.id, { result: "mark_paid", comment: "approved" }))}>
-          Mark paid
-        </button>
-        <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void runAction(`exp-${inv.id}`, () => reviewAdminInvoice(tok(), inv.id, { result: "expire", comment: "expired" }))}>
-          Expire
-        </button>
+        {showRefresh && (
+          <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void runAction(`rf-${inv.id}`, () => refreshAdminInvoiceStatus(tok(), inv.id))}>
+            {busyKey === `rf-${inv.id}` ? "…" : "Refresh status"}
+          </button>
+        )}
+        {showMarkPaid && (
+          <button className="dev-btn dev-btn--secondary dev-btn--compact dev-btn--success-color" disabled={busy} onClick={() => void runAction(`mp-${inv.id}`, () => reviewAdminInvoice(tok(), inv.id, { result: "mark_paid", comment: "approved" }))}>
+            Mark paid
+          </button>
+        )}
+        {showExpire && (
+          <button className="dev-btn dev-btn--secondary dev-btn--compact" disabled={busy} onClick={() => void runAction(`exp-${inv.id}`, () => reviewAdminInvoice(tok(), inv.id, { result: "expire", comment: "expired" }))}>
+            Expire
+          </button>
+        )}
         <button className={`dev-btn dev-btn--compact ${manage ? "dev-btn--primary" : "dev-btn--secondary"}`} onClick={() => setManage((v) => !v)}>
           {manage ? "Close" : "Manage workspace"}
         </button>
@@ -792,6 +815,15 @@ function InvoicesPanel({ invoices, total, filters, onApplyFilters, workspaces, b
   loading: boolean;
 }) {
   const [query, setQuery] = useState(filters.query);
+  const totalPages = Math.max(1, Math.ceil(total / (filters.page_size || 50)));
+  const currentPage = filters.page || 1;
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      onApplyFilters({ ...filters, page: newPage });
+    }
+  };
+
   return (
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Invoices" subtitle={`${total} invoices match the current filters — act on them inline without leaving this page.`} />
@@ -815,6 +847,30 @@ function InvoicesPanel({ invoices, total, filters, onApplyFilters, workspaces, b
           <InvoiceCard key={inv.id} inv={inv} workspaces={workspaces} busyKey={busyKey} runAction={runAction} />
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className="admin-pagination">
+          <button
+            type="button"
+            className="dev-btn dev-btn--secondary dev-btn--compact"
+            disabled={currentPage <= 1 || loading}
+            onClick={() => handlePageChange(currentPage - 1)}
+          >
+            Previous
+          </button>
+          <span className="admin-pagination__info">
+            Page {currentPage} of {totalPages} ({total} total)
+          </span>
+          <button
+            type="button"
+            className="dev-btn dev-btn--secondary dev-btn--compact"
+            disabled={currentPage >= totalPages || loading}
+            onClick={() => handlePageChange(currentPage + 1)}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

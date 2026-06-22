@@ -21,6 +21,7 @@ const PAGE_TITLES = {
   ru: {
     auth: "recv | Вход",
     admin: "recv | Админ",
+    blog: "recv | Управление блогом",
     console: "recv | Консоль",
     developers: "recv | Портал разработчика",
     docs: "recv | Документация API",
@@ -34,6 +35,7 @@ const PAGE_TITLES = {
   en: {
     auth: "recv | Sign In",
     admin: "recv | Admin",
+    blog: "recv | Blog Management",
     console: "recv | Console",
     developers: "recv | Developer Portal",
     docs: "recv | API Documentation",
@@ -59,6 +61,8 @@ function RouteTitleManager() {
       title = titles.auth;
     } else if (path === "/admin") {
       title = titles.admin;
+    } else if (path === "/admin/blog") {
+      title = titles.blog;
     } else if (path === "/console") {
       title = titles.console;
     } else if (path === "/developers") {
