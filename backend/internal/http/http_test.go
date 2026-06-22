@@ -1374,13 +1374,23 @@ func TestCookieAndRefreshTokenHelpers(t *testing.T) {
 		}
 	})
 
-	t.Run("setRefreshCookie uses secure flag outside development", func(t *testing.T) {
+	t.Run("setRefreshCookie uses cross-site secure attributes outside development", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		context, _ := gin.CreateTestContext(recorder)
 		setRefreshCookie(context, "recv_refresh", "token", "production")
 		cookie := recorder.Result().Cookies()[0]
-		if !cookie.HttpOnly || !cookie.Secure || cookie.MaxAge <= 0 || cookie.Path != "/" {
+		if !cookie.HttpOnly || !cookie.Secure || cookie.SameSite != stdhttp.SameSiteNoneMode || cookie.MaxAge <= 0 || cookie.Path != "/" {
 			t.Fatalf("unexpected production cookie attributes: %#v", cookie)
+		}
+	})
+
+	t.Run("setRefreshCookie keeps lax cookies in development", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		context, _ := gin.CreateTestContext(recorder)
+		setRefreshCookie(context, "recv_refresh", "token", "development")
+		cookie := recorder.Result().Cookies()[0]
+		if cookie.Secure || cookie.SameSite != stdhttp.SameSiteLaxMode {
+			t.Fatalf("unexpected development cookie attributes: %#v", cookie)
 		}
 	})
 

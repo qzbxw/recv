@@ -1283,7 +1283,7 @@ func setRefreshCookie(c *gin.Context, name string, value string, appEnv string) 
 		MaxAge:   30 * 24 * 60 * 60,
 		HttpOnly: true,
 		Secure:   secure,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: refreshCookieSameSite(appEnv),
 	})
 }
 
@@ -1296,8 +1296,15 @@ func clearRefreshCookie(c *gin.Context, name string, appEnv string) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   secure,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: refreshCookieSameSite(appEnv),
 	})
+}
+
+func refreshCookieSameSite(appEnv string) http.SameSite {
+	if appEnv == "development" {
+		return http.SameSiteLaxMode
+	}
+	return http.SameSiteNoneMode
 }
 
 func refreshTokenFromRequest(c *gin.Context, cookieName string) string {

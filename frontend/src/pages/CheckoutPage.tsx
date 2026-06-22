@@ -6,6 +6,7 @@ import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceSt
 import type { Invoice } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { CHECKOUT_COPY as COPY } from "../i18n";
+import "../styles/checkout.css";
 
 const BOT_URL = "https://t.me/recvmoney_bot";
 const DEMO_PUBLIC_ID = "demo";

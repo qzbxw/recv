@@ -99,6 +99,13 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
+    const ua = navigator.userAgent;
+    const isWebView = /\bwv\b|Telegram|FBAN|FBAV|Instagram|Line\//i.test(ua);
+    const isCoarsePointer = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+    document.documentElement.dataset.lowPowerUi = isWebView || isCoarsePointer ? "true" : "false";
+  }, []);
+
+  useEffect(() => {
     captureAttribution();
   }, [location.pathname, location.search]);
 

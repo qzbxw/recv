@@ -3,6 +3,7 @@ import { ApiError } from "../errors";
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const TOKEN_KEY = "recv_token";
 const ADMIN_TOKEN_KEY = "recv_admin_token";
+const ADMIN_REFRESH_TOKEN_KEY = "recv_admin_refresh_token";
 let sellerRefreshPromise: Promise<string> | null = null;
 let adminRefreshPromise: Promise<string> | null = null;
 
@@ -32,6 +33,22 @@ export function setStoredAdminToken(token: string) {
 
 export function clearStoredAdminToken() {
   window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
+export function getStoredAdminRefreshToken() {
+  return window.localStorage.getItem(ADMIN_REFRESH_TOKEN_KEY);
+}
+
+export function setStoredAdminRefreshToken(token: string) {
+  if (token) {
+    window.localStorage.setItem(ADMIN_REFRESH_TOKEN_KEY, token);
+  } else {
+    clearStoredAdminRefreshToken();
+  }
+}
+
+export function clearStoredAdminRefreshToken() {
+  window.localStorage.removeItem(ADMIN_REFRESH_TOKEN_KEY);
 }
 
 export async function request<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
@@ -93,22 +110,31 @@ function refreshAccessToken(kind: "seller" | "admin") {
 
 async function performAccessTokenRefresh(kind: "seller" | "admin") {
   const path = kind === "admin" ? "/api/admin/refresh" : "/api/auth/refresh";
+  const adminRefreshToken = kind === "admin" ? getStoredAdminRefreshToken() : "";
   const response = await fetch(`${getApiBase()}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: "{}",
+    body: JSON.stringify(adminRefreshToken ? { refresh_token: adminRefreshToken } : {}),
   });
   if (!response.ok) {
-    if (kind === "admin") clearStoredAdminToken();
-    else clearStoredToken();
+    if (kind === "admin") {
+      clearStoredAdminToken();
+      clearStoredAdminRefreshToken();
+    } else {
+      clearStoredToken();
+    }
     return "";
   }
   const payload = (await response.json()) as { token?: string; access_token?: string };
   const nextToken = payload.token || payload.access_token || "";
   if (!nextToken) {
-    if (kind === "admin") clearStoredAdminToken();
-    else clearStoredToken();
+    if (kind === "admin") {
+      clearStoredAdminToken();
+      clearStoredAdminRefreshToken();
+    } else {
+      clearStoredToken();
+    }
     return "";
   }
   if (kind === "admin") setStoredAdminToken(nextToken);

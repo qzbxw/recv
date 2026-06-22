@@ -34,7 +34,11 @@ import {
   fetchAdminPromoCodes,
   createAdminPromoCode,
   deleteAdminPromoCode,
+  clearStoredAdminRefreshToken,
+  getStoredAdminRefreshToken,
+  setStoredAdminRefreshToken,
 } from "../lib/api";
+import { ApiError } from "../lib/errors";
 import { CustomSelect } from "../components/CustomSelect";
 import { buildCheckoutUrl, buildCheckoutPath } from "../lib/routing";
 import { formatPaymentAssetLabel } from "../lib/status";
@@ -178,20 +182,40 @@ export function AdminDashboardPage() {
 
   const invoices = invoiceList?.items || [];
 
+  const resetAdminSession = useCallback((message?: string) => {
+    clearStoredAdminToken();
+    clearStoredAdminRefreshToken();
+    setToken("");
+    setOverview(null);
+    setInvoiceList(null);
+    setAnalytics(null);
+    setWebVitals(null);
+    setUtmReport(null);
+    setAuditEvents([]);
+    setSeoTargets([]);
+    setSeoRedirects([]);
+    setWorkspaces([]);
+    if (message) setError(message);
+  }, []);
+
   const loadDashboard = useCallback(async (activeToken: string, nextFilters: Filters) => {
     setLoading(true);
     setError("");
     try {
-      const [nextOverview, nextInvoices, nextAnalytics, nextVitals, nextUTM, nextAuditEvents, nextSEO, nextWorkspaces, nextRedirects] = await Promise.all([
-        fetchAdminOpsOverview(activeToken),
-        fetchAdminInvoices(activeToken, { page: 1, page_size: 50, ...nextFilters }),
-        fetchAdminAnalytics(activeToken, { group_by: analyticsGroupBy }),
-        fetchAdminWebVitals(activeToken).catch(() => null),
-        fetchAdminUTMReport(activeToken).catch(() => null),
-        fetchAdminAuditEvents(activeToken),
-        fetchAdminSEOTargets(activeToken),
-        fetchAdminWorkspaces(activeToken).catch(() => ({ items: [] })),
-        fetchAdminSEORedirects(activeToken).catch(() => ({ items: [] })),
+      const nextOverview = await fetchAdminOpsOverview(activeToken);
+      const currentToken = getStoredAdminToken() || activeToken;
+      if (currentToken !== activeToken) {
+        setToken(currentToken);
+      }
+      const [nextInvoices, nextAnalytics, nextVitals, nextUTM, nextAuditEvents, nextSEO, nextWorkspaces, nextRedirects] = await Promise.all([
+        fetchAdminInvoices(currentToken, { page: 1, page_size: 50, ...nextFilters }),
+        fetchAdminAnalytics(currentToken, { group_by: analyticsGroupBy }),
+        fetchAdminWebVitals(currentToken).catch(() => null),
+        fetchAdminUTMReport(currentToken).catch(() => null),
+        fetchAdminAuditEvents(currentToken),
+        fetchAdminSEOTargets(currentToken),
+        fetchAdminWorkspaces(currentToken).catch(() => ({ items: [] })),
+        fetchAdminSEORedirects(currentToken).catch(() => ({ items: [] })),
       ]);
       setOverview(nextOverview);
       setInvoiceList(nextInvoices);
@@ -203,11 +227,15 @@ export function AdminDashboardPage() {
       setWorkspaces(nextWorkspaces.items || []);
       setSeoRedirects(nextRedirects.items || []);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        resetAdminSession("Admin session expired. Sign in again.");
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to load admin dashboard");
     } finally {
       setLoading(false);
     }
-  }, [analyticsGroupBy]);
+  }, [analyticsGroupBy, resetAdminSession]);
 
   useEffect(() => {
     if (token) void loadDashboard(token, filters);
@@ -228,6 +256,7 @@ export function AdminDashboardPage() {
       const response = await loginAdmin(credentials);
       if (!response.token) throw new Error("Admin token was not returned");
       setStoredAdminToken(response.token);
+      setStoredAdminRefreshToken(response.refresh_token || "");
       setToken(response.token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Admin login failed");
@@ -237,11 +266,8 @@ export function AdminDashboardPage() {
   }
 
   function handleLogout() {
-    void logoutAdmin().catch(() => undefined);
-    clearStoredAdminToken();
-    setToken("");
-    setOverview(null);
-    setInvoiceList(null);
+    void logoutAdmin(getStoredAdminRefreshToken()).catch(() => undefined);
+    resetAdminSession();
   }
 
   const runAction = useCallback(async (key: string, fn: () => Promise<{ result: string }>) => {

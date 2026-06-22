@@ -31,6 +31,7 @@ func TestUTMVisitsAndReport(t *testing.T) {
 		{AttributionID: "vis-1", EventName: "docs_open", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", Path: "/ru/docs/quickstart", Title: "Quickstart"},
 		{AttributionID: "vis-1", EventName: "app_open", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", Path: "/app/auth", Title: "Sign in"},
 		{AttributionID: "vis-1", EventName: "signup_start", Source: "tg_channel_a", Medium: "cpc", Campaign: "launch", Path: "/app/auth", Title: "Sign in"},
+		{AttributionID: "vis-3", EventName: "page_view", Source: "tg_channel_b", Medium: "organic", Campaign: "events-only", Path: "/ru/help", Title: "Help"},
 	} {
 		if err := st.RecordUTMEvent(ctx, event); err != nil {
 			t.Fatalf("RecordUTMEvent: %v", err)
@@ -68,6 +69,19 @@ func TestUTMVisitsAndReport(t *testing.T) {
 	}
 	if found == nil {
 		t.Fatalf("expected tg_channel_a/launch in report, got %+v", report.Campaigns)
+	}
+	var eventOnly *UTMCampaignStats
+	for i := range report.Campaigns {
+		if report.Campaigns[i].Source == "tg_channel_b" && report.Campaigns[i].Campaign == "events-only" {
+			eventOnly = &report.Campaigns[i]
+			break
+		}
+	}
+	if eventOnly == nil {
+		t.Fatalf("expected event-only campaign in report, got %+v", report.Campaigns)
+	}
+	if eventOnly.Visits != 0 || eventOnly.Events != 1 || eventOnly.Signups != 0 {
+		t.Fatalf("unexpected event-only campaign stats: %+v", eventOnly)
 	}
 	if found.Visits != 3 {
 		t.Fatalf("expected 3 visits, got %d", found.Visits)

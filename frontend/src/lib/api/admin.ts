@@ -27,16 +27,16 @@ import type {
 import { getApiBase, request } from "./core";
 
 export async function loginAdmin(payload: { username: string; password: string }) {
-  return request<{ token?: string; username?: string; email?: string; roles?: string[] }>("/api/admin/login", {
+  return request<{ token?: string; refresh_token?: string; username?: string; email?: string; roles?: string[] }>("/api/admin/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function logoutAdmin() {
+export async function logoutAdmin(refreshToken?: string | null) {
   return request<{ ok: boolean }>("/api/admin/logout", {
     method: "POST",
-    body: JSON.stringify({}),
+    body: JSON.stringify(refreshToken ? { refresh_token: refreshToken } : {}),
   });
 }
 

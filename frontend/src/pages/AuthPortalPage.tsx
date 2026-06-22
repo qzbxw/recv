@@ -267,7 +267,7 @@ export function AuthPortalPage() {
     let targetX = 0;
     let targetY = 0;
     let isHovered = false;
-    let frameId: number;
+    let frameId = 0;
 
     const onMouseMove = (e: MouseEvent) => {
       const rect = card.getBoundingClientRect();
@@ -275,22 +275,11 @@ export function AuthPortalPage() {
       targetY = e.clientY - rect.top;
     };
 
-    const onMouseEnter = () => {
-      isHovered = true;
-      card.style.setProperty("--spotlight-opacity", "1");
-    };
-
-    const onMouseLeave = () => {
-      isHovered = false;
-      card.style.setProperty("--spotlight-opacity", "0");
-      
-      // Settle back to center slowly when mouse leaves
-      const rect = card.getBoundingClientRect();
-      targetX = rect.width / 2;
-      targetY = rect.height / 2;
-    };
-
     const update = () => {
+      if (!isHovered) {
+        frameId = 0;
+        return;
+      }
       // Interpolate with a factor of 0.08 (liquid lag)
       currentX += (targetX - currentX) * 0.08;
       currentY += (targetY - currentY) * 0.08;
@@ -299,6 +288,30 @@ export function AuthPortalPage() {
       card.style.setProperty("--mouse-y", `${currentY}px`);
 
       frameId = requestAnimationFrame(update);
+    };
+
+    const startAnimation = () => {
+      if (!frameId) frameId = requestAnimationFrame(update);
+    };
+
+    const onMouseEnter = () => {
+      isHovered = true;
+      card.style.setProperty("--spotlight-opacity", "1");
+      startAnimation();
+    };
+
+    const onMouseLeave = () => {
+      isHovered = false;
+      card.style.setProperty("--spotlight-opacity", "0");
+      
+      // Settle back to center for the next hover without keeping a frame loop alive.
+      const rect = card.getBoundingClientRect();
+      targetX = rect.width / 2;
+      targetY = rect.height / 2;
+      currentX = targetX;
+      currentY = targetY;
+      card.style.setProperty("--mouse-x", `${currentX}px`);
+      card.style.setProperty("--mouse-y", `${currentY}px`);
     };
 
     card.addEventListener("mousemove", onMouseMove);
@@ -312,13 +325,11 @@ export function AuthPortalPage() {
     currentX = targetX;
     currentY = targetY;
 
-    frameId = requestAnimationFrame(update);
-
     return () => {
       card.removeEventListener("mousemove", onMouseMove);
       card.removeEventListener("mouseenter", onMouseEnter);
       card.removeEventListener("mouseleave", onMouseLeave);
-      cancelAnimationFrame(frameId);
+      if (frameId) cancelAnimationFrame(frameId);
     };
   }, []);
 

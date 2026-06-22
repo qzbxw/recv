@@ -11,7 +11,6 @@ import { marked } from "marked";
 import { CustomSelect } from "../components/CustomSelect";
 import type { AdminBlogPost } from "../lib/types";
 
-const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 const TipTapEditor = lazy(() => import("../features/blog/TipTapEditor"));
 const MediaLibraryModal = lazy(() =>
   import("../features/blog/MediaLibraryModal").then((m) => ({ default: m.MediaLibraryModal })),
@@ -72,6 +71,24 @@ function blankTranslation(base: Partial<AdminBlogPost>, locale: string): Partial
 // rendering. Structured JSON becomes authoritative on the first save.
 function markdownToHTML(md: string): string {
   return marked.parse(md, { async: false, gfm: true, breaks: false });
+}
+
+function LegacyMarkdownEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const previewHTML = useMemo(() => markdownToHTML(value), [value]);
+
+  return (
+    <div className="admin-markdown-editor">
+      <textarea
+        className="dev-input admin-markdown-editor__input"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        spellCheck
+      />
+      <div className="admin-markdown-editor__preview" aria-label="Markdown preview">
+        <div className="admin-markdown-editor__preview-inner" dangerouslySetInnerHTML={{ __html: previewHTML }} />
+      </div>
+    </div>
+  );
 }
 
 function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
@@ -423,10 +440,11 @@ export function AdminBlogPage() {
                 <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact admin-blog-convert" onClick={() => setConvertedToRich(true)}>
                   Convert to rich editor
                 </button>
-                <div data-color-mode="dark" className="admin-blog-editor">
-                  <Suspense fallback={<div className="dev-portal__empty-large">Loading editor…</div>}>
-                    <MDEditor value={editingPost.content_md || ""} onChange={(val) => updateEditingPost({ content_md: val || "" })} height={460} />
-                  </Suspense>
+                <div className="admin-blog-editor">
+                  <LegacyMarkdownEditor
+                    value={editingPost.content_md || ""}
+                    onChange={(value) => updateEditingPost({ content_md: value })}
+                  />
                 </div>
               </>
             )}

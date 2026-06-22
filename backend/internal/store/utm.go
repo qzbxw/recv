@@ -91,25 +91,25 @@ type UTMLeadEvent struct {
 }
 
 type UTMLeadJourney struct {
-	AttributionID string         `json:"attribution_id"`
-	Source        string         `json:"source"`
-	Medium        string         `json:"medium"`
-	Campaign      string         `json:"campaign"`
-	Term          string         `json:"term"`
-	Content       string         `json:"content"`
-	LandingPath   string         `json:"landing_path"`
-	Referrer      string         `json:"referrer"`
-	FirstSeenAt   time.Time      `json:"first_seen_at"`
-	LastSeenAt    time.Time      `json:"last_seen_at"`
-	EventCount    int64          `json:"event_count"`
-	DocsOpened    int64          `json:"docs_opened"`
-	AppOpens      int64          `json:"app_opens"`
-	SignupStarted bool           `json:"signup_started"`
-	WorkspaceID   *int64         `json:"workspace_id,omitempty"`
-	WorkspaceName string         `json:"workspace_name,omitempty"`
-	WorkspaceEmail string        `json:"workspace_email,omitempty"`
-	SignedUpAt    *time.Time     `json:"signed_up_at,omitempty"`
-	Timeline      []UTMLeadEvent `json:"timeline"`
+	AttributionID  string         `json:"attribution_id"`
+	Source         string         `json:"source"`
+	Medium         string         `json:"medium"`
+	Campaign       string         `json:"campaign"`
+	Term           string         `json:"term"`
+	Content        string         `json:"content"`
+	LandingPath    string         `json:"landing_path"`
+	Referrer       string         `json:"referrer"`
+	FirstSeenAt    time.Time      `json:"first_seen_at"`
+	LastSeenAt     time.Time      `json:"last_seen_at"`
+	EventCount     int64          `json:"event_count"`
+	DocsOpened     int64          `json:"docs_opened"`
+	AppOpens       int64          `json:"app_opens"`
+	SignupStarted  bool           `json:"signup_started"`
+	WorkspaceID    *int64         `json:"workspace_id,omitempty"`
+	WorkspaceName  string         `json:"workspace_name,omitempty"`
+	WorkspaceEmail string         `json:"workspace_email,omitempty"`
+	SignedUpAt     *time.Time     `json:"signed_up_at,omitempty"`
+	Timeline       []UTMLeadEvent `json:"timeline"`
 }
 
 type UTMReport struct {
@@ -168,8 +168,14 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 				GROUP BY workspace_id
 			) p ON p.workspace_id = a.workspace_id
 			GROUP BY a.source, a.medium, a.campaign
+		), campaign_keys AS (
+			SELECT source, medium, campaign FROM visits
+			UNION
+			SELECT source, medium, campaign FROM events
+			UNION
+			SELECT source, medium, campaign FROM signups
 		)
-		SELECT source, medium, campaign,
+		SELECT k.source, k.medium, k.campaign,
 		       COALESCE(v.visits, 0),
 		       COALESCE(v.unique_visitors, 0),
 		       COALESCE(e.events, 0),
@@ -179,9 +185,10 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 		       COALESCE(s.signups, 0),
 		       COALESCE(s.paying_workspaces, 0),
 		       COALESCE(s.paid_usd, 0)
-		FROM visits v
-		FULL OUTER JOIN signups s USING (source, medium, campaign)
-		FULL OUTER JOIN events e USING (source, medium, campaign)
+		FROM campaign_keys k
+		LEFT JOIN visits v USING (source, medium, campaign)
+		LEFT JOIN events e USING (source, medium, campaign)
+		LEFT JOIN signups s USING (source, medium, campaign)
 		ORDER BY COALESCE(s.paid_usd, 0) DESC, COALESCE(s.signups, 0) DESC, COALESCE(v.visits, 0) DESC
 	`, from, to)
 	if err != nil {
@@ -293,7 +300,7 @@ func (s *Store) getUTMLeadJourneys(ctx context.Context, from, to time.Time) ([]U
 			WHERE attribution_id IN (SELECT attribution_id FROM lead_ids)
 			GROUP BY attribution_id
 		), signup AS (
-			SELECT DISTINCT ON (a.attribution_id) a.attribution_id, a.workspace_id, w.name, w.email, a.created_at
+			SELECT DISTINCT ON (a.attribution_id) a.attribution_id, a.workspace_id, w.username, w.email, a.created_at
 			FROM utm_attributions a
 			LEFT JOIN workspaces w ON w.id = a.workspace_id
 			WHERE a.attribution_id IN (SELECT attribution_id FROM lead_ids) AND a.workspace_id IS NOT NULL
@@ -303,7 +310,7 @@ func (s *Store) getUTMLeadJourneys(ctx context.Context, from, to time.Time) ([]U
 		       COALESCE(f.source, ''), COALESCE(f.medium, ''), COALESCE(f.campaign, ''), COALESCE(f.term, ''), COALESCE(f.content, ''),
 		       COALESCE(f.landing_path, ''), COALESCE(f.referrer, ''), COALESCE(f.created_at, l.last_seen_at), l.last_seen_at,
 		       COALESCE(es.event_count, 0), COALESCE(es.docs_opened, 0), COALESCE(es.app_opens, 0), COALESCE(es.signup_started, false),
-		       s.workspace_id, COALESCE(s.name, ''), COALESCE(s.email, ''), s.created_at
+		       s.workspace_id, COALESCE(s.username, ''), COALESCE(s.email, ''), s.created_at
 		FROM lead_ids l
 		LEFT JOIN first_touch f ON f.attribution_id = l.attribution_id
 		LEFT JOIN event_stats es ON es.attribution_id = l.attribution_id
