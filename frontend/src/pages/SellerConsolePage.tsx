@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import { CustomSelect } from "../components/CustomSelect";
+import { MultiSelect } from "../components/MultiSelect";
 import {
   cancelInvoice,
   clearStoredToken,
@@ -232,6 +233,24 @@ export function SellerConsolePage() {
   const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
   const [recentCreated, setRecentCreated] = useState<Invoice[]>([]);
   const [invoiceFilters, setInvoiceFilters] = useState({ page: 1, pageSize: 20, status: "all", query: "" });
+  const [searchVal, setSearchVal] = useState("");
+
+  // Debounce search query to avoid spamming the network on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInvoiceFilters(current => {
+        if (current.query === searchVal) return current;
+        return { ...current, page: 1, query: searchVal };
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchVal]);
+
+  // Keep searchVal in sync with external updates to invoiceFilters.query
+  useEffect(() => {
+    setSearchVal(invoiceFilters.query);
+  }, [invoiceFilters.query]);
+
   const [expandedInvoice, setExpandedInvoice] = useState<number | null>(null);
 
   // Developer panel extras
@@ -1223,8 +1242,8 @@ export function SellerConsolePage() {
                   <div className="console-dogfood-glow" />
                   <input
                     className="dev-input"
-                    value={invoiceFilters.query}
-                    onChange={(event) => setInvoiceFilters(current => ({ ...current, page: 1, query: event.target.value }))}
+                    value={searchVal}
+                    onChange={(event) => setSearchVal(event.target.value)}
                     placeholder={language === "ru" ? "Поиск по названию, ID или tx hash" : "Search title, ID, or tx hash"}
                   />
                   <CustomSelect
@@ -1392,36 +1411,20 @@ export function SellerConsolePage() {
                       </div>
                       <div className="dev-input-group">
                         <label>{t.create.network}</label>
-                        <CustomSelect
-                          value={invoiceForm.optionKeys[0]}
+                        <MultiSelect
+                          values={invoiceForm.optionKeys}
                           options={payableNetworkOptions}
                           ariaLabel={t.create.network}
-                          onChange={(v) => {
-                            const selected = PAYABLE_PAYMENT_OPTIONS.find(option => option.key === v);
+                          placeholder={t.create.network}
+                          onChange={v => {
+                            const selected = PAYABLE_PAYMENT_OPTIONS.find(option => option.key === v[0]);
                             setInvoiceForm(c => ({
                               ...c,
                               network: selected?.network ?? c.network,
-                              optionKeys: [v, ...c.optionKeys.filter(key => key !== v)].slice(0, 2),
+                              optionKeys: v,
                             }));
                           }}
                         />
-                        <div className="dev-preset-row">
-                          {PAYABLE_PAYMENT_OPTIONS.filter(option => walletNetworks.has(walletBucket(option.network))).map(option => (
-                            <button
-                              key={option.key}
-                              type="button"
-                              className={`dev-preset-chip ${invoiceForm.optionKeys.includes(option.key) ? "is-active" : ""}`}
-                              onClick={() => setInvoiceForm(c => {
-                                const exists = c.optionKeys.includes(option.key);
-                                const next = exists ? c.optionKeys.filter(key => key !== option.key) : [...c.optionKeys, option.key].slice(-2);
-                                const fallback = next.length > 0 ? next : [option.key];
-                                return { ...c, network: option.network, optionKeys: fallback };
-                              })}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
                       </div>
                       {Number(invoiceForm.amount) <= 0 && <p className="dev-resource-card__error">{t.create.amountInvalid}</p>}
                       <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={isCreatingInvoice || activeWalletsCount === 0 || Number(invoiceForm.amount) <= 0}>
@@ -1999,36 +2002,20 @@ export function SellerConsolePage() {
                     </div>
                     <div className="dev-input-group">
                       <label>{t.common.network}</label>
-                      <CustomSelect
-                        value={billingForm.optionKeys[0]}
+                      <MultiSelect
+                        values={billingForm.optionKeys}
                         options={billingNetworkOptions}
                         ariaLabel={t.common.network}
+                        placeholder={t.common.network}
                         onChange={v => {
-                          const selected = PAYABLE_PAYMENT_OPTIONS.find(option => option.key === v);
+                          const selected = PAYABLE_PAYMENT_OPTIONS.find(option => option.key === v[0]);
                           setBillingForm(c => ({
                             ...c,
                             network: selected?.network ?? c.network,
-                            optionKeys: [v, ...c.optionKeys.filter(key => key !== v)].slice(0, 2),
+                            optionKeys: v,
                           }));
                         }}
                       />
-                      <div className="dev-preset-row">
-                        {PAYABLE_PAYMENT_OPTIONS.map(option => (
-                          <button
-                            key={option.key}
-                            type="button"
-                            className={`dev-preset-chip ${billingForm.optionKeys.includes(option.key) ? "is-active" : ""}`}
-                            onClick={() => setBillingForm(c => {
-                              const exists = c.optionKeys.includes(option.key);
-                              const next = exists ? c.optionKeys.filter(key => key !== option.key) : [...c.optionKeys, option.key].slice(-2);
-                              const fallback = next.length > 0 ? next : [option.key];
-                              return { ...c, network: option.network, optionKeys: fallback };
-                            })}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
                     </div>
                     <button className="dev-btn dev-btn--primary" onClick={onUpgrade}>{t.billing.upgrade}</button>
                   </div>

@@ -37,6 +37,7 @@
 .dev-portal {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   color: var(--ink);
   background: #000;
@@ -76,6 +77,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Topbar ref */
@@ -10802,6 +10804,7 @@ html {
 .dev-portal__layout {
   display: flex;
   height: 100vh !important;
+  height: 100dvh !important;
   width: 100%;
   position: relative;
   /* No overflow:hidden here — dropdowns must escape this container */
@@ -13558,50 +13561,69 @@ html {
 }
 
 /* Low-power mobile/webview rendering: keep the visual language, skip repaint-heavy effects. */
-@media (hover: none), (pointer: coarse), (max-width: 768px) {
-  html[data-low-power-ui="true"] *,
-  html[data-low-power-ui="true"] *::before,
-  html[data-low-power-ui="true"] *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-  }
+html[data-low-power-ui="true"] *,
+html[data-low-power-ui="true"] *::before,
+html[data-low-power-ui="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
 
-  html[data-low-power-ui="true"] .lend-backdrop--grid,
-  html[data-low-power-ui="true"] .dev-portal__backdrop--grid {
-    animation: none !important;
-    opacity: 0.035 !important;
-  }
+html[data-low-power-ui="true"] .lend-backdrop--grid,
+html[data-low-power-ui="true"] .dev-portal__backdrop--grid {
+  animation: none !important;
+  opacity: 0.035 !important;
+}
 
-  html[data-low-power-ui="true"] .lend-backdrop--glow,
-  html[data-low-power-ui="true"] .auth-portal__glow,
-  html[data-low-power-ui="true"] .dev-portal::before,
-  html[data-low-power-ui="true"] .dev-portal::after,
-  html[data-low-power-ui="true"] .auth-portal::before,
-  html[data-low-power-ui="true"] .auth-portal::after {
-    display: none !important;
-  }
+html[data-low-power-ui="true"] .lend-backdrop--glow,
+html[data-low-power-ui="true"] .auth-portal__glow,
+html[data-low-power-ui="true"] .dev-portal::before,
+html[data-low-power-ui="true"] .dev-portal::after,
+html[data-low-power-ui="true"] .auth-portal::before,
+html[data-low-power-ui="true"] .auth-portal::after {
+  display: none !important;
+}
 
-  html[data-low-power-ui="true"] .lend-spotlight-card::before,
-  html[data-low-power-ui="true"] .lend-spotlight-card::after,
-  html[data-low-power-ui="true"] .lend-card-spotlight,
-  html[data-low-power-ui="true"] .lend-dogfood-glow {
-    display: none !important;
-  }
+html[data-low-power-ui="true"] .lend-spotlight-card::before,
+html[data-low-power-ui="true"] .lend-spotlight-card::after,
+html[data-low-power-ui="true"] .lend-card-spotlight,
+html[data-low-power-ui="true"] .lend-dogfood-glow {
+  display: none !important;
+}
 
-  html[data-low-power-ui="true"] .dev-card,
-  html[data-low-power-ui="true"] .lend-card,
-  html[data-low-power-ui="true"] .lend-pricing-card,
-  html[data-low-power-ui="true"] .dev-portal__content-card,
-  html[data-low-power-ui="true"] .checkout-shell {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28) !important;
-  }
+html[data-low-power-ui="true"] .dev-card,
+html[data-low-power-ui="true"] .lend-card,
+html[data-low-power-ui="true"] .lend-pricing-card,
+html[data-low-power-ui="true"] .dev-portal__content-card,
+html[data-low-power-ui="true"] .checkout-shell {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28) !important;
+}
 
-  html[data-low-power-ui="true"] .lend-spotlight-card:hover,
-  html[data-low-power-ui="true"] .lend-card:hover,
-  html[data-low-power-ui="true"] .lend-pricing-card:hover {
+html[data-low-power-ui="true"] .lend-spotlight-card:hover,
+html[data-low-power-ui="true"] .lend-card:hover,
+html[data-low-power-ui="true"] .lend-pricing-card:hover {
+  transform: none !important;
+}
+
+/* Mobile & Touch Optimizations */
+@media (max-width: 768px) {
+  .dev-input, .ui-input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+@media (hover: none) {
+  .dev-btn--primary:hover, .ui-button--primary:hover,
+  .dev-btn--secondary:hover, .ui-button--ghost:hover,
+  .lend-spotlight-card:hover, .lend-card:hover, .lend-pricing-card:hover {
     transform: none !important;
+    filter: none !important;
+    box-shadow: none !important;
   }
+}
+
+html, body {
+  overscroll-behavior-y: none;
 }

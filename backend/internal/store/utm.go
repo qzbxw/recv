@@ -137,15 +137,15 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 
 	rows, err := s.pool.Query(ctx, `
 		WITH visits AS (
-			SELECT source, medium, campaign,
+			SELECT COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign,
 			       COUNT(*) AS visits,
 			       COUNT(DISTINCT NULLIF(attribution_id, '')) AS unique_visitors,
 			       COUNT(*) FILTER (WHERE landing_path = '/tg-bot') AS bot_visits
 			FROM utm_visits
 			WHERE created_at >= $1 AND created_at < $2
-			GROUP BY source, medium, campaign
+			GROUP BY COALESCE(source, ''), COALESCE(medium, ''), COALESCE(campaign, '')
 		), events AS (
-			SELECT source, medium, campaign,
+			SELECT COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign,
 			       COUNT(*) AS events,
 			       COUNT(*) FILTER (WHERE event_name IN ('docs_open', 'docs_page_view')) AS docs_opened,
 			       COUNT(*) FILTER (WHERE event_name = 'app_open') AS app_opens,
@@ -153,9 +153,10 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 			       COUNT(*) FILTER (WHERE event_name = 'signup_start') AS signup_starts
 			FROM utm_events
 			WHERE created_at >= $1 AND created_at < $2
-			GROUP BY source, medium, campaign
+			GROUP BY COALESCE(source, ''), COALESCE(medium, ''), COALESCE(campaign, '')
 		), attributed AS (
-			SELECT DISTINCT ON (workspace_id) workspace_id, source, medium, campaign
+			SELECT DISTINCT ON (workspace_id) workspace_id,
+			       COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign
 			FROM utm_attributions
 			WHERE workspace_id IS NOT NULL AND created_at >= $1 AND created_at < $2
 			ORDER BY workspace_id, created_at ASC
@@ -179,7 +180,7 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 			UNION
 			SELECT source, medium, campaign FROM signups
 		)
-		SELECT k.source, k.medium, k.campaign,
+		SELECT COALESCE(k.source, ''), COALESCE(k.medium, ''), COALESCE(k.campaign, ''),
 		       COALESCE(v.visits, 0),
 		       COALESCE(v.unique_visitors, 0),
 		       COALESCE(e.events, 0),
@@ -242,15 +243,15 @@ func (s *Store) getUTMLandingStats(ctx context.Context, from, to time.Time) ([]U
 			FROM utm_attributions
 			WHERE attribution_id <> '' AND created_at >= $1 AND created_at < $2
 		)
-		SELECT landing_path,
+		SELECT COALESCE(landing_path, ''),
 		       '' AS title,
 		       COUNT(DISTINCT NULLIF(v.attribution_id, '')) AS visitors,
 		       COUNT(*) AS visits,
 		       COUNT(DISTINCT v.attribution_id) FILTER (WHERE s.attribution_id IS NOT NULL) AS signup_visitors
 		FROM utm_visits v
 		LEFT JOIN signup_attrs s ON s.attribution_id = v.attribution_id
-		WHERE v.created_at >= $1 AND v.created_at < $2 AND landing_path <> ''
-		GROUP BY landing_path
+		WHERE v.created_at >= $1 AND v.created_at < $2 AND COALESCE(landing_path, '') <> ''
+		GROUP BY COALESCE(landing_path, '')
 		ORDER BY visits DESC, visitors DESC
 		LIMIT 12
 	`, from, to)
@@ -284,15 +285,15 @@ func (s *Store) getUTMPathStats(ctx context.Context, from, to time.Time, docsOnl
 			FROM utm_attributions
 			WHERE attribution_id <> '' AND created_at >= $1 AND created_at < $2
 		)
-		SELECT e.path,
-		       MAX(e.title) AS title,
+		SELECT COALESCE(e.path, ''),
+		       COALESCE(MAX(e.title), '') AS title,
 		       COUNT(DISTINCT NULLIF(e.attribution_id, '')) AS visitors,
 		       COUNT(*) AS events,
 		       COUNT(DISTINCT e.attribution_id) FILTER (WHERE s.attribution_id IS NOT NULL) AS signup_visitors
 		FROM utm_events e
 		LEFT JOIN signup_attrs s ON s.attribution_id = e.attribution_id
-		WHERE e.created_at >= $1 AND e.created_at < $2 AND e.path <> '' %s
-		GROUP BY e.path
+		WHERE e.created_at >= $1 AND e.created_at < $2 AND COALESCE(e.path, '') <> '' %s
+		GROUP BY COALESCE(e.path, '')
 		ORDER BY visitors DESC, events DESC
 		LIMIT 12
 	`, filter), from, to)
@@ -320,17 +321,20 @@ func (s *Store) getUTMLeadJourneys(ctx context.Context, from, to time.Time) ([]U
 		WITH lead_ids AS (
 			SELECT attribution_id, MAX(created_at) AS last_seen_at
 			FROM (
-				SELECT attribution_id, created_at FROM utm_events WHERE attribution_id <> '' AND created_at >= $1 AND created_at < $2
+				SELECT attribution_id, created_at FROM utm_events WHERE COALESCE(attribution_id, '') <> '' AND created_at >= $1 AND created_at < $2
 				UNION ALL
-				SELECT attribution_id, created_at FROM utm_visits WHERE attribution_id <> '' AND created_at >= $1 AND created_at < $2
+				SELECT attribution_id, created_at FROM utm_visits WHERE COALESCE(attribution_id, '') <> '' AND created_at >= $1 AND created_at < $2
 				UNION ALL
-				SELECT attribution_id, created_at FROM utm_attributions WHERE attribution_id <> '' AND created_at >= $1 AND created_at < $2
+				SELECT attribution_id, created_at FROM utm_attributions WHERE COALESCE(attribution_id, '') <> '' AND created_at >= $1 AND created_at < $2
 			) ids
 			GROUP BY attribution_id
 			ORDER BY last_seen_at DESC
 			LIMIT 40
 		), first_touch AS (
-			SELECT DISTINCT ON (attribution_id) attribution_id, source, medium, campaign, term, content, landing_path, referrer, created_at
+			SELECT DISTINCT ON (attribution_id) attribution_id,
+			       COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign,
+			       COALESCE(term, '') AS term, COALESCE(content, '') AS content,
+			       COALESCE(landing_path, '') AS landing_path, COALESCE(referrer, '') AS referrer, created_at
 			FROM (
 				SELECT attribution_id, source, medium, campaign, term, content, landing_path, referrer, created_at FROM utm_visits
 				UNION ALL
@@ -402,7 +406,7 @@ func (s *Store) getUTMLeadJourneys(ctx context.Context, from, to time.Time) ([]U
 
 func (s *Store) getUTMLeadTimeline(ctx context.Context, attributionID string) ([]UTMLeadEvent, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT event_name, path, title, created_at
+		SELECT COALESCE(event_name, ''), COALESCE(path, ''), COALESCE(title, ''), created_at
 		FROM utm_events
 		WHERE attribution_id = $1
 		ORDER BY created_at ASC

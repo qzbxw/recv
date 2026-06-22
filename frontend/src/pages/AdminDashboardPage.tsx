@@ -1924,7 +1924,7 @@ function ContentPanel({
 }
 
 function SettingsPanel({ token, setToast, setError }: { token: string; setToast: (msg: string) => void; setError: (msg: string) => void }) {
-  const [wallets, setWallets] = useState<Record<string, string>>({ TON: "", EVM: "", TRON: "" });
+  const [wallets, setWallets] = useState<Record<string, string>>({ TON: "", EVM: "", TRON: "", SOLANA: "" });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -1936,6 +1936,7 @@ function SettingsPanel({ token, setToast, setError }: { token: string; setToast:
           TON: res.wallets.TON || "",
           EVM: res.wallets.EVM || "",
           TRON: res.wallets.TRON || "",
+          SOLANA: res.wallets.SOLANA || "",
         });
       })
       .catch(err => {
@@ -2011,6 +2012,17 @@ function SettingsPanel({ token, setToast, setError }: { token: string; setToast:
               value={wallets.TRON}
               onChange={e => setWallets({ ...wallets, TRON: e.target.value })}
               placeholder="e.g. TX_tron_wallet_addr..."
+              required
+            />
+          </div>
+
+          <div className="dev-input-group dev-input-group--margin">
+            <label>Solana Wallet Address (for SOL, Solana USDT, and Solana USDC)</label>
+            <input
+              className="dev-input"
+              value={wallets.SOLANA}
+              onChange={e => setWallets({ ...wallets, SOLANA: e.target.value })}
+              placeholder="e.g. SOL_wallet_addr..."
               required
             />
           </div>
