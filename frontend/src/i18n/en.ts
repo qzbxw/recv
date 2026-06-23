@@ -424,6 +424,7 @@ function verify(payload, signature, secret) {
     footerPoweredBy: "Powered by",
     footerCTA: "Accept crypto payments like this with recv",
     payInWallet: "Pay in Wallet",
+    copyPaymentDetails: "Copy payment details",
   },
   sellerConsole: {
     nav: {

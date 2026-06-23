@@ -352,8 +352,110 @@ func TestInvoicePresentationHelpers(t *testing.T) {
 	if got := checkoutBadge(invoice); got != "Merchant Checkout" {
 		t.Fatalf("expected merchant checkout badge, got %q", got)
 	}
-	if got := paymentURI(invoice); got != invoice.DestinationAddress {
-		t.Fatalf("expected EVM-like payment URI to be destination address, got %q", got)
+	if got := paymentURI(invoice); !strings.HasPrefix(got, "ethereum:0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2@8453/transfer?") {
+		t.Fatalf("expected Base USDT payment URI, got %q", got)
+	}
+}
+
+func TestWalletDeepLinks(t *testing.T) {
+	comment := "RECV-123"
+	tests := []struct {
+		name        string
+		network     store.Network
+		asset       store.PaymentAsset
+		destination string
+		amount      string
+		comment     *string
+		wantPrefix  string
+		wantParts   []string
+	}{
+		{
+			name:        "TON GRAM",
+			network:     store.NetworkTON,
+			asset:       store.AssetGRAM,
+			destination: "UQWallet",
+			amount:      "1.25",
+			comment:     &comment,
+			wantPrefix:  "ton://transfer/UQWallet?",
+			wantParts:   []string{"amount=1250000000", "text=RECV-123"},
+		},
+		{
+			name:        "TON USDT",
+			network:     store.NetworkTON_USDT,
+			asset:       store.AssetUSDT,
+			destination: "UQWallet",
+			amount:      "1.25",
+			wantPrefix:  "ton://transfer/UQWallet?",
+			wantParts:   []string{"amount=1250000", "jetton=EQCxE6mC__G6cD7YIAkb4leT8akRi8nM60Nw2VY0lNAM9qfe"},
+		},
+		{
+			name:        "TRON USDT",
+			network:     store.NetworkTRON,
+			asset:       store.AssetUSDT,
+			destination: "TN3W4H6rK2ce4vX9YnFQHwKENnHjoxb3m9",
+			amount:      "1.25",
+			wantPrefix:  "tron:TN3W4H6rK2ce4vX9YnFQHwKENnHjoxb3m9?",
+			wantParts:   []string{"amount=1.250000", "contract=TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj", "token=USDT"},
+		},
+		{
+			name:        "Solana USDC",
+			network:     store.NetworkSOLANA,
+			asset:       store.AssetUSDC,
+			destination: "DgTFwh8r8gGRNQyLz2jP4kCMv4rNVmtaKBuUPeRZxH4t",
+			amount:      "1.25",
+			wantPrefix:  "solana:DgTFwh8r8gGRNQyLz2jP4kCMv4rNVmtaKBuUPeRZxH4t?",
+			wantParts:   []string{"amount=1.250000", "label=recv", "spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},
+		},
+		{
+			name:        "Base USDC",
+			network:     store.NetworkBASE,
+			asset:       store.AssetUSDC,
+			destination: "0x1111111111111111111111111111111111111111",
+			amount:      "1.25",
+			wantPrefix:  "ethereum:0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913@8453/transfer?",
+			wantParts:   []string{"address=0x1111111111111111111111111111111111111111", "uint256=1250000"},
+		},
+		{
+			name:        "Arbitrum USDT",
+			network:     store.NetworkARBITRUM,
+			asset:       store.AssetUSDT,
+			destination: "0x1111111111111111111111111111111111111111",
+			amount:      "1.25",
+			wantPrefix:  "ethereum:0xFd086bC7CD5C481DCC9C85ebe478A1C0b69FCbb9@42161/transfer?",
+			wantParts:   []string{"address=0x1111111111111111111111111111111111111111", "uint256=1250000"},
+		},
+		{
+			name:        "BSC USDT",
+			network:     store.NetworkBSC,
+			asset:       store.AssetUSDT,
+			destination: "0x1111111111111111111111111111111111111111",
+			amount:      "1.25",
+			wantPrefix:  "ethereum:0x55d398326f99059fF775485246999027B3197955@56/transfer?",
+			wantParts:   []string{"address=0x1111111111111111111111111111111111111111", "uint256=1250000000000000000"},
+		},
+		{
+			name:        "BSC BNB",
+			network:     store.NetworkBSC,
+			asset:       store.AssetBNB,
+			destination: "0x1111111111111111111111111111111111111111",
+			amount:      "1.25",
+			wantPrefix:  "ethereum:0x1111111111111111111111111111111111111111@56?",
+			wantParts:   []string{"value=1250000000000000000"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := walletDeepLink(tt.network, tt.asset, tt.destination, decimal.RequireFromString(tt.amount), tt.comment)
+			if !strings.HasPrefix(got, tt.wantPrefix) {
+				t.Fatalf("expected prefix %q, got %q", tt.wantPrefix, got)
+			}
+			for _, part := range tt.wantParts {
+				if !strings.Contains(got, part) {
+					t.Fatalf("expected URI %q to contain %q", got, part)
+				}
+			}
+		})
 	}
 }
 

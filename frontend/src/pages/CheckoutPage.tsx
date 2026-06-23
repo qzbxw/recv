@@ -10,14 +10,34 @@ import "../styles/checkout.css";
 
 const BOT_URL = "https://t.me/recvmoney_bot";
 const DEMO_PUBLIC_ID = "demo";
+const WALLET_URI_SCHEMES = new Set(["ton", "ethereum", "solana", "tron"]);
 
-function fallbackPaymentURI(invoice: Invoice) {
-  if (invoice.payable_network === "TON") {
-    const amount = Math.round(Number(invoice.payable_amount) * 1_000_000_000);
-    const comment = invoice.payment_comment ? `&text=${encodeURIComponent(invoice.payment_comment)}` : "";
-    return `ton://transfer/${invoice.destination_address}?amount=${amount}${comment}`;
+type CheckoutPaymentDetails = Pick<Invoice, "payable_amount" | "payable_network" | "payable_asset" | "destination_address" | "payment_comment" | "payment_uri">;
+
+function isWalletURI(value: string | null | undefined) {
+  if (!value) {
+    return false;
   }
-  return [invoice.destination_address, invoice.payment_comment, `${invoice.payable_amount} ${invoice.payable_network}`].filter(Boolean).join("\n");
+  const match = value.trim().match(/^([a-z][a-z0-9+.-]*):/i);
+  return match ? WALLET_URI_SCHEMES.has(match[1].toLowerCase()) : false;
+}
+
+function fallbackPaymentURI(payment: CheckoutPaymentDetails) {
+  if (payment.payable_network === "TON" && payment.payable_asset === "GRAM") {
+    const amount = Math.round(Number(payment.payable_amount) * 1_000_000_000);
+    const comment = payment.payment_comment ? `&text=${encodeURIComponent(payment.payment_comment)}` : "";
+    return `ton://transfer/${payment.destination_address}?amount=${amount}${comment}`;
+  }
+  return "";
+}
+
+function paymentDetailsText(payment: CheckoutPaymentDetails, labels: { amount: string; wallet: string; network: string; comment: string }) {
+  return [
+    `${labels.amount}: ${payment.payable_amount}`,
+    `${labels.network}: ${payment.payable_asset ? `${payment.payable_asset} ` : ""}${formatNetworkLabel(payment.payable_network)}`.trim(),
+    `${labels.wallet}: ${payment.destination_address}`,
+    payment.payment_comment ? `${labels.comment}: ${payment.payment_comment}` : "",
+  ].filter(Boolean).join("\n");
 }
 
 function formatAddressPreview(address: string) {
@@ -116,7 +136,7 @@ export function CheckoutPage() {
   const [error, setError] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [now, setNow] = useState(Date.now());
-  const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "">("");
+  const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "details" | "">("");
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
   const [retryNonce, setRetryNonce] = useState(0);
   const statusRef = useRef("");
@@ -201,7 +221,16 @@ export function CheckoutPage() {
     }
 
     const option = invoice.payment_options?.[selectedOptionIndex] ?? invoice.payment_options?.[0];
-    const source = option?.payment_uri || invoice.payment_uri || fallbackPaymentURI(invoice);
+    const source = option
+      ? (isWalletURI(option.payment_uri) ? option.payment_uri : paymentDetailsText({
+          payable_amount: option.payable_amount,
+          payable_network: option.network,
+          payable_asset: option.asset,
+          destination_address: option.destination_address,
+          payment_comment: option.payment_comment,
+          payment_uri: option.payment_uri,
+        }, text))
+      : (isWalletURI(invoice.payment_uri) ? invoice.payment_uri : paymentDetailsText(invoice, text));
 
     void QRCode.toDataURL(source, {
       width: 288,
@@ -215,7 +244,7 @@ export function CheckoutPage() {
       .then(setQrDataUrl)
       .catch(async () => {
         try {
-          const fallback = await QRCode.toDataURL(fallbackPaymentURI(invoice), {
+          const fallback = await QRCode.toDataURL(paymentDetailsText(invoice, text), {
             width: 288,
             margin: 2,
             errorCorrectionLevel: "M",
@@ -229,7 +258,7 @@ export function CheckoutPage() {
           setQrDataUrl("");
         }
       });
-  }, [invoice, selectedOptionIndex]);
+  }, [invoice, selectedOptionIndex, text]);
 
   useEffect(() => {
     if (!copiedField) {
@@ -321,6 +350,15 @@ export function CheckoutPage() {
     }
   }
 
+  async function copyPaymentDetails(payment: CheckoutPaymentDetails) {
+    try {
+      await navigator.clipboard.writeText(paymentDetailsText(payment, text));
+      setCopiedField("details");
+    } catch {
+      setError(language === "ru" ? "Не удалось скопировать реквизиты. Скопируйте значения вручную." : "Could not copy payment details. Copy the values manually.");
+    }
+  }
+
   const statusTone = invoice ? getInvoiceStatusMeta(invoice.status).tone : "neutral";
   const netLabel = invoice
     ? `${activePayment?.payable_asset || invoice.payable_asset || ""} ${formatNetworkLabel(activePayment?.payable_network || invoice.payable_network)}`.trim()
@@ -328,6 +366,7 @@ export function CheckoutPage() {
   const bigAmount = activePayment?.payable_amount || invoice?.payable_amount || "";
   const addressValue = activePayment?.destination_address || invoice?.destination_address || "";
   const commentValue = activePayment?.payment_comment || invoice?.payment_comment || "";
+  const walletURI = activePayment ? (isWalletURI(activePayment.payment_uri) ? activePayment.payment_uri : fallbackPaymentURI(activePayment)) : "";
   const finalBody = isPaid
     ? text.paidBody
     : isExpired
@@ -488,14 +527,26 @@ export function CheckoutPage() {
             ) : null}
 
             <div className="co-actions">
-              <a
-                id="co-btn-pay"
-                href={activePayment?.payment_uri || fallbackPaymentURI(invoice)}
-                className="co-btn co-btn--primary"
-              >
-                <Icons.Wallet />
-                {text.payInWallet}
-              </a>
+              {walletURI ? (
+                <a
+                  id="co-btn-pay"
+                  href={walletURI}
+                  className="co-btn co-btn--primary"
+                >
+                  <Icons.Wallet />
+                  {text.payInWallet}
+                </a>
+              ) : (
+                <button
+                  id="co-btn-pay"
+                  type="button"
+                  className={`co-btn co-btn--primary ${copiedField === "details" ? "is-copied" : ""}`}
+                  onClick={() => activePayment && void copyPaymentDetails(activePayment)}
+                >
+                  {copiedField === "details" ? <Icons.Check /> : <Icons.Wallet />}
+                  {copiedField === "details" ? text.copied : text.copyPaymentDetails}
+                </button>
+              )}
             </div>
 
             <div className="co-qr">

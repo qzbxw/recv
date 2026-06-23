@@ -423,6 +423,7 @@ function verify(payload, signature, secret) {
     footerPoweredBy: "Работает на",
     footerCTA: "Принимайте платежи так же с recv",
     payInWallet: "Открыть кошелек",
+    copyPaymentDetails: "Скопировать реквизиты",
   },
   sellerConsole: {
     nav: {

@@ -1166,28 +1166,137 @@ func normalizedInvoicePlanCode(invoice store.Invoice) store.PlanCode {
 }
 
 func paymentURI(invoice store.Invoice) string {
-	if invoice.PayableAsset == store.AssetGRAM {
-		comment := ""
-		if invoice.PaymentComment != nil {
-			comment = *invoice.PaymentComment
-		}
-		return "ton://transfer/" + invoice.DestinationAddress + "?amount=" + invoice.PayableAmount.Mul(decimal.NewFromInt(1_000_000_000)).StringFixed(0) + "&text=" + url.QueryEscape(comment)
-	}
-	return invoice.DestinationAddress
+	return walletDeepLink(invoice.PayableNetwork, invoice.PayableAsset, invoice.DestinationAddress, invoice.PayableAmount, invoice.PaymentComment)
 }
 
 func paymentOptionURI(option store.PaymentOption) string {
 	if option.PaymentURI != "" {
 		return option.PaymentURI
 	}
-	if option.Asset == store.AssetGRAM {
-		comment := ""
-		if option.PaymentComment != nil {
-			comment = *option.PaymentComment
-		}
-		return "ton://transfer/" + option.DestinationAddress + "?amount=" + option.PayableAmount.Mul(decimal.NewFromInt(1_000_000_000)).StringFixed(0) + "&text=" + url.QueryEscape(comment)
+	return walletDeepLink(option.Network, option.Asset, option.DestinationAddress, option.PayableAmount, option.PaymentComment)
+}
+
+type walletTokenSpec struct {
+	chainID  string
+	contract string
+	decimals int32
+}
+
+func walletDeepLink(network store.Network, asset store.PaymentAsset, destination string, amount decimal.Decimal, comment *string) string {
+	destination = strings.TrimSpace(destination)
+	if destination == "" {
+		return ""
 	}
-	return option.DestinationAddress
+	if asset == "" {
+		asset = store.DefaultAssetForNetwork(network)
+	}
+
+	switch network {
+	case store.NetworkTON:
+		if asset != store.AssetGRAM {
+			return destination
+		}
+		return tonTransferURI(destination, amount, 9, "", comment)
+	case store.NetworkTON_USDT:
+		if asset != store.AssetUSDT {
+			return destination
+		}
+		return tonTransferURI(destination, amount, 6, "EQCxE6mC__G6cD7YIAkb4leT8akRi8nM60Nw2VY0lNAM9qfe", comment)
+	case store.NetworkSOLANA:
+		return solanaPayURI(destination, amount, asset)
+	case store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC:
+		return evmPaymentURI(network, asset, destination, amount)
+	case store.NetworkTRON:
+		return tronPaymentURI(asset, destination, amount)
+	default:
+		return destination
+	}
+}
+
+func tonTransferURI(destination string, amount decimal.Decimal, decimals int32, jetton string, comment *string) string {
+	values := url.Values{}
+	values.Set("amount", decimalUnits(amount, decimals))
+	if jetton != "" {
+		values.Set("jetton", jetton)
+	}
+	if comment != nil && strings.TrimSpace(*comment) != "" {
+		values.Set("text", strings.TrimSpace(*comment))
+	}
+	return "ton://transfer/" + destination + "?" + values.Encode()
+}
+
+func solanaPayURI(destination string, amount decimal.Decimal, asset store.PaymentAsset) string {
+	values := url.Values{}
+	values.Set("amount", amount.StringFixed(6))
+	values.Set("label", "recv")
+	switch asset {
+	case store.AssetUSDT:
+		values.Set("spl-token", "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
+	case store.AssetUSDC:
+		values.Set("spl-token", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
+	case store.AssetSOL:
+	default:
+		return destination
+	}
+	return "solana:" + destination + "?" + values.Encode()
+}
+
+func evmPaymentURI(network store.Network, asset store.PaymentAsset, destination string, amount decimal.Decimal) string {
+	spec, ok := evmWalletTokenSpec(network, asset)
+	if !ok {
+		return destination
+	}
+	if spec.contract == "" {
+		values := url.Values{}
+		values.Set("value", decimalUnits(amount, spec.decimals))
+		return "ethereum:" + destination + "@" + spec.chainID + "?" + values.Encode()
+	}
+	values := url.Values{}
+	values.Set("address", destination)
+	values.Set("uint256", decimalUnits(amount, spec.decimals))
+	return "ethereum:" + spec.contract + "@" + spec.chainID + "/transfer?" + values.Encode()
+}
+
+func evmWalletTokenSpec(network store.Network, asset store.PaymentAsset) (walletTokenSpec, bool) {
+	switch network {
+	case store.NetworkBASE:
+		if asset == store.AssetUSDC {
+			return walletTokenSpec{chainID: "8453", contract: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", decimals: 6}, true
+		}
+		if asset == store.AssetUSDT {
+			return walletTokenSpec{chainID: "8453", contract: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2", decimals: 6}, true
+		}
+	case store.NetworkARBITRUM:
+		if asset == store.AssetUSDC {
+			return walletTokenSpec{chainID: "42161", contract: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", decimals: 6}, true
+		}
+		if asset == store.AssetUSDT {
+			return walletTokenSpec{chainID: "42161", contract: "0xFd086bC7CD5C481DCC9C85ebe478A1C0b69FCbb9", decimals: 6}, true
+		}
+	case store.NetworkBSC:
+		if asset == store.AssetBNB {
+			return walletTokenSpec{chainID: "56", decimals: 18}, true
+		}
+		if asset == store.AssetUSDT {
+			return walletTokenSpec{chainID: "56", contract: "0x55d398326f99059fF775485246999027B3197955", decimals: 18}, true
+		}
+	}
+	return walletTokenSpec{}, false
+}
+
+func tronPaymentURI(asset store.PaymentAsset, destination string, amount decimal.Decimal) string {
+	if asset != store.AssetUSDT {
+		return destination
+	}
+	values := url.Values{}
+	values.Set("amount", amount.StringFixed(6))
+	values.Set("token", "USDT")
+	values.Set("contract", "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj")
+	return "tron:" + destination + "?" + values.Encode()
+}
+
+func decimalUnits(amount decimal.Decimal, decimals int32) string {
+	return amount.Mul(decimal.New(1, decimals)).Truncate(0).StringFixed(0)
 }
 
 func paymentOptionResponses(invoice store.Invoice) []gin.H {
