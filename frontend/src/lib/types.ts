@@ -414,6 +414,29 @@ export type AdminAnalyticsResponse = {
 export type UTMReport = {
   from: string;
   to: string;
+  activation: Array<{
+    key: string;
+    label: string;
+    count: number;
+    workspaces: number;
+    paid_usd: string;
+  }>;
+  countries: Array<{
+    country: string;
+    visits: number;
+    unique_visitors: number;
+    app_opens: number;
+    bot_opens: number;
+    signup_starts: number;
+    signups: number;
+    workspace_created: number;
+    wallet_connected: number;
+    invoice_created: number;
+    test_payment_simulated: number;
+    live_invoice_created: number;
+    paid: number;
+    paid_usd: string;
+  }>;
   campaigns: Array<{
     source: string;
     medium: string;

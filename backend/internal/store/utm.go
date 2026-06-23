@@ -19,9 +19,9 @@ func (s *Store) RecordUTMVisit(ctx context.Context, attr AttributionInput) error
 		return nil
 	}
 	_, err := s.pool.Exec(ctx, `
-		INSERT INTO utm_visits (attribution_id, source, medium, campaign, term, content, landing_path, referrer)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, limitString(attr.AttributionID, 160), limitString(attr.Source, 160), limitString(attr.Medium, 160), limitString(attr.Campaign, 240), limitString(attr.Term, 240), limitString(attr.Content, 240), limitString(attr.LandingPath, 500), limitString(attr.Referrer, 500))
+		INSERT INTO utm_visits (attribution_id, source, medium, campaign, term, content, country, landing_path, referrer)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	`, limitString(attr.AttributionID, 160), limitString(attr.Source, 160), limitString(attr.Medium, 160), limitString(attr.Campaign, 240), limitString(attr.Term, 240), limitString(attr.Content, 240), limitString(attr.Country, 2), limitString(attr.LandingPath, 500), limitString(attr.Referrer, 500))
 	if err != nil {
 		return fmt.Errorf("record utm visit: %w", err)
 	}
@@ -36,6 +36,7 @@ type UTMEventInput struct {
 	Campaign      string          `json:"campaign"`
 	Term          string          `json:"term"`
 	Content       string          `json:"content"`
+	Country       string          `json:"country"`
 	Path          string          `json:"path"`
 	Title         string          `json:"title"`
 	Referrer      string          `json:"referrer"`
@@ -51,9 +52,9 @@ func (s *Store) RecordUTMEvent(ctx context.Context, event UTMEventInput) error {
 		properties = json.RawMessage(`{}`)
 	}
 	_, err := s.pool.Exec(ctx, `
-		INSERT INTO utm_events (attribution_id, event_name, source, medium, campaign, term, content, path, title, referrer, properties)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	`, limitString(event.AttributionID, 160), limitString(event.EventName, 160), limitString(event.Source, 160), limitString(event.Medium, 160), limitString(event.Campaign, 240), limitString(event.Term, 240), limitString(event.Content, 240), limitString(event.Path, 500), limitString(event.Title, 240), limitString(event.Referrer, 500), properties)
+		INSERT INTO utm_events (attribution_id, event_name, source, medium, campaign, term, content, country, path, title, referrer, properties)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+	`, limitString(event.AttributionID, 160), limitString(event.EventName, 160), limitString(event.Source, 160), limitString(event.Medium, 160), limitString(event.Campaign, 240), limitString(event.Term, 240), limitString(event.Content, 240), limitString(event.Country, 2), limitString(event.Path, 500), limitString(event.Title, 240), limitString(event.Referrer, 500), properties)
 	if err != nil {
 		return fmt.Errorf("record utm event: %w", err)
 	}
@@ -74,6 +75,31 @@ type UTMCampaignStats struct {
 	Signups          int64           `json:"signups"`
 	PayingWorkspaces int64           `json:"paying_workspaces"`
 	PaidUSD          decimal.Decimal `json:"paid_usd"`
+}
+
+type UTMCountryFunnel struct {
+	Country              string          `json:"country"`
+	Visits               int64           `json:"visits"`
+	UniqueVisitors       int64           `json:"unique_visitors"`
+	AppOpens             int64           `json:"app_opens"`
+	BotOpens             int64           `json:"bot_opens"`
+	SignupStarts         int64           `json:"signup_starts"`
+	Signups              int64           `json:"signups"`
+	WorkspaceCreated     int64           `json:"workspace_created"`
+	WalletConnected      int64           `json:"wallet_connected"`
+	InvoiceCreated       int64           `json:"invoice_created"`
+	TestPaymentSimulated int64           `json:"test_payment_simulated"`
+	LiveInvoiceCreated   int64           `json:"live_invoice_created"`
+	Paid                 int64           `json:"paid"`
+	PaidUSD              decimal.Decimal `json:"paid_usd"`
+}
+
+type ActivationMetric struct {
+	Key        string          `json:"key"`
+	Label      string          `json:"label"`
+	Count      int64           `json:"count"`
+	Workspaces int64           `json:"workspaces"`
+	PaidUSD    decimal.Decimal `json:"paid_usd"`
 }
 
 type UTMPathStats struct {
@@ -117,6 +143,8 @@ type UTMReport struct {
 	From        time.Time          `json:"from"`
 	To          time.Time          `json:"to"`
 	Campaigns   []UTMCampaignStats `json:"campaigns"`
+	Countries   []UTMCountryFunnel `json:"countries"`
+	Activation  []ActivationMetric `json:"activation"`
 	TopLandings []UTMPathStats     `json:"top_landings"`
 	TopPages    []UTMPathStats     `json:"top_pages"`
 	TopDocs     []UTMPathStats     `json:"top_docs"`
@@ -213,6 +241,14 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 	if err := rows.Err(); err != nil {
 		return UTMReport{}, fmt.Errorf("iterate utm campaign stats: %w", err)
 	}
+	countries, err := s.getUTMCountryFunnels(ctx, from, to)
+	if err != nil {
+		return UTMReport{}, err
+	}
+	activation, err := s.getActivationMetrics(ctx, from, to)
+	if err != nil {
+		return UTMReport{}, err
+	}
 	topLandings, err := s.getUTMLandingStats(ctx, from, to)
 	if err != nil {
 		return UTMReport{}, err
@@ -229,6 +265,8 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 	if err != nil {
 		return UTMReport{}, err
 	}
+	report.Countries = countries
+	report.Activation = activation
 	report.TopLandings = topLandings
 	report.TopPages = topPages
 	report.TopDocs = topDocs
@@ -270,6 +308,183 @@ func (s *Store) getUTMLandingStats(ctx context.Context, from, to time.Time) ([]U
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate utm landing stats: %w", err)
+	}
+	return items, nil
+}
+
+func (s *Store) getUTMCountryFunnels(ctx context.Context, from, to time.Time) ([]UTMCountryFunnel, error) {
+	rows, err := s.pool.Query(ctx, `
+		WITH visit_country AS (
+			SELECT COALESCE(NULLIF(country, ''), 'ZZ') AS country,
+			       COUNT(*) AS visits,
+			       COUNT(DISTINCT NULLIF(attribution_id, '')) AS unique_visitors
+			FROM utm_visits
+			WHERE created_at >= $1 AND created_at < $2
+			GROUP BY COALESCE(NULLIF(country, ''), 'ZZ')
+		), event_country AS (
+			SELECT COALESCE(NULLIF(country, ''), 'ZZ') AS country,
+			       COUNT(*) FILTER (WHERE event_name = 'app_open') AS app_opens,
+			       COUNT(*) FILTER (WHERE event_name = 'bot_open') AS bot_opens,
+			       COUNT(*) FILTER (WHERE event_name = 'signup_start') AS signup_starts
+			FROM utm_events
+			WHERE created_at >= $1 AND created_at < $2
+			GROUP BY COALESCE(NULLIF(country, ''), 'ZZ')
+		), attr_country AS (
+			SELECT DISTINCT ON (attribution_id) attribution_id, country
+			FROM (
+				SELECT attribution_id, COALESCE(NULLIF(country, ''), 'ZZ') AS country, created_at
+				FROM utm_visits
+				WHERE COALESCE(attribution_id, '') <> ''
+				UNION ALL
+				SELECT attribution_id, COALESCE(NULLIF(country, ''), 'ZZ') AS country, created_at
+				FROM utm_events
+				WHERE COALESCE(attribution_id, '') <> ''
+			) touches
+			ORDER BY attribution_id, created_at ASC
+		), workspace_country AS (
+			SELECT DISTINCT ON (a.workspace_id) a.workspace_id, COALESCE(ac.country, 'ZZ') AS country
+			FROM utm_attributions a
+			LEFT JOIN attr_country ac ON ac.attribution_id = a.attribution_id
+			WHERE a.workspace_id IS NOT NULL AND a.created_at >= $1 AND a.created_at < $2
+			ORDER BY a.workspace_id, a.created_at ASC
+		), signup_country AS (
+			SELECT country, COUNT(*) AS signups
+			FROM workspace_country
+			GROUP BY country
+		), wallet_country AS (
+			SELECT wc.country, COUNT(DISTINCT w.workspace_id) AS wallet_connected
+			FROM workspace_country wc
+			JOIN wallets w ON w.workspace_id = wc.workspace_id
+			WHERE w.created_at >= $1 AND w.created_at < $2
+			GROUP BY wc.country
+		), invoice_country AS (
+			SELECT wc.country,
+			       COUNT(i.id) FILTER (WHERE i.kind = 'merchant' AND i.created_at >= $1 AND i.created_at < $2) AS invoice_created,
+			       COUNT(i.id) FILTER (WHERE i.kind = 'merchant' AND i.mode = 'live' AND i.created_at >= $1 AND i.created_at < $2) AS live_invoice_created,
+			       COUNT(i.id) FILTER (WHERE i.status = 'paid' AND i.paid_at >= $1 AND i.paid_at < $2) AS paid,
+			       COALESCE(SUM(i.base_amount_usd) FILTER (WHERE i.status = 'paid' AND i.paid_at >= $1 AND i.paid_at < $2), 0) AS paid_usd
+			FROM workspace_country wc
+			JOIN invoices i ON i.workspace_id = wc.workspace_id
+			GROUP BY wc.country
+		), test_payment_country AS (
+			SELECT wc.country, COUNT(pe.id) AS test_payment_simulated
+			FROM workspace_country wc
+			JOIN invoices i ON i.workspace_id = wc.workspace_id
+			JOIN payment_events pe ON pe.matched_invoice_id = i.id
+			WHERE pe.classification = 'test_simulated' AND pe.created_at >= $1 AND pe.created_at < $2
+			GROUP BY wc.country
+		), keys AS (
+			SELECT country FROM visit_country
+			UNION SELECT country FROM event_country
+			UNION SELECT country FROM signup_country
+			UNION SELECT country FROM wallet_country
+			UNION SELECT country FROM invoice_country
+			UNION SELECT country FROM test_payment_country
+		)
+		SELECT k.country,
+		       COALESCE(v.visits, 0),
+		       COALESCE(v.unique_visitors, 0),
+		       COALESCE(e.app_opens, 0),
+		       COALESCE(e.bot_opens, 0),
+		       COALESCE(e.signup_starts, 0),
+		       COALESCE(s.signups, 0),
+		       COALESCE(s.signups, 0),
+		       COALESCE(w.wallet_connected, 0),
+		       COALESCE(i.invoice_created, 0),
+		       COALESCE(t.test_payment_simulated, 0),
+		       COALESCE(i.live_invoice_created, 0),
+		       COALESCE(i.paid, 0),
+		       COALESCE(i.paid_usd, 0)
+		FROM keys k
+		LEFT JOIN visit_country v USING (country)
+		LEFT JOIN event_country e USING (country)
+		LEFT JOIN signup_country s USING (country)
+		LEFT JOIN wallet_country w USING (country)
+		LEFT JOIN invoice_country i USING (country)
+		LEFT JOIN test_payment_country t USING (country)
+		ORDER BY COALESCE(i.paid_usd, 0) DESC, COALESCE(s.signups, 0) DESC, COALESCE(v.unique_visitors, 0) DESC
+		LIMIT 40
+	`, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("get utm country funnels: %w", err)
+	}
+	defer rows.Close()
+
+	items := []UTMCountryFunnel{}
+	for rows.Next() {
+		var item UTMCountryFunnel
+		if err := rows.Scan(&item.Country, &item.Visits, &item.UniqueVisitors, &item.AppOpens, &item.BotOpens, &item.SignupStarts, &item.Signups, &item.WorkspaceCreated, &item.WalletConnected, &item.InvoiceCreated, &item.TestPaymentSimulated, &item.LiveInvoiceCreated, &item.Paid, &item.PaidUSD); err != nil {
+			return nil, fmt.Errorf("scan utm country funnel: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate utm country funnels: %w", err)
+	}
+	return items, nil
+}
+
+func (s *Store) getActivationMetrics(ctx context.Context, from, to time.Time) ([]ActivationMetric, error) {
+	rows, err := s.pool.Query(ctx, `
+		WITH metrics AS (
+			SELECT 'workspace_created' AS key, 'Workspace created' AS label, COUNT(*) AS count, COUNT(*) AS workspaces, 0::numeric AS paid_usd
+			FROM workspaces
+			WHERE created_at >= $1 AND created_at < $2
+			UNION ALL
+			SELECT 'wallet_connected', 'Wallet connected', COUNT(*), COUNT(DISTINCT workspace_id), 0::numeric
+			FROM wallets
+			WHERE created_at >= $1 AND created_at < $2
+			UNION ALL
+			SELECT 'invoice_created', 'Invoice created', COUNT(*), COUNT(DISTINCT workspace_id), 0::numeric
+			FROM invoices
+			WHERE kind = 'merchant' AND created_at >= $1 AND created_at < $2
+			UNION ALL
+			SELECT 'test_payment_simulated', 'Test payment simulated', COUNT(*), COUNT(DISTINCT i.workspace_id), 0::numeric
+			FROM payment_events pe
+			JOIN invoices i ON i.id = pe.matched_invoice_id
+			WHERE pe.classification = 'test_simulated' AND pe.created_at >= $1 AND pe.created_at < $2
+			UNION ALL
+			SELECT 'live_invoice_created', 'Live invoice created', COUNT(*), COUNT(DISTINCT workspace_id), 0::numeric
+			FROM invoices
+			WHERE kind = 'merchant' AND mode = 'live' AND created_at >= $1 AND created_at < $2
+			UNION ALL
+			SELECT 'subscription_checkout_opened', 'Subscription checkout opened', COUNT(DISTINCT i.id), COUNT(DISTINCT i.workspace_id), 0::numeric
+			FROM product_events pe
+			JOIN invoices i ON i.id = pe.invoice_id
+			WHERE i.kind = 'subscription' AND pe.event_name = 'checkout_viewed' AND pe.created_at >= $1 AND pe.created_at < $2
+			UNION ALL
+			SELECT 'paid', 'Paid', COUNT(*), COUNT(DISTINCT workspace_id), COALESCE(SUM(base_amount_usd), 0)
+			FROM invoices
+			WHERE status = 'paid' AND paid_at >= $1 AND paid_at < $2
+		)
+		SELECT key, label, count, workspaces, paid_usd
+		FROM metrics
+		ORDER BY CASE key
+			WHEN 'workspace_created' THEN 1
+			WHEN 'wallet_connected' THEN 2
+			WHEN 'invoice_created' THEN 3
+			WHEN 'test_payment_simulated' THEN 4
+			WHEN 'live_invoice_created' THEN 5
+			WHEN 'subscription_checkout_opened' THEN 6
+			WHEN 'paid' THEN 7
+			ELSE 99
+		END
+	`, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("get activation metrics: %w", err)
+	}
+	defer rows.Close()
+
+	items := []ActivationMetric{}
+	for rows.Next() {
+		var item ActivationMetric
+		if err := rows.Scan(&item.Key, &item.Label, &item.Count, &item.Workspaces, &item.PaidUSD); err != nil {
+			return nil, fmt.Errorf("scan activation metric: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate activation metrics: %w", err)
 	}
 	return items, nil
 }

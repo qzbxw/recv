@@ -20,6 +20,7 @@ type utmVisitInput struct {
 	Campaign      string `json:"campaign"`
 	Term          string `json:"term"`
 	Content       string `json:"content"`
+	Country       string `json:"country"`
 	LandingPath   string `json:"landing_path"`
 	Referrer      string `json:"referrer"`
 }
@@ -32,6 +33,7 @@ type utmEventInput struct {
 	Campaign      string          `json:"campaign"`
 	Term          string          `json:"term"`
 	Content       string          `json:"content"`
+	Country       string          `json:"country"`
 	Path          string          `json:"path" binding:"required"`
 	Title         string          `json:"title"`
 	Referrer      string          `json:"referrer"`
@@ -57,6 +59,7 @@ func normalizeUTMVisit(input utmVisitInput) (store.AttributionInput, error) {
 		Campaign:      strings.TrimSpace(input.Campaign),
 		Term:          strings.TrimSpace(input.Term),
 		Content:       strings.TrimSpace(input.Content),
+		Country:       normalizeCountry(input.Country),
 		LandingPath:   landingPath,
 		Referrer:      strings.TrimSpace(input.Referrer),
 	}, nil
@@ -82,11 +85,34 @@ func normalizeUTMEvent(input utmEventInput) (store.UTMEventInput, error) {
 		Campaign:      strings.TrimSpace(input.Campaign),
 		Term:          strings.TrimSpace(input.Term),
 		Content:       strings.TrimSpace(input.Content),
+		Country:       normalizeCountry(input.Country),
 		Path:          path,
 		Title:         strings.TrimSpace(input.Title),
 		Referrer:      strings.TrimSpace(input.Referrer),
 		Properties:    input.Properties,
 	}, nil
+}
+
+func normalizeCountry(value string) string {
+	country := strings.ToUpper(strings.TrimSpace(value))
+	if len(country) != 2 {
+		return ""
+	}
+	for _, r := range country {
+		if r < 'A' || r > 'Z' {
+			return ""
+		}
+	}
+	return country
+}
+
+func requestCountry(c *gin.Context) string {
+	for _, header := range []string{"CF-IPCountry", "X-Vercel-IP-Country", "X-Country-Code"} {
+		if country := normalizeCountry(c.GetHeader(header)); country != "" && country != "XX" {
+			return country
+		}
+	}
+	return ""
 }
 
 func normalizeLocalPath(value string, field string) (string, error) {
@@ -116,6 +142,9 @@ func (s *Server) handlePublicUTMVisit(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if visit.Country == "" {
+		visit.Country = requestCountry(c)
+	}
 	if err := s.store.RecordUTMVisit(c.Request.Context(), visit); err != nil {
 		respondError(c, http.StatusInternalServerError, err)
 		return
@@ -137,6 +166,9 @@ func (s *Server) handlePublicUTMEvent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+	if event.Country == "" {
+		event.Country = requestCountry(c)
 	}
 	if err := s.store.RecordUTMEvent(c.Request.Context(), event); err != nil {
 		respondError(c, http.StatusInternalServerError, err)

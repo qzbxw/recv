@@ -1660,6 +1660,8 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
     return name === "CLS" ? metric.p75.toFixed(3) : `${Math.round(metric.p75)} ms`;
   };
   const campaigns = utmReport?.campaigns || [];
+  const activation = utmReport?.activation || [];
+  const countries = utmReport?.countries || [];
   const leads = utmReport?.leads || [];
   const totalUnique = campaigns.reduce((sum, row) => sum + row.unique_visitors, 0);
   const totalSignupStarts = campaigns.reduce((sum, row) => sum + (row.signup_starts || 0), 0);
@@ -1673,6 +1675,17 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
     .sort((a, b) => b.signups - a.signups || Number(b.paid_usd) - Number(a.paid_usd) || b.unique_visitors - a.unique_visitors)
     .slice(0, 6);
   const recentLeads = leads.slice(0, 8);
+  const activationByKey = new Map(activation.map((metric) => [metric.key, metric]));
+  const activationSteps = [
+    "workspace_created",
+    "wallet_connected",
+    "invoice_created",
+    "test_payment_simulated",
+    "live_invoice_created",
+    "subscription_checkout_opened",
+    "paid",
+  ].map((key) => activationByKey.get(key) || { key, label: key.replace(/_/g, " "), count: 0, workspaces: 0, paid_usd: "0" });
+  const countryRows = [...countries].slice(0, 12);
   return (
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Analytics" subtitle="Revenue, conversion and reliability metrics across the platform.">
@@ -1709,7 +1722,51 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
       </div>
       <UTMLinkBuilder setToast={setToast} />
       <div className="dev-portal__section-header dev-portal__section-header--margin">
-        <h3>Lead journey funnel</h3>
+        <h3>Activation funnel</h3>
+        <span className="dev-card__note-text">Workspace creation through paid invoices, rolling 365 days</span>
+      </div>
+      <div className="dev-metrics-grid">
+        {activationSteps.map((step, index) => {
+          const previous = index > 0 ? activationSteps[index - 1] : null;
+          const conversion = previous && previous.count > 0 ? `${((step.count / previous.count) * 100).toFixed(1)}% from previous` : index === 0 ? `${step.workspaces} workspaces` : "—";
+          const meta = step.key === "paid" ? `${step.workspaces} workspaces · ${formatMoney(step.paid_usd)}` : conversion;
+          return <MetricCard key={step.key} label={step.label} value={String(step.count)} meta={meta} />;
+        })}
+      </div>
+      <details className="admin-details">
+        <summary>Country funnel</summary>
+        <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+          <div className="console-card-spotlight" />
+          <div className="dev-portal__section-header dev-portal__section-header--margin">
+            <h3>Country-level funnel</h3>
+            <span className="dev-card__note-text">Country comes from CDN geo headers on UTM visits and events.</span>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-sales-table admin-sales-table--utm">
+              <thead><tr><th>Country</th><th>Visits</th><th>Unique</th><th>Workspace</th><th>Wallet</th><th>Invoice</th><th>Test sim</th><th>Live invoice</th><th>Paid</th><th>Revenue</th></tr></thead>
+              <tbody>
+                {countryRows.map((row) => (
+                  <tr key={row.country}>
+                    <td><span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{row.country === "ZZ" ? "Unknown" : row.country}</span></td>
+                    <td>{row.visits}</td>
+                    <td>{row.unique_visitors}</td>
+                    <td>{row.workspace_created}</td>
+                    <td>{row.wallet_connected}</td>
+                    <td>{row.invoice_created}</td>
+                    <td>{row.test_payment_simulated}</td>
+                    <td>{row.live_invoice_created}</td>
+                    <td>{row.paid}</td>
+                    <td>{formatMoney(row.paid_usd)}</td>
+                  </tr>
+                ))}
+                {countryRows.length === 0 && <tr><td colSpan={10} className="admin-table-empty">No country-level UTM data yet.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+      <div className="dev-portal__section-header dev-portal__section-header--margin">
+        <h3>Lead journey signals</h3>
         <span className="dev-card__note-text">UTM visitors, docs activity, app and bot opens, and signup completion, rolling 365 days</span>
       </div>
       <div className="dev-metrics-grid">

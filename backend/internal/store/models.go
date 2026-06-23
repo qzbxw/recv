@@ -283,6 +283,7 @@ type AttributionInput struct {
 	Campaign      string `json:"campaign"`
 	Term          string `json:"term"`
 	Content       string `json:"content"`
+	Country       string `json:"country"`
 	LandingPath   string `json:"landing_path"`
 	Referrer      string `json:"referrer"`
 }
