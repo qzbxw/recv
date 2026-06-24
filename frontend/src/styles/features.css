@@ -152,8 +152,7 @@
 
 /* Staggered entrance for the shell's children */
 .auth-portal__shell > * {
-  opacity: 0;
-  animation: authRise 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: authRise 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .auth-portal__header { animation-delay: 0.02s; }
 .auth-portal__card { animation-delay: 0.04s; }
@@ -813,60 +812,243 @@
 
 
 /* Team Management */
-.dev-team-member__controls {
+.dev-team-seats-header-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dev-team-seats-summary-inline {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--line);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
 }
 
-.dev-team-you {
-  color: var(--accent-strong);
+.dev-team-seats-label-inline {
+  color: var(--muted);
+}
+
+.dev-team-seats-count-inline {
+  color: #fff;
   font-weight: 600;
 }
 
-.dev-team-role-select {
-  min-width: 9.5rem;
+.dev-team-seats-bar-inline {
+  width: 80px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
 }
 
-.dev-team-invite-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(9rem, 12rem) auto;
-  gap: 0.75rem;
-  align-items: end;
+.dev-team-seats-fill-inline {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
+  border-radius: 2px;
+  transition: width 0.3s ease;
 }
 
-.dev-team-invite-btn {
-  height: 3rem;
+.dev-team-manage-hint-inline {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: -0.5rem 0 1.25rem 0;
+  padding: 0 1.5rem;
+}
+
+/* Individual Row alignments */
+.dev-team-member-row-inline {
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.dev-team-member-profile-inline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.dev-team-avatar-icon-inline {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.dev-team-avatar-icon-inline--owner {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.dev-team-avatar-icon-inline--admin {
+  color: #8b5cf6;
+  border-color: rgba(139, 92, 246, 0.25);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.dev-team-you-badge-inline {
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+}
+
+.dev-team-member-controls-inline {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.dev-team-role-select-inline {
+  min-width: 7.5rem;
+  flex-shrink: 0;
+}
+
+.dev-team-role-badge-static {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dev-team-action-inline {
+  min-width: 6.5rem;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.dev-team-member-controls-inline .dev-btn--danger {
+  background: transparent !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  color: #ef4444 !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.dev-team-member-controls-inline .dev-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #ff5f5f !important;
+}
+
+/* Invite Teammate Form Row */
+.dev-team-invite-form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.dev-team-invite-submit-btn {
+  height: 2.75rem;
+  padding: 0 1.5rem;
   white-space: nowrap;
 }
 
-.dev-team-invites-header {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--line);
+/* Pending invites */
+.dev-team-invite-card-row {
+  justify-content: space-between;
+  align-items: center;
 }
 
-.workspace-switcher {
-  min-width: 11rem;
-  transition: opacity 0.2s ease;
+.dev-team-invite-username-col {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1;
 }
 
-.workspace-switcher.is-busy {
-  opacity: 0.5;
-  pointer-events: none;
+.dev-team-invite-avatar-placeholder {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
 }
 
-@media (max-width: 720px) {
-  .dev-team-invite-grid {
-    grid-template-columns: 1fr;
-  }
-  .dev-team-member__controls {
+.dev-team-revoke-btn-inline {
+  transition: all 0.2s ease;
+}
+
+.dev-team-revoke-btn-inline:hover {
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+@media (max-width: 768px) {
+  .dev-team-invite-form-row {
     flex-direction: column;
-    align-items: flex-end;
-    gap: 0.5rem;
+    align-items: stretch;
+    gap: 1rem;
   }
-  .workspace-switcher {
-    min-width: 8rem;
+  .dev-team-invite-form-row .dev-input-group {
+    width: 100% !important;
+  }
+  .dev-team-invite-submit-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .dev-team-member-row-inline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem !important;
+  }
+  .dev-team-member-controls-inline {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .dev-team-role-select-inline {
+    flex-grow: 1;
+  }
+  .dev-team-action-inline {
+    width: auto;
+  }
+}
+
+.dev-locked-icon {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
   }
 }
 

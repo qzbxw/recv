@@ -494,6 +494,15 @@ func (s *Server) handleMe(c *gin.Context) {
 		workspaces = []store.Workspace{wc.Workspace}
 	}
 
+	apiKeyLimit := plan.APIKeyLimit
+	if s.cfg.AppEnv == "development" && apiKeyLimit < 3 {
+		apiKeyLimit = 3
+	}
+	webhookLimit := plan.WebhookLimit
+	if s.cfg.AppEnv == "development" && webhookLimit < 3 {
+		webhookLimit = 3
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"workspace":  wc.Workspace,
 		"workspaces": workspaces,
@@ -502,13 +511,14 @@ func (s *Server) handleMe(c *gin.Context) {
 			"code":            plan.Code,
 			"name":            plan.Name,
 			"is_pro":          plan.Code != store.PlanCodeTrial,
-			"has_api":         plan.HasAPI,
-			"has_webhooks":    plan.HasWebhooks,
+			"has_api":         plan.HasAPI || s.cfg.AppEnv == "development",
+			"has_webhooks":    plan.HasWebhooks || s.cfg.AppEnv == "development",
 			"trial_limit":     service.TrialInvoiceLimit,
 			"trial_remaining": max(0, service.TrialInvoiceLimit-wc.Workspace.FreeInvoicesUsed),
 			"price_usd":       plan.PriceUSDString,
 			"billing_days":    plan.BillingDays,
-			"api_key_limit":   plan.APIKeyLimit,
+			"api_key_limit":   apiKeyLimit,
+			"webhook_limit":   webhookLimit,
 			"monthly_cap":     plan.MonthlyRequestCap,
 			"rpm_limit":       plan.RequestsPerMinute,
 			"webhook_retries": plan.WebhookRetries,

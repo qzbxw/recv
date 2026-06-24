@@ -71,6 +71,21 @@ func runAPI(ctx context.Context, deps apiDeps) error {
 	}
 	if st != nil {
 		defer st.Close()
+		// Automatically seed billing wallets in development or test environment to simplify local testing
+		if cfg.AppEnv == "development" || cfg.AppEnv == "dev" || cfg.AppEnv == "test" {
+			log.Printf("Development/test environment detected. Seeding default billing wallets...")
+			wallets := map[string]string{
+				"TON":    "EQD4P3aV1QQplUsw2zPst-j9Yd_0-N_2-N_2-N_2-N_2-N_2",
+				"TRON":   "TYDtwHZzpP2fC5L9wX6wYcQ4eU9D1D1D1D",
+				"SOLANA": "Solana11111111111111111111111111111111111111",
+				"EVM":    "0x0000000000000000000000000000000000000000",
+			}
+			if err := st.UpsertSystemConfig(ctx, "billing_wallets", wallets, false, "bootstrap-dev"); err != nil {
+				log.Printf("Warning: Failed to seed billing wallets: %v", err)
+			} else {
+				log.Printf("Successfully seeded default billing wallets for TON, TRON, Solana, and EVM.")
+			}
+		}
 	}
 
 	authService := service.NewAuthServiceWithTTL(st, cfg.JWTSecret, cfg.TelegramBotToken, cfg.AllowInsecureDevAuth, cfg.TelegramInitMaxAge, cfg.AccessTokenTTL, cfg.RefreshTokenTTL)

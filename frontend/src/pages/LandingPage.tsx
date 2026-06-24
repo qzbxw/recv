@@ -1,7 +1,73 @@
 import { useEffect, useState, useRef } from "react";
+import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { useUI } from "../lib/ui";
 import { LANDING_COPY as COPY, BOT_URL } from "../i18n";
+import { LanguageSelect } from "../components/LanguageSelect";
+
+// ── Network Logos ──────────────────────────────────────────────────────────
+const NetworkLogos: Record<string, () => ReactElement> = {
+  TON: () => (
+    <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M28 0C12.536 0 0 12.536 0 28s12.536 28 28 28 28-12.536 28-28S43.464 0 28 0z" fill="#0088CC"/>
+      <path d="M37.5 15h-19a2 2 0 00-1.6 3.2L27 32.333V41a1 1 0 001.5.866l4-2.308A1 1 0 0033 38.693V32.333L44.1 18.2A2 2 0 0042.5 15h-5z" fill="white"/>
+      <path d="M28 15h9.5L28 28.5 18.5 15H28z" fill="white" opacity="0.6"/>
+    </svg>
+  ),
+  TRON: () => (
+    <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="28" cy="28" r="28" fill="#FF0013"/>
+      <path d="M40.5 22.5L27 10 8 23.5l7.5 23H40l.5-24z" fill="white" opacity="0.15"/>
+      <path d="M27 10L8 23.5l9 2.5L27 10z" fill="white"/>
+      <path d="M27 10l12 15-3 1.5L27 10z" fill="white" opacity="0.8"/>
+      <path d="M17 26l10 20 10-20H17z" fill="white"/>
+      <path d="M17 26l10 20V26H17z" fill="white" opacity="0.7"/>
+    </svg>
+  ),
+  SOLANA: () => (
+    <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="28" cy="28" r="28" fill="#131313"/>
+      <defs>
+        <linearGradient id="sol-a" x1="12" y1="38" x2="44" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#9945FF"/>
+          <stop offset="50%" stopColor="#14F195"/>
+          <stop offset="100%" stopColor="#00C2FF"/>
+        </linearGradient>
+      </defs>
+      <path d="M14 33.5h22.5a1 1 0 00.7-.3l3.8-3.8a1 1 0 00-.7-1.7H17.8a1 1 0 00-.7.3l-3.8 3.8a1 1 0 00.7 1.7z" fill="url(#sol-a)"/>
+      <path d="M14 22.3h22.5a1 1 0 00.7-.3l3.8-3.8A1 1 0 0040.3 17H17.8a1 1 0 00-.7.3l-3.8 3.8a1 1 0 00.7 1.7l-.7.5z" fill="url(#sol-a)"/>
+      <path d="M14 27.9h22.5a1 1 0 01.7.3l3.8 3.8a1 1 0 01-.7 1.7H17.8a1 1 0 01-.7-.3l-3.8-3.8a1 1 0 01.7-1.7z" fill="url(#sol-a)" opacity="0"/>
+      <path d="M37.3 28.3 14 28.3a1 1 0 00-.7 1.7l3.8 3.8a1 1 0 00.7.3h22.5a1 1 0 00.7-1.7L37.3 28.6a1 1 0 00-.7-.3h1z" fill="url(#sol-a)" opacity="0"/>
+      <g fill="url(#sol-a)">
+        <rect x="13" y="17" width="30" height="4" rx="1"/>
+        <rect x="13" y="26" width="30" height="4" rx="1"/>
+        <rect x="13" y="35" width="30" height="4" rx="1"/>
+      </g>
+    </svg>
+  ),
+  BASE: () => (
+    <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="28" cy="28" r="28" fill="#0052FF"/>
+      <path d="M28 10C18.06 10 10 18.06 10 28c0 9.94 8.06 18 18 18 9.94 0 18-8.06 18-18 0-9.94-8.06-18-18-18zm0 32.73C19.41 42.73 12.27 35.59 12.27 27S19.41 11.27 28 11.27 43.73 18.41 43.73 27 36.59 42.73 28 42.73z" fill="white"/>
+    </svg>
+  ),
+  ARBITRUM: () => (
+    <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="28" cy="28" r="28" fill="#213147"/>
+      <path d="M28 8L11 37.5 28 48l17-10.5L28 8z" fill="#12AAFF" opacity="0.2"/>
+      <path d="M28 8l-8.5 29.5L28 48V8z" fill="#12AAFF" opacity="0.4"/>
+      <path d="M21 25l7-17 7 17-7 4-7-4z" fill="#12AAFF"/>
+      <path d="M16 36l5-11 7 4-12 7z" fill="#9DCCED"/>
+      <path d="M40 36l-5-11-7 4 12 7z" fill="#9DCCED"/>
+    </svg>
+  ),
+  BSC: () => (
+    <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="28" cy="28" r="28" fill="#F3BA2F"/>
+      <path d="M28 12l4 4-4 4-4-4 4-4zM17 23l4 4-4 4-4-4 4-4zM28 23l4 4-4 4-4-4 4-4zM39 23l4 4-4 4-4-4 4-4zM22 28l4-4 4 4-4 4-4-4zM28 34l4 4-4 4-4-4 4-4z" fill="white"/>
+    </svg>
+  ),
+};
 
 function useReveal() {
   const refs = useRef<(HTMLElement | null)[]>([]);
@@ -57,10 +123,7 @@ export function LandingPage() {
             </Link>
 
             <div className="lend-topbar-actions">
-              <div className="lend-language" role="group" aria-label="language switcher">
-                <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>RU</button>
-                <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
-              </div>
+              <LanguageSelect value={language} onChange={setLanguage} ariaLabel="language switcher" compact className="lend-language" />
             </div>
           </div>
         </header>
@@ -172,15 +235,21 @@ export function LandingPage() {
           </div>
 
           <div className="lend-network-grid lend-reveal--2">
-            {copy.networks.rails.map((rail) => (
-              <article key={rail.title} className="lend-network-card lend-spotlight-card" onMouseMove={handleMouseMove}>
-                <div className="lend-card-spotlight" />
-                <div className="lend-dogfood-glow" />
-                <div className="lend-network-badge">{rail.name}</div>
-                <h3>{rail.title}</h3>
-                <p>{rail.body}</p>
-              </article>
-            ))}
+            {copy.networks.rails.map((rail) => {
+              const Logo = NetworkLogos[(rail as { logo?: string }).logo ?? rail.name];
+              return (
+                <article key={rail.title} className="lend-network-card lend-spotlight-card" onMouseMove={handleMouseMove}>
+                  <div className="lend-card-spotlight" />
+                  <div className="lend-dogfood-glow" />
+                  <div className="lend-network-badge">
+                    {Logo ? <span className="lend-network-badge__logo"><Logo /></span> : null}
+                    <span className="lend-network-badge__name">{rail.name}</span>
+                  </div>
+                  <h3>{rail.title}</h3>
+                  <p>{rail.body}</p>
+                </article>
+              );
+            })}
           </div>
         </section>
 <section className="lend-stacked-section lend-dogfood-section" ref={reveal}>

@@ -1,7 +1,8 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import React, { FormEvent, Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import { CustomSelect } from "../components/CustomSelect";
+import { LanguageSelect } from "../components/LanguageSelect";
 import { MultiSelect } from "../components/MultiSelect";
 import {
   cancelInvoice,
@@ -47,7 +48,7 @@ import { formatInvoiceStatus, getInvoiceStatusMeta, getInvoiceStatusTooltip, for
 import { PAYABLE_PAYMENT_OPTIONS, walletBucket } from "../lib/paymentOptions";
 import type { APIKey, AuthIdentity, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
-import { SELLER_CONSOLE_COPY as COPY } from "../i18n";
+import { SELLER_CONSOLE_COPY as COPY, type Language } from "../i18n";
 
 const BOT_URL = "https://t.me/recvmoney_bot";
 
@@ -175,6 +176,12 @@ function UsageBar({ label, value, limit, suffix }: { label: string; value: numbe
   );
 }
 
+function formatPlanLimit(value: number | null | undefined, fallback = "∞") {
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? value.toLocaleString()
+    : fallback;
+}
+
 const PANEL_ICONS: Record<PanelKey | "logout", React.ReactNode> = {
   overview: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" /><rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" /></svg>,
   wallets: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 10h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><circle cx="17" cy="15" r="1" /></svg>,
@@ -186,6 +193,384 @@ const PANEL_ICONS: Record<PanelKey | "logout", React.ReactNode> = {
   settings: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
   logout: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
 };
+
+const MOCK_INVOICES: Invoice[] = [
+  {
+    id: 101,
+    public_id: "RECV-2026-001",
+    kind: "merchant",
+    title: "SaaS Premium Subscription",
+    base_amount_usd: "49.00",
+    payable_amount: "49.00",
+    payable_network: "TON",
+    payable_asset: "USDT",
+    destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    payment_comment: "RECV-2026-001",
+    status: "paid",
+    environment: "live",
+    expires_at: new Date(Date.now() + 86400000).toISOString(),
+    created_at: new Date().toISOString(),
+    tx_hash: "tx_ton_mock_1111111111111111111111111111111111111111111111111111111111111111",
+    received_amount: "49.00",
+    review_reason: null,
+    finalized_at: new Date().toISOString(),
+    checkout_url: "/app/checkout/RECV-2026-001",
+    payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=49000000000&text=RECV-2026-001"
+  },
+  {
+    id: 102,
+    public_id: "RECV-2026-002",
+    kind: "merchant",
+    title: "E-commerce Payment #1054",
+    base_amount_usd: "125.50",
+    payable_amount: "125.50",
+    payable_network: "ARBITRUM",
+    payable_asset: "USDC",
+    destination_address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    payment_comment: "RECV-2026-002",
+    status: "paid",
+    environment: "live",
+    expires_at: new Date(Date.now() + 86400000).toISOString(),
+    created_at: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
+    tx_hash: "0x3333333333333333333333333333333333333333333333333333333333333333",
+    received_amount: "125.50",
+    review_reason: null,
+    finalized_at: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
+    checkout_url: "/app/checkout/RECV-2026-002",
+    payment_uri: "ethereum:0x742d35Cc6634C0532925a3b844Bc454e4438f44e?value=0"
+  },
+  {
+    id: 103,
+    public_id: "RECV-2026-003",
+    kind: "merchant",
+    title: "Consulting Fee",
+    base_amount_usd: "1500.00",
+    payable_amount: "1500.00",
+    payable_network: "TRON",
+    payable_asset: "USDT",
+    destination_address: "TXDemoAddressTRON1111111111111111",
+    payment_comment: "RECV-2026-003",
+    status: "awaiting_payment",
+    environment: "live",
+    expires_at: new Date(Date.now() + 2 * 86400000).toISOString(),
+    created_at: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+    tx_hash: null,
+    received_amount: "0.00",
+    review_reason: null,
+    finalized_at: null,
+    checkout_url: "/app/checkout/RECV-2026-003",
+    payment_uri: "tron:TXDemoAddressTRON1111111111111111?amount=1500000000"
+  },
+  {
+    id: 104,
+    public_id: "RECV-2026-004",
+    kind: "merchant",
+    title: "Digital Art Asset #99",
+    base_amount_usd: "350.00",
+    payable_amount: "140.00",
+    payable_network: "TON",
+    payable_asset: "GRAM",
+    destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    payment_comment: "RECV-2026-004",
+    status: "expired",
+    environment: "live",
+    expires_at: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    tx_hash: null,
+    received_amount: "0.00",
+    review_reason: null,
+    finalized_at: null,
+    checkout_url: "/app/checkout/RECV-2026-004",
+    payment_uri: "ton://transfer/..."
+  },
+  {
+    id: 105,
+    public_id: "RECV-2026-005",
+    kind: "merchant",
+    title: "Custom Integration Work",
+    base_amount_usd: "2500.00",
+    payable_amount: "2500.00",
+    payable_network: "BASE",
+    payable_asset: "USDC",
+    destination_address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    payment_comment: "RECV-2026-005",
+    status: "manual_review",
+    environment: "live",
+    expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+    created_at: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    tx_hash: "0x5555555555555555555555555555555555555555555555555555555555555555",
+    received_amount: "2499.00",
+    review_reason: "underpaid",
+    finalized_at: null,
+    checkout_url: "/app/checkout/RECV-2026-005",
+    payment_uri: "ethereum:0x742d35Cc6634C0532925a3b844Bc454e4438f44e?value=0"
+  },
+  {
+    id: 106,
+    public_id: "RECV-2026-006",
+    kind: "merchant",
+    title: "API Starter Monthly Plan",
+    base_amount_usd: "29.00",
+    payable_amount: "29.00",
+    payable_network: "BSC",
+    payable_asset: "USDT",
+    destination_address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    payment_comment: "RECV-2026-006",
+    status: "paid",
+    environment: "live",
+    expires_at: new Date(Date.now() + 86400000).toISOString(),
+    created_at: new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString(),
+    tx_hash: "0x6666666666666666666666666666666666666666666666666666666666666666",
+    received_amount: "29.00",
+    review_reason: null,
+    finalized_at: new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString(),
+    checkout_url: "/app/checkout/RECV-2026-006",
+    payment_uri: "ethereum:0x742d35Cc6634C0532925a3b844Bc454e4438f44e?value=0"
+  },
+  {
+    id: 107,
+    public_id: "RECV-2026-007",
+    kind: "merchant",
+    title: "Merch Store Order #441",
+    base_amount_usd: "85.00",
+    payable_amount: "85.00",
+    payable_network: "SOLANA",
+    payable_asset: "USDC",
+    destination_address: "So11111111111111111111111111111111111111112",
+    payment_comment: null,
+    status: "paid",
+    environment: "live",
+    expires_at: new Date(Date.now() + 86400000).toISOString(),
+    created_at: new Date(Date.now() - 25 * 24 * 3600 * 1000).toISOString(),
+    tx_hash: "sol_tx_hash_mock_7777777777777777777777777777777777777777777777777777777",
+    received_amount: "85.00",
+    review_reason: null,
+    finalized_at: new Date(Date.now() - 25 * 24 * 3600 * 1000).toISOString(),
+    checkout_url: "/app/checkout/RECV-2026-007",
+    payment_uri: "solana:So11111111111111111111111111111111111111112"
+  }
+];
+
+const MOCK_WALLETS: Wallet[] = [
+  {
+    id: 1,
+    workspace_id: 1,
+    network: "TON",
+    address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    is_active: true,
+    created_at: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(),
+    environment: "live"
+  },
+  {
+    id: 2,
+    workspace_id: 1,
+    network: "ARBITRUM",
+    address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    is_active: true,
+    created_at: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(),
+    environment: "live"
+  },
+  {
+    id: 3,
+    workspace_id: 1,
+    network: "TRON",
+    address: "TXDemoAddressTRON1111111111111111",
+    is_active: true,
+    created_at: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(),
+    environment: "live"
+  }
+];
+
+const MOCK_KEYS: APIKey[] = [
+  {
+    id: 1,
+    workspace_id: 1,
+    label: "Production Backend Key",
+    prefix: "recv_live_8f7b...3a",
+    environment: "live",
+    scopes: ["invoices:read", "invoices:write"],
+    last_used_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString()
+  },
+  {
+    id: 2,
+    workspace_id: 1,
+    label: "Staging Testing Key",
+    prefix: "recv_test_e3b1...9c",
+    environment: "test",
+    scopes: ["invoices:read", "invoices:write"],
+    last_used_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 20 * 24 * 3600 * 1000).toISOString()
+  }
+];
+
+const MOCK_HOOKS: WebhookEndpoint[] = [
+  {
+    id: 1,
+    workspace_id: 1,
+    label: "Production Server Webhook",
+    url: "https://api.merchant.com/v1/recv-payments",
+    environment: "live",
+    is_active: true,
+    last_delivery_at: new Date().toISOString(),
+    last_success_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    secret: "whsec_ProdSecret1234567890abcdef"
+  },
+  {
+    id: 2,
+    workspace_id: 1,
+    label: "Staging Test Webhook",
+    url: "https://staging.merchant.com/v1/recv-payments",
+    environment: "test",
+    is_active: true,
+    last_delivery_at: new Date(Date.now() - 3600 * 1000).toISOString(),
+    last_success_at: new Date(Date.now() - 3600 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 20 * 24 * 3600 * 1000).toISOString(),
+    secret: "whsec_TestSecret1234567890abcdef"
+  }
+];
+
+const MOCK_DELIVERIES: WebhookDelivery[] = [
+  {
+    id: 1,
+    event_id: "evt_1111111111111111",
+    endpoint_id: 1,
+    workspace_id: 1,
+    event_type: "invoice.paid",
+    payload: { id: 101, public_id: "RECV-2026-001", status: "paid" },
+    status: "delivered",
+    environment: "live",
+    attempts: 1,
+    max_attempts: 5,
+    last_http_status: 200,
+    last_error: null,
+    created_at: new Date().toISOString(),
+    sent_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    event_id: "evt_2222222222222222",
+    endpoint_id: 1,
+    workspace_id: 1,
+    event_type: "invoice.created",
+    payload: { id: 103, public_id: "RECV-2026-003", status: "awaiting_payment" },
+    status: "delivered",
+    environment: "live",
+    attempts: 1,
+    max_attempts: 5,
+    last_http_status: 200,
+    last_error: null,
+    created_at: new Date().toISOString(),
+    sent_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    event_id: "evt_3333333333333333",
+    endpoint_id: 2,
+    workspace_id: 1,
+    event_type: "invoice.paid",
+    payload: { id: 102, public_id: "RECV-2026-002", status: "paid" },
+    status: "delivered",
+    environment: "test",
+    attempts: 1,
+    max_attempts: 5,
+    last_http_status: 200,
+    last_error: null,
+    created_at: new Date().toISOString(),
+    sent_at: new Date().toISOString()
+  },
+  {
+    id: 4,
+    event_id: "evt_4444444444444444",
+    endpoint_id: 1,
+    workspace_id: 1,
+    event_type: "invoice.payment_failed",
+    payload: { id: 104, public_id: "RECV-2026-004", status: "expired" },
+    status: "failed",
+    environment: "live",
+    attempts: 5,
+    max_attempts: 5,
+    last_http_status: 502,
+    last_error: "Bad Gateway",
+    created_at: new Date().toISOString(),
+    sent_at: new Date().toISOString()
+  }
+];
+
+const MOCK_TEAM: TeamResponse = {
+  my_role: "owner",
+  members: [
+    {
+      user_id: 1,
+      telegram_id: 12345,
+      username: "demo_owner",
+      email: "owner@example.com",
+      role: "owner",
+      joined_at: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
+    },
+    {
+      user_id: 2,
+      telegram_id: 67890,
+      username: "alex_dev",
+      email: "alex@example.com",
+      role: "admin",
+      joined_at: new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString()
+    },
+    {
+      user_id: 3,
+      telegram_id: 11223,
+      username: "maria_support",
+      email: "maria@example.com",
+      role: "member",
+      joined_at: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString()
+    }
+  ],
+  invites: [
+    {
+      id: 1,
+      workspace_id: 1,
+      invited_username: "serge_marketing",
+      role: "member",
+      status: "pending",
+      created_at: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString()
+    }
+  ]
+};
+
+function validateWalletAddress(network: Network, address: string): boolean {
+  const trimmed = address.trim();
+  if (!trimmed) return true;
+  switch (network) {
+    case "TON": {
+      const friendlyRegex = /^[EQ|UQ|kQ|0Q][a-zA-Z0-9_\-\+\/]{47}$/;
+      const rawRegex = /^-?[0-9]+:[a-fA-F0-9]{64}$/;
+      return friendlyRegex.test(trimmed) || rawRegex.test(trimmed);
+    }
+    case "SOLANA": {
+      const solanaRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+      return solanaRegex.test(trimmed);
+    }
+    case "TRON": {
+      const tronRegex = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
+      return tronRegex.test(trimmed);
+    }
+    case "EVM": {
+      const evmRegex = /^0x[a-fA-F0-9]{40}$/;
+      return evmRegex.test(trimmed);
+    }
+    default:
+      return true;
+  }
+}
+
+function renderAssetPill(coin: string) {
+  return (
+    <span key={coin} className="payout-asset-pill">
+      {coin}
+    </span>
+  );
+}
 
 export function SellerConsolePage() {
   const navigate = useNavigate();
@@ -199,9 +584,14 @@ export function SellerConsolePage() {
   const [copiedId, setCopiedId] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [environment, setEnvironment] = useState<Environment>("live");
+  const [showDemoData, setShowDemoData] = useState(import.meta.env.DEV);
 
   // Form States
   const [walletForm, setWalletForm] = useState<{ network: Network; address: string }>({ network: "TON", address: "" });
+  const [editingNetwork, setEditingNetwork] = useState<Record<string, boolean>>({});
+  const [networkInputs, setNetworkInputs] = useState<Record<string, string>>({});
+  const [isSavingNetwork, setIsSavingNetwork] = useState<Record<string, boolean>>({});
+  const [networkErrors, setNetworkErrors] = useState<Record<string, string>>({});
   const [invoiceForm, setInvoiceForm] = useState({ title: "Product/Service", amount: "10.00", network: "TON" as Network, ttl: 30, optionKeys: ["TON:GRAM"] });
   const [keyForm, setKeyForm] = useState({ label: "" });
   const [hookForm, setHookForm] = useState({ label: "", url: "" });
@@ -214,7 +604,7 @@ export function SellerConsolePage() {
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
   const [recentCreated, setRecentCreated] = useState<Invoice[]>([]);
-  const [invoiceFilters, setInvoiceFilters] = useState({ page: 1, pageSize: 20, status: "all", query: "" });
+  const [invoiceFilters, setInvoiceFilters] = useState({ page: 1, pageSize: 50, status: "all", query: "" });
   const [searchVal, setSearchVal] = useState("");
 
   // Debounce search query to avoid spamming the network on every keystroke
@@ -234,6 +624,10 @@ export function SellerConsolePage() {
   }, [invoiceFilters.query]);
 
   const [expandedInvoice, setExpandedInvoice] = useState<number | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<string>("all");
+  const [selectedDate, setSelectedDate] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
+  const [activeActionMenuId, setActiveActionMenuId] = useState<number | null>(null);
 
   // Developer panel extras
   const [devUsage, setDevUsage] = useState<DeveloperUsageResponse | null>(null);
@@ -256,15 +650,6 @@ export function SellerConsolePage() {
     window.Telegram?.WebApp?.ready?.();
     window.Telegram?.WebApp?.expand?.();
   }, []);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    if (!window.matchMedia("(hover: hover)").matches) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-  };
 
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -465,7 +850,8 @@ export function SellerConsolePage() {
   }
 
   useEffect(() => {
-    if (activePanel === "developer" && session?.token && session.me.plan.has_api) {
+    const hasApi = session?.me.plan.has_api || import.meta.env.DEV;
+    if (activePanel === "developer" && session?.token && hasApi) {
       void loadDeveloperData(session.token);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -507,6 +893,43 @@ export function SellerConsolePage() {
       await deleteWallet(session.token, id);
       void loadSession(session.token, { silent: true });
     } catch (err) { setError(formatApiError(err)); }
+  }
+
+  async function onSaveWalletInline(network: Network, oldId: number | null, address: string) {
+    if (!session) return;
+    if (!address.trim()) {
+      setNetworkErrors(c => ({ ...c, [network]: "Address is required" }));
+      return;
+    }
+    setNetworkErrors(c => ({ ...c, [network]: "" }));
+    setIsSavingNetwork(c => ({ ...c, [network]: true }));
+    try {
+      if (oldId !== null) {
+        await deleteWallet(session.token, oldId);
+      }
+      await createWallet(session.token, { network, address: address.trim(), environment });
+      setNetworkInputs(c => ({ ...c, [network]: "" }));
+      setEditingNetwork(c => ({ ...c, [network]: false }));
+      void loadSession(session.token, { silent: true });
+    } catch (err) {
+      setNetworkErrors(c => ({ ...c, [network]: formatApiError(err) }));
+    } finally {
+      setIsSavingNetwork(c => ({ ...c, [network]: false }));
+    }
+  }
+
+  async function onDeleteWalletInline(network: Network, id: number) {
+    if (!session) return;
+    setNetworkErrors(c => ({ ...c, [network]: "" }));
+    setIsSavingNetwork(c => ({ ...c, [network]: true }));
+    try {
+      await deleteWallet(session.token, id);
+      void loadSession(session.token, { silent: true });
+    } catch (err) {
+      setNetworkErrors(c => ({ ...c, [network]: formatApiError(err) }));
+    } finally {
+      setIsSavingNetwork(c => ({ ...c, [network]: false }));
+    }
   }
 
   async function onCreateInvoice(e: FormEvent) {
@@ -594,7 +1017,7 @@ export function SellerConsolePage() {
     } catch (err) { setError(formatApiError(err)); }
   }
 
-  async function onSetLanguage(next: "en" | "ru") {
+  async function onSetLanguage(next: Language) {
     setLanguage(next);
     if (!session) return;
     try {
@@ -622,27 +1045,10 @@ export function SellerConsolePage() {
     }
     try {
       const inv = await createBillingCheckout(session.token, {
-        payable_network: billingForm.network,
-        payment_options: billingForm.optionKeys
-          .map(key => PAYABLE_PAYMENT_OPTIONS.find(option => option.key === key))
-          .filter(Boolean)
-          .map(option => ({ network: option!.network, asset: option!.asset })),
+        payable_network: "TRON",
+        payment_options: PAYABLE_PAYMENT_OPTIONS.map(option => ({ network: option.network, asset: option.asset })),
         plan_code: billingForm.plan,
         subscription_days: billingForm.subscriptionDays,
-      });
-      setCheckoutUrl(buildCheckoutUrl(inv.public_id));
-    } catch (err) { setError(formatApiError(err)); }
-  }
-
-  async function onQuickMerchantUpgrade() {
-    if (!session) return;
-    try {
-      setBillingForm(current => ({ ...current, plan: "merchant", network: "TRON", optionKeys: ["TRON:USDT"], subscriptionDays: 30 }));
-      const inv = await createBillingCheckout(session.token, {
-        payable_network: "TRON",
-        payment_options: [{ network: "TRON", asset: "USDT" }],
-        plan_code: "merchant",
-        subscription_days: 30,
       });
       setCheckoutUrl(buildCheckoutUrl(inv.public_id));
     } catch (err) { setError(formatApiError(err)); }
@@ -675,21 +1081,114 @@ export function SellerConsolePage() {
     }
   }
 
-  const filteredInvoices = useMemo(() => session?.invoices.filter(inv => inv.environment === environment) ?? [], [session, environment]);
-  const filteredWallets = useMemo(() => session?.wallets.filter(w => w.environment === environment) ?? [], [session, environment]);
-  const filteredKeys = useMemo(() => session?.apiKeys.filter(k => k.environment === environment) ?? [], [session, environment]);
-  const filteredHooks = useMemo(() => session?.webhooks.filter(h => h.environment === environment) ?? [], [session, environment]);
+  const filteredInvoices = useMemo(() => {
+    if (showDemoData) {
+      return MOCK_INVOICES.map(inv => ({ ...inv, environment }));
+    }
+    return session?.invoices.filter(inv => inv.environment === environment) ?? [];
+  }, [session, environment, showDemoData]);
 
-  const navItems: Array<{ key: PanelKey; label: string }> = [
-    { key: "overview", label: t.nav.overview },
-    { key: "wallets", label: t.nav.wallets },
-    { key: "invoices", label: t.nav.invoices },
-    { key: "create", label: t.nav.create },
-    { key: "developer", label: t.nav.developer },
-    { key: "team", label: t.nav.team },
-    { key: "billing", label: t.nav.billing },
-    { key: "settings", label: t.nav.settings },
-  ];
+  // Local filtering by network and date range for the Transaction History tab
+  const displayInvoices = useMemo(() => {
+    return filteredInvoices.filter(inv => {
+      // 1. Network Filter
+      if (selectedNetwork !== "all" && inv.payable_network !== selectedNetwork) {
+        return false;
+      }
+      
+      // 2. Date Range Filter
+      if (selectedDate !== "all") {
+        const invDate = new Date(inv.created_at);
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        if (selectedDate === "today") {
+          if (invDate < todayStart) return false;
+        } else if (selectedDate === "yesterday") {
+          const yesterdayStart = new Date(todayStart);
+          yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+          if (invDate < yesterdayStart || invDate >= todayStart) return false;
+        } else if (selectedDate === "last7") {
+          const sevenDaysAgo = new Date(todayStart);
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          if (invDate < sevenDaysAgo) return false;
+        } else if (selectedDate === "last30") {
+          const thirtyDaysAgo = new Date(todayStart);
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          if (invDate < thirtyDaysAgo) return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [filteredInvoices, selectedNetwork, selectedDate]);
+
+  // Export to CSV utility
+  const handleExportCSV = () => {
+    const headers = ["Invoice ID", "Title", "Status", "Network", "Crypto Amount", "USD Amount", "Date", "Tx Hash"];
+    const rows = displayInvoices.map(inv => [
+      inv.public_id,
+      inv.title,
+      inv.status,
+      inv.payable_network,
+      `${inv.payable_amount} ${inv.payable_asset || ""}`,
+      `$${Number(inv.base_amount_usd).toFixed(2)}`,
+      new Date(inv.created_at).toLocaleString(),
+      inv.tx_hash || ""
+    ]);
+    
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `invoices_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Transaction History tab metrics
+  const tabPaidInvoices = useMemo(() => displayInvoices.filter(inv => inv.status === "paid"), [displayInvoices]);
+  const tabBasePaidRevenue = useMemo(() => tabPaidInvoices.reduce((sum, inv) => sum + (Number(inv.base_amount_usd) || 0), 0), [tabPaidInvoices]);
+  
+  const tabVolume = showDemoData ? 14250.00 : tabBasePaidRevenue;
+  const tabCompletedCount = showDemoData ? 142 : tabPaidInvoices.length;
+  const tabPendingCount = showDemoData 
+    ? 8 
+    : displayInvoices.filter(inv => inv.status === "awaiting_payment" || inv.status === "manual_review").length;
+
+  const filteredWallets = useMemo(() => {
+    if (showDemoData) {
+      return MOCK_WALLETS.map(w => ({ ...w, environment }));
+    }
+    return session?.wallets.filter(w => w.environment === environment) ?? [];
+  }, [session, environment, showDemoData]);
+
+  const filteredKeys = useMemo(() => {
+    if (showDemoData) {
+      return MOCK_KEYS.filter(k => k.environment === environment);
+    }
+    return session?.apiKeys.filter(k => k.environment === environment) ?? [];
+  }, [session, environment, showDemoData]);
+
+  const filteredHooks = useMemo(() => {
+    if (showDemoData) {
+      return MOCK_HOOKS.filter(h => h.environment === environment);
+    }
+    return session?.webhooks.filter(h => h.environment === environment) ?? [];
+  }, [session, environment, showDemoData]);
+
+  const liveInvoices = useMemo(() => {
+    if (showDemoData) {
+      return MOCK_INVOICES;
+    }
+    return session?.invoices.filter(inv => inv.environment === "live") ?? [];
+  }, [session, showDemoData]);
+
+  const operationsGroup: PanelKey[] = ["overview", "invoices", "wallets"];
+  const integrationsGroup: PanelKey[] = ["developer", "team"];
+  const accountGroup: PanelKey[] = ["billing", "settings"];
 
   if (loading) {
     return (
@@ -701,14 +1200,21 @@ export function SellerConsolePage() {
               <strong className="dev-portal__skeleton-brand">recv<span className="brand-dot">.</span></strong>
             </div>
             <div className="dev-portal__nav-menu">
-              <div className="dev-portal__skeleton-nav-label" />
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="dev-portal__skeleton-nav-link" />
-              ))}
-              <div className="dev-portal__skeleton-nav-label" style={{ marginTop: '1.5rem' }} />
-              {[...Array(4)].map((_, i) => (
-                <div key={i + 4} className="dev-portal__skeleton-nav-link" />
-              ))}
+              <div className="dev-sidebar-cta" style={{ opacity: 0.5, marginBottom: '0.5rem' }}>
+                <div className="dev-sidebar-cta-btn" style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.08)', cursor: 'default' }} />
+              </div>
+              <div className="dev-portal__nav-group">
+                <div className="dev-portal__skeleton-nav-label" />
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="dev-portal__skeleton-nav-link" style={{ marginBottom: '0.2rem' }} />
+                ))}
+              </div>
+              <div className="dev-portal__nav-group">
+                <div className="dev-portal__skeleton-nav-label" style={{ marginTop: '0.5rem' }} />
+                {[...Array(2)].map((_, i) => (
+                  <div key={i + 3} className="dev-portal__skeleton-nav-link" style={{ marginBottom: '0.2rem' }} />
+                ))}
+              </div>
             </div>
           </aside>
           <div className="dev-portal__content">
@@ -770,32 +1276,58 @@ export function SellerConsolePage() {
 
   // Dashboard metrics (current environment)
   const paidInvoices = filteredInvoices.filter(inv => inv.status === "paid");
-  const paidRevenue = paidInvoices.reduce((sum, inv) => sum + (Number(inv.base_amount_usd) || 0), 0);
-  const hasApi = session.me.plan.has_api;
+  const basePaidRevenue = paidInvoices.reduce((sum, inv) => sum + (Number(inv.base_amount_usd) || 0), 0);
+  const paidRevenue = showDemoData ? 12450.00 : basePaidRevenue;
+  
+  const hasApi = session.me.plan.has_api || import.meta.env.DEV;
   const connectedProviderMap = new Map(session.authIdentities.map(identity => [identity.provider, identity]));
   const authProviderRows = [
     { provider: "telegram" as const, label: "Telegram", action: "", identity: connectedProviderMap.get("telegram") },
     { provider: "google" as const, label: "Google", action: t.settings.connect, identity: connectedProviderMap.get("google") },
     { provider: "github" as const, label: "GitHub", action: t.settings.connect, identity: connectedProviderMap.get("github") },
   ];
-  const avgTicket = paidInvoices.length > 0 ? paidRevenue / paidInvoices.length : 0;
-  const openValue = filteredInvoices
-    .filter(inv => inv.status === "awaiting_payment" || inv.status === "underpaid")
-    .reduce((sum, inv) => sum + (Number(inv.base_amount_usd) || 0), 0);
-  const conversionPct = filteredInvoices.length > 0 ? Math.round((paidInvoices.length / filteredInvoices.length) * 100) : 0;
+  const avgTicket = showDemoData 
+    ? 87.68 
+    : (paidInvoices.length > 0 ? basePaidRevenue / paidInvoices.length : 0);
+  const openValue = showDemoData
+    ? 790.00
+    : filteredInvoices
+        .filter(inv => inv.status === "awaiting_payment" || inv.status === "underpaid")
+        .reduce((sum, inv) => sum + (Number(inv.base_amount_usd) || 0), 0);
+  const conversionPct = showDemoData
+    ? 94
+    : (filteredInvoices.length > 0 ? Math.round((paidInvoices.length / filteredInvoices.length) * 100) : 0);
+
+  const totalInvoicesCount = showDemoData ? 151 : filteredInvoices.length;
+  const paidInvoicesCount = showDemoData ? 142 : paidInvoices.length;
+
+  const liveInvoicesCount = liveInvoices.length;
+  const trialLimit = 15;
+  const subscriptionEndsAt = session.me.workspace.subscription_ends_at
+    ? new Date(session.me.workspace.subscription_ends_at).getTime()
+    : 0;
+  const hasActivePaidPlan = session.me.plan.code !== "trial"
+    || (session.me.workspace.plan_code !== "trial" && Number.isFinite(subscriptionEndsAt) && subscriptionEndsAt > Date.now());
+  const estimatedFeesSaved = paidRevenue * 0.025; // 2.5% standard gateway fee estimation
 
   // Status breakdown (current environment)
   const statusCounts = filteredInvoices.reduce<Record<string, number>>((acc, inv) => {
     acc[inv.status] = (acc[inv.status] || 0) + 1;
     return acc;
   }, {});
-  const statusBreakdown = (Object.keys(statusCounts) as InvoiceStatus[])
-    .map(status => ({
-      status,
-      count: statusCounts[status],
-      pct: filteredInvoices.length > 0 ? Math.round((statusCounts[status] / filteredInvoices.length) * 100) : 0,
-    }))
-    .sort((a, b) => b.count - a.count);
+  const statusBreakdown = showDemoData
+    ? [
+        { status: "paid" as InvoiceStatus, count: 142, pct: 94 },
+        { status: "awaiting_payment" as InvoiceStatus, count: 6, pct: 4 },
+        { status: "expired" as InvoiceStatus, count: 3, pct: 2 },
+      ]
+    : (Object.keys(statusCounts) as InvoiceStatus[])
+        .map(status => ({
+          status,
+          count: statusCounts[status],
+          pct: filteredInvoices.length > 0 ? Math.round((statusCounts[status] / filteredInvoices.length) * 100) : 0,
+        }))
+        .sort((a, b) => b.count - a.count);
 
   // Revenue by network (paid only)
   const networkTotals = paidInvoices.reduce<Record<string, { usd: number; count: number }>>((acc, inv) => {
@@ -805,9 +1337,14 @@ export function SellerConsolePage() {
     acc[key].count += 1;
     return acc;
   }, {});
-  const networkBreakdown = Object.entries(networkTotals)
-    .map(([network, v]) => ({ network: network as Network, ...v }))
-    .sort((a, b) => b.usd - a.usd);
+  const networkBreakdown = showDemoData
+    ? [
+        { network: "TON" as Network, usd: 8240.00, count: 95 },
+        { network: "TRON" as Network, usd: 4210.00, count: 47 },
+      ]
+    : Object.entries(networkTotals)
+        .map(([network, v]) => ({ network: network as Network, ...v }))
+        .sort((a, b) => b.usd - a.usd);
   const maxNetworkUsd = networkBreakdown.reduce((m, n) => Math.max(m, n.usd), 0);
 
   const apiBaseUrl = getApiBase() || "https://api.recv.money";
@@ -819,7 +1356,7 @@ export function SellerConsolePage() {
     { done: activeWalletsCount > 0, body: t.overview.setupWallet, action: t.overview.setupWalletAction, target: "wallets" as PanelKey },
     ...(hasApi ? [{ done: filteredKeys.length > 0, body: t.overview.setupKey, action: t.overview.setupKeyAction, target: "developer" as PanelKey }] : []),
     { done: filteredInvoices.length > 0, body: t.overview.setupInvoice, action: t.overview.setupInvoiceAction, target: "create" as PanelKey },
-    { done: session.me.plan.code !== "trial", body: t.overview.setupPlan, action: t.overview.setupPlanAction, target: "billing" as PanelKey },
+    { done: hasActivePaidPlan, body: t.overview.setupPlan, action: t.overview.setupPlanAction, target: "billing" as PanelKey },
   ];
   const onboardingComplete = onboardingSteps.every(s => s.done);
   const isNewActivation = !onboardingComplete && filteredInvoices.length === 0;
@@ -865,26 +1402,87 @@ export function SellerConsolePage() {
             </Link>
           </div>
           
+          <div className="dev-sidebar-cta">
+            <button 
+              className="dev-sidebar-cta-btn" 
+              onClick={() => handleNavClick("create")}
+            >
+              {PANEL_ICONS.create}
+              {t.nav.create}
+            </button>
+          </div>
+
           <nav className="dev-portal__nav-menu">
             <div className="dev-portal__nav-group">
-              <span className="dev-portal__nav-label">{t.common.management}</span>
-              {navItems.slice(0, 4).map(item => (
-                <button key={item.key} className={`dev-portal__nav-link ${activePanel === item.key ? "is-active" : ""}`} onClick={() => handleNavClick(item.key)}>
-                  {PANEL_ICONS[item.key]}
-                  {item.label}
-                </button>
-              ))}
+              <span className="dev-portal__nav-label">{t.nav.operations}</span>
+              {operationsGroup.map(key => {
+                const label = key === "overview" ? t.nav.overview : (key === "invoices" ? t.nav.invoices : t.nav.wallets);
+                return (
+                  <button key={key} className={`dev-portal__nav-link ${activePanel === key ? "is-active" : ""}`} onClick={() => handleNavClick(key)}>
+                    {PANEL_ICONS[key]}
+                    {label}
+                  </button>
+                );
+              })}
             </div>
             
             <div className="dev-portal__nav-group">
-              <span className="dev-portal__nav-label">{t.common.advanced}</span>
-              {navItems.slice(4).map(item => (
-                <button key={item.key} className={`dev-portal__nav-link ${activePanel === item.key ? "is-active" : ""}`} onClick={() => handleNavClick(item.key)}>
-                  {PANEL_ICONS[item.key]}
-                  {item.label}
-                </button>
-              ))}
+              <span className="dev-portal__nav-label">{t.nav.integrations}</span>
+              {integrationsGroup.map(key => {
+                const label = key === "developer" ? t.nav.developer : t.nav.team;
+                return (
+                  <button key={key} className={`dev-portal__nav-link ${activePanel === key ? "is-active" : ""}`} onClick={() => handleNavClick(key)}>
+                    {PANEL_ICONS[key]}
+                    {label}
+                  </button>
+                );
+              })}
             </div>
+            
+            <div className="dev-portal__nav-group">
+              {accountGroup.map(key => {
+                const label = key === "billing" ? t.nav.billing : t.nav.settings;
+                return (
+                  <button key={key} className={`dev-portal__nav-link ${activePanel === key ? "is-active" : ""}`} onClick={() => handleNavClick(key)}>
+                    {PANEL_ICONS[key]}
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Trial progress widget / Active plan badge */}
+            {!hasActivePaidPlan ? (
+              <div className="dev-sidebar-plan-widget">
+                <div className="dev-sidebar-plan-header">
+                  <span className="dev-sidebar-plan-title">{t.common.plan}</span>
+                  <a className="dev-sidebar-plan-upgrade-link" onClick={() => handleNavClick("billing")}>
+                    {t.nav.upgrade}
+                  </a>
+                </div>
+                <div className="dev-sidebar-plan-stats">
+                  {liveInvoicesCount} / {trialLimit}
+                </div>
+                <div className="dev-sidebar-plan-bar">
+                  <div 
+                    className={`dev-sidebar-plan-progress ${
+                      liveInvoicesCount >= trialLimit 
+                        ? 'dev-sidebar-plan-progress--danger' 
+                        : (liveInvoicesCount >= trialLimit - 3 ? 'dev-sidebar-plan-progress--warning' : 'dev-sidebar-plan-progress--normal')
+                    }`} 
+                    style={{ width: `${Math.min(100, Math.round((liveInvoicesCount / trialLimit) * 100))}%` }} 
+                  />
+                </div>
+                <div className="dev-sidebar-plan-hint">
+                  {language === 'ru' ? 'Лимит live-инвойсов' : 'Live invoice limit'}
+                </div>
+              </div>
+            ) : (
+              <div className="dev-sidebar-plan-active-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                <span className="dev-sidebar-plan-active-label">{session.me.plan.name}</span>
+              </div>
+            )}
             
             <div className="dev-portal__nav-group dev-portal__nav-logout">
               <button className="dev-portal__nav-link dev-btn--danger-color" onClick={handleLogout}>
@@ -915,10 +1513,6 @@ export function SellerConsolePage() {
             </div>
 
             <div className="dev-portal__header-actions">
-              <div className="env-toggle">
-                <button className={`env-toggle__btn ${environment === 'live' ? 'is-active' : ''}`} onClick={() => setEnvironment('live')}>{t.common.liveMode}</button>
-                <button className={`env-toggle__btn ${environment === 'test' ? 'is-active' : ''}`} onClick={() => setEnvironment('test')}>{t.common.testMode}</button>
-              </div>
               {session.me.workspaces.length > 1 ? (
                 <div className={`workspace-switcher ${switchingWorkspace ? "is-busy" : ""}`}>
                   <CustomSelect
@@ -943,105 +1537,264 @@ export function SellerConsolePage() {
             {activePanel === "overview" && (
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__hero dev-portal__hero--compact">
-                  <span className="dev-api-badge dev-api-badge--post dev-api-badge--fit">{t.overview.badge}</span>
                   <h1>{t.overview.welcome} {session.me.user.username || 'User'}</h1>
                   <p>{t.overview.subtitle} {t.overview.currentWorkspace}: <strong>{workspaceName}</strong></p>
                 </div>
 
-                {isNewActivation && (
-                  <div className="dev-setup-panel dev-setup-panel--primary portal-animate-in">
-                    <div className="dev-setup-header">
-                      <div className="dev-setup-title-row">
-                        <h3>{t.overview.setupTitle}</h3>
-                        <span className="dev-setup-progress-badge">
-                          {onboardingSteps.filter(s => s.done).length} / {onboardingSteps.length} {language === "ru" ? "пройдено" : "completed"}
-                        </span>
-                      </div>
-                      <div className="dev-setup-progress-track">
-                        <div
-                          className="dev-setup-progress-fill"
-                          style={{ width: `${Math.round((onboardingSteps.filter(s => s.done).length / onboardingSteps.length) * 100)}%` }}
-                        />
+                {/* Trial HUD Widget */}
+                {session.me.plan.code === 'trial' && (
+                  <div className="console-trial-hud" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '16px',
+                    padding: '8px 12px',
+                    background: 'rgba(139, 92, 246, 0.03)',
+                    border: '1px solid rgba(139, 92, 246, 0.1)',
+                    borderRadius: '8px',
+                    marginBottom: '24px',
+                    fontSize: '14.5px',
+                    color: '#ffffff',
+                    flexWrap: 'wrap'
+                  }}>
+                    <div className="console-trial-hud__copy" style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '240px' }}>
+                      <span style={{ fontWeight: 500, color: '#f8fafc' }}>
+                        {t.overview.trialHudSubtitle.replace('{used}', String(liveInvoicesCount)).replace('{limit}', String(trialLimit))}
+                      </span>
+                      {/* Thin inline progress bar */}
+                      <div className="console-trial-hud__bar" style={{ width: '70px', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden', marginLeft: '8px', display: 'inline-block', verticalAlign: 'middle' }}>
+                        <div style={{ height: '100%', width: `${Math.min(100, Math.round((liveInvoicesCount / trialLimit) * 100))}%`, background: liveInvoicesCount >= trialLimit ? '#ef4444' : '#8b5cf6' }} />
                       </div>
                     </div>
-                    <div className="dev-setup-stepper">
-                      {onboardingSteps.map((step, i) => (
-                        <div key={i} className={`dev-setup-step ${step.done ? "is-done" : ""}`}>
-                          <div className="dev-setup-step-indicator">
-                            <span className="dev-setup-step-marker">{step.done ? "✓" : i + 1}</span>
-                          </div>
-                          <div className="dev-setup-step-content">
-                            <span className="dev-setup-step-body">{step.body}</span>
-                            {step.done ? null : (
-                              <button className="dev-btn dev-btn--primary dev-btn--compact" onClick={() => setActivePanel(step.target)}>
-                                {step.action}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <button
+                      className="dev-btn dev-btn--primary dev-btn--compact"
+                      onClick={() => setActivePanel("billing")}
+                      style={{
+                        padding: '0 12px',
+                        fontSize: '11px',
+                        height: '28px',
+                        borderRadius: '6px',
+                        background: 'linear-gradient(to right, #8b5cf6, #6366f1)',
+                        border: 'none',
+                        color: '#ffffff',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        margin: 0,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {t.overview.trialHudAction}
+                    </button>
                   </div>
                 )}
 
-                <div className="dev-metrics-grid">
-                  <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
-                    <div className="console-card-spotlight" />
-                    <span className="dev-metric-label">{t.overview.revenue}</span>
-                    <strong className="dev-metric-value"><LiveValue value={`$${paidRevenue.toFixed(2)}`} /></strong>
-                    <span className="dev-metric-meta">{t.overview.revenuePaid} ({environment})</span>
+                {/* Quick Setup Checklist */}
+                <div className="console-quick-setup" style={{
+                  marginBottom: '24px',
+                  background: 'rgba(18, 14, 30, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  padding: '1.25rem',
+                  borderRadius: '12px'
+                }}>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h3 style={{ margin: '0 0 2px 0', fontSize: '15px', fontWeight: 600, color: '#ffffff' }}>
+                      {t.overview.setupTitle}
+                    </h3>
                   </div>
-                  <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
-                    <div className="console-card-spotlight" />
-                    <span className="dev-metric-label">{t.overview.stats.plan}</span>
-                    <strong className="dev-metric-value">{session.me.plan.name}</strong>
-                    <span className="dev-metric-meta">
-                      {session.me.plan.code === 'trial' ? `${t.billing.trial}` : t.billing.active}
-                    </span>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    
+                    {/* Row 1: Payout Address */}
+                    <div className="console-quick-setup__row" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 0',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                      gap: '16px'
+                    }}>
+                      <div className="console-quick-setup__copy" style={{ display: 'grid', gridTemplateColumns: '24px 170px 1fr', alignItems: 'center', gap: '8px', flex: 1 }}>
+                        <span className={`dev-status-dot dev-status-dot--${activeWalletsCount > 0 ? 'success' : 'warning'}`} style={{ justifySelf: 'center' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
+                          {t.overview.integrationHealthPayouts}
+                        </span>
+                        <span style={{ fontSize: '13px', color: activeWalletsCount > 0 ? '#94a3b8' : '#f59e0b' }}>
+                          {activeWalletsCount > 0 ? t.overview.integrationHealthPayoutsConfigured : t.overview.integrationHealthPayoutsMissing}
+                        </span>
+                      </div>
+                      <button 
+                        className="dev-btn dev-btn--secondary dev-btn--compact" 
+                        onClick={() => setActivePanel("wallets")} 
+                        style={{ width: '100px', borderRadius: '6px', fontSize: '12px', height: '32px', padding: 0, margin: 0, display: 'inline-flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0, fontWeight: 600 }}
+                      >
+                        {language === 'ru' ? 'Настроить' : 'Configure'}
+                      </button>
+                    </div>
+
+                    {/* Row 2: Test Invoice */}
+                    <div className="console-quick-setup__row" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 0',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                      gap: '16px'
+                    }}>
+                      <div className="console-quick-setup__copy" style={{ display: 'grid', gridTemplateColumns: '24px 170px 1fr', alignItems: 'center', gap: '8px', flex: 1 }}>
+                        <span className={`dev-status-dot dev-status-dot--${filteredInvoices.length > 0 ? 'success' : 'neutral'}`} style={{ justifySelf: 'center' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
+                          {language === 'ru' ? 'Тест платежа' : 'Payment Test'}
+                        </span>
+                        <span style={{ fontSize: '13px', color: '#94a3b8' }}>
+                          {filteredInvoices.length > 0 ? t.overview.invoiceTested : t.overview.invoiceMissing}
+                        </span>
+                      </div>
+                      <button 
+                        className="dev-btn dev-btn--secondary dev-btn--compact" 
+                        onClick={() => setActivePanel("create")} 
+                        style={{ width: '100px', borderRadius: '6px', fontSize: '12px', height: '32px', padding: 0, margin: 0, display: 'inline-flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0, fontWeight: 600 }}
+                      >
+                        {language === 'ru' ? 'Создать' : 'Create'}
+                      </button>
+                    </div>
+
+                    {/* Row 3: Go Live / Billing */}
+                    <div className="console-quick-setup__row" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 0 0 0',
+                      gap: '16px'
+                    }}>
+                      <div className="console-quick-setup__copy" style={{ display: 'grid', gridTemplateColumns: '24px 170px 1fr', alignItems: 'center', gap: '8px', flex: 1 }}>
+                        <span className={`dev-status-dot dev-status-dot--${session.me.plan.code !== 'trial' ? 'success' : 'neutral'}`} style={{ justifySelf: 'center' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
+                          {language === 'ru' ? 'Снять лимиты' : 'Upgrade Plan'}
+                        </span>
+                        <span style={{ fontSize: '13px', color: '#94a3b8' }}>
+                          {session.me.plan.code !== 'trial' 
+                            ? (language === 'ru' ? 'Вы на активном платном тарифе' : 'Unlimited active plan is active')
+                            : (language === 'ru' ? 'Снимите ограничения в 15 инвойсов и откройте API' : 'Unlock unlimited invoices, REST API access, and webhooks')
+                          }
+                        </span>
+                      </div>
+                      <button 
+                        className="dev-btn dev-btn--secondary dev-btn--compact" 
+                        onClick={() => setActivePanel("billing")} 
+                        style={{ width: '100px', borderRadius: '6px', fontSize: '12px', height: '32px', padding: 0, margin: 0, display: 'inline-flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0, fontWeight: 600 }}
+                      >
+                        {language === 'ru' ? 'Тарифы' : 'Billing'}
+                      </button>
+                    </div>
+
                   </div>
-                  <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
-                    <div className="console-card-spotlight" />
-                    <span className="dev-metric-label">{t.overview.stats.networks}</span>
-                    <strong className="dev-metric-value"><LiveValue value={activeWalletsCount} /></strong>
-                    <span className="dev-metric-meta">/{WALLET_NETWORK_OPTIONS.length} {t.overview.active} ({environment})</span>
+                </div>
+
+                {/* Unified Performance Analytics Panel */}
+                <div className="dev-setup-panel console-sales-analytics portal-animate-in" style={{ background: 'rgba(18, 14, 30, 0.45)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '12px', padding: '1.75rem', marginBottom: '2.5rem' }}>
+                  
+                  {/* Title & Simulation Controls */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#ffffff' }}>
+                      {language === 'ru' ? 'Аналитика продаж' : 'Sales Analytics'}
+                    </h3>
+                    
+                    {/* Sandbox preview control - hidden in production, shown only in development mode */}
+                    {import.meta.env.DEV && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(139, 92, 246, 0.08)', padding: '5px 12px', borderRadius: '20px', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>{t.overview.sandboxToggle}</span>
+                        <button
+                          type="button"
+                          className={`env-toggle__btn ${showDemoData ? 'is-active' : ''}`}
+                          onClick={() => setShowDemoData(!showDemoData)}
+                          style={{ padding: '2px 8px', fontSize: '10px', height: 'auto', borderRadius: '8px', margin: 0 }}
+                        >
+                          {showDemoData ? 'ON' : 'OFF'}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
-                    <div className="console-card-spotlight" />
-                    <span className="dev-metric-label">{t.overview.stats.invoices}</span>
-                    <strong className="dev-metric-value"><LiveValue value={filteredInvoices.length} /></strong>
-                    <span className="dev-metric-meta">{paidInvoices.length} {t.overview.paidCount} ({environment})</span>
-                  </div>
-                  <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
-                    <div className="console-card-spotlight" />
-                    <span className="dev-metric-label">{t.overview.conversion}</span>
-                    <strong className="dev-metric-value"><LiveValue value={`${conversionPct}%`} /></strong>
-                    <span className="dev-metric-meta">{paidInvoices.length}/{filteredInvoices.length} {t.overview.conversionMeta}</span>
-                  </div>
-                  <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
-                    <div className="console-card-spotlight" />
-                    <span className="dev-metric-label">{t.overview.avgTicket}</span>
-                    <strong className="dev-metric-value"><LiveValue value={`$${avgTicket.toFixed(2)}`} /></strong>
-                    <span className="dev-metric-meta">{t.overview.avgTicketMeta}</span>
-                  </div>
-                  <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
-                    <div className="console-card-spotlight" />
-                    <span className="dev-metric-label">{t.overview.openValue}</span>
-                    <strong className="dev-metric-value"><LiveValue value={`$${openValue.toFixed(2)}`} /></strong>
-                    <span className="dev-metric-meta">{t.overview.openValueMeta}</span>
-                  </div>
-                  <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
-                    <div className="console-card-spotlight" />
-                    <span className="dev-metric-label">{language === 'ru' ? 'Вебхуки' : 'Webhooks'}</span>
-                    <strong className="dev-metric-value"><LiveValue value={filteredHooks.length} /></strong>
-                    <span className="dev-metric-meta">
-                      /{session.me.plan.webhook_limit || 0} {language === 'ru' ? 'активно' : 'active'} ({environment})
-                    </span>
+
+                  <div className="dev-metrics-telemetry console-sales-analytics__grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+                    
+                    {/* Left Column: Big Revenue Card */}
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.25rem', paddingRight: '2rem', borderRight: '1px solid rgba(255, 255, 255, 0.05)' }} className="telemetry-revenue-col console-sales-analytics__revenue">
+                      <div>
+                        <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#8f9cae', fontWeight: 600, letterSpacing: '0.05em' }}>
+                          {t.overview.revenue}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '4px' }}>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif', color: '#ffffff', letterSpacing: '-0.02em' }}>
+                            ${paidRevenue.toFixed(2)}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: '#8f9cae' }}>
+                          {t.overview.revenuePaid}
+                        </span>
+                      </div>
+
+                      {/* Sparkline trend simulator */}
+                      <div style={{ height: '40px', display: 'flex', alignItems: 'flex-end', gap: '4px', paddingBottom: '4px' }}>
+                        {showDemoData ? (
+                          [25, 40, 60, 35, 75, 50, 90, 65, 85, 100].map((h, i) => (
+                            <div key={i} style={{ flex: 1, height: `${h}%`, background: 'linear-gradient(to top, rgba(139, 92, 246, 0.2), var(--accent, #8b5cf6))', borderRadius: '2px', transition: 'height 0.3s ease' }} />
+                          ))
+                        ) : (
+                          // Flat line when 0 real invoices
+                          <div style={{ width: '100%', height: '2px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '1px' }} />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Column: Performance KPIs */}
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1rem' }}>
+                      
+                      {/* Metric Row 1: Invoices */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <span style={{ fontSize: '13px', color: '#8f9cae', fontWeight: 500 }}>{t.overview.stats.invoices}</span>
+                        <div style={{ textAlign: 'right' }}>
+                          <strong style={{ fontSize: '15px', color: '#ffffff' }}>{totalInvoicesCount}</strong>
+                          <span style={{ display: 'block', fontSize: '11px', color: '#8f9cae' }}>{paidInvoicesCount} {t.overview.paidCount}</span>
+                        </div>
+                      </div>
+
+                      {/* Metric Row 2: Conversion */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <span style={{ fontSize: '13px', color: '#8f9cae', fontWeight: 500 }}>{t.overview.conversion}</span>
+                        <div style={{ textAlign: 'right' }}>
+                          <strong style={{ fontSize: '15px', color: '#ffffff' }}>{conversionPct}%</strong>
+                          <span style={{ display: 'block', fontSize: '11px', color: '#8f9cae' }}>{paidInvoicesCount}/{totalInvoicesCount} {t.overview.conversionMeta}</span>
+                        </div>
+                      </div>
+
+                      {/* Metric Row 3: Avg Ticket */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <span style={{ fontSize: '13px', color: '#8f9cae', fontWeight: 500 }}>{t.overview.avgTicket}</span>
+                        <div style={{ textAlign: 'right' }}>
+                          <strong style={{ fontSize: '15px', color: '#ffffff' }}>${avgTicket.toFixed(2)}</strong>
+                          <span style={{ display: 'block', fontSize: '11px', color: '#8f9cae' }}>{t.overview.avgTicketMeta}</span>
+                        </div>
+                      </div>
+
+                      {/* Metric Row 4: Open Value */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', color: '#8f9cae', fontWeight: 500 }}>{t.overview.openValue}</span>
+                        <div style={{ textAlign: 'right' }}>
+                          <strong style={{ fontSize: '15px', color: '#ffffff' }}>${openValue.toFixed(2)}</strong>
+                          <span style={{ display: 'block', fontSize: '11px', color: '#8f9cae' }}>{t.overview.openValueMeta}</span>
+                        </div>
+                      </div>
+
+                    </div>
+
                   </div>
                 </div>
 
                 {filteredInvoices.length > 0 && (
                   <div className="dev-analytics-panel">
-                    <div className="dev-analytics-col console-spotlight-card" onMouseMove={handleMouseMove}>
+                    <div className="dev-analytics-col console-spotlight-card">
                       <div className="console-card-spotlight" />
                       <div className="dev-portal__section-header dev-portal__section-header--margin">
                         <h3>{t.overview.statusTitle}</h3>
@@ -1063,7 +1816,7 @@ export function SellerConsolePage() {
                       </div>
                     </div>
 
-                    <div className="dev-analytics-col console-spotlight-card" onMouseMove={handleMouseMove}>
+                    <div className="dev-analytics-col console-spotlight-card">
                       <div className="console-card-spotlight" />
                       <div className="dev-portal__section-header dev-portal__section-header--margin">
                         <h3>{t.overview.networksTitle}</h3>
@@ -1091,44 +1844,9 @@ export function SellerConsolePage() {
                   </div>
                 )}
 
-                {!onboardingComplete && !isNewActivation && (
-                  <div className="dev-setup-panel portal-animate-in">
-                    <div className="dev-setup-header">
-                      <div className="dev-setup-title-row">
-                        <h3>{t.overview.setupTitle}</h3>
-                        <span className="dev-setup-progress-badge">
-                          {onboardingSteps.filter(s => s.done).length} / {onboardingSteps.length} {language === "ru" ? "пройдено" : "completed"}
-                        </span>
-                      </div>
-                      <div className="dev-setup-progress-track">
-                        <div 
-                          className="dev-setup-progress-fill" 
-                          style={{ width: `${Math.round((onboardingSteps.filter(s => s.done).length / onboardingSteps.length) * 100)}%` }} 
-                        />
-                      </div>
-                    </div>
-                    <div className="dev-setup-stepper">
-                      {onboardingSteps.map((step, i) => (
-                        <div key={i} className={`dev-setup-step ${step.done ? "is-done" : ""}`}>
-                          <div className="dev-setup-step-indicator">
-                            <span className="dev-setup-step-marker">{step.done ? "✓" : i + 1}</span>
-                          </div>
-                          <div className="dev-setup-step-content">
-                            <span className="dev-setup-step-body">{step.body}</span>
-                            {step.done ? null : (
-                              <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => setActivePanel(step.target)}>
-                                {step.action}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {session.me.plan.code === 'trial' && (
-                  <div className="dev-card dev-card--accent dev-promo-card portal-animate-in console-spotlight-card" onMouseMove={handleMouseMove}>
+                  <div className="dev-card dev-card--accent dev-promo-card portal-animate-in console-spotlight-card">
                     <div className="console-card-spotlight" />
                     <div className="console-dogfood-glow" />
                     <div className="dev-promo-card__content">
@@ -1141,11 +1859,11 @@ export function SellerConsolePage() {
                   </div>
                 )}
 
-                <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="dev-card console-spotlight-card">
                   <div className="console-card-spotlight" />
                   <div className="console-dogfood-glow" />
                   <div className="dev-portal__section-header dev-portal__section-header--margin">
-                    <h3>{t.overview.activity} ({environment})</h3>
+                    <h3>{t.overview.activity}</h3>
                   </div>
                   {filteredInvoices.length === 0 ? (
                     <div className="dev-portal__empty-state">{t.overview.noActivity}</div>
@@ -1184,11 +1902,11 @@ export function SellerConsolePage() {
             {activePanel === "wallets" && (
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__section-header">
-                  <h2>{t.wallets.title} ({environment})</h2>
+                  <h2>{t.wallets.title}</h2>
                   <p>{t.wallets.subtitle}</p>
                 </div>
 
-                <div className="dev-card dev-card--accent dev-coverage console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="dev-card dev-card--accent dev-coverage console-spotlight-card">
                   <div className="console-card-spotlight" />
                   <div className="console-dogfood-glow" />
                   <div className="dev-coverage__info">
@@ -1203,67 +1921,252 @@ export function SellerConsolePage() {
                   </div>
                 </div>
 
-                <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <form onSubmit={onAddWallet} className="dev-form">
-                    <div className="dev-wallet-form-grid">
-                      <div className="dev-input-group">
-                        <label>{t.wallets.network}</label>
-                        <CustomSelect
-                          value={walletForm.network}
-                          options={WALLET_NETWORK_OPTIONS}
-                          ariaLabel={t.wallets.network}
-                          onChange={(v) => setWalletForm(c => ({ ...c, network: v as Network }))}
-                        />
-                      </div>
-                      <div className="dev-input-group">
-                        <label>{t.wallets.address}</label>
-                        <input className="dev-input" placeholder={t.wallets.placeholder} value={walletForm.address} onChange={e => setWalletForm(c => ({ ...c, address: e.target.value }))} required />
-                      </div>
-                      <button type="submit" className="dev-btn dev-btn--primary dev-wallet-add-btn">{t.wallets.add}</button>
-                    </div>
-                  </form>
-                </div>
-
-                <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <div className="dev-portal__section-header dev-portal__section-header--margin">
-                    <h3>{t.wallets.configured}</h3>
-                  </div>
+                <div className="payout-network-container">
                   <div className="dev-network-grid">
                     {WALLET_NETWORK_OPTIONS.map(opt => {
                       const wallets = filteredWallets.filter(w => walletBucket(w.network) === walletBucket(opt.value));
                       const configured = wallets.length > 0;
+                      const currentWallet = wallets[0] || null;
+                      
+                      const isEditing = editingNetwork[opt.value] || !configured;
+                      const isSaving = isSavingNetwork[opt.value];
+                      const errorMsg = networkErrors[opt.value];
+                      
+                      const addressVal = networkInputs[opt.value] !== undefined 
+                        ? networkInputs[opt.value] 
+                        : (currentWallet ? currentWallet.address : "");
+
+                      const isValidAddress = validateWalletAddress(opt.value, addressVal);
+                      const isAddressEmpty = !addressVal.trim();
+                      const showValidationError = !isAddressEmpty && !isValidAddress;
+
+                      // Define helper for network icons
+                      let networkIcon = null;
+                      let networkCoins: string[] = [];
+
+                      switch (opt.value) {
+                        case "TON":
+                          networkCoins = ["GRAM", "USDT"];
+                          networkIcon = (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="payout-network-icon" style={{ flexShrink: 0 }}>
+                              <circle cx="12" cy="12" r="11" fill="#0098EA" />
+                              <path d="M12 5.5l5.5 3.5L12 18.5 6.5 9 12 5.5z" stroke="#ffffff" strokeWidth="1.5" strokeLinejoin="round" />
+                              <path d="M6.5 9h11M12 5.5v13" stroke="#ffffff" strokeWidth="1.2" />
+                            </svg>
+                          );
+                          break;
+                        case "SOLANA":
+                          networkCoins = ["SOL", "USDT", "USDC"];
+                          networkIcon = (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="payout-network-icon" style={{ flexShrink: 0 }}>
+                              <defs>
+                                <linearGradient id="solana-gradient-network" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#9945FF" />
+                                  <stop offset="100%" stopColor="#14F195" />
+                                </linearGradient>
+                              </defs>
+                              <path d="M3.7 5.7h16.6l-3.2 3.2H.5l3.2-3.2z" fill="url(#solana-gradient-network)" />
+                              <path d="M20.3 10.4H3.7l3.2 3.2h16.6l-3.2-3.2z" fill="url(#solana-gradient-network)" />
+                              <path d="M3.7 15.1h16.6l-3.2 3.2H.5l3.2-3.2z" fill="url(#solana-gradient-network)" />
+                            </svg>
+                          );
+                          break;
+                        case "TRON":
+                          networkCoins = ["USDT"];
+                          networkIcon = (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="payout-network-icon" style={{ flexShrink: 0 }}>
+                              <path d="M12 3L3 17.5h18L12 3z" stroke="#EF3026" strokeWidth="2.2" strokeLinejoin="round" />
+                              <path d="M12 3v14.5M3 17.5l9-7 9 7" stroke="#EF3026" strokeWidth="1.5" />
+                            </svg>
+                          );
+                          break;
+                        case "EVM":
+                          networkCoins = ["BNB", "USDT", "USDC"];
+                          networkIcon = (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="payout-network-icon" style={{ flexShrink: 0 }}>
+                              <path d="M12 2L4.5 12 12 16.5 19.5 12 12 2z" fill="#3B82F6" fillOpacity="0.25" stroke="#60A5FA" strokeWidth="1.5" strokeLinejoin="round" />
+                              <path d="M12 2L4.5 12 12 16.5" fill="#2563EB" fillOpacity="0.3" />
+                              <path d="M12 16.5L4.5 12 12 22 19.5 12 12 16.5z" fill="#3B82F6" fillOpacity="0.15" stroke="#60A5FA" strokeWidth="1.5" strokeLinejoin="round" />
+                              <path d="M12 22L4.5 12 12 16.5" fill="#2563EB" fillOpacity="0.2" />
+                            </svg>
+                          );
+                          break;
+                      }
+
+                      // Truncate address for display on mobile / compact
+                      const formatAddress = (addr: string) => {
+                        if (addr.length <= 16) return addr;
+                        return `${addr.slice(0, 10)}...${addr.slice(-8)}`;
+                      };
+
+                      const explorerUrl = currentWallet ? (
+                        environment === "live" ? (
+                          opt.value === "TON" ? `https://tonviewer.com/${currentWallet.address}` :
+                          opt.value === "SOLANA" ? `https://solscan.io/account/${currentWallet.address}` :
+                          opt.value === "TRON" ? `https://tronscan.org/#/address/${currentWallet.address}` :
+                          `https://basescan.org/address/${currentWallet.address}`
+                        ) : (
+                          opt.value === "TON" ? `https://testnet.tonviewer.com/${currentWallet.address}` :
+                          opt.value === "SOLANA" ? `https://solscan.io/account/${currentWallet.address}?cluster=testnet` :
+                          opt.value === "TRON" ? `https://shasta.tronscan.org/#/address/${currentWallet.address}` :
+                          `https://sepolia.basescan.org/address/${currentWallet.address}`
+                        )
+                      ) : "#";
+
                       return (
-                        <div key={opt.value} className={`dev-network-card console-spotlight-card ${configured ? "is-active" : "is-missing"}`} onMouseMove={handleMouseMove}>
+                        <div key={opt.value} className={`payout-card dev-card console-spotlight-card ${configured ? "is-active" : "is-missing"}`}>
                           <div className="console-card-spotlight" />
                           <div className="console-dogfood-glow" />
-                          <div className="dev-network-card__head">
-                            <span className="dev-network-card__name">{opt.label}</span>
-                            <span className={`dev-api-badge dev-api-badge--${configured ? "get" : "secondary"} dev-api-badge--micro`}>
+                          
+                          <div className="payout-card__head">
+                            <div className="payout-card__network-info">
+                              <div className="payout-card__icon-wrapper">
+                                {networkIcon}
+                              </div>
+                              <div className="payout-card__label-group">
+                                <span className="payout-card__name">{opt.label}</span>
+                                <div className="payout-card__assets">
+                                  <span className="payout-card__assets-label">{t.wallets.assets}:</span>
+                                  {networkCoins.map(coin => renderAssetPill(coin))}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <span className={`payout-card__status payout-card__status--${configured ? "active" : "missing"}`}>
                               {configured ? t.wallets.active : t.wallets.missing}
                             </span>
                           </div>
-                          {configured ? (
-                            <div className="dev-network-card__addresses">
-                              {wallets.map(w => (
-                                <div key={w.id} className="dev-network-card__addr">
-                                  <code className="dev-wallet-address">{w.address}</code>
-                                  <button className="dev-btn dev-btn--danger dev-btn--compact" onClick={() => void onDeleteWallet(w.id)}>{t.common.delete}</button>
+
+                          {isEditing ? (
+                            <div className="payout-card__edit-form">
+                              <div className="dev-input-group">
+                                <label className="payout-input-label">{t.wallets.address}</label>
+                                <div className="payout-input-wrapper">
+                                  <input 
+                                    className={`dev-input payout-input ${showValidationError ? "is-invalid" : ""}`} 
+                                    placeholder={t.wallets.placeholder} 
+                                    value={addressVal} 
+                                    disabled={isSaving}
+                                    onChange={e => setNetworkInputs(c => ({ ...c, [opt.value]: e.target.value }))}
+                                  />
                                 </div>
-                              ))}
+                                {showValidationError && (
+                                  <div className="payout-card__validation-error">
+                                    {t.wallets.invalidFormat.replace("{network}", opt.label)}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {errorMsg && (
+                                <div className="payout-card__error">
+                                  {errorMsg}
+                                </div>
+                              )}
+
+                              <div className="payout-card__actions-row">
+                                <button 
+                                  className="dev-btn dev-btn--primary dev-btn--compact payout-btn"
+                                  disabled={isSaving || isAddressEmpty || !isValidAddress}
+                                  onClick={() => void onSaveWalletInline(opt.value, currentWallet ? currentWallet.id : null, addressVal)}
+                                >
+                                  {isSaving ? t.wallets.updating : t.wallets.save}
+                                </button>
+                                {configured && (
+                                  <button 
+                                    className="dev-btn dev-btn--secondary dev-btn--compact payout-btn"
+                                    disabled={isSaving}
+                                    onClick={() => {
+                                      setEditingNetwork(c => ({ ...c, [opt.value]: false }));
+                                      setNetworkErrors(c => ({ ...c, [opt.value]: "" }));
+                                      setNetworkInputs(c => ({ ...c, [opt.value]: currentWallet.address }));
+                                    }}
+                                  >
+                                    {t.common.cancel}
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ) : (
-                            <div className="dev-network-card__empty">
-                              <p className="dev-card__note-text">{t.wallets.missingHint}</p>
-                              <button
-                                className="dev-btn dev-btn--secondary dev-btn--compact"
-                                onClick={() => setWalletForm({ network: opt.value, address: "" })}
-                              >
-                                {t.wallets.addFor}
-                              </button>
+                            <div className="payout-card__view-mode">
+                              <div className="payout-address-block">
+                                <code className="payout-address payout-address--desktop">{currentWallet.address}</code>
+                                <code className="payout-address payout-address--mobile">{formatAddress(currentWallet.address)}</code>
+                              </div>
+                              
+                              <div className="payout-card__toolbar">
+                                <button 
+                                  className="dev-btn dev-btn--secondary dev-btn--compact payout-icon-btn"
+                                  title={t.common.copy}
+                                  onClick={() => void handleCopy(currentWallet.address, `wallet-${currentWallet.id}`)}
+                                >
+                                  {copiedId === `wallet-${currentWallet.id}` ? (
+                                    <>
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                      {t.common.copied}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                      </svg>
+                                      {t.common.copy}
+                                    </>
+                                  )}
+                                </button>
+                                
+                                <a 
+                                  href={explorerUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="dev-btn dev-btn--secondary dev-btn--compact payout-icon-btn"
+                                  title={t.wallets.explorer}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                    <polyline points="15 3 21 3 21 9" />
+                                    <line x1="10" y1="14" x2="21" y2="3" />
+                                  </svg>
+                                  {t.wallets.explorer}
+                                </a>
+
+                                <button 
+                                  className="dev-btn dev-btn--secondary dev-btn--compact payout-icon-btn"
+                                  disabled={isSaving}
+                                  onClick={() => {
+                                    setEditingNetwork(c => ({ ...c, [opt.value]: true }));
+                                    setNetworkInputs(c => ({ ...c, [opt.value]: currentWallet.address }));
+                                  }}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                  </svg>
+                                  {t.wallets.edit}
+                                </button>
+
+                                <button 
+                                  className="dev-btn dev-btn--danger dev-btn--compact payout-icon-btn"
+                                  disabled={isSaving}
+                                  onClick={() => void onDeleteWalletInline(opt.value, currentWallet.id)}
+                                >
+                                  {isSaving ? (
+                                    t.wallets.updating
+                                  ) : (
+                                    <>
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        <line x1="10" y1="11" x2="10" y2="17" />
+                                        <line x1="14" y1="11" x2="14" y2="17" />
+                                      </svg>
+                                      {t.common.delete}
+                                    </>
+                                  )}
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1275,121 +2178,508 @@ export function SellerConsolePage() {
             )}
 
             {activePanel === "invoices" && (
-              <div className="dev-portal__section portal-animate-in">
+              <div className="dev-portal__section console-transactions portal-animate-in">
                 <div className="dev-portal__section-header">
-                  <h2>{t.invoices.title} ({environment})</h2>
+                  <h2>{t.invoices.title}</h2>
                   <p>{t.invoices.subtitle}</p>
                 </div>
-                <div className="dev-card dev-toolbar console-spotlight-card" onMouseMove={handleMouseMove}>
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <input
-                    className="dev-input"
-                    value={searchVal}
-                    onChange={(event) => setSearchVal(event.target.value)}
-                    placeholder={language === "ru" ? "Поиск по названию, ID или tx hash" : "Search title, ID, or tx hash"}
-                  />
-                  <CustomSelect
-                    value={invoiceFilters.status}
-                    onChange={(value) => setInvoiceFilters(current => ({ ...current, page: 1, status: value }))}
-                    options={statusOptions}
-                    ariaLabel={language === "ru" ? "Фильтр статуса" : "Status filter"}
-                  />
-                  <div className="dev-toolbar__meta">
-                    {language === "ru" ? "Всего" : "Total"}: {session.invoiceTotal}
+
+                {/* Metrics Cards */}
+                <div className="dev-metrics-telemetry console-sales-analytics__grid console-transactions__metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                  {/* Volume Card */}
+                  <div className="dev-card console-spotlight-card console-transactions__metric console-transactions__metric--volume" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderLeft: '4px solid #10b981' }}>
+                    <div className="console-card-spotlight" />
+                    <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#8f9cae', fontWeight: 600, letterSpacing: '0.05em' }}>
+                      {t.invoices.metricsVolume}
+                    </span>
+                    <strong style={{ fontSize: '1.8rem', color: '#ffffff', fontFamily: 'Space Grotesk, sans-serif' }}>
+                      ${tabVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </strong>
+                    {showDemoData && <span style={{ fontSize: '11px', color: '#10b981' }}>+$342.10 (2.4%)</span>}
+                  </div>
+
+                  {/* Completed Card */}
+                  <div className="dev-card console-spotlight-card console-transactions__metric console-transactions__metric--completed" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderLeft: '4px solid #3b82f6' }}>
+                    <div className="console-card-spotlight" />
+                    <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#8f9cae', fontWeight: 600, letterSpacing: '0.05em' }}>
+                      {t.invoices.metricsCompleted}
+                    </span>
+                    <strong style={{ fontSize: '1.8rem', color: '#ffffff', fontFamily: 'Space Grotesk, sans-serif' }}>
+                      {tabCompletedCount}
+                    </strong>
+                    {showDemoData && <span style={{ fontSize: '11px', color: '#3b82f6' }}>11 new today</span>}
+                  </div>
+
+                  {/* Pending Card */}
+                  <div className="dev-card console-spotlight-card console-transactions__metric console-transactions__metric--pending" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderLeft: '4px solid #a855f7' }}>
+                    <div className="console-card-spotlight" />
+                    <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#8f9cae', fontWeight: 600, letterSpacing: '0.05em' }}>
+                      {t.invoices.metricsPending}
+                    </span>
+                    <strong style={{ fontSize: '1.8rem', color: '#ffffff', fontFamily: 'Space Grotesk, sans-serif' }}>
+                      {tabPendingCount}
+                    </strong>
+                    {showDemoData && <span style={{ fontSize: '11px', color: '#a855f7' }}>3 awaiting confirmation</span>}
                   </div>
                 </div>
-                <div className="dev-resource-list">
-                  {filteredInvoices.length === 0 ? (
-                    <div className="dev-card dev-portal__empty-large console-spotlight-card" onMouseMove={handleMouseMove}>
-                      <div className="console-card-spotlight" />
-                      <div className="console-dogfood-glow" />
-                      {t.invoices.empty}
-                    </div>
-                  ) : filteredInvoices.map(inv => {
-                    const isOpen = expandedInvoice === inv.id;
-                    return (
-                    <div key={inv.id} className="dev-card dev-card--invoice console-spotlight-card" onMouseMove={handleMouseMove}>
-                      <div className="console-card-spotlight" />
-                      <div className="console-dogfood-glow" />
-                      <div className="dev-card__head">
-                        <div>
-                          <div className="dev-card__status-row">
-                            <span className={`dev-api-badge dev-status-badge dev-status-badge--${statusToneClass(inv.status)}`} title={getInvoiceStatusTooltip(inv.status, language) || undefined}>
-                              {formatInvoiceStatus(inv.status, language, true)}
-                            </span>
-                            <span className="dev-api-badge dev-api-badge--secondary">{formatNetworkLabel(inv.payable_network)}</span>
-                          </div>
-                          <h3 className="dev-card__title">{inv.title}</h3>
-                          <code className="dev-card__id">{inv.public_id}</code>
-                        </div>
-                        <div className="dev-card__amount-col">
-                          <div className="dev-card__amount">{inv.payable_amount} <small className="dev-card__currency">{formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</small></div>
-                          <div className="dev-card__base">${Number(inv.base_amount_usd).toFixed(2)} {t.invoices.baseUsd}</div>
-                          <div className="dev-card__date">{new Date(inv.created_at).toLocaleString()}</div>
-                        </div>
-                      </div>
 
-                      <div className={`dev-invoice-details-wrapper ${isOpen ? "is-expanded" : ""}`}>
-                        <div className="dev-invoice-details-inner">
-                          <div className="dev-invoice-details">
-                            <div className="dev-settings-row">
-                              <span className="dev-settings-row__label">{t.invoices.baseUsd}</span>
-                              <span className="dev-settings-row__value">${Number(inv.base_amount_usd).toFixed(2)}</span>
-                            </div>
-                            <div className="dev-settings-row">
-                              <span className="dev-settings-row__label">{t.invoices.payable}</span>
-                              <span className="dev-settings-row__value">{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
-                            </div>
-                            {Number(inv.received_amount) > 0 && (
-                              <div className="dev-settings-row">
-                                <span className="dev-settings-row__label">{t.invoices.received}</span>
-                                <span className="dev-settings-row__value">{inv.received_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
-                              </div>
-                            )}
-                            <div className="dev-settings-row">
-                              <span className="dev-settings-row__label">{t.invoices.created}</span>
-                              <span className="dev-settings-row__value">{new Date(inv.created_at).toLocaleString()}</span>
-                            </div>
-                            <div className="dev-settings-row dev-invoice-details__tx">
-                              <span className="dev-settings-row__label">{t.invoices.txHash}</span>
-                              {inv.tx_hash ? (
-                                <div className="dev-invoice-details__tx-val">
-                                  <code className="dev-wallet-address">{inv.tx_hash}</code>
-                                  <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => handleCopy(inv.tx_hash || "", `tx-${inv.id}`)}>
-                                    {copiedId === `tx-${inv.id}` ? t.common.copied : t.invoices.copyTx}
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="dev-settings-row__value dev-card__note-text">{t.invoices.noTx}</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="dev-card__actions">
-                        <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `inv-${inv.id}`)}>
-                          {copiedId === `inv-${inv.id}` ? t.common.copied : t.invoices.copyLink}
-                        </button>
-                        <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(inv.public_id, `id-${inv.id}`)}>
-                          {copiedId === `id-${inv.id}` ? t.common.copied : t.invoices.copyId}
-                        </button>
-                        <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--flex-grow dev-btn--centered">{t.invoices.view}</a>
-                        <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => setExpandedInvoice(isOpen ? null : inv.id)}>
-                          {isOpen ? t.invoices.hide : t.invoices.details}
-                        </button>
-                        {(getInvoiceStatusMeta(inv.status).canSellerMarkPaid || getInvoiceStatusMeta(inv.status).canSellerCancel) && (
-                          <>
-                            {getInvoiceStatusMeta(inv.status).canSellerMarkPaid ? <button className="dev-btn dev-btn--secondary dev-btn--flex-grow dev-btn--success-color" onClick={() => void onInvoiceAction(inv.id, "mark_paid")}>{t.invoices.confirm}</button> : null}
-                            {getInvoiceStatusMeta(inv.status).canSellerCancel ? <button className="dev-btn dev-btn--danger dev-btn--flex-grow" onClick={() => void onInvoiceAction(inv.id, "cancel")}>{t.invoices.cancel}</button> : null}
-                          </>
-                        )}
-                      </div>
+                {/* Toolbar / Filters */}
+                <div className="dev-card dev-toolbar console-spotlight-card console-transactions__toolbar" style={{ flexDirection: 'column', gap: '1rem', alignItems: 'stretch', marginBottom: '1.5rem' }}>
+                  <div className="console-card-spotlight" />
+                  <div className="console-dogfood-glow" />
+                  
+                  {/* Row 1: Search & Layout Toggle */}
+                  <div className="console-transactions__toolbar-row console-transactions__toolbar-row--primary" style={{ display: 'flex', gap: '1rem', width: '100%', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                    <input
+                      className="dev-input"
+                      value={searchVal}
+                      onChange={(event) => setSearchVal(event.target.value)}
+                      placeholder={language === "ru" ? "Поиск по названию, ID или tx hash" : "Search title, ID, or tx hash"}
+                      style={{ flex: 1, minWidth: '240px' }}
+                    />
+                    <div className="console-transactions__view-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', padding: '2px', flexShrink: 0 }}>
+                      <button 
+                        type="button"
+                        onClick={() => setViewMode("table")}
+                        className="dev-btn dev-btn--compact" 
+                        style={{ 
+                          background: viewMode === "table" ? 'rgba(255,255,255,0.1)' : 'transparent',
+                          border: 'none',
+                          boxShadow: 'none',
+                          padding: '4px 8px',
+                          color: viewMode === "table" ? '#ffffff' : '#8f9cae',
+                          minWidth: 'auto'
+                        }}
+                        title={t.invoices.viewTable}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="3" y1="12" x2="21" y2="12" />
+                          <line x1="3" y1="6" x2="21" y2="6" />
+                          <line x1="3" y1="18" x2="21" y2="18" />
+                        </svg>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setViewMode("card")}
+                        className="dev-btn dev-btn--compact" 
+                        style={{ 
+                          background: viewMode === "card" ? 'rgba(255,255,255,0.1)' : 'transparent',
+                          border: 'none',
+                          boxShadow: 'none',
+                          padding: '4px 8px',
+                          color: viewMode === "card" ? '#ffffff' : '#8f9cae',
+                          minWidth: 'auto'
+                        }}
+                        title={t.invoices.viewCard}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="9" />
+                          <rect x="14" y="3" width="7" height="5" />
+                          <rect x="14" y="12" width="7" height="9" />
+                          <rect x="3" y="16" width="7" height="5" />
+                        </svg>
+                      </button>
                     </div>
-                    );
-                  })}
+                  </div>
+
+                  {/* Row 2: Selectors */}
+                  <div className="console-transactions__toolbar-row console-transactions__filters" style={{ display: 'flex', gap: '1rem', width: '100%', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div className="dev-toolbar-select">
+                      <CustomSelect
+                        value={selectedNetwork}
+                        onChange={(value) => setSelectedNetwork(value)}
+                        options={[
+                          { value: "all", label: t.invoices.filterAllNetworks },
+                          { value: "TON", label: "TON" },
+                          { value: "TON_USDT", label: "TON (USDT)" },
+                          { value: "TRON", label: "TRON" },
+                          { value: "EVM", label: "Ethereum" },
+                          { value: "SOLANA", label: "Solana" },
+                          { value: "BASE", label: "Base" },
+                          { value: "ARBITRUM", label: "Arbitrum" },
+                          { value: "BSC", label: "BSC" },
+                        ]}
+                        ariaLabel={t.invoices.filterNetwork}
+                      />
+                    </div>
+                    <div className="dev-toolbar-select">
+                      <CustomSelect
+                        value={invoiceFilters.status}
+                        onChange={(value) => setInvoiceFilters(current => ({ ...current, page: 1, status: value }))}
+                        options={statusOptions}
+                        ariaLabel={language === "ru" ? "Фильтр статуса" : "Status filter"}
+                      />
+                    </div>
+                    <div className="dev-toolbar-select">
+                      <CustomSelect
+                        value={selectedDate}
+                        onChange={(value) => setSelectedDate(value)}
+                        options={[
+                          { value: "all", label: t.invoices.filterAllDates },
+                          { value: "today", label: t.invoices.filterToday },
+                          { value: "yesterday", label: t.invoices.filterYesterday },
+                          { value: "last7", label: t.invoices.filterLast7Days },
+                          { value: "last30", label: t.invoices.filterLast30Days },
+                        ]}
+                        ariaLabel={t.invoices.filterDateRange}
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                {/* Invoices List / Table */}
+                <div className="dev-resource-list console-transactions__list">
+                  {filteredInvoices.length === 0 ? (
+                    /* True Empty State - No invoices created at all */
+                    <div className="dev-card dev-portal__empty-large console-spotlight-card" style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                      <div className="console-card-spotlight" />
+                      <div className="console-dogfood-glow" />
+                      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8f9cae' }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                      </div>
+                      <div style={{ maxWidth: '400px' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', marginBottom: '8px' }}>{t.invoices.empty}</h3>
+                        <p style={{ fontSize: '13px', color: '#8f9cae', lineHeight: 1.5 }}>
+                          {language === "ru" ? "Здесь будут отображаться ваши счета и платежи от клиентов." : "Your invoices and client payments will be displayed here."}
+                        </p>
+                      </div>
+                      <button className="dev-btn dev-btn--primary" onClick={() => setActivePanel("create")}>
+                        {t.invoices.createFirst}
+                      </button>
+                    </div>
+                  ) : displayInvoices.length === 0 ? (
+                    /* Filters Empty State - Invoices exist but none match filters */
+                    <div className="dev-card dev-portal__empty-large console-spotlight-card" style={{ padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                      <div className="console-card-spotlight" />
+                      <div className="console-dogfood-glow" />
+                      <div style={{ fontSize: '15px', fontWeight: 500, color: '#ffffff' }}>
+                        {language === "ru" ? "Нет счетов, соответствующих фильтрам" : "No invoices match active filters"}
+                      </div>
+                      <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => {
+                        setSearchVal("");
+                        setInvoiceFilters(current => ({ ...current, page: 1, status: "all", query: "" }));
+                        setSelectedNetwork("all");
+                        setSelectedDate("all");
+                      }}>
+                        {language === "ru" ? "Сбросить фильтры" : "Reset filters"}
+                      </button>
+                    </div>
+                  ) : viewMode === "card" ? (
+                    /* Card View Mode */
+                    displayInvoices.map(inv => {
+                      const isOpen = expandedInvoice === inv.id;
+                      return (
+                        <div key={inv.id} className="dev-card dev-card--invoice console-spotlight-card console-transaction-card">
+                          <div className="console-card-spotlight" />
+                          <div className="console-dogfood-glow" />
+                          <div className="dev-card__head">
+                            <div>
+                              <div className="dev-card__status-row">
+                                <span className={`dev-api-badge dev-status-badge dev-status-badge--${statusToneClass(inv.status)}`} title={getInvoiceStatusTooltip(inv.status, language) || undefined}>
+                                  {formatInvoiceStatus(inv.status, language, true)}
+                                </span>
+                                <span className="dev-api-badge dev-api-badge--secondary">{formatNetworkLabel(inv.payable_network)}</span>
+                              </div>
+                              <h3 className="dev-card__title">{inv.title}</h3>
+                              <code className="dev-card__id">{inv.public_id}</code>
+                            </div>
+                            <div className="dev-card__amount-col">
+                              <div className="dev-card__amount">{inv.payable_amount} <small className="dev-card__currency">{formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</small></div>
+                              <div className="dev-card__base">${Number(inv.base_amount_usd).toFixed(2)} {t.invoices.baseUsd}</div>
+                              <div className="dev-card__date">{new Date(inv.created_at).toLocaleString()}</div>
+                            </div>
+                          </div>
+
+                          <div className={`dev-invoice-details-wrapper ${isOpen ? "is-expanded" : ""}`}>
+                            <div className="dev-invoice-details-inner">
+                              <div className="dev-invoice-details">
+                                <div className="dev-settings-row">
+                                  <span className="dev-settings-row__label">{t.invoices.baseUsd}</span>
+                                  <span className="dev-settings-row__value">${Number(inv.base_amount_usd).toFixed(2)}</span>
+                                </div>
+                                <div className="dev-settings-row">
+                                  <span className="dev-settings-row__label">{t.invoices.payable}</span>
+                                  <span className="dev-settings-row__value">{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
+                                </div>
+                                {Number(inv.received_amount) > 0 && (
+                                  <div className="dev-settings-row">
+                                    <span className="dev-settings-row__label">{t.invoices.received}</span>
+                                    <span className="dev-settings-row__value">{inv.received_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
+                                  </div>
+                                )}
+                                <div className="dev-settings-row">
+                                  <span className="dev-settings-row__label">{t.invoices.created}</span>
+                                  <span className="dev-settings-row__value">{new Date(inv.created_at).toLocaleString()}</span>
+                                </div>
+                                <div className="dev-settings-row dev-invoice-details__tx">
+                                  <span className="dev-settings-row__label">{t.invoices.txHash}</span>
+                                  {inv.tx_hash ? (
+                                    <div className="dev-invoice-details__tx-val">
+                                      <code className="dev-wallet-address">{inv.tx_hash}</code>
+                                      <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => handleCopy(inv.tx_hash || "", `tx-${inv.id}`)}>
+                                        {copiedId === `tx-${inv.id}` ? t.common.copied : t.invoices.copyTx}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className="dev-settings-row__value dev-card__note-text">{t.invoices.noTx}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="dev-card__actions">
+                            <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `inv-${inv.id}`)}>
+                              {copiedId === `inv-${inv.id}` ? t.common.copied : t.invoices.copyLink}
+                            </button>
+                            <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(inv.public_id, `id-${inv.id}`)}>
+                              {copiedId === `id-${inv.id}` ? t.common.copied : t.invoices.copyId}
+                            </button>
+                            <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--flex-grow dev-btn--centered">{t.invoices.view}</a>
+                            <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => setExpandedInvoice(isOpen ? null : inv.id)}>
+                              {isOpen ? t.invoices.hide : t.invoices.details}
+                            </button>
+                            {(getInvoiceStatusMeta(inv.status).canSellerMarkPaid || getInvoiceStatusMeta(inv.status).canSellerCancel) && (
+                              <>
+                                {getInvoiceStatusMeta(inv.status).canSellerMarkPaid ? <button className="dev-btn dev-btn--secondary dev-btn--flex-grow dev-btn--success-color" onClick={() => void onInvoiceAction(inv.id, "mark_paid")}>{t.invoices.confirm}</button> : null}
+                                {getInvoiceStatusMeta(inv.status).canSellerCancel ? <button className="dev-btn dev-btn--danger dev-btn--flex-grow" onClick={() => void onInvoiceAction(inv.id, "cancel")}>{t.invoices.cancel}</button> : null}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    /* Modern Density-Optimized Table View Mode */
+                    <div className="dev-card console-spotlight-card console-transactions-table-wrap" style={{ padding: '0', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <table className="console-transactions-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                            <th style={{ padding: '12px 16px', color: '#8f9cae', fontWeight: 600 }}>{t.invoices.status}</th>
+                            <th style={{ padding: '12px 16px', color: '#8f9cae', fontWeight: 600 }}>{language === "ru" ? "Название" : "Invoice Title"}</th>
+                            <th style={{ padding: '12px 16px', color: '#8f9cae', fontWeight: 600 }}>{t.invoices.id}</th>
+                            <th style={{ padding: '12px 16px', color: '#8f9cae', fontWeight: 600 }}>{t.invoices.date}</th>
+                            <th style={{ padding: '12px 16px', color: '#8f9cae', fontWeight: 600, textAlign: 'right' }}>{t.invoices.amount}</th>
+                            <th style={{ padding: '12px 16px', color: '#8f9cae', fontWeight: 600, textAlign: 'right' }}>{t.invoices.actions}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {displayInvoices.map(inv => {
+                            const isOpen = expandedInvoice === inv.id;
+                            const isMenuOpen = activeActionMenuId === inv.id;
+                            return (
+                              <React.Fragment key={inv.id}>
+                                <tr className="console-transactions-table__row" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'middle' }}>
+                                  {/* Status badge */}
+                                  <td className="console-transactions-table__status" data-label={t.invoices.status} style={{ padding: '14px 16px' }}>
+                                    <span className={`dev-api-badge dev-status-badge dev-status-badge--${statusToneClass(inv.status)}`} title={getInvoiceStatusTooltip(inv.status, language) || undefined}>
+                                      {formatInvoiceStatus(inv.status, language, true)}
+                                    </span>
+                                  </td>
+                                  
+                                  {/* Title & Network label */}
+                                  <td className="console-transactions-table__title" data-label={language === "ru" ? "Название" : "Invoice Title"} style={{ padding: '14px 16px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                      <span style={{ fontWeight: 500, color: '#ffffff' }}>{inv.title}</span>
+                                      <span style={{ fontSize: '11px', color: '#8f9cae' }}>
+                                        <span className="dev-api-badge dev-api-badge--secondary" style={{ padding: '1px 4px', fontSize: '10px' }}>
+                                          {formatNetworkLabel(inv.payable_network)}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </td>
+                                  
+                                  {/* Public ID with quick copy */}
+                                  <td className="console-transactions-table__id" data-label={t.invoices.id} style={{ padding: '14px 16px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <code style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', color: '#e2e8f0' }}>
+                                        {inv.public_id}
+                                      </code>
+                                      <button 
+                                        onClick={() => handleCopy(inv.public_id, `id-${inv.id}`)}
+                                        style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', color: '#8f9cae', display: 'flex', alignItems: 'center' }}
+                                        title={t.invoices.copyId}
+                                      >
+                                        {copiedId === `id-${inv.id}` ? (
+                                          <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 500 }}>{t.invoices.copiedShort}</span>
+                                        ) : (
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                          </svg>
+                                        )}
+                                      </button>
+                                    </div>
+                                  </td>
+                                  
+                                  {/* Date */}
+                                  <td className="console-transactions-table__date" data-label={t.invoices.date} style={{ padding: '14px 16px', color: '#8f9cae' }}>
+                                    {new Date(inv.created_at).toLocaleDateString()} <span style={{ fontSize: '11px', color: '#4a5568' }}>{new Date(inv.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                  </td>
+                                  
+                                  {/* Amount crypto + base usd */}
+                                  <td className="console-transactions-table__amount" data-label={t.invoices.amount} style={{ padding: '14px 16px', textAlign: 'right' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                      <span style={{ fontWeight: 600, color: '#ffffff' }}>
+                                        {inv.payable_amount} <span style={{ fontSize: '11px', color: '#8f9cae', fontWeight: 400 }}>{formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
+                                      </span>
+                                      <span style={{ fontSize: '11px', color: '#8f9cae' }}>
+                                        ${Number(inv.base_amount_usd).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  
+                                  {/* Actions dropdown trigger */}
+                                  <td className="console-transactions-table__actions" data-label={t.invoices.actions} style={{ padding: '14px 16px', textAlign: 'right', position: 'relative' }}>
+                                    <div className="console-transactions-table__actions-inner" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
+                                      <button 
+                                        className="dev-btn dev-btn--secondary dev-btn--compact"
+                                        onClick={() => setExpandedInvoice(isOpen ? null : inv.id)}
+                                        style={{ padding: '4px 8px', fontSize: '11px', minWidth: 'auto' }}
+                                      >
+                                        {isOpen ? t.invoices.hide : t.invoices.details}
+                                      </button>
+                                      
+                                      <div className="console-transaction-menu" style={{ position: 'relative' }}>
+                                        <button 
+                                          className="dev-btn dev-btn--secondary dev-btn--compact"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveActionMenuId(isMenuOpen ? null : inv.id);
+                                          }}
+                                          style={{ padding: '4px 6px', minWidth: 'auto' }}
+                                        >
+                                          &#8942;
+                                        </button>
+                                        
+                                        {isMenuOpen && (
+                                          <>
+                                            <div 
+                                              style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} 
+                                              onClick={() => setActiveActionMenuId(null)}
+                                            />
+                                            <div className="console-transaction-menu__panel" style={{
+                                              position: 'absolute',
+                                              right: 0,
+                                              top: '100%',
+                                              marginTop: '4px',
+                                              background: '#1a202c',
+                                              border: '1px solid rgba(255,255,255,0.08)',
+                                              borderRadius: '6px',
+                                              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                                              zIndex: 999,
+                                              minWidth: '150px',
+                                              textAlign: 'left',
+                                              display: 'flex',
+                                              flexDirection: 'column',
+                                              padding: '4px 0'
+                                            }}>
+                                              <button 
+                                                className="dropdown-item" 
+                                                style={{ background: 'none', border: 'none', color: '#e2e8f0', padding: '8px 12px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '12px' }}
+                                                onClick={() => { handleCopy(buildCheckoutUrl(inv.public_id), `inv-${inv.id}`); setActiveActionMenuId(null); }}
+                                              >
+                                                {copiedId === `inv-${inv.id}` ? t.common.copied : t.invoices.copyLink}
+                                              </button>
+                                              
+                                              <a 
+                                                href={buildCheckoutPath(inv.public_id)} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="dropdown-item"
+                                                style={{ color: '#e2e8f0', padding: '8px 12px', width: '100%', textAlign: 'left', display: 'block', textDecoration: 'none', fontSize: '12px' }}
+                                                onClick={() => setActiveActionMenuId(null)}
+                                              >
+                                                {t.invoices.view}
+                                              </a>
+                                              
+                                              {getInvoiceStatusMeta(inv.status).canSellerMarkPaid && (
+                                                <button 
+                                                  className="dropdown-item" 
+                                                  style={{ background: 'none', border: 'none', color: '#10b981', padding: '8px 12px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '12px' }}
+                                                  onClick={() => { void onInvoiceAction(inv.id, "mark_paid"); setActiveActionMenuId(null); }}
+                                                >
+                                                  {t.invoices.confirm}
+                                                </button>
+                                              )}
+                                              
+                                              {getInvoiceStatusMeta(inv.status).canSellerCancel && (
+                                                <button 
+                                                  className="dropdown-item" 
+                                                  style={{ background: 'none', border: 'none', color: '#ef4444', padding: '8px 12px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '12px' }}
+                                                  onClick={() => { void onInvoiceAction(inv.id, "cancel"); setActiveActionMenuId(null); }}
+                                                >
+                                                  {t.invoices.cancel}
+                                                </button>
+                                              )}
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                                
+                                {/* Expandable details block */}
+                                {isOpen && (
+                                  <tr className="console-transactions-table__details-row" style={{ background: 'rgba(255,255,255,0.01)' }}>
+                                    <td colSpan={6} style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                      <div className="console-transactions-table__details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', fontSize: '12px' }}>
+                                        <div>
+                                          <div style={{ color: '#8f9cae', marginBottom: '4px' }}>{t.invoices.baseUsd}</div>
+                                          <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}>${Number(inv.base_amount_usd).toFixed(2)}</div>
+                                        </div>
+                                        <div>
+                                          <div style={{ color: '#8f9cae', marginBottom: '4px' }}>{t.invoices.payable}</div>
+                                          <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}>{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</div>
+                                        </div>
+                                        {Number(inv.received_amount) > 0 && (
+                                          <div>
+                                            <div style={{ color: '#8f9cae', marginBottom: '4px' }}>{t.invoices.received}</div>
+                                            <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}>{inv.received_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</div>
+                                          </div>
+                                        )}
+                                        <div>
+                                          <div style={{ color: '#8f9cae', marginBottom: '4px' }}>{t.invoices.created}</div>
+                                          <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}>{new Date(inv.created_at).toLocaleString()}</div>
+                                        </div>
+                                        <div style={{ gridColumn: 'span 2' }}>
+                                          <div style={{ color: '#8f9cae', marginBottom: '4px' }}>{t.invoices.txHash}</div>
+                                          {inv.tx_hash ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                                              <code style={{ background: 'rgba(255,255,255,0.04)', padding: '4px 8px', borderRadius: '4px', color: '#cbd5e0', wordBreak: 'break-all', fontSize: '11px' }}>
+                                                {inv.tx_hash}
+                                              </code>
+                                              <button 
+                                                className="dev-btn dev-btn--secondary dev-btn--compact" 
+                                                onClick={() => handleCopy(inv.tx_hash || "", `tx-${inv.id}`)}
+                                                style={{ padding: '2px 8px', minWidth: 'auto', fontSize: '10px' }}
+                                              >
+                                                {copiedId === `tx-${inv.id}` ? t.common.copied : t.invoices.copyTx}
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <span style={{ color: '#718096' }} className="dev-card__note-text">{t.invoices.noTx}</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
                 <div className="dev-pagination">
                   <button
                     className="dev-btn dev-btn--secondary"
@@ -1415,11 +2705,11 @@ export function SellerConsolePage() {
             {activePanel === "create" && (
               <div className="dev-portal__section portal-animate-in">
                 <div className="dev-portal__section-header">
-                  <h2>{t.create.title} ({environment})</h2>
+                  <h2>{t.create.title}</h2>
                   <p>{t.create.subtitle}</p>
                 </div>
                 <div className="dev-create-grid">
-                  <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                  <div className="dev-card console-spotlight-card">
                     <div className="console-card-spotlight" />
                     <div className="console-dogfood-glow" />
                     <form onSubmit={onCreateInvoice} className="dev-form">
@@ -1476,7 +2766,7 @@ export function SellerConsolePage() {
                     </form>
                   </div>
 
-                  <div className="dev-card dev-create-preview console-spotlight-card" onMouseMove={handleMouseMove}>
+                  <div className="dev-card dev-create-preview console-spotlight-card">
                     <div className="console-card-spotlight" />
                     <div className="console-dogfood-glow" />
                     <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1503,7 +2793,7 @@ export function SellerConsolePage() {
                 </div>
 
                 {recentCreated.length > 0 && (
-                  <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                  <div className="dev-card console-spotlight-card">
                     <div className="console-card-spotlight" />
                     <div className="console-dogfood-glow" />
                     <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1534,13 +2824,13 @@ export function SellerConsolePage() {
             )}
 
             {activePanel === "developer" && (
-              <div className="dev-portal__section portal-animate-in">
+              <div className="dev-portal__section console-developer portal-animate-in">
                 <div className="dev-portal__section-header">
-                  <h2>{t.developer.title} ({environment})</h2>
+                  <h2>{t.developer.title}</h2>
                   <p>{t.developer.subtitle}</p>
                 </div>
 
-                {!session.me.plan.has_api ? (
+                {!(session.me.plan.has_api || import.meta.env.DEV) ? (
                   <div className="dev-portal__locked-state">
                     <h3>{t.developer.locked}</h3>
                     <button className="dev-btn dev-btn--primary" onClick={() => setActivePanel("billing")}>{t.promo.action}</button>
@@ -1548,7 +2838,7 @@ export function SellerConsolePage() {
                 ) : (
                   <>
                     {devUsage && (
-                      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                      <div className="dev-card console-spotlight-card console-developer__usage-card">
                         <div className="console-card-spotlight" />
                         <div className="console-dogfood-glow" />
                         <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1564,14 +2854,14 @@ export function SellerConsolePage() {
                       </div>
                     )}
 
-                    <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                    <div className="dev-card console-spotlight-card console-developer__quickstart-card">
                       <div className="console-card-spotlight" />
                       <div className="console-dogfood-glow" />
                       <div className="dev-portal__section-header dev-portal__section-header--margin">
                         <h3>{t.developer.quickstartTitle}</h3>
                         <p>{t.developer.quickstartSubtitle}</p>
                       </div>
-                      <div className="dev-settings-row">
+                      <div className="dev-settings-row console-developer__base-url-row">
                         <span className="dev-settings-row__label">{t.developer.baseUrl}</span>
                         <div className="dev-invoice-details__tx-val">
                           <code className="dev-wallet-address">{apiBaseUrl}</code>
@@ -1592,7 +2882,7 @@ export function SellerConsolePage() {
                       <p className="dev-card__note-text">{t.developer.snippetHint}</p>
                     </div>
 
-                    <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                    <div className="dev-card console-spotlight-card console-developer__keys-card">
                       <div className="console-card-spotlight" />
                       <div className="console-dogfood-glow" />
                       <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1600,7 +2890,7 @@ export function SellerConsolePage() {
                         <p>{t.developer.keysSubtitle}</p>
                       </div>
                       <form onSubmit={onCreateKey} className="dev-form">
-                        <div className="dev-form__row-grid">
+                        <div className="dev-form__row-grid console-developer__key-form">
                           <div className="dev-input-group">
                             <label>{t.developer.keyLabel}</label>
                             <input className="dev-input" value={keyForm.label} onChange={e => setKeyForm({ label: e.target.value })} placeholder="Production App" required />
@@ -1621,11 +2911,11 @@ export function SellerConsolePage() {
                         </div>
                       )}
 
-                      <div className="dev-resource-list dev-resource-list--margin">
+                      <div className="dev-resource-list dev-resource-list--margin console-developer__resource-list">
                         {filteredKeys.length === 0 ? (
                           <div className="dev-portal__empty-state">{t.developer.noKeys}</div>
                         ) : filteredKeys.map(key => (
-                          <div key={key.id} className="dev-resource-card">
+                          <div key={key.id} className="dev-resource-card console-developer__key-row">
                             <div className="dev-resource-card__info">
                               <div className="dev-resource-card__title">{key.label}</div>
                               <code className="dev-resource-card__meta">{key.prefix}***</code>
@@ -1636,7 +2926,7 @@ export function SellerConsolePage() {
                       </div>
                     </div>
 
-                    <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                    <div className="dev-card console-spotlight-card console-developer__hooks-card">
                       <div className="console-card-spotlight" />
                       <div className="console-dogfood-glow" />
                       <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1644,7 +2934,7 @@ export function SellerConsolePage() {
                         <p>{t.developer.hooksSubtitle}</p>
                       </div>
                       <form onSubmit={onCreateHook} className="dev-form">
-                        <div className="dev-webhook-form-grid">
+                        <div className="dev-webhook-form-grid console-developer__webhook-form">
                           <div className="dev-input-group">
                             <label>{t.common.label}</label>
                             <input className="dev-input" value={hookForm.label} onChange={e => setHookForm({ ...hookForm, label: e.target.value })} placeholder="Main Server" required />
@@ -1669,11 +2959,11 @@ export function SellerConsolePage() {
                         </div>
                       )}
 
-                      <div className="dev-resource-list dev-resource-list--margin">
+                      <div className="dev-resource-list dev-resource-list--margin console-developer__resource-list">
                         {filteredHooks.length === 0 ? (
                           <div className="dev-portal__empty-state">{t.developer.noEndpoints}</div>
                         ) : filteredHooks.map(hook => (
-                          <div key={hook.id} className="dev-resource-card dev-resource-card--column">
+                          <div key={hook.id} className="dev-resource-card dev-resource-card--column console-developer__hook-row">
                             <div className="dev-resource-card__header">
                               <div className="dev-resource-card__info">
                                 <div className="dev-resource-card__title">{hook.label}</div>
@@ -1689,7 +2979,7 @@ export function SellerConsolePage() {
                       </div>
                     </div>
 
-                    <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                    <div className="dev-card console-spotlight-card console-developer__deliveries-card">
                       <div className="console-card-spotlight" />
                       <div className="console-dogfood-glow" />
                       <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1697,16 +2987,18 @@ export function SellerConsolePage() {
                         <p>{t.developer.deliveriesSubtitle}</p>
                       </div>
                       {(() => {
-                        const envDeliveries = deliveries.filter(d => d.environment === environment);
+                        const envDeliveries = showDemoData
+                          ? MOCK_DELIVERIES.filter(d => d.environment === environment)
+                          : deliveries.filter(d => d.environment === environment);
                         if (envDeliveries.length === 0) {
                           return <div className="dev-portal__empty-state">{t.developer.noDeliveries}</div>;
                         }
                         return (
-                          <div className="dev-resource-list">
+                          <div className="dev-resource-list console-developer__resource-list console-developer__deliveries-list">
                             {envDeliveries.map(d => {
                               const tone = d.status === "delivered" ? "success" : d.status === "failed" || d.status === "exhausted" ? "danger" : "warning";
                               return (
-                                <div key={d.id} className="dev-resource-card">
+                                <div key={d.id} className="dev-resource-card console-developer__delivery-row">
                                   <div className="dev-resource-card__info">
                                     <div className="dev-resource-card__title">
                                       <span className={`dev-status-dot dev-status-dot--${tone}`} /> {d.event_type}
@@ -1739,12 +3031,38 @@ export function SellerConsolePage() {
             )}
 
             {activePanel === "team" && (() => {
-              const myRole: MemberRole = team?.my_role ?? "member";
+              const displayTeam = showDemoData ? MOCK_TEAM : team;
+              const isLocked = !(session.me.plan.code === 'business' || import.meta.env.DEV);
+
+              if (isLocked) {
+                return (
+                  <div className="dev-portal__section portal-animate-in">
+                    <div className="dev-portal__section-header">
+                      <h2>{t.team.title}</h2>
+                      <p>{t.team.subtitle}</p>
+                    </div>
+                    <div className="dev-portal__locked-state">
+                      <div className="dev-locked-glow" />
+                      <svg className="dev-locked-icon" viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)", marginBottom: "0.5rem" }}>
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                      <h3>{t.team.locked}</h3>
+                      <p style={{ maxWidth: "460px", marginBottom: "1rem" }}>{t.team.lockedSub}</p>
+                      <button className="dev-btn dev-btn--primary" onClick={() => setActivePanel("billing")}>
+                        {t.team.lockedAction}
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
+              const myRole: MemberRole = displayTeam?.my_role ?? "member";
               const canManage = myRole === "owner" || myRole === "admin";
               const isOwner = myRole === "owner";
               const meTelegramId = session.me.user.telegram_id;
-              const members = team?.members ?? [];
-              const invites = team?.invites ?? [];
+              const members = displayTeam?.members ?? [];
+              const invites = displayTeam?.invites ?? [];
               const ownerCount = members.filter(m => m.role === "owner").length;
               const roleLabel = (r: MemberRole) => r === "owner" ? t.team.roleOwner : r === "admin" ? t.team.roleAdmin : t.team.roleMember;
               const roleTone = (r: MemberRole) => r === "owner" ? "post" : r === "admin" ? "get" : "secondary";
@@ -1754,38 +3072,58 @@ export function SellerConsolePage() {
                 { value: "member", label: t.team.roleMember },
               ];
               const inviteRoleOptions = (isOwner ? roleSelectOptions : roleSelectOptions.filter(o => o.value !== "owner"));
+
+              const activeSeats = members.length + invites.length;
+              const maxSeats = showDemoData ? 10 : (session.me.plan.max_seats ?? 1);
+
               return (
-              <div className="dev-portal__section portal-animate-in">
+              <div className="dev-portal__section console-team portal-animate-in">
                 <div className="dev-portal__section-header">
                   <h2>{t.team.title}</h2>
                   <p>{t.team.subtitle}</p>
                 </div>
 
-                <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                {/* Card 1: Members list */}
+                <div className="dev-card console-spotlight-card console-team__members-card">
                   <div className="console-card-spotlight" />
                   <div className="console-dogfood-glow" />
-                  <div className="dev-portal__section-header dev-portal__section-header--margin">
+                  <div className="dev-portal__section-header dev-portal__section-header--margin dev-team-seats-header-inline">
                     <h3>{t.team.membersTitle} ({members.length})</h3>
-                    {!canManage && <p>{t.team.manageHint}</p>}
+                    <div className="dev-team-seats-summary-inline">
+                      <span className="dev-team-seats-label-inline">{language === 'ru' ? 'Использование мест:' : 'Seat usage:'}</span>
+                      <strong className="dev-team-seats-count-inline">{activeSeats} / {maxSeats}</strong>
+                      <div className="dev-team-seats-bar-inline">
+                        <div className="dev-team-seats-fill-inline" style={{ width: `${Math.min(100, (activeSeats / maxSeats) * 100)}%` }} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="dev-resource-list">
+                  {!canManage && <p className="dev-team-manage-hint-inline">{t.team.manageHint}</p>}
+                  
+                  <div className="dev-resource-list console-team__member-list">
                     {members.map(m => {
                       const isSelf = m.telegram_id === meTelegramId;
                       const displayName = m.username ? `@${m.username}` : `#${m.telegram_id}`;
                       const isLastOwner = m.role === "owner" && ownerCount <= 1;
                       const canEditRole = isOwner && !isLastOwner;
                       const canRemove = (isSelf && !isLastOwner) || (canManage && !isSelf && !(myRole === "admin" && m.role !== "member") && !isLastOwner);
+                      const initial = (m.username ? m.username.charAt(0) : "U").toUpperCase();
                       return (
-                        <div key={m.user_id} className="dev-resource-card dev-team-member">
-                          <div className="dev-resource-card__info">
-                            <div className="dev-resource-card__title">
-                              {displayName}{isSelf ? <span className="dev-team-you"> ({t.team.you})</span> : null}
+                        <div key={m.user_id} className="dev-resource-card dev-team-member-row-inline">
+                          <div className="dev-team-member-profile-inline">
+                            <div className={`dev-team-avatar-icon-inline dev-team-avatar-icon-inline--${m.role}`}>
+                              {initial}
                             </div>
-                            {m.email ? <div className="dev-resource-card__meta">{m.email}</div> : null}
+                            <div className="dev-resource-card__info">
+                              <div className="dev-resource-card__title">
+                                {displayName}{isSelf ? <span className="dev-team-you-badge-inline"> ({t.team.you})</span> : null}
+                              </div>
+                              {m.email ? <div className="dev-resource-card__meta">{m.email}</div> : null}
+                            </div>
                           </div>
-                          <div className="dev-team-member__controls">
+                          
+                          <div className="dev-team-member-controls-inline">
                             {canEditRole ? (
-                              <div className="dev-team-role-select">
+                              <div className="dev-team-role-select-inline">
                                 <CustomSelect
                                   value={m.role}
                                   options={roleSelectOptions}
@@ -1794,13 +3132,15 @@ export function SellerConsolePage() {
                                 />
                               </div>
                             ) : (
-                              <span className={`dev-api-badge dev-api-badge--${roleTone(m.role)}`}>{roleLabel(m.role)}</span>
+                              <span className={`dev-api-badge dev-api-badge--${roleTone(m.role)} dev-team-role-badge-static`}>{roleLabel(m.role)}</span>
                             )}
-                            {canRemove ? (
-                              <button className="dev-btn dev-btn--danger dev-btn--compact" onClick={() => void onRemoveMember(m.user_id, isSelf)}>
-                                {isSelf ? t.team.leave : t.team.remove}
-                              </button>
-                            ) : null}
+                            <div className="dev-team-action-inline">
+                              {canRemove ? (
+                                <button className="dev-btn dev-btn--danger dev-btn--compact" onClick={() => void onRemoveMember(m.user_id, isSelf)}>
+                                  {isSelf ? t.team.leave : t.team.remove}
+                                </button>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
                       );
@@ -1808,8 +3148,9 @@ export function SellerConsolePage() {
                   </div>
                 </div>
 
+                {/* Card 2: Invite Member */}
                 {canManage && (
-                  <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                  <div className="dev-card console-spotlight-card console-team__invite-card" style={{ marginTop: "1.5rem" }}>
                     <div className="console-card-spotlight" />
                     <div className="console-dogfood-glow" />
                     <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -1817,8 +3158,8 @@ export function SellerConsolePage() {
                       <p>{t.team.inviteHint}</p>
                     </div>
                     <form onSubmit={onInviteMember} className="dev-form">
-                      <div className="dev-team-invite-grid">
-                        <div className="dev-input-group">
+                      <div className="dev-team-invite-form-row">
+                        <div className="dev-input-group" style={{ flex: 1, minWidth: "200px" }}>
                           <label>{t.team.name}</label>
                           <input
                             className="dev-input"
@@ -1828,7 +3169,7 @@ export function SellerConsolePage() {
                             required
                           />
                         </div>
-                        <div className="dev-input-group">
+                        <div className="dev-input-group" style={{ width: "180px", minWidth: "150px" }}>
                           <label>{t.team.role}</label>
                           <CustomSelect
                             value={inviteForm.role}
@@ -1837,31 +3178,37 @@ export function SellerConsolePage() {
                             onChange={(v) => setInviteForm(c => ({ ...c, role: v as MemberRole }))}
                           />
                         </div>
-                        <button type="submit" className="dev-btn dev-btn--primary dev-team-invite-btn" disabled={invitingMember || !inviteForm.username.trim()}>
+                        <button type="submit" className="dev-btn dev-btn--primary dev-team-invite-submit-btn" disabled={invitingMember || !inviteForm.username.trim()}>
                           {invitingMember ? t.team.inviting : t.team.inviteAction}
                         </button>
                       </div>
                     </form>
                     {teamNotice ? <div className="alert alert--success alert--margin">{teamNotice}</div> : null}
+                  </div>
+                )}
 
-                    <div className="dev-portal__section-header dev-portal__section-header--margin dev-team-invites-header">
+                {/* Card 3: Pending Invites */}
+                {canManage && invites.length > 0 && (
+                  <div className="dev-card console-spotlight-card console-team__pending-card" style={{ marginTop: "1.5rem" }}>
+                    <div className="console-card-spotlight" />
+                    <div className="console-dogfood-glow" />
+                    <div className="dev-portal__section-header dev-portal__section-header--margin">
                       <h3>{t.team.invitesTitle}</h3>
                     </div>
-                    {invites.length === 0 ? (
-                      <div className="dev-portal__empty-state">{t.team.noInvites}</div>
-                    ) : (
-                      <div className="dev-resource-list">
-                        {invites.map(inv => (
-                          <div key={inv.id} className="dev-resource-card">
+                    <div className="dev-resource-list console-team__invite-list">
+                      {invites.map(inv => (
+                        <div key={inv.id} className="dev-resource-card dev-team-invite-card-row">
+                          <div className="dev-team-invite-username-col">
+                            <div className="dev-team-invite-avatar-placeholder">@</div>
                             <div className="dev-resource-card__info">
                               <div className="dev-resource-card__title">@{inv.invited_username}</div>
-                              <div className="dev-resource-card__meta">{t.team.invitedAs} {roleLabel(inv.role)}</div>
+                              <div className="dev-resource-card__meta">{t.team.invitedAs} <strong>{roleLabel(inv.role)}</strong></div>
                             </div>
-                            <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void onRevokeInvite(inv.id)}>{t.team.revoke}</button>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <button className="dev-btn dev-btn--secondary dev-btn--compact dev-team-revoke-btn-inline" onClick={() => void onRevokeInvite(inv.id)}>{t.team.revoke}</button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1869,22 +3216,76 @@ export function SellerConsolePage() {
             })()}
 
             {activePanel === "billing" && (
-              <div className="dev-portal__section portal-animate-in">
-                <div className="dev-billing-section-header">
-                  <div>
-                    <h2>{t.billing.title}</h2>
-                    <p>{t.billing.subtitle}</p>
+              <div className="dev-portal__section console-billing portal-animate-in">
+                {/* Redesigned Premium Billing Status Header */}
+                <div className="billing-status-banner">
+                  <div className="billing-status-banner__info">
+                    <div className="billing-status-banner__title-group">
+                      <h2>{t.billing.title}</h2>
+                      <p>{t.billing.subtitle}</p>
+                    </div>
                   </div>
-                  <div className="dev-billing-plan-badge">
-                    <span className="dev-billing-plan-badge__label">
-                      {language === 'ru' ? 'Текущий план' : 'Current plan'}
+                  
+                  <div className="billing-status-card">
+                    <span className="billing-status-card__label">
+                      {language === 'ru' ? 'Текущий тариф' : 'Current Plan'}
                     </span>
-                    <strong className="dev-billing-plan-badge__name">{session.me.plan.name}</strong>
-                    {session.me.plan.code === 'trial' && (
-                      <span className="dev-billing-plan-badge__trial">
-                        {language === 'ru' ? 'Пробный период' : 'Trial Period'}
-                      </span>
-                    )}
+                    <div className="billing-status-card__plan-row">
+                      <strong className="billing-status-card__plan-name">
+                        {session.me.plan.name}
+                      </strong>
+                      {session.me.plan.code !== 'trial' && (
+                        <span className={`billing-status-card__badge billing-status-card__badge--${session.me.plan.code}`}>
+                          {language === 'ru' ? 'Активен' : 'Active'}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="billing-status-card__details">
+                      {(() => {
+                        const endsAt = session.me.workspace.subscription_ends_at;
+                        if (session.me.plan.code === 'trial') {
+                          return (
+                            <span className="billing-status-card__expiry-text">
+                              {language === 'ru' 
+                                ? 'Тестовый доступ. Выберите тариф ниже для активации.' 
+                                : 'Trial access. Select a plan below to upgrade.'}
+                            </span>
+                          );
+                        } else if (endsAt) {
+                          const diffTime = new Date(endsAt).getTime() - Date.now();
+                          const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          const formattedDate = new Date(endsAt).toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          });
+                          if (remainingDays > 0) {
+                            return (
+                              <span className="billing-status-card__expiry-text">
+                                {language === 'ru' 
+                                  ? `Действует до ${formattedDate} (осталось ${remainingDays} дн.)` 
+                                  : `Active until ${formattedDate} (${remainingDays} days left)`}
+                              </span>
+                            );
+                          } else {
+                            return (
+                              <span className="billing-status-card__expiry-text billing-status-card__expiry-text--expired">
+                                {language === 'ru' 
+                                  ? `Истёк ${formattedDate}` 
+                                  : `Expired on ${formattedDate}`}
+                              </span>
+                            );
+                          }
+                        } else {
+                          return (
+                            <span className="billing-status-card__expiry-text">
+                              {language === 'ru' ? 'Подписка активна' : 'Subscription active'}
+                            </span>
+                          );
+                        }
+                      })()}
+                    </div>
                   </div>
                 </div>
 
@@ -1896,32 +3297,52 @@ export function SellerConsolePage() {
                   const comparePlans = PLAN_COMPARE_ORDER
                     .map(code => session.me.plans.find(p => p.code === code))
                     .filter((p): p is NonNullable<typeof p> => Boolean(p));
+                  
+                  const planDescriptions: Record<string, { en: string; ru: string }> = {
+                    merchant: {
+                      en: "Ideal for simple online stores & digital sales via payment links. Zero development required.",
+                      ru: "Идеально для простых онлайн-магазинов и продаж по платежным ссылкам без разработки."
+                    },
+                    developer: {
+                      en: "Best for developers building custom checkouts. Includes REST API access & webhooks.",
+                      ru: "Лучший выбор для разработчиков. Доступ к REST API, вебхукам и интеграциям."
+                    },
+                    business: {
+                      en: "For growing teams and high-volume operations. Priority support & advanced limits.",
+                      ru: "Для растущих команд и больших объемов продаж. Приоритетная поддержка и лимиты."
+                    }
+                  };
+
                   const featRow = (label: string, on: boolean) => (
-                    <div className="dev-plan-feat">
+                    <div className={`dev-plan-feat ${!on ? "dev-plan-feat--dimmed" : ""}`}>
                       <span className={`dev-plan-feat__icon dev-plan-feat__icon--${on ? "yes" : "no"}`}>{on ? "✓" : "—"}</span>
                       <span>{label}</span>
                     </div>
                   );
+                  
                   return (
-                    <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                    <div className="dev-card console-billing__plans-card console-spotlight-card">
                       <div className="console-card-spotlight" />
                       <div className="console-dogfood-glow" />
                       <div className="dev-portal__section-header dev-portal__section-header--margin">
                         <h3>{t.billing.comparisonTitle}</h3>
                         <p>{t.billing.comparisonSubtitle}</p>
                       </div>
-                      <div className="dev-plan-grid">
+                      <div className="dev-plan-grid console-billing__plan-grid">
                         {comparePlans.map(plan => {
                           const isCurrent = plan.code === session.me.plan.code;
                           const isSelected = plan.code === billingForm.plan;
+                          const desc = planDescriptions[plan.code]?.[language] || "";
+                          
                           return (
-                            <div key={plan.code} className={`dev-plan-card console-spotlight-card ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""}`} onMouseMove={handleMouseMove}>
+                            <div key={plan.code} className={`dev-plan-card console-billing__plan-card console-spotlight-card ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""}`}>
                               <div className="console-card-spotlight" />
                               <div className="console-dogfood-glow" />
                               <div className="dev-plan-card__head">
                                 <span className="dev-plan-card__name">{plan.name}</span>
                                 {isCurrent && <span className="dev-api-badge dev-api-badge--get dev-api-badge--micro">{t.billing.currentBadge}</span>}
                               </div>
+                              
                               {(() => {
                                 const dPct = session.me.workspace.discount_percent || 0;
                                 const dPlan = session.me.workspace.discount_plan_code;
@@ -1939,8 +3360,8 @@ export function SellerConsolePage() {
                                         ${formattedPrice}
                                       </span>
                                       <span className="dev-plan-card__period">{t.billing.perMonth}</span>
-                                      <div style={{ fontSize: "0.75em", color: "#27c24c", marginTop: "0.25rem", fontWeight: "normal" }}>
-                                        ({dPct}% discount applied)
+                                      <div style={{ fontSize: "0.68em", color: "#27c24c", marginTop: "0.25rem", fontWeight: "normal" }}>
+                                        {language === 'ru' ? `(скидка ${dPct}% применена)` : `(${dPct}% discount applied)`}
                                       </div>
                                     </div>
                                   );
@@ -1949,6 +3370,9 @@ export function SellerConsolePage() {
                                   <div className="dev-plan-card__price">${plan.price_usd}<span className="dev-plan-card__period">{t.billing.perMonth}</span></div>
                                 );
                               })()}
+                              
+                              <p className="dev-plan-card__description">{desc}</p>
+                              
                               <div className="dev-plan-card__feats">
                                 {featRow(t.billing.featApi, plan.has_api)}
                                 {featRow(t.billing.featWebhooks, plan.has_webhooks)}
@@ -1971,9 +3395,13 @@ export function SellerConsolePage() {
                                 </div>
                               </div>
                               <button
+                                type="button"
                                 className={`dev-btn ${isSelected ? "dev-btn--primary" : "dev-btn--secondary"} dev-btn--full-width`}
                                 disabled={isCurrent}
-                                onClick={() => setBillingForm(c => ({ ...c, plan: plan.code }))}
+                                onClick={() => {
+                                  setCheckoutUrl("");
+                                  setBillingForm(c => ({ ...c, plan: plan.code }));
+                                }}
                               >
                                 {isCurrent ? t.billing.currentBadge : t.billing.selectPlan}
                               </button>
@@ -1985,139 +3413,203 @@ export function SellerConsolePage() {
                   );
                 })()}
 
-                <div className="dev-card dev-billing-card console-spotlight-card" onMouseMove={handleMouseMove}>
+                <h3 className="checkout-section-title">
+                  {language === 'ru' ? 'Оформление подписки' : 'Checkout & Upgrade'}
+                </h3>
+
+                <div className="dev-card billing-checkout-container console-billing__checkout console-spotlight-card">
                   <div className="console-card-spotlight" />
                   <div className="console-dogfood-glow" />
-                  <div className="dev-form">
-                    <h3>{t.billing.checkoutTitle}</h3>
-                    <p className="dev-card__note-text">{t.billing.checkoutSubtitle}</p>
-                    <div className="dev-billing-fast-path">
-                      <div>
-                        <strong>{language === "ru" ? "Merchant за $19 / 30 дней" : "Merchant for $19 / 30 days"}</strong>
-                        <span>{language === "ru" ? "TRON USDT, 0% с оборота, платёжные ссылки без пробных лимитов." : "TRON USDT, 0% turnover fee, payment links without trial limits."}</span>
+                  
+                  {checkoutUrl ? (
+                    <div className="billing-checkout-success console-billing__success" style={{ gridColumn: "span 2" }}>
+                      <div className="success-icon-wrapper">✓</div>
+                      <h4 className="success-title">
+                        {language === 'ru' ? 'Счёт успешно создан!' : 'Invoice Generated Successfully!'}
+                      </h4>
+                      <p className="success-subtitle">
+                        {language === 'ru' 
+                          ? 'Счёт готов к оплате криптовалютой. Выберите любую удобную для вас сеть и монету на странице оплаты.' 
+                          : 'Your subscription invoice is ready. You can complete the payment in any network/asset on the payment checkout page.'}
+                      </p>
+                      
+                      <div className="success-actions-row">
+                        <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered">
+                          {t.common.payNow || 'Pay Now'}
+                        </a>
+                        <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(checkoutUrl, "billing-url")}>
+                          {copiedId === "billing-url" ? t.common.copied : t.common.copy}
+                        </button>
                       </div>
-                      <button className="dev-btn dev-btn--primary" onClick={onQuickMerchantUpgrade}>
-                        {language === "ru" ? "Оплатить Merchant" : "Pay Merchant"}
+                      
+                      <button className="success-back-button" onClick={() => setCheckoutUrl("")}>
+                        {language === 'ru' ? '← Изменить тариф или срок' : '← Change plan or duration'}
                       </button>
                     </div>
-                    <div className="dev-input-group">
-                      <label>{t.common.plan}</label>
-                      <CustomSelect
-                        value={billingForm.plan}
-                        options={session.me.plans.filter(p => p.code !== 'trial').map(p => ({ value: p.code, label: p.name }))}
-                        ariaLabel={t.common.plan}
-                        onChange={v => setBillingForm(c => ({ ...c, plan: v }))}
-                      />
-                      {(() => {
-                        const selectedPlan = session.me.plans.find(p => p.code === billingForm.plan);
-                        const dPct = session.me.workspace.discount_percent || 0;
-                        const dPlan = session.me.workspace.discount_plan_code;
-                        const hasD = selectedPlan && dPct > 0 && (!dPlan || dPlan === selectedPlan.code);
-                        if (!hasD) return null;
-                        return (
-                          <div style={{ color: "#27c24c", fontSize: "0.85em", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                            <span style={{ fontSize: "1.2em" }}>✓</span>
-                            {dPct}% discount will be applied to your checkout!
+                  ) : (
+                    <>
+                      <div className="billing-checkout__left">
+                        <div className="dev-form">
+                          <div className="console-billing__selected-label-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.25rem" }}>
+                            <span style={{ textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: "600" }}>
+                              {language === 'ru' ? 'Выбранный тариф' : 'Selected Plan'}
+                            </span>
                           </div>
-                        );
-                      })()}
-                    </div>
-                    <div className="dev-input-group">
-                      <label>{t.billing.durationDays || "Duration (days)"}</label>
-                      <input
-                        type="number"
-                        min="14"
-                        className="dev-input"
-                        value={billingForm.subscriptionDays}
-                        onChange={e => {
-                          const val = parseInt(e.target.value, 10);
-                          setBillingForm(c => ({ ...c, subscriptionDays: isNaN(val) ? 30 : val }));
-                        }}
-                      />
-                      <span className="dev-input-hint" style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "0.25rem" }}>
-                        {t.billing.durationDaysHint || "Minimum 14 days"}
-                      </span>
-                      {(() => {
-                        const selectedPlan = session.me.plans.find(p => p.code === billingForm.plan);
-                        if (!selectedPlan) return null;
-                        const days = billingForm.subscriptionDays;
-                        if (days < 14) return null;
-                        const dailyRate = Number(selectedPlan.price_usd) / 30;
-                        const totalPrice = dailyRate * days;
-                        const dPct = session.me.workspace.discount_percent || 0;
-                        const dPlan = session.me.workspace.discount_plan_code;
-                        const hasD = dPct > 0 && (!dPlan || dPlan === selectedPlan.code);
-                        const finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
-                        return (
-                          <div style={{ fontSize: "0.9em", marginTop: "0.5rem", opacity: 0.9 }}>
-                            {t.billing.estimatedPrice || "Estimated price"}: <strong>${finalPrice.toFixed(2)} USD</strong> {days !== 30 && `(for ${days} days)`}
+                          <div className="console-billing__selected-plan" style={{ fontSize: "1.4rem", fontWeight: "800", color: "#fff", fontFamily: "Space Grotesk, sans-serif" }}>
+                            {(() => {
+                              const plan = session.me.plans.find(p => p.code === billingForm.plan);
+                              return plan ? plan.name : billingForm.plan;
+                            })()}
                           </div>
-                        );
-                      })()}
-                    </div>
-                    <div className="dev-input-group">
-                      <label>{t.common.network}</label>
-                      <MultiSelect
-                        values={billingForm.optionKeys}
-                        options={billingNetworkOptions}
-                        ariaLabel={t.common.network}
-                        placeholder={t.common.network}
-                        onChange={v => {
-                          const selected = PAYABLE_PAYMENT_OPTIONS.find(option => option.key === v[0]);
-                          setBillingForm(c => ({
-                            ...c,
-                            network: selected?.network ?? c.network,
-                            optionKeys: v,
-                          }));
-                        }}
-                      />
-                    </div>
-                    <button className="dev-btn dev-btn--primary" onClick={onUpgrade}>{t.billing.upgrade}</button>
-                  </div>
-                  <div className="dev-card__side-col">
-                    {checkoutUrl ? (
-                      <div className="dev-form">
-                        <div className="alert alert--success">{t.common.checkoutGenerated}</div>
-                        <code className="dev-input dev-input--readonly-box">{checkoutUrl}</code>
-                        <div className="dev-form__actions-row">
-                          <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(checkoutUrl, "billing-url")}>
-                            {copiedId === "billing-url" ? t.common.copied : t.common.copy}
-                          </button>
-                          <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered">{t.common.payNow}</a>
+                          
+                          <div className="billing-duration-selector" style={{ marginTop: "1.5rem" }}>
+                            <label style={{ fontSize: "0.85rem", color: "var(--muted)", fontWeight: "600" }}>
+                              {t.billing.durationDays || "Duration (days)"}
+                            </label>
+                            
+                            <div className="duration-presets console-billing__duration-presets">
+                              {[
+                                { days: 30, label: language === 'ru' ? '30 дней' : '30 Days' },
+                                { days: 90, label: language === 'ru' ? '90 дней' : '90 Days' },
+                                { days: 180, label: language === 'ru' ? '180 дней' : '180 Days' },
+                                { days: 365, label: language === 'ru' ? '365 дней' : '365 Days' }
+                              ].map(preset => (
+                                <button
+                                  key={preset.days}
+                                  type="button"
+                                  className={`preset-pill ${billingForm.subscriptionDays === preset.days ? 'is-active' : ''}`}
+                                  onClick={() => {
+                                    setCheckoutUrl("");
+                                    setBillingForm(c => ({ ...c, subscriptionDays: preset.days }));
+                                  }}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                            
+                            <div className="dev-input-group" style={{ marginTop: "0.5rem" }}>
+                              <input
+                                type="number"
+                                min="14"
+                                className="dev-input"
+                                value={billingForm.subscriptionDays}
+                                onChange={e => {
+                                  const val = parseInt(e.target.value, 10);
+                                  setCheckoutUrl("");
+                                  setBillingForm(c => ({ ...c, subscriptionDays: isNaN(val) ? 30 : val }));
+                                }}
+                              />
+                              <span className="dev-input-hint" style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "0.25rem" }}>
+                                {t.billing.durationDaysHint || "Minimum 14 days"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    ) : (
-                      <div className="dev-card__footer-text">
-                        <p className="dev-card__plan-label">{t.billing.current}: <strong className="dev-card__plan-strong">{session.me.plan.name}</strong></p>
+                      
+                      <div className="billing-checkout__right">
+                        <div className="billing-price-summary">
+                          <span style={{ textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: "600" }}>
+                            {language === 'ru' ? 'Детали цены' : 'Pricing Details'}
+                          </span>
+                          
+                          {(() => {
+                            const selectedPlan = session.me.plans.find(p => p.code === billingForm.plan);
+                            if (!selectedPlan) return null;
+                            const days = billingForm.subscriptionDays;
+                            const dailyRate = Number(selectedPlan.price_usd) / 30;
+                            const totalPrice = dailyRate * days;
+                            const dPct = session.me.workspace.discount_percent || 0;
+                            const dPlan = session.me.workspace.discount_plan_code;
+                            const hasD = dPct > 0 && (!dPlan || dPlan === selectedPlan.code);
+                            const finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
+                            
+                            return (
+                              <>
+                                <div className="price-summary-row" style={{ marginTop: "0.5rem" }}>
+                                  <span>{language === 'ru' ? 'Базовый тариф' : 'Base rate'}</span>
+                                  <span>${selectedPlan.price_usd} / {language === 'ru' ? '30 дн.' : '30 days'}</span>
+                                </div>
+                                <div className="price-summary-row">
+                                  <span>{language === 'ru' ? 'Срок подписки' : 'Duration'}</span>
+                                  <span>{days} {language === 'ru' ? 'дн.' : 'days'}</span>
+                                </div>
+                                <div className="price-summary-row">
+                                  <span>{language === 'ru' ? 'Промежуточный итог' : 'Subtotal'}</span>
+                                  <span>${totalPrice.toFixed(2)} USD</span>
+                                </div>
+                                {hasD && (
+                                  <div className="price-summary-row">
+                                    <span>{language === 'ru' ? 'Скидка' : 'Discount'} ({dPct}%)</span>
+                                    <span className="price-summary-value--discount">-${(totalPrice - finalPrice).toFixed(2)} USD</span>
+                                  </div>
+                                )}
+                                <div className="price-summary-row price-summary-row--total">
+                                  <span>{language === 'ru' ? 'Итого к оплате' : 'Estimated Total'}</span>
+                                  <strong style={{ fontSize: "1.25rem", color: "#fff" }}>${finalPrice.toFixed(2)} USD</strong>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                        
+                        <div className="console-billing__promo" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem" }}>
+                          <label style={{ fontSize: "0.8rem", color: "var(--muted)", fontWeight: "600", display: "block", marginBottom: "0.4rem" }}>
+                            {t.billing.promoCodeLabel}
+                          </label>
+                          
+                          {promoNotice && (
+                            <div className="alert alert--success console-billing__promo-alert" style={{ padding: "0.4rem 0.6rem", fontSize: "0.78rem", marginBottom: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+                              <span>{promoNotice}</span>
+                              <span style={{ cursor: "pointer", fontWeight: "bold" }} onClick={() => setPromoNotice("")}>×</span>
+                            </div>
+                          )}
+                          {promoError && (
+                            <div className="alert console-billing__promo-alert" style={{ padding: "0.4rem 0.6rem", fontSize: "0.78rem", color: "#ff4d4f", borderColor: "#ff4d4f", marginBottom: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+                              <span>{promoError}</span>
+                              <span style={{ cursor: "pointer", fontWeight: "bold" }} onClick={() => setPromoError("")}>×</span>
+                            </div>
+                          )}
+                          
+                          <div className="billing-promo-input-row console-billing__promo-input-row">
+                            <input
+                              type="text"
+                              className="dev-input"
+                              placeholder="SUMMER30"
+                              value={promoCode}
+                              onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                              style={{ flex: 1, padding: "0.4rem 0.60rem", fontSize: "0.85rem" }}
+                            />
+                            <button
+                              type="button"
+                              className="dev-btn dev-btn--secondary"
+                              onClick={onRedeemPromoCode}
+                              disabled={!promoCode.trim() || redeemingPromo}
+                              style={{ padding: "0 0.75rem", height: "auto" }}
+                            >
+                              {redeemingPromo ? t.common.loading : (language === 'ru' ? 'ОК' : 'Apply')}
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="console-billing__network-note" style={{ fontSize: "0.72rem", color: "var(--muted)", lineHeight: "1.4", opacity: 0.8 }}>
+                          {language === 'ru' 
+                            ? 'Сгенерированный счёт можно оплатить любой криптовалютой во всех популярных сетях (TON, TRON, BSC, Solana, Base, Arbitrum).' 
+                            : 'All major crypto networks are supported at checkout (TON, TRON, BSC, Solana, Base, Arbitrum).'}
+                        </div>
+                        
+                        <button
+                          type="button"
+                          className="dev-btn dev-btn--primary dev-btn--full-width console-billing__create-btn"
+                          onClick={onUpgrade}
+                          style={{ marginTop: "0.5rem" }}
+                        >
+                          {language === 'ru' ? 'Создать счёт' : 'Create Invoice'}
+                        </button>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="dev-card dev-billing-card console-spotlight-card" onMouseMove={handleMouseMove} style={{ marginTop: "2rem" }}>
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <div className="dev-form">
-                    <h3>{t.billing.promoTitle}</h3>
-                    <p className="dev-card__note-text">{t.billing.promoSubtitle}</p>
-                    
-                    {promoNotice && <div className="alert alert--success" style={{ marginBottom: "1rem", cursor: "pointer" }} onClick={() => setPromoNotice("")}>{promoNotice}</div>}
-                    {promoError && <div className="alert" style={{ marginBottom: "1rem", color: "#ff4d4f", borderColor: "#ff4d4f", cursor: "pointer" }} onClick={() => setPromoError("")}>{promoError}</div>}
-                    
-                    <div className="dev-input-group">
-                      <label>{t.billing.promoCodeLabel}</label>
-                      <input
-                        type="text"
-                        className="dev-input"
-                        placeholder="SUMMER30"
-                        value={promoCode}
-                        onChange={e => setPromoCode(e.target.value.toUpperCase())}
-                      />
-                    </div>
-                    <button className="dev-btn dev-btn--primary" onClick={onRedeemPromoCode} disabled={!promoCode.trim() || redeemingPromo}>
-                      {redeemingPromo ? t.common.loading : t.billing.redeemBtn}
-                    </button>
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -2128,7 +3620,7 @@ export function SellerConsolePage() {
                   <h2>{t.settings.title}</h2>
                   <p>{t.settings.subtitle}</p>
                 </div>
-                <div className="dev-card dev-card--max-width console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="dev-card dev-card--max-width console-spotlight-card">
                   <div className="console-card-spotlight" />
                   <div className="console-dogfood-glow" />
                   <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -2150,7 +3642,7 @@ export function SellerConsolePage() {
                   </div>
                 </div>
 
-                <div className="dev-card dev-card--max-width console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="dev-card dev-card--max-width console-spotlight-card">
                   <div className="console-card-spotlight" />
                   <div className="console-dogfood-glow" />
                   <form onSubmit={onUpdateEmail} className="dev-form">
@@ -2170,7 +3662,7 @@ export function SellerConsolePage() {
                   </form>
                 </div>
 
-                <div className="dev-card dev-card--max-width console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="dev-card dev-card--max-width console-spotlight-card">
                   <div className="console-card-spotlight" />
                   <div className="console-dogfood-glow" />
                   <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -2208,7 +3700,7 @@ export function SellerConsolePage() {
                 </div>
 
                 {hasApi && (
-                  <div className="dev-card dev-card--max-width console-spotlight-card" onMouseMove={handleMouseMove}>
+                  <div className="dev-card dev-card--max-width console-spotlight-card">
                     <div className="console-card-spotlight" />
                     <div className="console-dogfood-glow" />
                     <div className="dev-portal__section-header dev-portal__section-header--margin">
@@ -2216,37 +3708,47 @@ export function SellerConsolePage() {
                       <p>{t.usage.subtitle}</p>
                     </div>
                     <div className="dev-widget-grid">
-                      <div className="dev-card dev-widget console-spotlight-card" onMouseMove={handleMouseMove}>
+                      <div className="dev-card dev-widget console-spotlight-card">
                         <div className="console-card-spotlight" />
                         <div className="console-dogfood-glow" />
                         <span className="dev-widget__label">{t.usage.rpm}</span>
-                        <div className="dev-widget__value">{session.me.plan.requests_per_minute}</div>
+                        <div className="dev-widget__value">{formatPlanLimit(session.me.plan.requests_per_minute, t.common.unlimited)}</div>
                       </div>
-                      <div className="dev-card dev-widget console-spotlight-card" onMouseMove={handleMouseMove}>
+                      <div className="dev-card dev-widget console-spotlight-card">
                         <div className="console-card-spotlight" />
                         <div className="console-dogfood-glow" />
                         <span className="dev-widget__label">{t.usage.monthly}</span>
-                        <div className="dev-widget__value">{session.me.plan.monthly_request_cap.toLocaleString()}</div>
+                        <div className="dev-widget__value">{formatPlanLimit(session.me.plan.monthly_request_cap, t.common.unlimited)}</div>
                       </div>
-                      <div className="dev-card dev-widget console-spotlight-card" onMouseMove={handleMouseMove}>
+                      <div className="dev-card dev-widget console-spotlight-card">
                         <div className="console-card-spotlight" />
                         <div className="console-dogfood-glow" />
                         <span className="dev-widget__label">{t.usage.keys}</span>
-                        <div className="dev-widget__value">{filteredKeys.length}/{session.me.plan.api_key_limit}</div>
+                        <div className="dev-widget__value">{filteredKeys.length}/{formatPlanLimit(session.me.plan.api_key_limit, t.common.unlimited)}</div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="dev-card dev-card--max-width console-spotlight-card" onMouseMove={handleMouseMove}>
+                <div className="dev-card dev-card--max-width console-spotlight-card">
+                  <div className="console-card-spotlight" />
+                  <div className="console-dogfood-glow" />
+                  <div className="dev-portal__section-header dev-portal__section-header--margin">
+                    <h3>{language === 'ru' ? 'Режим сети' : 'Network Environment'}</h3>
+                    <p>{language === 'ru' ? 'Выберите Live (реальные блокчейн-транзакции) или Test (тестовая сеть для симуляций).' : 'Toggle between Live (real blockchain transactions) and Test (simulated sandbox) environments.'}</p>
+                  </div>
+                  <div className="env-toggle" style={{ display: 'flex', gap: '8px', maxWidth: '320px' }}>
+                    <button style={{ flex: 1, height: '36px', fontSize: '13px' }} className={`env-toggle__btn ${environment === 'live' ? 'is-active' : ''}`} onClick={() => setEnvironment('live')}>{t.common.liveMode}</button>
+                    <button style={{ flex: 1, height: '36px', fontSize: '13px' }} className={`env-toggle__btn ${environment === 'test' ? 'is-active' : ''}`} onClick={() => setEnvironment('test')}>{t.common.testMode}</button>
+                  </div>
+                </div>
+
+                <div className="dev-card dev-card--max-width console-spotlight-card">
                   <div className="console-card-spotlight" />
                   <div className="console-dogfood-glow" />
                   <div className="dev-input-group">
                     <label>{t.settings.language}</label>
-                    <div className="dev-form__grid">
-                      <button className={`dev-btn ${language === 'ru' ? 'dev-btn--primary' : 'dev-btn--secondary'}`} onClick={() => void onSetLanguage('ru')}>RU</button>
-                      <button className={`dev-btn ${language === 'en' ? 'dev-btn--primary' : 'dev-btn--secondary'}`} onClick={() => void onSetLanguage('en')}>EN</button>
-                    </div>
+                    <LanguageSelect value={language} onChange={(next) => void onSetLanguage(next)} ariaLabel={t.settings.language} className="console-language-picker" />
                   </div>
 
                   <div className="dev-card--danger-zone">

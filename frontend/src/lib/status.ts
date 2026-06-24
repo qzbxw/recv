@@ -128,6 +128,14 @@ export function formatNetworkLabel(network: Network) {
       return "Solana";
     case "ARBITRUM":
       return "Arbitrum";
+    case "BASE":
+      return "Base";
+    case "BSC":
+      return "BSC";
+    case "TRON":
+      return "TRON";
+    case "TON":
+      return "TON";
     default:
       return network;
   }

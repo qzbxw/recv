@@ -383,7 +383,7 @@ export function DeveloperPortalPage() {
                 <div className="dev-card dev-card--accent dev-widget">
                   <span className="dev-widget__label">{t.dashboard.plan}</span>
                   <div className="dev-widget__value">{me?.plan.name ?? "—"}</div>
-                  <div className="dev-widget__meta">{me?.plan.has_api ? t.dashboard.active : t.dashboard.inactive}</div>
+                  <div className="dev-widget__meta">{(me?.plan.has_api || import.meta.env.DEV) ? t.dashboard.active : t.dashboard.inactive}</div>
                 </div>
                 <div className="dev-card dev-widget">
                   <span className="dev-widget__label">{t.dashboard.usage}</span>
@@ -552,7 +552,7 @@ export function DeveloperPortalPage() {
                         <label>{t.keys.label}</label>
                         <input className="dev-input" value={keyLabel} onChange={e => setKeyLabel(e.target.value)} placeholder={t.keys.placeholder} required />
                       </div>
-                      <button type="submit" className="dev-btn dev-btn--primary" disabled={!me?.plan.has_api}>{t.keys.create}</button>
+                      <button type="submit" className="dev-btn dev-btn--primary" disabled={!(me?.plan.has_api || import.meta.env.DEV)}>{t.keys.create}</button>
                     </div>
                     <div className="dev-form__scopes-row">
                       {["invoices:read", "invoices:write"].map(s => (

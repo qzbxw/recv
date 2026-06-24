@@ -3,9 +3,10 @@ import { useParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { fetchPublicInvoice, trackPublicEvent } from "../lib/api";
 import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel, formatPaymentAssetLabel, getInvoiceStatusMeta } from "../lib/status";
-import type { Invoice } from "../lib/types";
+import type { Invoice, Network } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { CHECKOUT_COPY as COPY } from "../i18n";
+import { LanguageSelect } from "../components/LanguageSelect";
 import "../styles/checkout.css";
 
 const BOT_URL = "https://t.me/recvmoney_bot";
@@ -84,6 +85,17 @@ function createDemoInvoice(): Invoice {
     finalized_at: null,
     checkout_url: "/app/checkout/demo",
     payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=149000000000&text=RECV-DEMO-149",
+    payment_options: [
+      { network: "TON_USDT", asset: "USDT", payable_amount: "149.000000", destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: "RECV-DEMO-149", payment_uri: "", is_default: true },
+      { network: "TON", asset: "GRAM", payable_amount: "1234.500000", destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: "RECV-DEMO-149", payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=1234500000000&text=RECV-DEMO-149", is_default: false },
+      { network: "TRON", asset: "USDT", payable_amount: "149.000000", destination_address: "TXDemoTRON4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1", payment_comment: null, payment_uri: "", is_default: false },
+      { network: "SOLANA", asset: "USDT", payable_amount: "149.000000", destination_address: "DemoSoLana7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: null, payment_uri: "", is_default: false },
+      { network: "SOLANA", asset: "USDC", payable_amount: "149.000000", destination_address: "DemoSoLana7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: null, payment_uri: "", is_default: false },
+      { network: "BASE", asset: "USDT", payable_amount: "149.000000", destination_address: "0xDemoBase4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD", payment_comment: null, payment_uri: "", is_default: false },
+      { network: "ARBITRUM", asset: "USDC", payable_amount: "149.000000", destination_address: "0xDemoArb4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD", payment_comment: null, payment_uri: "", is_default: false },
+      { network: "BSC", asset: "BNB", payable_amount: "0.412000", destination_address: "0xDemoBSC4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD", payment_comment: null, payment_uri: "", is_default: false },
+      { network: "BSC", asset: "USDT", payable_amount: "149.000000", destination_address: "0xDemoBSC4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD", payment_comment: null, payment_uri: "", is_default: false },
+    ],
   };
 }
 
@@ -125,6 +137,15 @@ const Icons = {
       <circle cx="16" cy="14" r="1" />
     </svg>
   ),
+  ChevronDown: ({ className }: { className?: string }) => (
+    <svg
+      width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+      style={{ transition: "transform 0.2s ease", transform: className?.includes("is-flipped") ? "rotate(180deg)" : "rotate(0deg)" }}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  ),
 };
 
 export function CheckoutPage() {
@@ -138,6 +159,10 @@ export function CheckoutPage() {
   const [now, setNow] = useState(Date.now());
   const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "details" | "">("");
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
+  const [networkDropOpen, setNetworkDropOpen] = useState(false);
+  const [assetDropOpen, setAssetDropOpen] = useState(false);
+  const networkDropRef = useRef<HTMLDivElement>(null);
+  const assetDropRef = useRef<HTMLDivElement>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const statusRef = useRef("");
   const trackedCheckoutRef = useRef("");
@@ -268,6 +293,20 @@ export function CheckoutPage() {
     return () => window.clearTimeout(timeout);
   }, [copiedField]);
 
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (networkDropRef.current && !networkDropRef.current.contains(e.target as Node)) {
+        setNetworkDropOpen(false);
+      }
+      if (assetDropRef.current && !assetDropRef.current.contains(e.target as Node)) {
+        setAssetDropOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
   const timeLeft = useMemo(() => {
     if (!invoice) {
       return "00:00";
@@ -288,8 +327,65 @@ export function CheckoutPage() {
       : text.pageTitle;
   }, [invoice?.title, text.pageTitle]);
 
-  const title = invoice?.title?.trim() || text.paymentRequest;
+  // Cascade dropdown derived state
+  // TON_USDT is a backend implementation detail — in the UI it's just TON + USDT asset.
+  const paymentOptions = invoice?.payment_options ?? [];
+
+  function getDisplayNetwork(network: string): string {
+    return network === "TON_USDT" ? "TON" : network;
+  }
+
+  const uniqueNetworks = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const o of paymentOptions) {
+      const display = getDisplayNetwork(o.network);
+      if (!seen.has(display)) {
+        seen.add(display);
+        result.push(display);
+      }
+    }
+    return result;
+  }, [paymentOptions]);
+
   const selectedOption = invoice?.payment_options?.[selectedOptionIndex] ?? invoice?.payment_options?.[0] ?? null;
+  const selectedDisplayNetwork = selectedOption ? getDisplayNetwork(selectedOption.network) : null;
+  const selectedAsset = selectedOption?.asset ?? null;
+
+  // All assets available under the currently selected display-network
+  const assetsForNetwork = useMemo(() => {
+    if (!selectedDisplayNetwork) return [];
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const o of paymentOptions) {
+      if (getDisplayNetwork(o.network) === selectedDisplayNetwork && !seen.has(o.asset)) {
+        seen.add(o.asset);
+        result.push(o.asset);
+      }
+    }
+    return result;
+  }, [paymentOptions, selectedDisplayNetwork]);
+
+  function selectNetwork(displayNetwork: string) {
+    // Pick first option that matches the display network
+    const idx = paymentOptions.findIndex(o => getDisplayNetwork(o.network) === displayNetwork);
+    if (idx >= 0) setSelectedOptionIndex(idx);
+    setNetworkDropOpen(false);
+    setAssetDropOpen(false);
+  }
+
+  function selectAsset(asset: string) {
+    // Match by display-network + asset (handles TON/TON_USDT transparently)
+    const idx = paymentOptions.findIndex(
+      o => getDisplayNetwork(o.network) === selectedDisplayNetwork && o.asset === asset
+    );
+    if (idx >= 0) setSelectedOptionIndex(idx);
+    setAssetDropOpen(false);
+  }
+
+
+
+  const title = invoice?.title?.trim() || text.paymentRequest;
   const activePayment = invoice && selectedOption
     ? {
         payable_amount: selectedOption.payable_amount,
@@ -385,10 +481,7 @@ export function CheckoutPage() {
 
       <header className="co-top">
         <a className="co-brand" href="/">recv</a>
-        <div className="co-lang" role="group" aria-label="language">
-          <button id="co-lang-ru" type="button" className={language === "ru" ? "is-active" : ""} onClick={() => setLanguage("ru")}>RU</button>
-          <button id="co-lang-en" type="button" className={language === "en" ? "is-active" : ""} onClick={() => setLanguage("en")}>EN</button>
-        </div>
+        <LanguageSelect value={language} onChange={setLanguage} ariaLabel="language" compact className="co-lang" />
       </header>
 
       <section className={`co-card co-card--${checkoutVariant}`} onMouseMove={handleMouseMove}>
@@ -440,18 +533,77 @@ export function CheckoutPage() {
               <h1 className="co-title">{title}</h1>
             </div>
 
-            {invoice.payment_options && invoice.payment_options.length > 1 ? (
-              <div className="co-options">
-                {invoice.payment_options.map((option, index) => (
+            {paymentOptions.length > 1 ? (
+              <div className="co-options co-options--dropdowns">
+                {/* Network Dropdown */}
+                <div className="co-drop-wrap" ref={networkDropRef}>
                   <button
-                    key={`${option.network}-${option.asset}`}
+                    id="co-drop-network"
                     type="button"
-                    className={`co-chip ${selectedOptionIndex === index ? "is-active" : ""}`}
-                    onClick={() => setSelectedOptionIndex(index)}
+                    className={`co-drop-btn ${networkDropOpen ? "is-open" : ""}`}
+                    onClick={() => { setNetworkDropOpen(o => !o); setAssetDropOpen(false); }}
+                    aria-haspopup="listbox"
+                    aria-expanded={networkDropOpen}
                   >
-                    {option.asset} · {formatNetworkLabel(option.network)}
+                    <span className="co-drop-btn__label">{text.network}</span>
+                    <span className="co-drop-btn__value">
+                      {selectedDisplayNetwork ? formatNetworkLabel(selectedDisplayNetwork as Network) : text.selectNetwork}
+                    </span>
+                    <Icons.ChevronDown className={networkDropOpen ? "is-flipped" : ""} />
                   </button>
-                ))}
+                  {networkDropOpen && (
+                    <ul className="co-drop-menu" role="listbox">
+                      {uniqueNetworks.map(net => (
+                        <li
+                          key={net}
+                          role="option"
+                          aria-selected={net === selectedDisplayNetwork}
+                          className={`co-drop-item ${net === selectedDisplayNetwork ? "is-selected" : ""}`}
+                          onClick={() => selectNetwork(net)}
+                        >
+                          {formatNetworkLabel(net as Network)}
+                          {net === selectedDisplayNetwork && <Icons.Check />}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Asset Dropdown — only when network has multiple assets */}
+                {assetsForNetwork.length > 1 && (
+                  <div className="co-drop-wrap" ref={assetDropRef}>
+                    <button
+                      id="co-drop-asset"
+                      type="button"
+                      className={`co-drop-btn ${assetDropOpen ? "is-open" : ""}`}
+                      onClick={() => { setAssetDropOpen(o => !o); setNetworkDropOpen(false); }}
+                      aria-haspopup="listbox"
+                      aria-expanded={assetDropOpen}
+                    >
+                      <span className="co-drop-btn__label">{text.selectAsset}</span>
+                      <span className="co-drop-btn__value">
+                        {selectedAsset ?? text.selectAsset}
+                      </span>
+                      <Icons.ChevronDown className={assetDropOpen ? "is-flipped" : ""} />
+                    </button>
+                    {assetDropOpen && (
+                      <ul className="co-drop-menu" role="listbox">
+                        {assetsForNetwork.map(asset => (
+                          <li
+                            key={asset}
+                            role="option"
+                            aria-selected={asset === selectedAsset}
+                            className={`co-drop-item ${asset === selectedAsset ? "is-selected" : ""}`}
+                            onClick={() => selectAsset(asset)}
+                          >
+                            {asset}
+                            {asset === selectedAsset && <Icons.Check />}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             ) : null}
 
@@ -571,7 +723,7 @@ export function CheckoutPage() {
       {invoice ? (
         <footer className="co-foot">
           <a href="/">
-            <span>{text.footerPoweredBy}</span>
+            <span>{text.footerVerifiedBy}</span>
             <strong>recv</strong>
           </a>
         </footer>

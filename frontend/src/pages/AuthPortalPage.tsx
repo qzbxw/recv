@@ -14,7 +14,7 @@ import {
 import { sanitizeNextPath } from "../lib/routing";
 import { readAttribution, readRefCode, sanitizeRefCode, trackUTMEvent } from "../lib/attribution";
 import { useUI } from "../lib/ui";
-import { AUTH_COPY as COPY } from "../i18n";
+import { AUTH_COPY as COPY, SUPPORTED_LANGUAGES, type Language } from "../i18n";
 
 const BOT_URL = "https://t.me/recvmoney_bot";
 const DEV_AUTH_ENABLED = import.meta.env.VITE_ENABLE_DEV_AUTH === "true";
@@ -61,7 +61,7 @@ function TelegramIcon({ size = 18 }: { size?: number }) {
 export function AuthPortalPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { language } = useUI();
+  const { language, setLanguage } = useUI();
   const text = COPY[language];
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -76,6 +76,27 @@ export function AuthPortalPage() {
   const [showRefCode, setShowRefCode] = useState(false);
   const [refStatus, setRefStatus] = useState<"idle" | "valid" | "invalid">("idle");
   const [refPartner, setRefPartner] = useState("");
+
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const languageFlags: Partial<Record<Language, string>> = { ru: "🇷🇺", en: "🇺🇸" };
+  const languagesList = SUPPORTED_LANGUAGES.map((lang) => ({
+    code: lang.value,
+    label: lang.label,
+    flag: languageFlags[lang.value] ?? "🌐",
+  }));
+  const currentLanguage = languagesList.find((l) => l.code === language) || languagesList[0];
 
   useEffect(() => {
     const code = sanitizeRefCode(refCode);
@@ -94,6 +115,7 @@ export function AuthPortalPage() {
     }, 400);
     return () => window.clearTimeout(timeout);
   }, [refCode]);
+
   const [devForm, setDevForm] = useState({
     username: "designer",
     telegramId: "10001",
@@ -255,89 +277,53 @@ export function AuthPortalPage() {
     }
   }
 
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!window.matchMedia("(hover: hover)").matches) return;
-    const card = cardRef.current;
-    if (!card) return;
-
-    let currentX = 0;
-    let currentY = 0;
-    let targetX = 0;
-    let targetY = 0;
-    let isHovered = false;
-    let frameId = 0;
-
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = card.getBoundingClientRect();
-      targetX = e.clientX - rect.left;
-      targetY = e.clientY - rect.top;
-    };
-
-    const update = () => {
-      if (!isHovered) {
-        frameId = 0;
-        return;
-      }
-      // Interpolate with a factor of 0.08 (liquid lag)
-      currentX += (targetX - currentX) * 0.08;
-      currentY += (targetY - currentY) * 0.08;
-
-      card.style.setProperty("--mouse-x", `${currentX}px`);
-      card.style.setProperty("--mouse-y", `${currentY}px`);
-
-      frameId = requestAnimationFrame(update);
-    };
-
-    const startAnimation = () => {
-      if (!frameId) frameId = requestAnimationFrame(update);
-    };
-
-    const onMouseEnter = () => {
-      isHovered = true;
-      card.style.setProperty("--spotlight-opacity", "1");
-      startAnimation();
-    };
-
-    const onMouseLeave = () => {
-      isHovered = false;
-      card.style.setProperty("--spotlight-opacity", "0");
-      
-      // Settle back to center for the next hover without keeping a frame loop alive.
-      const rect = card.getBoundingClientRect();
-      targetX = rect.width / 2;
-      targetY = rect.height / 2;
-      currentX = targetX;
-      currentY = targetY;
-      card.style.setProperty("--mouse-x", `${currentX}px`);
-      card.style.setProperty("--mouse-y", `${currentY}px`);
-    };
-
-    card.addEventListener("mousemove", onMouseMove);
-    card.addEventListener("mouseenter", onMouseEnter);
-    card.addEventListener("mouseleave", onMouseLeave);
-
-    // Set initial position to center
-    const rect = card.getBoundingClientRect();
-    targetX = rect.width / 2;
-    targetY = rect.height / 2;
-    currentX = targetX;
-    currentY = targetY;
-
-    return () => {
-      card.removeEventListener("mousemove", onMouseMove);
-      card.removeEventListener("mouseenter", onMouseEnter);
-      card.removeEventListener("mouseleave", onMouseLeave);
-      if (frameId) cancelAnimationFrame(frameId);
-    };
-  }, []);
-
   return (
     <main className="auth-portal">
       <div className="dev-portal__backdrop dev-portal__backdrop--grid" />
       <div className="auth-portal__glow auth-portal__glow--left" />
       <div className="auth-portal__glow auth-portal__glow--right" />
+
+      {/* Language dropdown selector top right */}
+      <div className="auth-portal__lang-selector" ref={dropdownRef}>
+        <button
+          type="button"
+          className="auth-portal__lang-trigger"
+          onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+        >
+          <span className="auth-portal__lang-flag">{currentLanguage.flag}</span>
+          <span className="auth-portal__lang-label">{currentLanguage.label}</span>
+          <svg
+            className={`auth-portal__lang-arrow ${langDropdownOpen ? "open" : ""}`}
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        {langDropdownOpen && (
+          <ul className="auth-portal__lang-dropdown">
+            {languagesList.map((lang) => (
+              <li key={lang.code}>
+                <button
+                  type="button"
+                  className={`auth-portal__lang-option ${lang.code === language ? "active" : ""}`}
+                  onClick={() => {
+                    setLanguage(lang.code);
+                    setLangDropdownOpen(false);
+                  }}
+                >
+                  <span>{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <div className="auth-portal__shell portal-animate-in">
         <header className="auth-portal__header">
@@ -346,145 +332,274 @@ export function AuthPortalPage() {
           </Link>
         </header>
 
-        <div ref={cardRef} className="dev-card auth-portal__card lend-spotlight-card">
-          <div className="lend-card-spotlight" />
+        <div className="dev-card auth-portal__card lend-spotlight-card">
           <div className="auth-portal__form-header">
             <h1 className="auth-portal__title">{text.browserTitle}</h1>
             <p className="auth-portal__subtitle">{text.browserBody}</p>
           </div>
 
-          <div className="auth-portal__telegram-first">
-            {initData ? (
-              <button
-                type="button"
-                className="dev-btn dev-btn--primary auth-portal__submit-btn"
-                disabled={loading}
-                onClick={() => void performTelegramAuth()}
-                style={{ width: '100%' }}
-              >
-                {loading ? text.signingIn : text.continueTelegram}
-              </button>
-            ) : (
-              <div className="auth-portal__bot-hint-box">
-                <p className="auth-portal__hint-text">{text.browserHint}</p>
-                <a href={BOT_URL} target="_blank" rel="noreferrer" className="auth-portal__bot-link">
-                  <TelegramIcon size={14} />
-                  <span>{text.openBot}</span>
-                </a>
-              </div>
-            )}
-          </div>
-
-          <form className="dev-form" onSubmit={handleSubmit}>
-            <div className="dev-input-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <label style={{ margin: 0 }}>{text.username}</label>
-                {codeRequested && (
-                  <button
-                    type="button"
-                    className="auth-portal__change-username-btn"
-                    onClick={() => {
-                      setCodeRequested(false);
-                      setForm((current) => ({ ...current, code: "" }));
-                      setMessage("");
-                    }}
-                  >
-                    {language === "ru" ? "изменить" : "change"}
-                  </button>
-                )}
-              </div>
-              <div className="auth-portal__input-wrapper">
-                <span className="auth-portal__input-icon">
-                  <TelegramIcon size={16} />
-                </span>
-                <input
-                  className="dev-input"
-                  type="text"
-                  placeholder={text.usernamePlaceholder}
-                  value={form.username}
-                  onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
-                  required
-                  disabled={codeRequested}
-                />
-              </div>
-            </div>
-
-            {codeRequested && (
-              <div className="dev-input-group anim-fade-in" style={{ marginTop: '1.25rem' }}>
-                <label style={{ display: 'block', marginBottom: '8px' }}>{text.code}</label>
-                <input
-                  className="dev-input"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder={text.codePlaceholder}
-                  value={form.code}
-                  onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
-                  required
-                  autoFocus
-                />
-              </div>
-            )}
-
-            {!showRefCode ? (
-              <div className="auth-portal__ref-toggle-container">
+          {initData ? (
+            /* Inside Telegram Mini App - Telegram primary login */
+            <>
+              <div className="auth-portal__telegram-first">
                 <button
                   type="button"
-                  className="auth-portal__ref-toggle"
-                  onClick={() => setShowRefCode(true)}
-                >
-                  + {text.refCode}
-                </button>
-              </div>
-            ) : (
-              <div className="dev-input-group anim-fade-in" style={{ marginTop: '1.25rem' }}>
-                <label style={{ display: 'block', marginBottom: '8px' }}>{text.refCode}</label>
-                <input
-                  className="dev-input"
-                  type="text"
-                  placeholder={text.refCodePlaceholder}
-                  value={refCode}
-                  onChange={(event) => setRefCode(event.target.value)}
-                />
-                {refStatus === "valid" ? (
-                  <p className="auth-portal__ref-status auth-portal__ref-status--success">{text.refCodeApplied} {refPartner}</p>
-                ) : null}
-                {refStatus === "invalid" ? (
-                  <p className="auth-portal__ref-status auth-portal__ref-status--error">{text.refCodeInvalid}</p>
-                ) : null}
-              </div>
-            )}
-
-            {!codeRequested ? (
-              <button
-                type="button"
-                className="dev-btn dev-btn--primary auth-portal__submit-btn"
-                disabled={sendingCode || !form.username}
-                onClick={() => void handleSendCode()}
-                style={{ width: '100%', marginTop: '1.5rem' }}
-              >
-                {sendingCode ? text.sendingCode : text.sendCode}
-              </button>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1.5rem' }}>
-                <button
-                  type="submit"
                   className="dev-btn dev-btn--primary auth-portal__submit-btn"
-                  disabled={loading || !form.code}
+                  disabled={loading}
+                  onClick={() => void performTelegramAuth()}
                   style={{ width: '100%' }}
                 >
-                  {loading ? text.signingIn : text.loginAction}
-                </button>
-                <button
-                  type="button"
-                  className="auth-portal__resend-btn"
-                  disabled={sendingCode}
-                  onClick={() => void handleSendCode()}
-                >
-                  {sendingCode ? text.sendingCode : (language === "ru" ? "Отправить код повторно" : "Resend confirmation code")}
+                  {loading ? text.signingIn : text.continueTelegram}
                 </button>
               </div>
-            )}
-          </form>
+
+              <form className="dev-form" onSubmit={handleSubmit}>
+                <div className="dev-input-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label style={{ margin: 0 }}>{text.username}</label>
+                    {codeRequested && (
+                      <button
+                        type="button"
+                        className="auth-portal__change-username-btn"
+                        onClick={() => {
+                          setCodeRequested(false);
+                          setForm((current) => ({ ...current, code: "" }));
+                          setMessage("");
+                        }}
+                      >
+                        {language === "ru" ? "изменить" : "change"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="auth-portal__input-wrapper">
+                    <span className="auth-portal__input-icon">
+                      <TelegramIcon size={16} />
+                    </span>
+                    <input
+                      className="dev-input"
+                      type="text"
+                      placeholder={text.usernamePlaceholder}
+                      value={form.username}
+                      onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
+                      required
+                      disabled={codeRequested}
+                    />
+                  </div>
+                </div>
+
+                {codeRequested && (
+                  <div className="dev-input-group anim-fade-in" style={{ marginTop: '1.25rem' }}>
+                    <label style={{ display: 'block', marginBottom: '8px' }}>{text.code}</label>
+                    <input
+                      className="dev-input"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder={text.codePlaceholder}
+                      value={form.code}
+                      onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                )}
+
+                {!showRefCode ? (
+                  <div className="auth-portal__ref-toggle-container">
+                    <button
+                      type="button"
+                      className="auth-portal__ref-toggle"
+                      onClick={() => setShowRefCode(true)}
+                    >
+                      + {text.refCode}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="dev-input-group anim-fade-in" style={{ marginTop: '1.25rem' }}>
+                    <label style={{ display: 'block', marginBottom: '8px' }}>{text.refCode}</label>
+                    <input
+                      className="dev-input"
+                      type="text"
+                      placeholder={text.refCodePlaceholder}
+                      value={refCode}
+                      onChange={(event) => setRefCode(event.target.value)}
+                    />
+                    {refStatus === "valid" ? (
+                      <p className="auth-portal__ref-status auth-portal__ref-status--success">{text.refCodeApplied} {refPartner}</p>
+                    ) : null}
+                    {refStatus === "invalid" ? (
+                      <p className="auth-portal__ref-status auth-portal__ref-status--error">{text.refCodeInvalid}</p>
+                    ) : null}
+                  </div>
+                )}
+
+                {!codeRequested ? (
+                  <button
+                    type="button"
+                    className="dev-btn dev-btn--primary auth-portal__submit-btn"
+                    disabled={sendingCode || !form.username}
+                    onClick={() => void handleSendCode()}
+                    style={{ width: '100%', marginTop: '1.5rem' }}
+                  >
+                    {sendingCode ? text.sendingCode : text.sendCode}
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1.5rem' }}>
+                    <button
+                      type="submit"
+                      className="dev-btn dev-btn--primary auth-portal__submit-btn"
+                      disabled={loading || !form.code}
+                      style={{ width: '100%' }}
+                    >
+                      {loading ? text.signingIn : text.loginAction}
+                    </button>
+                    <button
+                      type="button"
+                      className="auth-portal__resend-btn"
+                      disabled={sendingCode}
+                      onClick={() => void handleSendCode()}
+                    >
+                      {sendingCode ? text.sendingCode : (language === "ru" ? "Отправить код повторно" : "Resend confirmation code")}
+                    </button>
+                  </div>
+                )}
+              </form>
+            </>
+          ) : (
+            /* Outside Telegram (standard browser) - OAuth primary login, TG secondary */
+            <>
+              <div className="auth-portal__oauth-grid" style={{ margin: '0 0 1.25rem' }}>
+                <a className="auth-portal__oauth-btn auth-portal__oauth-btn--google" href={getOAuthStartUrl("google", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
+                  <GoogleIcon />
+                  <span>Google</span>
+                </a>
+                <a className="auth-portal__oauth-btn auth-portal__oauth-btn--github" href={getOAuthStartUrl("github", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
+                  <GithubIcon />
+                  <span>GitHub</span>
+                </a>
+              </div>
+
+              <div className="auth-portal__divider"><span>{text.telegramFallback}</span></div>
+
+              <form className="dev-form" onSubmit={handleSubmit}>
+                <div className="dev-input-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label style={{ margin: 0 }}>{text.username}</label>
+                    {codeRequested && (
+                      <button
+                        type="button"
+                        className="auth-portal__change-username-btn"
+                        onClick={() => {
+                          setCodeRequested(false);
+                          setForm((current) => ({ ...current, code: "" }));
+                          setMessage("");
+                        }}
+                      >
+                        {language === "ru" ? "изменить" : "change"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="auth-portal__input-wrapper">
+                    <span className="auth-portal__input-icon">
+                      <TelegramIcon size={16} />
+                    </span>
+                    <input
+                      className="dev-input"
+                      type="text"
+                      placeholder={text.usernamePlaceholder}
+                      value={form.username}
+                      onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
+                      required
+                      disabled={codeRequested}
+                    />
+                  </div>
+                  {!codeRequested && (
+                    <div className="auth-portal__tg-hint">
+                      <span>{text.browserHint}</span>{" "}
+                      <a href={BOT_URL} target="_blank" rel="noreferrer" className="auth-portal__inline-bot-link">
+                        {text.openBot}
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {codeRequested && (
+                  <div className="dev-input-group anim-fade-in" style={{ marginTop: '1.25rem' }}>
+                    <label style={{ display: 'block', marginBottom: '8px' }}>{text.code}</label>
+                    <input
+                      className="dev-input"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder={text.codePlaceholder}
+                      value={form.code}
+                      onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                )}
+
+                {!showRefCode ? (
+                  <div className="auth-portal__ref-toggle-container">
+                    <button
+                      type="button"
+                      className="auth-portal__ref-toggle"
+                      onClick={() => setShowRefCode(true)}
+                    >
+                      + {text.refCode}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="dev-input-group anim-fade-in" style={{ marginTop: '1.25rem' }}>
+                    <label style={{ display: 'block', marginBottom: '8px' }}>{text.refCode}</label>
+                    <input
+                      className="dev-input"
+                      type="text"
+                      placeholder={text.refCodePlaceholder}
+                      value={refCode}
+                      onChange={(event) => setRefCode(event.target.value)}
+                    />
+                    {refStatus === "valid" ? (
+                      <p className="auth-portal__ref-status auth-portal__ref-status--success">{text.refCodeApplied} {refPartner}</p>
+                    ) : null}
+                    {refStatus === "invalid" ? (
+                      <p className="auth-portal__ref-status auth-portal__ref-status--error">{text.refCodeInvalid}</p>
+                    ) : null}
+                  </div>
+                )}
+
+                {!codeRequested ? (
+                  <button
+                    type="button"
+                    className="dev-btn dev-btn--primary auth-portal__submit-btn"
+                    disabled={sendingCode || !form.username}
+                    onClick={() => void handleSendCode()}
+                    style={{ width: '100%', marginTop: '1.5rem' }}
+                  >
+                    {sendingCode ? text.sendingCode : text.sendCode}
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1.5rem' }}>
+                    <button
+                      type="submit"
+                      className="dev-btn dev-btn--primary auth-portal__submit-btn"
+                      disabled={loading || !form.code}
+                      style={{ width: '100%' }}
+                    >
+                      {loading ? text.signingIn : text.loginAction}
+                    </button>
+                    <button
+                      type="button"
+                      className="auth-portal__resend-btn"
+                      disabled={sendingCode}
+                      onClick={() => void handleSendCode()}
+                    >
+                      {sendingCode ? text.sendingCode : (language === "ru" ? "Отправить код повторно" : "Resend confirmation code")}
+                    </button>
+                  </div>
+                )}
+              </form>
+            </>
+          )}
 
           {message ? (
             <div className="alert alert--success auth-portal__alert" style={{ marginTop: '1.25rem' }}>{message}</div>
@@ -496,34 +611,20 @@ export function AuthPortalPage() {
           <p className="auth-portal__disclaimer-text">
             {language === "ru" ? (
               <>
-                Продолжая, вы подтверждаете, что вам исполнилось 18 лет, вы обладаете полномочиями связывать Мерчанта обязательствами, соглашаетесь с{" "}
+                Продолжая, вы подтверждаете, что вам исполнилось 18 лет, вы уполномочены представлять интересы Мерчанта, соглашаетесь с{" "}
                 <Link to="/terms" target="_blank" className="auth-portal__disclaimer-link">Условиями использования</Link>{" "}
                 и признаете{" "}
                 <Link to="/privacy" target="_blank" className="auth-portal__disclaimer-link">Политику конфиденциальности</Link>.
               </>
             ) : (
               <>
-                By continuing, you confirm that you are at least 18 years old, have authority to bind the Merchant, and agree to the{" "}
+                By continuing, you confirm that you are at least 18 years old, are authorized to act on behalf of the Merchant, and agree to the{" "}
                 <Link to="/terms" target="_blank" className="auth-portal__disclaimer-link">Terms of Service</Link>{" "}
                 and acknowledge the{" "}
                 <Link to="/privacy" target="_blank" className="auth-portal__disclaimer-link">Privacy Policy</Link>.
               </>
             )}
           </p>
-
-          <div className="auth-portal__footer-actions">
-            <div className="auth-portal__divider"><span>{text.telegramFallback}</span></div>
-            <div className="auth-portal__oauth-grid">
-              <a className="auth-portal__oauth-btn auth-portal__oauth-btn--google" href={getOAuthStartUrl("google", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
-                <GoogleIcon />
-                <span>Google</span>
-              </a>
-              <a className="auth-portal__oauth-btn auth-portal__oauth-btn--github" href={getOAuthStartUrl("github", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
-                <GithubIcon />
-                <span>GitHub</span>
-              </a>
-            </div>
-          </div>
         </div>
 
         {DEV_AUTH_ENABLED ? (

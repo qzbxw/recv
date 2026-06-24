@@ -2,6 +2,10 @@ import en from "./en";
 import ru from "./ru";
 
 export type Language = "ru" | "en";
+export const SUPPORTED_LANGUAGES: Array<{ value: Language; label: string; shortLabel: string }> = [
+  { value: "ru", label: "Русский", shortLabel: "RU" },
+  { value: "en", label: "English", shortLabel: "EN" },
+];
 export const BOT_URL = "https://t.me/recvmoney_bot";
 export const APP_COPY = { en, ru } as const;
 

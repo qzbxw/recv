@@ -74,6 +74,10 @@ export function mapApiError(error: unknown): ApiErrorHint {
 
 export function formatApiError(error: unknown) {
   const mapped = mapApiError(error);
-  return `${mapped.message} ${mapped.action}`.trim();
+  const isDev = import.meta.env.DEV || import.meta.env.MODE === "test";
+  if (isDev) {
+    return `${mapped.message} ${mapped.action}`.trim();
+  }
+  return mapped.message;
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useUI } from "../lib/ui";
 import { PLAN_COPY as COPY } from "../i18n";
+import { LanguageSelect } from "../components/LanguageSelect";
 
 type Variant = "dev" | "business";
 
@@ -52,10 +53,7 @@ export function PlanPage({ variant }: { variant: Variant }) {
             </Link>
 
             <div className="lend-topbar-actions">
-              <div className="lend-language" role="group" aria-label="language switcher">
-                <button type="button" className={language === "ru" ? "active" : ""} onClick={() => setLanguage("ru")}>RU</button>
-                <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>EN</button>
-              </div>
+              <LanguageSelect value={language} onChange={setLanguage} ariaLabel="language switcher" compact className="lend-language" />
               <Link className="lend-primary" to="/auth">{text.auth}</Link>
             </div>
           </div>

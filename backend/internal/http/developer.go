@@ -61,7 +61,7 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 		}
 
 		plan := workspace.EffectivePlan(time.Now())
-		if !plan.HasAPI {
+		if !plan.HasAPI && s.cfg.AppEnv != "development" {
 			metrics.IncLimitDecision("api_access", "denied", "plan")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "current plan does not include Developer or Business API access"})
 			return
@@ -166,7 +166,7 @@ func (s *Server) handleCreateAPIKey(c *gin.Context) {
 		return
 	}
 	plan := wc.Workspace.EffectivePlan(time.Now())
-	if !plan.HasAPI {
+	if !plan.HasAPI && s.cfg.AppEnv != "development" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "current plan does not include API keys"})
 		return
 	}
@@ -176,8 +176,12 @@ func (s *Server) handleCreateAPIKey(c *gin.Context) {
 		respondError(c, http.StatusInternalServerError, err)
 		return
 	}
-	if plan.APIKeyLimit > 0 && count >= plan.APIKeyLimit {
-		c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("current plan allows up to %d active API keys", plan.APIKeyLimit)})
+	apiKeyLimit := plan.APIKeyLimit
+	if s.cfg.AppEnv == "development" && apiKeyLimit < 3 {
+		apiKeyLimit = 3
+	}
+	if apiKeyLimit > 0 && count >= apiKeyLimit {
+		c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("current plan allows up to %d active API keys", apiKeyLimit)})
 		return
 	}
 
@@ -261,7 +265,7 @@ func (s *Server) handleCreateWebhookEndpoint(c *gin.Context) {
 		return
 	}
 	plan := wc.Workspace.EffectivePlan(time.Now())
-	if !plan.HasWebhooks {
+	if !plan.HasWebhooks && s.cfg.AppEnv != "development" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "current plan does not include webhooks"})
 		return
 	}

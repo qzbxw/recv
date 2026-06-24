@@ -40,6 +40,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     cors: true,
+    allowedHosts: true,
     origin: "http://localhost:3000",
     hmr: {
       clientPort: 3000,
