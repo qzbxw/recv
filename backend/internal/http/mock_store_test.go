@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -326,6 +327,20 @@ func (m *mockHTTPStore) ListAuthIdentities(ctx context.Context, userID int64) ([
 		return nil, nil
 	}
 	return m.real.ListAuthIdentities(ctx, userID)
+}
+
+func (m *mockHTTPStore) CreateTelegramBroadcast(ctx context.Context, message string) (int64, error) {
+	if m.failAt == "CreateTelegramBroadcast" {
+		return 0, errors.New("injected error")
+	}
+	return m.real.CreateTelegramBroadcast(ctx, message)
+}
+
+func (m *mockHTTPStore) GetEligibleTelegramBroadcastUsersCount(ctx context.Context) (int64, error) {
+	if m.failAt == "GetEligibleTelegramBroadcastUsersCount" {
+		return 0, errors.New("injected error")
+	}
+	return m.real.GetEligibleTelegramBroadcastUsersCount(ctx)
 }
 
 func (m *mockHTTPStore) ListBlogPosts(ctx context.Context, page, pageSize int, onlyPublished bool) ([]store.BlogPost, int, error) {
