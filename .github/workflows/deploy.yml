@@ -13,91 +13,12 @@ permissions:
   contents: read
 
 jobs:
-  build-images:
-    name: Build and push images
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    outputs:
-      image_prefix: ${{ steps.prefix.outputs.image_prefix }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Compute image prefix
-        id: prefix
-        run: echo "image_prefix=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push api image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: backend/Dockerfile
-          push: true
-          tags: |
-            ${{ steps.prefix.outputs.image_prefix }}/api:${{ github.sha }}
-            ${{ steps.prefix.outputs.image_prefix }}/api:latest
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,scope=api,mode=max
-
-      - name: Build and push frontend-public image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: frontend-public/Dockerfile
-          push: true
-          # Marketing/analytics build args come from repository Actions
-          # variables (Settings → Secrets and variables → Actions →
-          # Variables); they are baked into the image at build time.
-          build-args: |
-            PUBLIC_APP_URL=${{ vars.PUBLIC_APP_URL || 'https://recv.money' }}
-            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://recv.money' }}
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://recv.money' }}
-            GTM_ID=${{ vars.GTM_ID || '' }}
-            YANDEX_METRIKA_ID=${{ vars.YANDEX_METRIKA_ID || '' }}
-            GOOGLE_SITE_VERIFICATION=${{ vars.GOOGLE_SITE_VERIFICATION || '' }}
-            YANDEX_VERIFICATION=${{ vars.YANDEX_VERIFICATION || '' }}
-          tags: |
-            ${{ steps.prefix.outputs.image_prefix }}/frontend-public:${{ github.sha }}
-            ${{ steps.prefix.outputs.image_prefix }}/frontend-public:latest
-          cache-from: type=gha,scope=frontend-public
-          cache-to: type=gha,scope=frontend-public,mode=max
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: frontend/Dockerfile
-          push: true
-          build-args: |
-            VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL || 'https://recv.money' }}
-          tags: |
-            ${{ steps.prefix.outputs.image_prefix }}/frontend:${{ github.sha }}
-            ${{ steps.prefix.outputs.image_prefix }}/frontend:latest
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,scope=frontend,mode=max
-
   deploy:
     name: Deploy production
     runs-on: ubuntu-latest
-    needs: build-images
-    if: ${{ !cancelled() }}
     permissions:
       contents: read
-      packages: read
     steps:
-      - name: Compute image prefix
-        id: prefix
-        run: echo "image_prefix=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-
       - name: Prepare SSH private key
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -130,123 +51,21 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           DEPLOY_SHA: ${{ github.sha }}
-          GHCR_IMAGE_PREFIX: ${{ steps.prefix.outputs.image_prefix }}
-          GHCR_USER: ${{ github.actor }}
-          # Workflow-scoped token: valid while this job runs, which covers
-          # the pulls below. Already-pulled images stay usable afterwards.
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
           key_path: ${{ runner.temp }}/recv_deploy_key
-          envs: DEPLOY_SHA,GHCR_IMAGE_PREFIX,GHCR_USER,GHCR_TOKEN
+          envs: DEPLOY_SHA
           command_timeout: 30m
           script: |
             set -eu
-            cd /root/recv
-            test -f .env
-            test -d .git
-
-            export GHCR_IMAGE_PREFIX
-            export GHCR_IMAGE_TAG="$DEPLOY_SHA"
-            printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-
-            # Persist the image coordinates into .env so a manual
-            # `docker compose up -d` on the server reuses the deployed tag
-            # instead of the compose placeholder defaults.
-            update_env_var() {
-              if grep -q "^${1}=" .env; then
-                sed -i "s|^${1}=.*|${1}=${2}|" .env
-              else
-                printf '%s=%s\n' "$1" "$2" >> .env
-              fi
-            }
-            update_env_var GHCR_IMAGE_PREFIX "$GHCR_IMAGE_PREFIX"
-            update_env_var GHCR_IMAGE_TAG "$DEPLOY_SHA"
-
-            previous_sha="$(git rev-parse HEAD)"
-            git fetch --prune origin main
-            # The working tree is a deploy target: discard any local edits to
-            # tracked files (e.g. leftovers from scripts run on the server)
-            # so checkout never aborts. Untracked files (.env, backups/,
-            # article.txt) are not touched.
-            git checkout --force --detach "$DEPLOY_SHA"
-
-            mkdir -p backups
-            if docker compose ps --status running postgres | grep -q postgres; then
-              docker compose exec -T postgres sh -lc \
-                'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
-                > "backups/predeploy-$(date -u +%Y%m%dT%H%M%SZ).sql"
-            fi
-
-            if grep -Eq '^RESTIC_REPOSITORY=.+$' .env &&
-               grep -Eq '^RESTIC_PASSWORD=.+$' .env; then
-              docker compose --profile ops run --rm restic backup /backup
-            fi
-
-            # Images are prebuilt in CI; pull them. Building on the server is
-            # only a fallback (e.g. registry outage).
-            docker compose pull \
-              api blockchain_watcher telegram_bot_worker frontend_public frontend ||
-              docker compose build \
-                api blockchain_watcher telegram_bot_worker frontend_public frontend
-            docker compose up -d postgres
-            docker compose up -d --remove-orphans \
-              api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
-
-            # Caddy matches sites by Host header, so the edge check must send
-            # the real site host instead of 127.0.0.1 (which matches no site).
-            site_host="$(grep -E '^CADDY_SITE_ADDRESS=' .env | tail -n1 | cut -d= -f2- | tr -d '"' | sed -e 's#^https\?://##' -e 's#[:/].*##')"
-            site_host="${site_host:-localhost}"
-
-            echo "Waiting for health gate (api healthz + watcher/bot healthz + caddy robots.txt, Host: ${site_host})..."
-            healthy=0
-            for i in $(seq 1 60); do
-              if docker compose exec -T api \
-                   wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1 &&
-                 docker compose exec -T blockchain_watcher \
-                   wget -qO- http://127.0.0.1:9091/healthz >/dev/null 2>&1 &&
-                 docker compose exec -T telegram_bot_worker \
-                   wget -qO- http://127.0.0.1:9092/healthz >/dev/null 2>&1 &&
-                 docker compose exec -T caddy \
-                   wget -qO- --header="Host: ${site_host}" http://127.0.0.1:80/robots.txt >/dev/null 2>&1; then
-                healthy=1
-                break
-              fi
-              sleep 2
-            done
-
-            if [ "$healthy" -eq 1 ]; then
-              echo "Health gate passed."
-              printf '%s' "$DEPLOY_SHA" > .deploy-sha
-              docker image prune -f --filter "until=168h"
-              docker logout ghcr.io || true
-              exit 0
-            fi
-
-            echo "Health gate failed after 120s. Diagnostics:"
-            docker compose exec -T api \
-              wget -qO- http://127.0.0.1:8080/healthz || echo "api healthz: FAILED"
-            docker compose exec -T blockchain_watcher \
-              wget -qO- http://127.0.0.1:9091/healthz >/dev/null || echo "watcher healthz: FAILED"
-            docker compose exec -T telegram_bot_worker \
-              wget -qO- http://127.0.0.1:9092/healthz >/dev/null || echo "bot healthz: FAILED"
-            docker compose exec -T caddy \
-              wget -qO- --header="Host: ${site_host}" http://127.0.0.1:80/robots.txt >/dev/null || echo "caddy robots.txt: FAILED (Host: ${site_host})"
-            docker compose logs --no-color --tail=200 \
-              api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
-            echo "Health gate failed; rolling back to $previous_sha"
-
-            git checkout --force --detach "$previous_sha"
-            export GHCR_IMAGE_TAG="$previous_sha"
-            update_env_var GHCR_IMAGE_TAG "$previous_sha"
-            # Previous images are normally still on disk or in the registry;
-            # building from the previous checkout is the last resort.
-            docker compose pull \
-              api blockchain_watcher telegram_bot_worker frontend_public frontend 2>/dev/null ||
-              docker compose build \
-                api blockchain_watcher telegram_bot_worker frontend_public frontend
-            docker compose up -d --remove-orphans \
-              api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
-            docker logout ghcr.io || true
-            exit 1
+            # Переходим в папку проекта на сервере (задайте путь в секретах или используйте дефолт /root/recv)
+            cd "${{ secrets.DEPLOY_PATH || '/root/recv' }}"
+            
+            echo "--> Получение изменений из git..."
+            git fetch --prune origin
+            
+            echo "--> Запуск скрипта деплоя на сервере..."
+            chmod +x ./deploy.sh
+            ./deploy.sh "$DEPLOY_SHA"
