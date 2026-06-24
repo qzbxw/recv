@@ -198,6 +198,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	adminAPI.GET("/ops/overview", server.handleAdminOpsOverview)
 	adminAPI.GET("/invoices", server.handleAdminInvoices)
 	adminAPI.GET("/workspaces", server.handleAdminWorkspaces)
+	adminAPI.GET("/wallets", server.handleAdminWallets)
 	adminAPI.GET("/webhooks/failed", server.handleAdminFailedWebhooks)
 	adminAPI.GET("/watchers", server.handleAdminWatchers)
 	adminAPI.GET("/notifications", server.handleAdminNotifications)

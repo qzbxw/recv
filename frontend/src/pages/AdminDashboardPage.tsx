@@ -37,6 +37,7 @@ import {
   clearStoredAdminRefreshToken,
   getStoredAdminRefreshToken,
   setStoredAdminRefreshToken,
+  fetchAdminWallets,
 } from "../lib/api";
 import { ApiError } from "../lib/errors";
 import { CustomSelect } from "../components/CustomSelect";
@@ -60,9 +61,11 @@ import type {
   ReferralPartnerReport,
   ReferralPartnerStats,
   PromoCode,
+  AdminWallet,
+  AdminWalletListResponse,
 } from "../lib/types";
 
-type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings" | "promocodes";
+type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "wallets" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings" | "promocodes";
 
 type Filters = { status: string; kind: string; query: string; page: number; page_size: number };
 const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "", page: 1, page_size: 50 };
@@ -142,6 +145,7 @@ const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
   invoices: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="16" y2="17" /></svg>,
   review: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
   workspaces: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+  wallets: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" ry="2" /><path d="M16 8h.01" /><path d="M12 8h.01" /><path d="M8 8h.01" /><path d="M3 12h18" /><path d="M16 16h4" /></svg>,
   webhooks: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
   analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
   partners: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" opacity="0" /><path d="M18 8a3 3 0 1 0-6 0c0 1.5.7 2.4 1.6 3.1.5.4.4 1.2-.2 1.4C10.5 13.6 8 15.2 8 18h12c0-2.8-2.5-4.4-5.4-5.5-.6-.2-.7-1-.2-1.4.9-.7 1.6-1.6 1.6-3.1z" /><path d="M9 11a2.5 2.5 0 1 0-5 0c0 1.2.6 2 1.3 2.6.4.3.3 1-.2 1.2C3.1 15.6 1 16.9 1 19h6" /></svg>,
@@ -179,6 +183,8 @@ export function AdminDashboardPage() {
   const [seoTargets, setSeoTargets] = useState<SEOTarget[]>([]);
   const [seoRedirects, setSeoRedirects] = useState<SEORedirect[]>([]);
   const [workspaces, setWorkspaces] = useState<AdminWorkspace[]>([]);
+  const [walletsList, setWalletsList] = useState<AdminWalletListResponse | null>(null);
+  const [walletFilters, setWalletFilters] = useState({ network: "all", environment: "all", is_active: "all", query: "", page: 1, page_size: 50 });
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [analyticsGroupBy, setAnalyticsGroupBy] = useState<"date" | "network" | "plan" | "mode">("date");
@@ -203,6 +209,7 @@ export function AdminDashboardPage() {
     setSeoTargets([]);
     setSeoRedirects([]);
     setWorkspaces([]);
+    setWalletsList(null);
     if (message) setError(message);
   }, []);
 
@@ -242,6 +249,9 @@ export function AdminDashboardPage() {
         ]);
         setSeoTargets(nextSEO.items || []);
         setSeoRedirects(nextRedirects.items || []);
+      } else if (panel === "wallets") {
+        const nextWallets = await fetchAdminWallets(tok, walletFilters);
+        setWalletsList(nextWallets);
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -252,7 +262,7 @@ export function AdminDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [analyticsGroupBy, resetAdminSession]);
+  }, [analyticsGroupBy, walletFilters, resetAdminSession]);
 
   useEffect(() => {
     if (token) void loadPanelData(activePanel, token, filters);
@@ -323,6 +333,25 @@ export function AdminDashboardPage() {
     if (token) await loadPanelData("invoices", token, finalFilters);
   }
 
+  async function applyWalletFilters(next: typeof walletFilters) {
+    const resetPage = next.network !== walletFilters.network || next.environment !== walletFilters.environment || next.is_active !== walletFilters.is_active || next.query !== walletFilters.query;
+    const finalFilters = resetPage ? { ...next, page: 1 } : next;
+    setWalletFilters(finalFilters);
+    if (token) {
+      setLoading(true);
+      setError("");
+      try {
+        const nextWallets = await fetchAdminWallets(token, finalFilters);
+        setWalletsList(nextWallets);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load wallets");
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+
   async function reloadAnalytics(groupBy: "date" | "network" | "plan" | "mode") {
     setAnalyticsGroupBy(groupBy);
     if (!token) return;
@@ -373,6 +402,7 @@ export function AdminDashboardPage() {
         { key: "invoices", label: "Invoices" },
         { key: "review", label: "Manual review", badge: overview?.invoices.manual_review || 0 },
         { key: "workspaces", label: "Workspaces" },
+        { key: "wallets", label: "Wallets" },
         { key: "promocodes", label: "Promo Codes" },
       ],
     },
@@ -472,6 +502,15 @@ export function AdminDashboardPage() {
 
             {activePanel === "workspaces" && (
               <WorkspacesPanel workspaces={workspaces} busyKey={busyKey} runAction={runAction} />
+            )}
+
+            {activePanel === "wallets" && (
+              <WalletsPanel
+                walletsList={walletsList}
+                filters={walletFilters}
+                onApplyFilters={applyWalletFilters}
+                loading={loading}
+              />
             )}
 
             {activePanel === "webhooks" && (
@@ -2489,3 +2528,216 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
     </div>
   );
 }
+
+function getExplorerUrl(network: string, address: string): string {
+  switch (network) {
+    case "TON":
+    case "TON_USDT":
+      return `https://tonviewer.com/${address}`;
+    case "TRON":
+      return `https://tronscan.org/#/address/${address}`;
+    case "SOLANA":
+      return `https://solscan.io/account/${address}`;
+    case "EVM":
+    case "BASE":
+    case "ARBITRUM":
+    case "BSC":
+    default:
+      return `https://debank.com/profile/${address}`;
+  }
+}
+
+function WalletsPanel({
+  walletsList,
+  filters,
+  onApplyFilters,
+  loading,
+}: {
+  walletsList: AdminWalletListResponse | null;
+  filters: { network: string; environment: string; is_active: string; query: string; page: number; page_size: number };
+  onApplyFilters: (f: typeof filters) => void;
+  loading: boolean;
+}) {
+  const [query, setQuery] = useState(filters.query);
+  const total = walletsList?.total || 0;
+  const items = walletsList?.items || [];
+  const totalPages = Math.max(1, Math.ceil(total / (filters.page_size || 50)));
+  const currentPage = filters.page || 1;
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      onApplyFilters({ ...filters, page: newPage });
+    }
+  };
+
+  const copyAddress = async (addr: string) => {
+    try {
+      await navigator.clipboard.writeText(addr);
+    } catch (err) {
+      console.error("Failed to copy address", err);
+    }
+  };
+
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader
+        title="Wallets"
+        subtitle={`${total} wallets connected by merchants. Filter, search and inspect individual wallets on block explorers.`}
+      />
+
+      <div className="dev-card dev-toolbar console-spotlight-card admin-toolbar" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <form
+          className="admin-toolbar__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onApplyFilters({ ...filters, query });
+          }}
+        >
+          <input
+            className="dev-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search address, username, email"
+          />
+          <CustomSelect
+            value={filters.network}
+            options={[
+              { value: "all", label: "All Networks" },
+              { value: "TON", label: "TON" },
+              { value: "TRON", label: "TRON" },
+              { value: "EVM", label: "EVM" },
+              { value: "SOLANA", label: "Solana" },
+            ]}
+            ariaLabel="Network"
+            onChange={(v) => onApplyFilters({ ...filters, network: v })}
+          />
+          <CustomSelect
+            value={filters.environment}
+            options={[
+              { value: "all", label: "All Environments" },
+              { value: "live", label: "Live" },
+              { value: "test", label: "Test" },
+            ]}
+            ariaLabel="Environment"
+            onChange={(v) => onApplyFilters({ ...filters, environment: v })}
+          />
+          <CustomSelect
+            value={filters.is_active}
+            options={[
+              { value: "all", label: "All Statuses" },
+              { value: "all", label: "All Statuses" },
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+            ariaLabel="Status"
+            onChange={(v) => onApplyFilters({ ...filters, is_active: v })}
+          />
+          <button className="dev-btn dev-btn--primary" type="submit" disabled={loading}>
+            Search
+          </button>
+        </form>
+      </div>
+
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead>
+              <tr>
+                <th>Workspace</th>
+                <th>Network</th>
+                <th>Env</th>
+                <th>Wallet Address</th>
+                <th>Status</th>
+                <th>Connected At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((w) => (
+                <tr key={w.id}>
+                  <td>
+                    <strong>{w.workspace_username ? `@${w.workspace_username}` : `Workspace #${w.workspace_id}`}</strong>
+                    {w.workspace_email ? <div className="dev-card__note-text">{w.workspace_email}</div> : null}
+                  </td>
+                  <td>
+                    <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">
+                      {w.network}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`dev-api-badge dev-api-badge--micro dev-api-badge--${w.environment === "live" ? "get" : "secondary"}`}>
+                      {w.environment}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <code className="dev-wallet-address" title={w.address} style={{ wordBreak: "break-all", whiteSpace: "normal" }}>
+                        {w.address}
+                      </code>
+                      <button
+                        type="button"
+                        className="dev-btn dev-btn--secondary dev-btn--micro"
+                        onClick={() => void copyAddress(w.address)}
+                        style={{ padding: "2px 6px" }}
+                      >
+                        Copy
+                      </button>
+                      <a
+                        href={getExplorerUrl(w.network, w.address)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="dev-btn dev-btn--secondary dev-btn--micro dev-btn--centered"
+                        style={{ padding: "2px 6px", textDecoration: "none" }}
+                      >
+                        Scan ↗
+                      </a>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`dev-api-badge dev-status-badge dev-status-badge--${w.is_active ? "success" : "neutral"}`}>
+                      {w.is_active ? "active" : "inactive"}
+                    </span>
+                  </td>
+                  <td>{formatDateTime(w.created_at)}</td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="admin-table-empty">
+                    {loading ? "Loading wallets…" : "No connected wallets found."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="admin-pagination">
+          <button
+            type="button"
+            className="dev-btn dev-btn--secondary dev-btn--compact"
+            disabled={currentPage <= 1 || loading}
+            onClick={() => handlePageChange(currentPage - 1)}
+          >
+            Previous
+          </button>
+          <span className="admin-pagination__info">
+            Page {currentPage} of {totalPages} ({total} total)
+          </span>
+          <button
+            type="button"
+            className="dev-btn dev-btn--secondary dev-btn--compact"
+            disabled={currentPage >= totalPages || loading}
+            onClick={() => handlePageChange(currentPage + 1)}
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+

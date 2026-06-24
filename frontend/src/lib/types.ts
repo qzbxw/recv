@@ -724,3 +724,23 @@ export type PromoCode = {
   created_by: string;
   created_at: string;
 };
+
+export type AdminWallet = {
+  id: number;
+  workspace_id: number;
+  workspace_username: string;
+  workspace_email: string;
+  network: Network;
+  address: string;
+  environment: "live" | "test";
+  is_active: boolean;
+  created_at: string;
+};
+
+export type AdminWalletListResponse = {
+  items: AdminWallet[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+

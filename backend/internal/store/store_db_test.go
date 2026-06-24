@@ -2063,6 +2063,32 @@ func TestStoreWalletOperations(t *testing.T) {
 		}
 	})
 
+	t.Run("ListAdminWallets returns wallets with details", func(t *testing.T) {
+		res, err := st.ListAdminWallets(ctx, AdminWalletFilters{
+			Page:     1,
+			PageSize: 10,
+		})
+		if err != nil {
+			t.Fatalf("ListAdminWallets: %v", err)
+		}
+		if res.Total < 1 {
+			t.Fatalf("expected at least 1 wallet in admin view, got %d", res.Total)
+		}
+		found := false
+		for _, w := range res.Items {
+			if w.ID == wallet.ID {
+				found = true
+				if w.WorkspaceUsername != "walletopsuser" {
+					t.Errorf("expected WorkspaceUsername walletopsuser, got %s", w.WorkspaceUsername)
+				}
+				break
+			}
+		}
+		if !found {
+			t.Errorf("wallet ID %d not found in admin wallets list", wallet.ID)
+		}
+	})
+
 	t.Run("GetWalletByID returns wallet", func(t *testing.T) {
 		w, err := st.GetWalletByID(ctx, workspace.ID, wallet.ID)
 		if err != nil {

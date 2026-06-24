@@ -23,6 +23,7 @@ import type {
   ReferralPartnerReport,
   ReferralPartnerStats,
   PromoCode,
+  AdminWalletListResponse,
 } from "../types";
 import { getApiBase, request } from "./core";
 
@@ -301,3 +302,23 @@ export async function deleteAdminPromoCode(token: string, id: number) {
     method: "DELETE",
   }, token);
 }
+
+export async function fetchAdminWallets(token: string, params: {
+  page?: number;
+  page_size?: number;
+  network?: string;
+  environment?: string;
+  is_active?: string;
+  query?: string;
+}) {
+  const search = new URLSearchParams();
+  if (params.page) search.set("page", String(params.page));
+  if (params.page_size) search.set("page_size", String(params.page_size));
+  if (params.network && params.network !== "all") search.set("network", params.network);
+  if (params.environment && params.environment !== "all") search.set("environment", params.environment);
+  if (params.is_active && params.is_active !== "all") search.set("is_active", params.is_active);
+  if (params.query?.trim()) search.set("query", params.query.trim());
+  const suffix = search.size > 0 ? `?${search.toString()}` : "";
+  return request<AdminWalletListResponse>(`/api/admin/wallets${suffix}`, {}, token);
+}
+

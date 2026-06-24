@@ -56,6 +56,7 @@ type httpStore interface {
 	ListAdminAuditEvents(ctx context.Context, limit int) ([]store.AdminAuditEvent, error)
 	ListAdminFailedWebhooks(ctx context.Context, limit int) ([]store.AdminWebhookDeliveryRecord, error)
 	ListAdminInvoices(ctx context.Context, filters store.AdminInvoiceFilters) (store.AdminInvoicePage, error)
+	ListAdminWallets(ctx context.Context, filters store.AdminWalletFilters) (store.AdminWalletPage, error)
 	ListAdminWatchers(ctx context.Context) ([]store.AdminWatcherRecord, error)
 	ListAdminWorkspaces(ctx context.Context, limit int) ([]store.AdminWorkspaceRecord, error)
 	ListAuthIdentities(ctx context.Context, userID int64) ([]store.AuthIdentity, error)

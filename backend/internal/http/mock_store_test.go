@@ -305,6 +305,11 @@ func (m *mockHTTPStore) ListAdminInvoices(ctx context.Context, filters store.Adm
 	return m.real.ListAdminInvoices(ctx, filters)
 }
 
+func (m *mockHTTPStore) ListAdminWallets(ctx context.Context, filters store.AdminWalletFilters) (store.AdminWalletPage, error) {
+	return m.real.ListAdminWallets(ctx, filters)
+}
+
+
 func (m *mockHTTPStore) ListAdminWatchers(ctx context.Context) ([]store.AdminWatcherRecord, error) {
 	if m.failAt == errAtListAdminWatchers {
 		return nil, m.mockErr(errAtListAdminWatchers)

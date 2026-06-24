@@ -432,3 +432,135 @@ func (s *Store) listAdminInvoices(ctx context.Context, filters AdminInvoiceFilte
 		PageSize: filters.PageSize,
 	}, nil
 }
+
+type AdminWalletRecord struct {
+	ID                int64       `json:"id"`
+	WorkspaceID       int64       `json:"workspace_id"`
+	WorkspaceUsername string      `json:"workspace_username"`
+	WorkspaceEmail    string      `json:"workspace_email"`
+	Network           Network     `json:"network"`
+	Address           string      `json:"address"`
+	Environment       Environment `json:"environment"`
+	IsActive          bool        `json:"is_active"`
+	CreatedAt         time.Time   `json:"created_at"`
+}
+
+type AdminWalletFilters struct {
+	Page        int
+	PageSize    int
+	Network     string
+	Environment string
+	IsActive    string // "all", "active", "inactive"
+	Query       string
+}
+
+type AdminWalletPage struct {
+	Items    []AdminWalletRecord `json:"items"`
+	Total    int                 `json:"total"`
+	Page     int                 `json:"page"`
+	PageSize int                 `json:"page_size"`
+}
+
+func (s *Store) ListAdminWallets(ctx context.Context, filters AdminWalletFilters) (AdminWalletPage, error) {
+	if filters.Page < 1 {
+		filters.Page = 1
+	}
+	if filters.PageSize < 1 || filters.PageSize > 200 {
+		filters.PageSize = 50
+	}
+
+	whereParts := []string{"TRUE"}
+	args := make([]any, 0, 8)
+	argIndex := 1
+
+	if network := strings.TrimSpace(filters.Network); network != "" && network != "all" {
+		whereParts = append(whereParts, fmt.Sprintf("wal.network = $%d", argIndex))
+		args = append(args, network)
+		argIndex++
+	}
+	if env := strings.TrimSpace(filters.Environment); env != "" && env != "all" {
+		whereParts = append(whereParts, fmt.Sprintf("wal.environment = $%d", argIndex))
+		args = append(args, env)
+		argIndex++
+	}
+	if active := strings.TrimSpace(filters.IsActive); active != "" && active != "all" {
+		val := true
+		if active == "inactive" || active == "false" {
+			val = false
+		}
+		whereParts = append(whereParts, fmt.Sprintf("wal.is_active = $%d", argIndex))
+		args = append(args, val)
+		argIndex++
+	}
+	if query := strings.TrimSpace(filters.Query); query != "" {
+		whereParts = append(whereParts, fmt.Sprintf("(wal.address ILIKE $%d OR COALESCE(w.username, '') ILIKE $%d OR COALESCE(w.email, '') ILIKE $%d)", argIndex, argIndex, argIndex))
+		args = append(args, "%"+query+"%")
+		argIndex++
+	}
+
+	whereClause := strings.Join(whereParts, " AND ")
+
+	countQuery := `
+		SELECT COUNT(1)
+		FROM wallets wal
+		LEFT JOIN workspaces w ON w.id = wal.workspace_id
+		WHERE ` + whereClause
+	var total int
+	if err := s.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return AdminWalletPage{}, fmt.Errorf("count admin wallets: %w", err)
+	}
+
+	listQuery := `
+		SELECT
+			wal.id,
+			wal.workspace_id,
+			COALESCE(w.username, ''),
+			COALESCE(w.email, ''),
+			wal.network,
+			wal.address,
+			wal.environment,
+			wal.is_active,
+			wal.created_at
+		FROM wallets wal
+		LEFT JOIN workspaces w ON w.id = wal.workspace_id
+		WHERE ` + whereClause + `
+		ORDER BY wal.created_at DESC, wal.id DESC
+		LIMIT $` + fmt.Sprintf("%d", argIndex) + ` OFFSET $` + fmt.Sprintf("%d", argIndex+1)
+	args = append(args, filters.PageSize, (filters.Page-1)*filters.PageSize)
+
+	rows, err := s.pool.Query(ctx, listQuery, args...)
+	if err != nil {
+		return AdminWalletPage{}, fmt.Errorf("list admin wallets: %w", err)
+	}
+	defer rows.Close()
+
+	items := make([]AdminWalletRecord, 0, filters.PageSize)
+	for rows.Next() {
+		var item AdminWalletRecord
+		if err := rows.Scan(
+			&item.ID,
+			&item.WorkspaceID,
+			&item.WorkspaceUsername,
+			&item.WorkspaceEmail,
+			&item.Network,
+			&item.Address,
+			&item.Environment,
+			&item.IsActive,
+			&item.CreatedAt,
+		); err != nil {
+			return AdminWalletPage{}, fmt.Errorf("scan admin wallet: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return AdminWalletPage{}, err
+	}
+
+	return AdminWalletPage{
+		Items:    items,
+		Total:    total,
+		Page:     filters.Page,
+		PageSize: filters.PageSize,
+	}, nil
+}
+

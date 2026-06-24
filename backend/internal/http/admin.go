@@ -786,3 +786,32 @@ func (s *Server) handleAdminUpdateBillingWallets(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
+
+func (s *Server) handleAdminWallets(c *gin.Context) {
+	page := parseIntDefault(c.Query("page"), 1)
+	pageSize := parseIntDefault(c.Query("page_size"), 50)
+	if pageSize < 1 || pageSize > 200 {
+		pageSize = 50
+	}
+
+	items, err := s.store.ListAdminWallets(c.Request.Context(), store.AdminWalletFilters{
+		Page:        page,
+		PageSize:    pageSize,
+		Network:     c.Query("network"),
+		Environment: c.Query("environment"),
+		IsActive:    c.Query("is_active"),
+		Query:       c.Query("query"),
+	})
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"items":     items.Items,
+		"total":     items.Total,
+		"page":      items.Page,
+		"page_size": items.PageSize,
+	})
+}
+

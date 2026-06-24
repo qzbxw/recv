@@ -328,6 +328,17 @@ func TestAdminHandlersSuccessPaths(t *testing.T) {
 		}
 	})
 
+	t.Run("handleAdminWallets returns 200", func(t *testing.T) {
+		router := gin.New()
+		router.GET("/api/admin/wallets", server.handleAdminWallets)
+
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, httptest.NewRequest(stdhttp.MethodGet, "/api/admin/wallets", nil))
+		if rec.Code != stdhttp.StatusOK {
+			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		}
+	})
+
 	t.Run("handleAdminFailedWebhooks returns 200", func(t *testing.T) {
 		router := gin.New()
 		router.GET("/api/admin/failed-webhooks", server.handleAdminFailedWebhooks)
