@@ -33,7 +33,7 @@ export function PricingClient({ locale }: { locale: string }) {
   return (
     <MarketingLayout language={locale as "en" | "ru"} path="/pricing" mainEntityId={schemaId(`/${locale}/pricing`, "product")}>
       {/* HERO */}
-      <section className="lend-hero--centered relative overflow-hidden is-revealed">
+      <section className="lend-hero--centered lend-pricing-hero relative overflow-hidden is-revealed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none w-full h-full">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-radial-gradient from-accent/20 via-transparent to-transparent blur-[120px] opacity-40 animate-pulse" />
         </div>
@@ -56,7 +56,7 @@ export function PricingClient({ locale }: { locale: string }) {
       </section>
 
       {/* PRICING CARDS */}
-      <section className="py-12 md:py-20 pb-24" data-reveal>
+      <section className="lend-pricing-cards-section py-12 md:py-20 pb-24" data-reveal>
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lend-reveal--2">
             {tiers.map((tier, idx) => {

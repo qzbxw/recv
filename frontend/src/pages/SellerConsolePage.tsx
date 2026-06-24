@@ -634,6 +634,20 @@ export function SellerConsolePage() {
     } catch (err) { setError(formatApiError(err)); }
   }
 
+  async function onQuickMerchantUpgrade() {
+    if (!session) return;
+    try {
+      setBillingForm(current => ({ ...current, plan: "merchant", network: "TRON", optionKeys: ["TRON:USDT"], subscriptionDays: 30 }));
+      const inv = await createBillingCheckout(session.token, {
+        payable_network: "TRON",
+        payment_options: [{ network: "TRON", asset: "USDT" }],
+        plan_code: "merchant",
+        subscription_days: 30,
+      });
+      setCheckoutUrl(buildCheckoutUrl(inv.public_id));
+    } catch (err) { setError(formatApiError(err)); }
+  }
+
   async function onRedeemPromoCode() {
     if (!session || !promoCode.trim()) return;
     setRedeemingPromo(true);
@@ -805,8 +819,10 @@ export function SellerConsolePage() {
     { done: activeWalletsCount > 0, body: t.overview.setupWallet, action: t.overview.setupWalletAction, target: "wallets" as PanelKey },
     ...(hasApi ? [{ done: filteredKeys.length > 0, body: t.overview.setupKey, action: t.overview.setupKeyAction, target: "developer" as PanelKey }] : []),
     { done: filteredInvoices.length > 0, body: t.overview.setupInvoice, action: t.overview.setupInvoiceAction, target: "create" as PanelKey },
+    { done: session.me.plan.code !== "trial", body: t.overview.setupPlan, action: t.overview.setupPlanAction, target: "billing" as PanelKey },
   ];
   const onboardingComplete = onboardingSteps.every(s => s.done);
+  const isNewActivation = !onboardingComplete && filteredInvoices.length === 0;
   const payableNetworkOptions = PAYABLE_PAYMENT_OPTIONS.map(option => ({
     value: option.key,
     label: option.label,
@@ -932,6 +948,42 @@ export function SellerConsolePage() {
                   <p>{t.overview.subtitle} {t.overview.currentWorkspace}: <strong>{workspaceName}</strong></p>
                 </div>
 
+                {isNewActivation && (
+                  <div className="dev-setup-panel dev-setup-panel--primary portal-animate-in">
+                    <div className="dev-setup-header">
+                      <div className="dev-setup-title-row">
+                        <h3>{t.overview.setupTitle}</h3>
+                        <span className="dev-setup-progress-badge">
+                          {onboardingSteps.filter(s => s.done).length} / {onboardingSteps.length} {language === "ru" ? "пройдено" : "completed"}
+                        </span>
+                      </div>
+                      <div className="dev-setup-progress-track">
+                        <div
+                          className="dev-setup-progress-fill"
+                          style={{ width: `${Math.round((onboardingSteps.filter(s => s.done).length / onboardingSteps.length) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="dev-setup-stepper">
+                      {onboardingSteps.map((step, i) => (
+                        <div key={i} className={`dev-setup-step ${step.done ? "is-done" : ""}`}>
+                          <div className="dev-setup-step-indicator">
+                            <span className="dev-setup-step-marker">{step.done ? "✓" : i + 1}</span>
+                          </div>
+                          <div className="dev-setup-step-content">
+                            <span className="dev-setup-step-body">{step.body}</span>
+                            {step.done ? null : (
+                              <button className="dev-btn dev-btn--primary dev-btn--compact" onClick={() => setActivePanel(step.target)}>
+                                {step.action}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="dev-metrics-grid">
                   <div className="dev-metric-item console-spotlight-card" onMouseMove={handleMouseMove}>
                     <div className="console-card-spotlight" />
@@ -1039,7 +1091,7 @@ export function SellerConsolePage() {
                   </div>
                 )}
 
-                {!onboardingComplete && (
+                {!onboardingComplete && !isNewActivation && (
                   <div className="dev-setup-panel portal-animate-in">
                     <div className="dev-setup-header">
                       <div className="dev-setup-title-row">
@@ -1837,7 +1889,10 @@ export function SellerConsolePage() {
                 </div>
 
                 {(() => {
-                  const fmt = (n: number | undefined) => (n && n > 0 ? n.toLocaleString() : t.common.unlimited);
+                  const fmt = (n: number | undefined, available = true) => {
+                    if (!available) return t.billing.notIncluded;
+                    return n && n > 0 ? n.toLocaleString() : t.common.unlimited;
+                  };
                   const comparePlans = PLAN_COMPARE_ORDER
                     .map(code => session.me.plans.find(p => p.code === code))
                     .filter((p): p is NonNullable<typeof p> => Boolean(p));
@@ -1900,16 +1955,16 @@ export function SellerConsolePage() {
                                 {featRow(t.billing.featUnlimited, plan.has_unlimited_sales)}
                                 {featRow(t.billing.featPriority, plan.priority_support)}
                                 <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featKeys}</span><strong>{fmt(plan.api_key_limit)}</strong>
+                                  <span>{t.billing.featKeys}</span><strong>{fmt(plan.api_key_limit, plan.has_api)}</strong>
                                 </div>
                                 <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featRpm}</span><strong>{fmt(plan.requests_per_minute)}</strong>
+                                  <span>{t.billing.featRpm}</span><strong>{fmt(plan.requests_per_minute, plan.has_api)}</strong>
                                 </div>
                                 <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featMonthly}</span><strong>{fmt(plan.monthly_request_cap)}</strong>
+                                  <span>{t.billing.featMonthly}</span><strong>{fmt(plan.monthly_request_cap, plan.has_api)}</strong>
                                 </div>
                                 <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featRetries}</span><strong>{fmt(plan.webhook_retries)}</strong>
+                                  <span>{t.billing.featRetries}</span><strong>{fmt(plan.webhook_retries, plan.has_webhooks)}</strong>
                                 </div>
                                 <div className="dev-plan-feat dev-plan-feat--metric">
                                   <span>{t.billing.featSeats}</span><strong>{fmt(plan.max_seats)}</strong>
@@ -1936,6 +1991,15 @@ export function SellerConsolePage() {
                   <div className="dev-form">
                     <h3>{t.billing.checkoutTitle}</h3>
                     <p className="dev-card__note-text">{t.billing.checkoutSubtitle}</p>
+                    <div className="dev-billing-fast-path">
+                      <div>
+                        <strong>{language === "ru" ? "Merchant за $19 / 30 дней" : "Merchant for $19 / 30 days"}</strong>
+                        <span>{language === "ru" ? "TRON USDT, 0% с оборота, платёжные ссылки без пробных лимитов." : "TRON USDT, 0% turnover fee, payment links without trial limits."}</span>
+                      </div>
+                      <button className="dev-btn dev-btn--primary" onClick={onQuickMerchantUpgrade}>
+                        {language === "ru" ? "Оплатить Merchant" : "Pay Merchant"}
+                      </button>
+                    </div>
                     <div className="dev-input-group">
                       <label>{t.common.plan}</label>
                       <CustomSelect

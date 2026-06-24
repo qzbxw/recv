@@ -11519,11 +11519,26 @@ html {
   text-decoration: line-through !important;
 }
 
+.dev-setup-step-content .dev-btn--compact {
+  flex: 0 0 auto !important;
+  min-width: 8.75rem !important;
+  height: auto !important;
+  min-height: 2.35rem !important;
+  padding: 0.55rem 0.85rem !important;
+  line-height: 1.1 !important;
+  white-space: normal !important;
+  border-radius: 999px !important;
+}
+
 @media (max-width: 560px) {
   .dev-setup-step-content {
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 0.75rem !important;
+  }
+
+  .dev-setup-step-content .dev-btn--compact {
+    width: 100% !important;
   }
 }
 
@@ -13005,6 +13020,12 @@ html {
   box-shadow: none !important;
 }
 
+.dev-setup-panel--primary {
+  margin-bottom: 2rem !important;
+  background: rgba(139, 92, 246, 0.06) !important;
+  border-color: rgba(139, 92, 246, 0.18) !important;
+}
+
 .dev-setup-title-row h3 {
   font-family: "Space Grotesk", sans-serif;
   font-weight: 700;
@@ -13026,6 +13047,40 @@ html {
 
 .dev-setup-step.is-done .dev-setup-step-marker {
   color: var(--success) !important;
+}
+
+.dev-billing-fast-path {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  margin: 0.75rem 0 1.25rem;
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 14px;
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.dev-billing-fast-path strong,
+.dev-billing-fast-path span {
+  display: block;
+}
+
+.dev-billing-fast-path strong {
+  color: #fff;
+  margin-bottom: 0.3rem;
+}
+
+.dev-billing-fast-path span {
+  color: var(--co-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .dev-billing-fast-path {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Spotlight dynamic cards */
@@ -13323,8 +13378,8 @@ html {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   gap: 0.8rem !important;
-  margin-top: 1.5rem !important;
-  margin-bottom: 1.5rem !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0 !important;
 }
 
 .auth-portal__oauth-btn {
@@ -13445,9 +13500,14 @@ html {
   margin-top: 1.25rem !important;
 }
 
+.auth-portal__telegram-first {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
 .auth-portal__bot-hint-box {
-  background: rgba(255, 255, 255, 0.005) !important;
-  border: 1px dashed rgba(255, 255, 255, 0.04) !important;
+  background: rgba(139, 92, 246, 0.07) !important;
+  border: 1px solid rgba(139, 92, 246, 0.18) !important;
   border-radius: var(--co-radius-sm);
   padding: 1rem !important;
   text-align: center;

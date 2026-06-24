@@ -4584,6 +4584,33 @@ html {
   gap: 1.5rem !important;
 }
 
+.lend-pricing-hero {
+  min-height: auto !important;
+  padding: 8rem 0 3rem !important;
+}
+
+.lend-pricing-hero p {
+  margin-bottom: 0 !important;
+}
+
+.lend-pricing-cards-section {
+  padding-top: 1rem !important;
+}
+
+@media (max-width: 640px) {
+  .lend-pricing-hero {
+    padding: 6.5rem 0 2rem !important;
+  }
+
+  .lend-pricing-hero h1 {
+    margin: 1rem 0 1.25rem !important;
+  }
+
+  .lend-pricing-cards-section {
+    padding-top: 0 !important;
+  }
+}
+
 
 
 

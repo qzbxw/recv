@@ -19,6 +19,11 @@ type botCopy struct {
 	homePlanActive string // %s plan, %s = formatted date
 	homeTrialLeft  string // %d remaining
 
+	// Acquisition start
+	startTitle string
+	startBody  string
+	startProof string
+
 	// Buttons
 	btnNewInvoice      string
 	btnRecentInvoices  string
@@ -37,6 +42,8 @@ type botCopy struct {
 	btnDisable         string // %s = network label
 	btnNewInvoiceShort string
 	btnPayPlan         string // %s = plan name
+	btnStartSetup      string
+	btnHowPlans        string
 	minuteSuffix       string // e.g. "min" / "мин"
 
 	// Login
@@ -116,6 +123,10 @@ var enCopy = botCopy{
 	homePlanActive: "⭐ %s active until %s",
 	homeTrialLeft:  "Trial · %d free invoices left",
 
+	startTitle: "<b>recv</b> — skip complex merchants. Accept USDT in Telegram",
+	startBody:  "Generate a payment link in 10 seconds and get crypto straight to your wallet. No revenue cuts.",
+	startProof: "First invoices are on us. Upgrade only when the real cash starts rolling in.",
+
 	btnNewInvoice:      "＋ New invoice",
 	btnRecentInvoices:  "🧾 Recent",
 	btnWallets:         "👛 Wallets",
@@ -126,13 +137,15 @@ var enCopy = botCopy{
 	btnCancel:          "✕ Cancel",
 	btnLanguage:        "🌐 Language",
 	btnOpenCheckout:    "💳 Open checkout",
-	btnOpenConsole:     "↗ Console",
+	btnOpenConsole:     "↗ Try Mini app",
 	btnPricing:         "Plans on site",
 	btnDocs:            "Docs",
 	btnSetWallet:       "Set %s",
 	btnDisable:         "Remove %s",
 	btnNewInvoiceShort: "＋ One more",
 	btnPayPlan:         "Pay for %s",
+	btnStartSetup:      "Setup wallet",
+	btnHowPlans:        "What's the cost?",
 	minuteSuffix:       "min",
 
 	loginTitle: "🔑 <b>Sign in on the web</b>",
@@ -203,6 +216,10 @@ var ruCopy = botCopy{
 	homePlanActive: "⭐ %s активен до %s",
 	homeTrialLeft:  "Пробный период · осталось %d бесплатных счетов",
 
+	startTitle: "<b>recv</b> — забудьте про сложные мерчанты. Принимайте USDT в Telegram",
+	startBody:  "Ссылка на оплату за 10 секунд — и крипта уже на вашем кошельке. Без процентов от ваших продаж.",
+	startProof: "Первые счета — за наш счёт. Переходите на тариф, когда пойдёт реальный кэш.",
+
 	btnNewInvoice:      "＋ Новый счёт",
 	btnRecentInvoices:  "🧾 Последние",
 	btnWallets:         "👛 Кошельки",
@@ -213,13 +230,15 @@ var ruCopy = botCopy{
 	btnCancel:          "✕ Отмена",
 	btnLanguage:        "🌐 Язык",
 	btnOpenCheckout:    "💳 Открыть оплату",
-	btnOpenConsole:     "↗ Консоль",
+	btnOpenConsole:     "↗ Попробовать Mini app",
 	btnPricing:         "Тарифы на сайте",
 	btnDocs:            "Документация",
 	btnSetWallet:       "Указать %s",
 	btnDisable:         "Убрать %s",
 	btnNewInvoiceShort: "＋ Ещё один",
 	btnPayPlan:         "Оплатить %s",
+	btnStartSetup:      "Настроить кошелёк",
+	btnHowPlans:        "Сколько это стоит?",
 	minuteSuffix:       "мин",
 
 	loginTitle: "🔑 <b>Вход через браузер</b>",

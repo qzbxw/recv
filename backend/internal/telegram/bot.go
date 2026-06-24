@@ -244,10 +244,12 @@ func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error
 		fields := strings.Fields(text)
 		if len(fields) > 0 {
 			cmd := fields[0]
+			isAcquisitionStart := false
 			if strings.ToLower(cmd) == "/start" && len(fields) > 1 {
 				param := fields[1]
 				utm, refCode := parseStartParam(param)
 				if utm != nil {
+					isAcquisitionStart = true
 					attrID := fmt.Sprintf("tg-bot-%d-%d", workspace.ID, time.Now().UTC().UnixNano())
 					utm.AttributionID = attrID
 					utm.LandingPath = "/tg-bot"
@@ -255,8 +257,13 @@ func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error
 					_ = b.store.RecordUTMAttribution(ctx, workspace.ID, *utm)
 				}
 				if refCode != "" {
+					isAcquisitionStart = true
 					_ = b.store.AttachReferralSignup(ctx, workspace.ID, refCode)
 				}
+			}
+			if isAcquisitionStart {
+				b.resetSession(message.Chat.ID)
+				return b.renderAcquisitionStart(ctx, workspace, message.Chat.ID, 0)
 			}
 			return b.handleCommand(ctx, workspace, message, cmd)
 		}
@@ -669,6 +676,35 @@ func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, c
 		{
 			{Text: c.btnWallets, CallbackData: "screen:wallets"},
 			planButton,
+		},
+		{
+			{Text: c.btnLanguage, CallbackData: "screen:language"},
+		},
+	}))
+}
+
+func (b *BotWorker) renderAcquisitionStart(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
+	remaining := service.TrialInvoiceLimit - workspace.FreeInvoicesUsed
+	if remaining < 0 {
+		remaining = 0
+	}
+	lines := []string{
+		c.startTitle,
+		"",
+		c.startBody,
+		"",
+		fmt.Sprintf(c.homeTrialLeft, remaining),
+		c.startProof,
+	}
+
+	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard([][]tgInlineKeyboardButton{
+		{
+			{Text: c.btnStartSetup, CallbackData: "screen:wallets"},
+		},
+		{
+			{Text: c.btnNewInvoice, CallbackData: "screen:invoice"},
+			{Text: c.btnHowPlans, CallbackData: "screen:upgrade"},
 		},
 		{
 			{Text: c.btnLanguage, CallbackData: "screen:language"},

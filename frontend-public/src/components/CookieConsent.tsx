@@ -43,12 +43,12 @@ export function CookieConsent({ language }: { language: "ru" | "en" }) {
   }[language];
 
   return (
-    <div className="fixed bottom-6 left-6 right-6 md:left-auto md:max-w-md z-[100] p-6 rounded-2xl border border-white/10 bg-black/80 backdrop-blur-xl shadow-2xl flex flex-col gap-4">
+    <div className="fixed bottom-3 left-3 right-3 md:bottom-6 md:left-auto md:right-6 md:max-w-md z-[100] p-4 md:p-6 rounded-xl md:rounded-2xl border border-white/10 bg-black/85 backdrop-blur-xl shadow-2xl flex flex-col gap-3 md:gap-4 max-h-[36vh] overflow-auto">
       <div className="flex flex-col gap-2">
         <h3 className="text-sm font-semibold text-white font-['Montserrat'] uppercase tracking-wider">
           {language === "ru" ? "Использование Cookie" : "Cookie Settings"}
         </h3>
-        <p className="text-xs text-white/70 leading-relaxed">
+        <p className="hidden md:block text-xs text-white/70 leading-relaxed">
           {content.text}{" "}
           <Link
             href={`/${language}/privacy`}
@@ -62,13 +62,13 @@ export function CookieConsent({ language }: { language: "ru" | "en" }) {
       <div className="flex gap-2">
         <button
           onClick={handleAccept}
-          className="flex-1 px-4 py-2 text-xs font-semibold rounded-xl bg-accent text-white hover:bg-accent/80 transition-colors cursor-pointer"
+          className="flex-1 px-3 md:px-4 py-2 text-[11px] md:text-xs font-semibold rounded-xl bg-accent text-white hover:bg-accent/80 transition-colors cursor-pointer"
         >
           {content.accept}
         </button>
         <button
           onClick={handleDecline}
-          className="px-4 py-2 text-xs font-semibold rounded-xl border border-white/10 hover:bg-white/[0.05] text-white/75 hover:text-white transition-colors cursor-pointer"
+          className="px-3 md:px-4 py-2 text-[11px] md:text-xs font-semibold rounded-xl border border-white/10 hover:bg-white/[0.05] text-white/75 hover:text-white transition-colors cursor-pointer"
         >
           {content.decline}
         </button>

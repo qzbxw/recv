@@ -89,10 +89,15 @@ jobs:
     name: Deploy production
     runs-on: ubuntu-latest
     needs: build-images
+    if: ${{ !cancelled() }}
     permissions:
       contents: read
       packages: read
     steps:
+      - name: Compute image prefix
+        id: prefix
+        run: echo "image_prefix=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Prepare SSH private key
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -125,7 +130,7 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           DEPLOY_SHA: ${{ github.sha }}
-          GHCR_IMAGE_PREFIX: ${{ needs.build-images.outputs.image_prefix }}
+          GHCR_IMAGE_PREFIX: ${{ steps.prefix.outputs.image_prefix }}
           GHCR_USER: ${{ github.actor }}
           # Workflow-scoped token: valid while this job runs, which covers
           # the pulls below. Already-pulled images stay usable afterwards.

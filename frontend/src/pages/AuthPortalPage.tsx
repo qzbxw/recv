@@ -73,7 +73,7 @@ export function AuthPortalPage() {
     code: "",
   });
   const [refCode, setRefCode] = useState(() => readRefCode());
-  const [showRefCode, setShowRefCode] = useState(() => Boolean(readRefCode()));
+  const [showRefCode, setShowRefCode] = useState(false);
   const [refStatus, setRefStatus] = useState<"idle" | "valid" | "invalid">("idle");
   const [refPartner, setRefPartner] = useState("");
 
@@ -353,18 +353,27 @@ export function AuthPortalPage() {
             <p className="auth-portal__subtitle">{text.browserBody}</p>
           </div>
 
-          <div className="auth-portal__oauth-grid">
-            <a className="auth-portal__oauth-btn auth-portal__oauth-btn--google" href={getOAuthStartUrl("google", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
-              <GoogleIcon />
-              <span>Google</span>
-            </a>
-            <a className="auth-portal__oauth-btn auth-portal__oauth-btn--github" href={getOAuthStartUrl("github", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
-              <GithubIcon />
-              <span>GitHub</span>
-            </a>
+          <div className="auth-portal__telegram-first">
+            {initData ? (
+              <button
+                type="button"
+                className="dev-btn dev-btn--primary auth-portal__submit-btn"
+                disabled={loading}
+                onClick={() => void performTelegramAuth()}
+                style={{ width: '100%' }}
+              >
+                {loading ? text.signingIn : text.continueTelegram}
+              </button>
+            ) : (
+              <div className="auth-portal__bot-hint-box">
+                <p className="auth-portal__hint-text">{text.browserHint}</p>
+                <a href={BOT_URL} target="_blank" rel="noreferrer" className="auth-portal__bot-link">
+                  <TelegramIcon size={14} />
+                  <span>{text.openBot}</span>
+                </a>
+              </div>
+            )}
           </div>
-
-          <div className="auth-portal__divider"><span>{text.telegramFallback}</span></div>
 
           <form className="dev-form" onSubmit={handleSubmit}>
             <div className="dev-input-group">
@@ -503,25 +512,17 @@ export function AuthPortalPage() {
           </p>
 
           <div className="auth-portal__footer-actions">
-             {initData ? (
-                <button
-                  type="button"
-                  className="dev-btn dev-btn--secondary auth-portal__action-btn"
-                  disabled={loading}
-                  onClick={() => void performTelegramAuth()}
-                  style={{ width: '100%', marginTop: '1rem' }}
-                >
-                  {loading ? text.signingIn : text.continueTelegram}
-                </button>
-             ) : (
-                <div className="auth-portal__bot-hint-box">
-                  <p className="auth-portal__hint-text">{text.browserHint}</p>
-                  <a href={BOT_URL} target="_blank" rel="noreferrer" className="auth-portal__bot-link">
-                    <TelegramIcon size={14} />
-                    <span>{text.openBot}</span>
-                  </a>
-                </div>
-             )}
+            <div className="auth-portal__divider"><span>{text.telegramFallback}</span></div>
+            <div className="auth-portal__oauth-grid">
+              <a className="auth-portal__oauth-btn auth-portal__oauth-btn--google" href={getOAuthStartUrl("google", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
+                <GoogleIcon />
+                <span>Google</span>
+              </a>
+              <a className="auth-portal__oauth-btn auth-portal__oauth-btn--github" href={getOAuthStartUrl("github", { next: nextPath, ref_code: sanitizeRefCode(refCode) })}>
+                <GithubIcon />
+                <span>GitHub</span>
+              </a>
+            </div>
           </div>
         </div>
 
