@@ -815,3 +815,45 @@ func (s *Server) handleAdminWallets(c *gin.Context) {
 	})
 }
 
+func (s *Server) handleAdminGetBroadcastInfo(c *gin.Context) {
+	count, err := s.store.GetEligibleTelegramBroadcastUsersCount(c.Request.Context())
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"eligible_users_count": count,
+	})
+}
+
+func (s *Server) handleAdminCreateBroadcast(c *gin.Context) {
+	var body struct {
+		Message string `json:"message"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	msg := strings.TrimSpace(body.Message)
+	if msg == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
+		return
+	}
+
+	queued, err := s.store.CreateTelegramBroadcast(c.Request.Context(), msg)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "telegram_broadcast_create", "telegram", "", gin.H{
+		"message_length":  len(msg),
+		"recipient_count": queued,
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"queued_count": queued,
+	})
+}
+

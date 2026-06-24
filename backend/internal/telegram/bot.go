@@ -80,8 +80,9 @@ type tgMessage struct {
 }
 
 type tgUser struct {
-	ID       int64  `json:"id"`
-	Username string `json:"username"`
+	ID           int64  `json:"id"`
+	Username     string `json:"username"`
+	LanguageCode string `json:"language_code"`
 }
 
 type tgCallbackQuery struct {
@@ -149,6 +150,13 @@ func (b *BotWorker) Run(ctx context.Context) error {
 	}()
 	defer func() { <-webhookDone }()
 
+	retentionDone := make(chan struct{})
+	go func() {
+		defer close(retentionDone)
+		b.runRetentionRemindersLoop(ctx)
+	}()
+	defer func() { <-retentionDone }()
+
 	if strings.TrimSpace(b.token) == "" {
 		b.logger.Info("telegram bot token is empty, running webhook delivery worker without Telegram polling")
 		<-ctx.Done()
@@ -211,6 +219,9 @@ func (b *BotWorker) flush(ctx context.Context) error {
 		keyboard := b.notificationKeyboard(job.Payload)
 		if _, err := b.sendMessage(ctx, job.RecipientTelegramID, job.Message, keyboard); err != nil {
 			_ = b.store.MarkNotificationFailed(ctx, job.ID, err.Error())
+			if isTelegramBlockedErr(err) {
+				_ = b.store.SetBotBlockedByTelegramID(ctx, job.RecipientTelegramID, true)
+			}
 			continue
 		}
 		_ = b.store.MarkNotificationSent(ctx, job.ID)
@@ -725,6 +736,10 @@ func (b *BotWorker) renderLanguage(ctx context.Context, workspace store.Workspac
 			{Text: "🇬🇧 English" + check("en"), CallbackData: "lang:set:en"},
 			{Text: "🇷🇺 Русский" + check("ru"), CallbackData: "lang:set:ru"},
 		},
+		{
+			{Text: "🇪🇸 Español" + check("es"), CallbackData: "lang:set:es"},
+			{Text: "🇧🇷 Português" + check("pt"), CallbackData: "lang:set:pt"},
+		},
 		{{Text: c.btnHome, CallbackData: "nav:home"}},
 	}))
 }
@@ -963,7 +978,20 @@ func (b *BotWorker) resetSession(chatID int64) {
 }
 
 func (b *BotWorker) ensureWorkspace(ctx context.Context, user tgUser) (store.Workspace, error) {
-	return b.store.UpsertWorkspaceByTelegram(ctx, user.ID, user.Username)
+	w, err := b.store.UpsertWorkspaceByTelegram(ctx, user.ID, user.Username)
+	if err != nil {
+		return w, err
+	}
+	if time.Since(w.CreatedAt) < 5*time.Second && user.LanguageCode != "" {
+		normLang := store.NormalizeLanguage(user.LanguageCode)
+		if normLang != w.Language {
+			w, err = b.store.UpdateWorkspaceLanguage(ctx, w.ID, normLang)
+			if err != nil {
+				b.logger.Error("failed to update initial workspace language", "error", err, "lang", normLang)
+			}
+		}
+	}
+	return w, nil
 }
 
 func (b *BotWorker) getUpdates(ctx context.Context) ([]tgUpdate, error) {
@@ -1270,4 +1298,246 @@ func parseStartParam(param string) (*store.AttributionInput, string) {
 	}
 
 	return nil, param
+}
+
+func (b *BotWorker) runRetentionRemindersLoop(ctx context.Context) {
+	// Check once per hour
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	// Initial run
+	if err := b.processRetentionReminders(ctx); err != nil {
+		b.logger.Error("process retention reminders", "error", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := b.processRetentionReminders(ctx); err != nil {
+				b.logger.Error("process retention reminders", "error", err)
+			}
+		}
+	}
+}
+
+func (b *BotWorker) processRetentionReminders(ctx context.Context) error {
+	candidates, err := b.store.GetRetentionCandidates(ctx)
+	if err != nil {
+		return fmt.Errorf("get retention candidates: %w", err)
+	}
+
+	now := time.Now()
+	for _, c := range candidates {
+		var stage string
+		var message string
+		var actions []notificationAction
+
+		copy := copyFor(c.Language)
+
+		if c.WalletCount == 0 {
+			age := now.Sub(c.CreatedAt)
+			if c.RetentionStage == nil && age >= 4*time.Hour {
+				stage = "no_wallet"
+				message = copy.reminderNoWallet
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnStartSetup, Data: "screen:wallets"},
+				}
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_wallet" && age >= 24*time.Hour {
+				stage = "no_wallet_2"
+				message = copy.reminderNoWallet2
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnStartSetup, Data: "screen:wallets"},
+				}
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_wallet_2" && age >= 48*time.Hour {
+				stage = "no_wallet_3"
+				message = copy.reminderNoWallet3
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnStartSetup, Data: "screen:wallets"},
+				}
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_wallet_3" && age >= 72*time.Hour {
+				stage = "no_wallet_4"
+				message = copy.reminderNoWallet4
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnStartSetup, Data: "screen:wallets"},
+				}
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_wallet_4" && age >= 96*time.Hour {
+				stage = "no_wallet_5"
+				message = copy.reminderNoWallet5
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnStartSetup, Data: "screen:wallets"},
+				}
+			}
+		} else if c.PlanCode == "trial" && c.FreeInvoicesUsed >= service.TrialInvoiceLimit {
+			if c.LastInvoiceCreatedAt != nil {
+				sinceLastInvoice := now.Sub(*c.LastInvoiceCreatedAt)
+				isNewCategory := c.RetentionStage == nil || (*c.RetentionStage != "trial_exhausted" && *c.RetentionStage != "trial_exhausted_2" && *c.RetentionStage != "trial_exhausted_3")
+				if isNewCategory && sinceLastInvoice >= 24*time.Hour {
+					stage = "trial_exhausted"
+					message = copy.reminderTrialExhausted
+					actions = []notificationAction{
+						{Kind: "callback", Text: copy.btnPlans, Data: "screen:plans"},
+					}
+				} else if c.RetentionStage != nil && *c.RetentionStage == "trial_exhausted" && sinceLastInvoice >= 48*time.Hour {
+					stage = "trial_exhausted_2"
+					message = copy.reminderTrialExhausted2
+					actions = []notificationAction{
+						{Kind: "callback", Text: copy.btnPlans, Data: "screen:plans"},
+					}
+				} else if c.RetentionStage != nil && *c.RetentionStage == "trial_exhausted_2" && sinceLastInvoice >= 72*time.Hour {
+					stage = "trial_exhausted_3"
+					message = copy.reminderTrialExhausted3
+					actions = []notificationAction{
+						{Kind: "callback", Text: copy.btnPlans, Data: "screen:plans"},
+					}
+				}
+			}
+		} else if c.InvoiceCount == 0 {
+			age := now.Sub(c.CreatedAt)
+			isNewCategory := c.RetentionStage == nil || (*c.RetentionStage != "no_invoice" && *c.RetentionStage != "no_invoice_2" && *c.RetentionStage != "no_invoice_3" && *c.RetentionStage != "no_invoice_4" && *c.RetentionStage != "no_invoice_5")
+			if isNewCategory && age >= 24*time.Hour {
+				stage = "no_invoice"
+				message = copy.reminderNoInvoice
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+				}
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_invoice" && age >= 48*time.Hour {
+				stage = "no_invoice_2"
+				message = copy.reminderNoInvoice2
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+				}
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_invoice_2" && age >= 72*time.Hour {
+				stage = "no_invoice_3"
+				message = copy.reminderNoInvoice3
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+				}
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_invoice_3" && age >= 96*time.Hour {
+				stage = "no_invoice_4"
+				message = copy.reminderNoInvoice4
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+				}
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_invoice_4" && age >= 120*time.Hour {
+				stage = "no_invoice_5"
+				message = copy.reminderNoInvoice5
+				actions = []notificationAction{
+					{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+				}
+			}
+		} else if c.PaidInvoiceCount == 0 {
+			if c.LastInvoiceCreatedAt != nil {
+				sinceLastInvoice := now.Sub(*c.LastInvoiceCreatedAt)
+				isNewCategory := c.RetentionStage == nil || (*c.RetentionStage != "expired_invoice" && *c.RetentionStage != "expired_invoice_2" && *c.RetentionStage != "expired_invoice_3" && *c.RetentionStage != "expired_invoice_4" && *c.RetentionStage != "expired_invoice_5")
+				if isNewCategory && sinceLastInvoice >= 24*time.Hour {
+					stage = "expired_invoice"
+					message = copy.reminderExpired
+					actions = []notificationAction{
+						{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+						{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+					}
+				} else if c.RetentionStage != nil && *c.RetentionStage == "expired_invoice" && sinceLastInvoice >= 48*time.Hour {
+					stage = "expired_invoice_2"
+					message = copy.reminderExpired2
+					actions = []notificationAction{
+						{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+						{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+					}
+				} else if c.RetentionStage != nil && *c.RetentionStage == "expired_invoice_2" && sinceLastInvoice >= 72*time.Hour {
+					stage = "expired_invoice_3"
+					message = copy.reminderExpired3
+					actions = []notificationAction{
+						{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+						{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+					}
+				} else if c.RetentionStage != nil && *c.RetentionStage == "expired_invoice_3" && sinceLastInvoice >= 96*time.Hour {
+					stage = "expired_invoice_4"
+					message = copy.reminderExpired4
+					actions = []notificationAction{
+						{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+						{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+					}
+				} else if c.RetentionStage != nil && *c.RetentionStage == "expired_invoice_4" && sinceLastInvoice >= 120*time.Hour {
+					stage = "expired_invoice_5"
+					message = copy.reminderExpired5
+					actions = []notificationAction{
+						{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+						{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+					}
+				}
+			}
+		} else { // c.PaidInvoiceCount > 0
+			if c.LastInvoiceCreatedAt != nil {
+				sinceLastInvoice := now.Sub(*c.LastInvoiceCreatedAt)
+				isNewCategory := c.RetentionStage == nil || (*c.RetentionStage != "inactive_merchant" && *c.RetentionStage != "inactive_merchant_2" && *c.RetentionStage != "inactive_merchant_3" && *c.RetentionStage != "inactive_merchant_4" && *c.RetentionStage != "inactive_merchant_5")
+				if sinceLastInvoice >= 7*24*time.Hour {
+					if isNewCategory {
+						stage = "inactive_merchant"
+						message = copy.reminderInactive
+						actions = []notificationAction{
+							{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+							{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+						}
+					} else if c.RetentionStage != nil && *c.RetentionStage == "inactive_merchant" && sinceLastInvoice >= 14*24*time.Hour {
+						stage = "inactive_merchant_2"
+						message = copy.reminderInactive2
+						actions = []notificationAction{
+							{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+							{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+						}
+					} else if c.RetentionStage != nil && *c.RetentionStage == "inactive_merchant_2" && sinceLastInvoice >= 30*24*time.Hour {
+						stage = "inactive_merchant_3"
+						message = copy.reminderInactive3
+						actions = []notificationAction{
+							{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+							{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+						}
+					} else if c.RetentionStage != nil && *c.RetentionStage == "inactive_merchant_3" && sinceLastInvoice >= 45*24*time.Hour {
+						stage = "inactive_merchant_4"
+						message = copy.reminderInactive4
+						actions = []notificationAction{
+							{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+							{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+						}
+					} else if c.RetentionStage != nil && *c.RetentionStage == "inactive_merchant_4" && sinceLastInvoice >= 60*24*time.Hour {
+						stage = "inactive_merchant_5"
+						message = copy.reminderInactive5
+						actions = []notificationAction{
+							{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
+							{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+						}
+					}
+				}
+			}
+		}
+
+		if stage != "" {
+			payload := notificationPayload{
+				InvoiceActions: actions,
+			}
+			payloadBytes, _ := json.Marshal(payload)
+
+			err := b.store.QueueRetentionReminder(ctx, c.ID, c.OwnerTelegramID, message, payloadBytes, stage)
+			if err != nil {
+				b.logger.Error("queue retention reminder", "workspace_id", c.ID, "stage", stage, "error", err)
+			} else {
+				b.logger.Info("queued retention reminder", "workspace_id", c.ID, "stage", stage)
+			}
+		}
+	}
+
+	return nil
+}
+
+func isTelegramBlockedErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Forbidden: bot was blocked by the user") ||
+		strings.Contains(msg, "Forbidden: user is deactivated") ||
+		strings.Contains(msg, "Forbidden: bot can't initiate conversation with a user") ||
+		strings.Contains(msg, "chat not found")
 }

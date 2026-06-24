@@ -38,6 +38,8 @@ import {
   getStoredAdminRefreshToken,
   setStoredAdminRefreshToken,
   fetchAdminWallets,
+  fetchAdminBroadcastCount,
+  sendAdminBroadcast,
 } from "../lib/api";
 import { ApiError } from "../lib/errors";
 import { CustomSelect } from "../components/CustomSelect";
@@ -65,7 +67,7 @@ import type {
   AdminWalletListResponse,
 } from "../lib/types";
 
-type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "wallets" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings" | "promocodes";
+type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "wallets" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings" | "promocodes" | "broadcast";
 
 type Filters = { status: string; kind: string; query: string; page: number; page_size: number };
 const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "", page: 1, page_size: 50 };
@@ -153,6 +155,7 @@ const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
   content: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></svg>,
   settings: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
   promocodes: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" strokeLinecap="round" strokeWidth="3" /></svg>,
+  broadcast: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>,
   logout: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
   refresh: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>,
 };
@@ -404,6 +407,7 @@ export function AdminDashboardPage() {
         { key: "workspaces", label: "Workspaces" },
         { key: "wallets", label: "Wallets" },
         { key: "promocodes", label: "Promo Codes" },
+        { key: "broadcast", label: "Telegram Broadcast" },
       ],
     },
     {
@@ -541,6 +545,9 @@ export function AdminDashboardPage() {
             {activePanel === "settings" && <SettingsPanel token={token} setToast={setToast} setError={setError} />}
             {activePanel === "promocodes" && (
               <PromoCodesPanel token={token} setToast={setToast} setError={setError} />
+            )}
+            {activePanel === "broadcast" && (
+              <BroadcastPanel token={token} setToast={setToast} setError={setError} />
             )}
           </div>
         </div>
@@ -2740,4 +2747,86 @@ function WalletsPanel({
     </div>
   );
 }
+
+function BroadcastPanel({ token, setToast, setError }: { token: string; setToast: (msg: string) => void; setError: (msg: string) => void }) {
+  const [message, setMessage] = useState("");
+  const [recipientCount, setRecipientCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const fetchCount = useCallback(() => {
+    setLoading(true);
+    fetchAdminBroadcastCount(token)
+      .then(res => setRecipientCount(res.eligible_users_count))
+      .catch(err => setError(err instanceof Error ? err.message : "Failed to load recipient count"))
+      .finally(() => setLoading(false));
+  }, [token, setError]);
+
+  useEffect(() => {
+    fetchCount();
+  }, [fetchCount]);
+
+  async function handleSend(e: FormEvent) {
+    e.preventDefault();
+    if (!message.trim()) {
+      setError("Message content cannot be empty.");
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to send this broadcast to ${recipientCount ?? "all"} users?`)) {
+      return;
+    }
+    setSending(true);
+    setError("");
+    try {
+      const res = await sendAdminBroadcast(token, { message: message.trim() });
+      setToast(`Broadcast successfully queued for ${res.queued_count} users.`);
+      setMessage("");
+      fetchCount();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send broadcast");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="Telegram Broadcast" subtitle="Broadcast updates or announcements to all active bot users." />
+
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove} style={{ marginBottom: "2rem" }}>
+        <div className="console-card-spotlight" />
+        <form onSubmit={handleSend} className="dev-form">
+          <div className="dev-input-group">
+            <label>Message Text (HTML formatted)</label>
+            <textarea
+              className="dev-input"
+              rows={8}
+              placeholder="e.g. <b>Hello!</b> We have updated our services. Check out..."
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              style={{ fontFamily: "monospace", resize: "vertical" }}
+            />
+            <span className="dev-input-hint">Supported tags: &lt;b&gt;, &lt;i&gt;, &lt;code&gt;, &lt;a href=&quot;...&quot;&gt;. Links will have web page preview disabled by default.</span>
+          </div>
+
+          {recipientCount !== null && (
+            <div style={{ margin: "1rem 0", fontSize: "0.9rem", opacity: 0.8 }}>
+              This broadcast will be sent to <strong>{recipientCount}</strong> active Telegram bot users (excluding blocked users and users who blocked the bot).
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
+            <button type="submit" className="dev-btn dev-btn--primary" disabled={sending || loading || !message.trim()}>
+              {sending ? "Queuing Broadcast..." : "Send Broadcast"}
+            </button>
+            <button type="button" className="dev-btn dev-btn--secondary" onClick={fetchCount} disabled={loading}>
+              Refresh Recipient Count
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 

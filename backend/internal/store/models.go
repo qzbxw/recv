@@ -302,17 +302,24 @@ type Workspace struct {
 	TelegramLinkedAt   *time.Time `json:"telegram_linked_at"`
 	DiscountPercent    int        `json:"discount_percent"`
 	DiscountPlanCode   *string    `json:"discount_plan_code"`
+	BotBlocked         bool       `json:"bot_blocked"`
+	LastRetentionReminderAt *time.Time `json:"last_retention_reminder_at"`
+	RetentionStage     *string    `json:"retention_stage"`
 	CreatedAt          time.Time  `json:"created_at"`
 }
 
 // SupportedLanguages lists the interface languages shared by the web app and bot.
-var SupportedLanguages = []string{"en", "ru"}
+var SupportedLanguages = []string{"en", "ru", "es", "pt"}
 
 // NormalizeLanguage maps arbitrary input to a supported language code, defaulting to English.
 func NormalizeLanguage(value string) string {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "ru", "ru-ru", "ru_ru", "russian":
 		return "ru"
+	case "es", "es-es", "es_es", "spanish":
+		return "es"
+	case "pt", "pt-br", "pt-pt", "pt_br", "pt_pt", "portuguese":
+		return "pt"
 	default:
 		return "en"
 	}
@@ -500,3 +507,19 @@ type PromoCodeRedemption struct {
 	WorkspaceID int64     `json:"workspace_id"`
 	RedeemedAt  time.Time `json:"redeemed_at"`
 }
+
+type WorkspaceRetentionCandidate struct {
+	ID                      int64
+	OwnerTelegramID         int64
+	Language                string
+	CreatedAt               time.Time
+	LastRetentionReminderAt *time.Time
+	RetentionStage          *string
+	WalletCount             int
+	InvoiceCount            int
+	PaidInvoiceCount        int
+	LastInvoiceCreatedAt    *time.Time
+	FreeInvoicesUsed        int
+	PlanCode                string
+}
+

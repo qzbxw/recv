@@ -47,9 +47,43 @@ var notificationCopyRU = notificationCopy{
 	actionKeepReview:  "🔍 Оставить на проверке",
 }
 
+var notificationCopyES = notificationCopy{
+	subscriptionActivated: "✅ %s activo.\nRecibido %s %s · %d días desbloqueados. A construir.",
+	paymentConfirmed:      "✅ Pagado — %s.\n+%s %s recibidos en tu billetera.",
+	partialPayment:        "🟡 Casi listo — %s.\nRecibido %s %s, la factura requería %s %s. Parece una comisión de la red. ¿Marcar como pagado o esperar el resto?",
+	underpaid:             "🟡 Pago incompleto — %s.\nRecibido %s %s, esperado %s %s. Tú decides cómo manejarlo.",
+	overpaid:              "🔵 Pago de más — %s.\nRecibido %s %s, esperado %s %s. Confirma y listo.",
+	latePayment:           "🟠 Llegada tarde — %s.\n%s %s llegaron después de la expiración. Estacionado en revisión para que lo confirmes.",
+	statusUpdated:         "🔔 %s es ahora %s.",
+
+	actionCountAsPaid: "✅ Contar como pagado",
+	actionWaitTopUp:   "⏳ Esperar saldo",
+	actionKeepReview:  "🔍 Dejar en revisión",
+}
+
+var notificationCopyPT = notificationCopy{
+	subscriptionActivated: "✅ %s ativo.\nRecebido %s %s · %d dias desbloqueados. Vamos construir.",
+	paymentConfirmed:      "✅ Pago — %s.\n+%s %s recebidos na sua carteira.",
+	partialPayment:        "🟡 Quase pronto — %s.\nRecebido %s %s, a fatura pedia %s %s. Parece taxa de corretora/rede. Deseja marcar como pago ou aguardar o restante?",
+	underpaid:             "🟡 Pagamento incompleto — %s.\nRecebido %s %s, esperado %s %s. Você decide como tratar.",
+	overpaid:              "🔵 Pago a mais — %s.\nRecebido %s %s, esperado %s %s. Confirme para finalizar.",
+	latePayment:           "🟠 Chegada tardia — %s.\n%s %s recebidos após o vencimento. Aguardando revisão para confirmação.",
+	statusUpdated:         "🔔 %s agora é %s.",
+
+	actionCountAsPaid: "✅ Marcar como pago",
+	actionWaitTopUp:   "⏳ Aguardar restante",
+	actionKeepReview:  "🔍 Manter em revisão",
+}
+
 func notificationCopyFor(language string) notificationCopy {
-	if NormalizeLanguage(language) == "ru" {
+	switch NormalizeLanguage(language) {
+	case "ru":
 		return notificationCopyRU
+	case "es":
+		return notificationCopyES
+	case "pt":
+		return notificationCopyPT
+	default:
+		return notificationCopyEN
 	}
-	return notificationCopyEN
 }

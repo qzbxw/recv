@@ -322,3 +322,15 @@ export async function fetchAdminWallets(token: string, params: {
   return request<AdminWalletListResponse>(`/api/admin/wallets${suffix}`, {}, token);
 }
 
+export async function fetchAdminBroadcastCount(token: string) {
+  return request<{ eligible_users_count: number }>("/api/admin/telegram/broadcast", {}, token);
+}
+
+export async function sendAdminBroadcast(token: string, payload: { message: string }) {
+  return request<{ queued_count: number }>("/api/admin/telegram/broadcast", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+

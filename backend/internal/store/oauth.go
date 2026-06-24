@@ -447,7 +447,10 @@ func loadPrimaryWorkspaceForUser(ctx context.Context, tx pgx.Tx, userID int64) (
 			w.telegram_linked_at,
 			w.created_at,
 			w.discount_percent,
-			COALESCE(w.discount_plan_code, '')
+			COALESCE(w.discount_plan_code, ''),
+			w.bot_blocked,
+			w.last_retention_reminder_at,
+			w.retention_stage
 		FROM workspaces w
 		JOIN workspace_members wm ON wm.workspace_id = w.id
 		WHERE wm.user_id = $1

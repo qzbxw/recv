@@ -40,7 +40,10 @@ const workspaceSelectColumns = `
 	telegram_linked_at,
 	created_at,
 	discount_percent,
-	COALESCE(discount_plan_code, '')
+	COALESCE(discount_plan_code, ''),
+	bot_blocked,
+	last_retention_reminder_at,
+	retention_stage
 `
 
 const invoiceSelectColumns = `
@@ -162,7 +165,10 @@ func (s *Store) ListWorkspacesForUser(ctx context.Context, userID int64) ([]Work
 			w.telegram_linked_at,
 			w.created_at,
 			w.discount_percent,
-			COALESCE(w.discount_plan_code, '')
+			COALESCE(w.discount_plan_code, ''),
+			w.bot_blocked,
+			w.last_retention_reminder_at,
+			w.retention_stage
 		FROM workspaces w
 		JOIN workspace_members wm ON w.id = wm.workspace_id
 		WHERE wm.user_id = $1
@@ -245,6 +251,10 @@ func (s *Store) UpsertWorkspaceByTelegram(ctx context.Context, telegramID int64,
 	// 2. Find existing workspace owned by this telegram ID
 	w, err := s.GetWorkspaceByTelegramID(ctx, telegramID)
 	if err == nil {
+		if w.BotBlocked {
+			_, _ = s.pool.Exec(ctx, `UPDATE workspaces SET bot_blocked = FALSE WHERE id = $1`, w.ID)
+			w.BotBlocked = false
+		}
 		// Ensure user is member
 		_ = s.AddWorkspaceMember(ctx, w.ID, user.ID, RoleOwner)
 		return w, nil
@@ -1290,13 +1300,16 @@ func (s *Store) ClaimNotificationJobs(ctx context.Context, limit int) ([]Notific
 	defer tx.Rollback(ctx)
 
 	rows, err := tx.Query(ctx, `
-		SELECT id, workspace_id, recipient_telegram_id, message, payload, attempts
-		FROM notification_outbox
-		WHERE status IN ('pending', 'failed')
-		  AND recipient_telegram_id IS NOT NULL
-		  AND available_at <= NOW()
-		ORDER BY created_at ASC
-		FOR UPDATE SKIP LOCKED
+		SELECT n.id, n.workspace_id, n.recipient_telegram_id, n.message, n.payload, n.attempts
+		FROM notification_outbox n
+		JOIN workspaces w ON n.workspace_id = w.id
+		WHERE n.status IN ('pending', 'failed')
+		  AND n.recipient_telegram_id IS NOT NULL
+		  AND n.available_at <= NOW()
+		  AND w.is_blocked = FALSE
+		  AND w.bot_blocked = FALSE
+		ORDER BY n.created_at ASC
+		FOR UPDATE OF n SKIP LOCKED
 		LIMIT $1
 	`, limit)
 	if err != nil {
@@ -1383,6 +1396,9 @@ func scanWorkspace(row pgx.Row) (Workspace, error) {
 		&workspace.CreatedAt,
 		&workspace.DiscountPercent,
 		&discountPlanCode,
+		&workspace.BotBlocked,
+		&workspace.LastRetentionReminderAt,
+		&workspace.RetentionStage,
 	)
 	if discountPlanCode != "" {
 		workspace.DiscountPlanCode = &discountPlanCode
@@ -1829,3 +1845,145 @@ func MustJSON(value any) json.RawMessage {
 	raw, _ := json.Marshal(value)
 	return raw
 }
+
+func (s *Store) SetBotBlockedByTelegramID(ctx context.Context, telegramID int64, blocked bool) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE workspaces
+		SET bot_blocked = $2
+		WHERE owner_telegram_id = $1
+	`, telegramID, blocked)
+	if err != nil {
+		return fmt.Errorf("set bot blocked by telegram id: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) GetEligibleTelegramBroadcastUsersCount(ctx context.Context) (int64, error) {
+	var count int64
+	err := s.pool.QueryRow(ctx, `
+		SELECT COUNT(1)
+		FROM workspaces
+		WHERE owner_telegram_id IS NOT NULL
+		  AND is_blocked = FALSE
+		  AND bot_blocked = FALSE
+	`).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("get eligible telegram broadcast count: %w", err)
+	}
+	return count, nil
+}
+
+func (s *Store) CreateTelegramBroadcast(ctx context.Context, message string) (int64, error) {
+	tag, err := s.pool.Exec(ctx, `
+		INSERT INTO notification_outbox (workspace_id, recipient_telegram_id, message)
+		SELECT id, owner_telegram_id, $1
+		FROM workspaces
+		WHERE owner_telegram_id IS NOT NULL
+		  AND is_blocked = FALSE
+		  AND bot_blocked = FALSE
+	`, message)
+	if err != nil {
+		return 0, fmt.Errorf("create telegram broadcast: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
+func (s *Store) GetRetentionCandidates(ctx context.Context) ([]WorkspaceRetentionCandidate, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT
+			w.id,
+			w.owner_telegram_id,
+			COALESCE(w.language, 'en'),
+			w.created_at,
+			w.last_retention_reminder_at,
+			w.retention_stage,
+			(SELECT COUNT(1) FROM wallets WHERE workspace_id = w.id AND is_active = TRUE) as wallet_count,
+			(SELECT COUNT(1) FROM invoices WHERE workspace_id = w.id) as invoice_count,
+			(SELECT COUNT(1) FROM invoices WHERE workspace_id = w.id AND status = 'paid') as paid_invoice_count,
+			(SELECT MAX(created_at) FROM invoices WHERE workspace_id = w.id) as last_invoice_created_at,
+			w.free_invoices_used,
+			w.plan_code
+		FROM workspaces w
+		WHERE w.owner_telegram_id IS NOT NULL
+		  AND w.is_blocked = FALSE
+		  AND w.bot_blocked = FALSE
+		  AND (w.last_retention_reminder_at IS NULL OR w.last_retention_reminder_at <= NOW() - INTERVAL '24 hours')
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("query retention candidates: %w", err)
+	}
+	defer rows.Close()
+
+	var candidates []WorkspaceRetentionCandidate
+	for rows.Next() {
+		var c WorkspaceRetentionCandidate
+		var ownerTelegramID sql.NullInt64
+		err := rows.Scan(
+			&c.ID,
+			&ownerTelegramID,
+			&c.Language,
+			&c.CreatedAt,
+			&c.LastRetentionReminderAt,
+			&c.RetentionStage,
+			&c.WalletCount,
+			&c.InvoiceCount,
+			&c.PaidInvoiceCount,
+			&c.LastInvoiceCreatedAt,
+			&c.FreeInvoicesUsed,
+			&c.PlanCode,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan retention candidate: %w", err)
+		}
+		if ownerTelegramID.Valid {
+			c.OwnerTelegramID = ownerTelegramID.Int64
+			candidates = append(candidates, c)
+		}
+	}
+	return candidates, rows.Err()
+}
+
+func (s *Store) UpdateWorkspaceRetention(ctx context.Context, workspaceID int64, stage string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE workspaces
+		SET last_retention_reminder_at = NOW(),
+		    retention_stage = $2
+		WHERE id = $1
+	`, workspaceID, stage)
+	if err != nil {
+		return fmt.Errorf("update workspace retention: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) QueueRetentionReminder(ctx context.Context, workspaceID int64, recipientTelegramID int64, message string, payload json.RawMessage, stage string) error {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin retention reminder tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO notification_outbox (workspace_id, recipient_telegram_id, message, payload)
+		VALUES ($1, $2, $3, $4)
+	`, workspaceID, recipientTelegramID, message, payload)
+	if err != nil {
+		return fmt.Errorf("insert notification outbox: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, `
+		UPDATE workspaces
+		SET last_retention_reminder_at = NOW(),
+		    retention_stage = $2
+		WHERE id = $1
+	`, workspaceID, stage)
+	if err != nil {
+		return fmt.Errorf("update workspace retention: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit retention reminder tx: %w", err)
+	}
+	return nil
+}
+

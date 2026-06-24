@@ -40,6 +40,8 @@ type httpStore interface {
 	GetAdminAnalytics(ctx context.Context, from time.Time, to time.Time, groupBy string) (store.AdminAnalytics, error)
 	GetAdminNotificationHealth(ctx context.Context) (store.AdminNotificationHealth, error)
 	GetAdminOverview(ctx context.Context) (store.AdminOverview, error)
+	GetEligibleTelegramBroadcastUsersCount(ctx context.Context) (int64, error)
+	CreateTelegramBroadcast(ctx context.Context, message string) (int64, error)
 	GetWebVitalsReport(ctx context.Context, from time.Time, to time.Time) (store.WebVitalsReport, error)
 	GetBlogPostBySlug(ctx context.Context, slug string, locale string) (store.BlogPost, error)
 	ListPublishedBlogLocalesBySlug(ctx context.Context, slug string) ([]string, error)

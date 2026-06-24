@@ -202,6 +202,8 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	adminAPI.GET("/webhooks/failed", server.handleAdminFailedWebhooks)
 	adminAPI.GET("/watchers", server.handleAdminWatchers)
 	adminAPI.GET("/notifications", server.handleAdminNotifications)
+	adminAPI.GET("/telegram/broadcast", server.handleAdminGetBroadcastInfo)
+	adminAPI.POST("/telegram/broadcast", server.handleAdminCreateBroadcast)
 	adminAPI.GET("/analytics", server.handleAdminAnalytics)
 	adminAPI.GET("/analytics/web-vitals", server.handleAdminWebVitals)
 	adminAPI.GET("/analytics/utm", server.handleAdminUTMReport)
