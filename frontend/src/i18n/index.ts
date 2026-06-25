@@ -24,4 +24,6 @@ export const DEVELOPER_PORTAL_COPY = { en: en.developerPortal, ru: ru.developerP
 export const LEGAL_COPY = {
   privacy: { en: en.legal.privacy, ru: ru.legal.privacy, uk: uk.legal.privacy, uz: uz.legal.privacy, de: de.legal.privacy },
   terms: { en: en.legal.terms, ru: ru.legal.terms, uk: uk.legal.terms, uz: uz.legal.terms, de: de.legal.terms },
+  dpa: { en: en.legal.dpa, ru: ru.legal.dpa, uk: uk.legal.dpa, uz: uz.legal.dpa, de: de.legal.dpa },
+  subprocessors: { en: en.legal.subprocessors, ru: ru.legal.subprocessors, uk: uk.legal.subprocessors, uz: uz.legal.subprocessors, de: de.legal.subprocessors },
 } as const;

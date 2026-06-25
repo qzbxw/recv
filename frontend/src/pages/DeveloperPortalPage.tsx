@@ -24,7 +24,7 @@ import { buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus } from "../lib/status";
 import type { APIKey, DeveloperUsageResponse, Invoice, MeResponse, Network, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
-import { DEVELOPER_PORTAL_COPY as COPY } from "../i18n";
+import { DEVELOPER_PORTAL_COPY as COPY, type Language } from "../i18n";
 
 const PLAN_OPTIONS = [
   { value: "merchant", label: "Merchant" },
@@ -48,10 +48,17 @@ const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
 
 const DEFAULT_SCOPES = ["invoices:read", "invoices:write"];
 
-function formatDate(value: string | null | undefined, language: "ru" | "en") {
+function formatDate(value: string | null | undefined, language: Language) {
   if (!value) return COPY[language].common.never;
+  const dateLocale: Record<Language, string> = {
+    ru: "ru-RU",
+    en: "en-US",
+    uk: "uk-UA",
+    uz: "uz-UZ",
+    de: "de-DE",
+  };
   const date = new Date(value);
-  return new Intl.DateTimeFormat(language === "ru" ? "ru-RU" : "en-US", {
+  return new Intl.DateTimeFormat(dateLocale[language], {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);

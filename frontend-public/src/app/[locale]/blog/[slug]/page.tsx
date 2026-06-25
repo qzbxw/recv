@@ -87,7 +87,7 @@ export async function generateMetadata(
 
 export default async function BlogPost(props: Props) {
   const params = await props.params;
-  const language = params.locale as "ru" | "en";
+  const language = params.locale === "ru" ? "ru" : "en";
   const post = await resolveBlogPost(params.slug, language);
 
   if (!post) {

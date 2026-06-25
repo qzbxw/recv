@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useUI } from "../lib/ui";
-import { LEGAL_COPY as COPY } from "../i18n";
+import { LEGAL_COPY as COPY, type Language } from "../i18n";
 import { LanguageSelect } from "../components/LanguageSelect";
 
 type LegalVariant = "privacy" | "terms" | "dpa" | "subprocessors";
 type LegalSection = {
   title: string;
-  paragraphs: string[];
-  bullets?: string[];
+  paragraphs: readonly string[];
+  bullets?: readonly string[];
 };
 
 type LegalCopy = {
@@ -19,12 +19,12 @@ type LegalCopy = {
   operatorLabel: string;
   draftTitle: string;
   draftBody: string;
-  draftItems: string[];
-  sections: LegalSection[];
+  draftItems: readonly string[];
+  sections: readonly LegalSection[];
   footerNote: string;
   leadTitle?: string;
-  leadParagraphs?: string[];
-  metaItems?: string[];
+  leadParagraphs?: readonly string[];
+  metaItems?: readonly string[];
 };
 
 
@@ -40,11 +40,15 @@ const LEGAL_PROFILE = {
     ru: "13 марта 2026",
     en: "March 13, 2026",
   },
-} as const;const legalCopy = COPY as unknown as Record<LegalVariant, Record<"ru" | "en", LegalCopy>>;
+} as const;
+
+function profileDateForLanguage(language: Language) {
+  return LEGAL_PROFILE.effectiveDate[language === "ru" ? "ru" : "en"];
+}
 
 export function LegalPage({ variant }: { variant: LegalVariant }) {
   const { language, setLanguage } = useUI();
-  const copy = legalCopy[variant][language];
+  const copy: LegalCopy = COPY[variant][language];
 
   useEffect(() => {
     document.documentElement.dataset.theme = "dark";
@@ -91,7 +95,7 @@ export function LegalPage({ variant }: { variant: LegalVariant }) {
             ) : (
               <>
                 <span>
-                  {copy.updatedLabel}: {LEGAL_PROFILE.effectiveDate[language]}
+                  {copy.updatedLabel}: {profileDateForLanguage(language)}
                 </span>
                 <span>
                   {copy.operatorLabel}: {LEGAL_PROFILE.operatorName}

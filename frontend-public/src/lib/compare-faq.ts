@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n";
+
 export type FaqItem = { q: string; a: string };
 
 // Visible FAQ content rendered on each /compare/[competitor] page and mirrored
@@ -94,3 +96,7 @@ export const COMPARE_FAQ: Record<string, { en: FaqItem[]; ru: FaqItem[] }> = {
     ],
   },
 };
+
+export function getCompareFaq(competitor: string, locale: Locale): FaqItem[] {
+  return COMPARE_FAQ[competitor]?.[locale === "ru" ? "ru" : "en"] ?? [];
+}

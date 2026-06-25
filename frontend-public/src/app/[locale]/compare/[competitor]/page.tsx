@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
-import { COMPARE_FAQ } from "@/lib/compare-faq";
+import { getCompareFaq } from "@/lib/compare-faq";
 import { getCopy, normalizeLocale } from "@/i18n";
 import { CompareDetailClient } from "@/components/CompareDetailClient";
 import { metadataDescription, socialImages } from "@/lib/seo";
@@ -45,7 +45,7 @@ export default async function ComparePage(props: Props) {
 
   if (!data) notFound();
 
-  const faq = COMPARE_FAQ[competitor]?.[locale] ?? [];
+  const faq = getCompareFaq(competitor, locale);
   const faqSchema = faq.length
     ? {
         "@context": "https://schema.org",

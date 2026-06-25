@@ -20,30 +20,30 @@ type notificationCopy struct {
 }
 
 var notificationCopyEN = notificationCopy{
-	subscriptionActivated: "✅ %s is live.\nReceived %s %s · %d days unlocked. Go build.",
-	paymentConfirmed:      "✅ Paid — %s.\n+%s %s landed in your wallet.",
-	partialPayment:        "🟡 Almost there — %s.\nGot %s %s, invoice asked for %s %s. Looks like an exchange fee. Count it as paid or wait for the top-up?",
-	underpaid:             "🟡 Short payment — %s.\nGot %s %s, expected %s %s. Your call on how to handle it.",
-	overpaid:              "🔵 Overpaid — %s.\nGot %s %s, expected %s %s. Confirm and you're done.",
-	latePayment:           "🟠 Late arrival — %s.\n%s %s came in after expiry. Parked in review for you to confirm.",
-	statusUpdated:         "🔔 %s is now %s.",
+	subscriptionActivated: "✅ %s plan activated.\nPayment of %s %s confirmed. Infrastructure unlocked for %d days.",
+	paymentConfirmed:      "✅ Payment Confirmed — %s.\n+%s %s has been routed to your wallet.",
+	partialPayment:        "🟡 Partial Payment Detected — %s.\nReceived: %s %s. Expected: %s %s. Often caused by exchange withdrawal fees. Please resolve manually.",
+	underpaid:             "🟡 Underpayment Detected — %s.\nReceived: %s %s. Expected: %s %s. Please review and resolve.",
+	overpaid:              "🔵 Overpayment Detected — %s.\nReceived: %s %s. Expected: %s %s. Please confirm to finalize.",
+	latePayment:           "🟠 Late Payment Detected — %s.\n%s %s arrived after invoice expiration. Placed in manual review.",
+	statusUpdated:         "🔔 Invoice %s status changed to %s.",
 
-	actionCountAsPaid: "✅ Count as paid",
-	actionWaitTopUp:   "⏳ Wait for top-up",
-	actionKeepReview:  "🔍 Keep in review",
+	actionCountAsPaid: "✅ Mark as Paid",
+	actionWaitTopUp:   "⏳ Await additional funds",
+	actionKeepReview:  "🔍 Keep in manual review",
 }
 
 var notificationCopyRU = notificationCopy{
-	subscriptionActivated: "✅ %s активирован.\nПолучено %s %s · разблокировано на %d дней. Поехали.",
-	paymentConfirmed:      "✅ Оплачено — %s.\n+%s %s уже в вашем кошельке.",
-	partialPayment:        "🟡 Почти всё — %s.\nПришло %s %s, в счёте было %s %s. Похоже на комиссию биржи. Засчитать как оплату или ждём доплату?",
-	underpaid:             "🟡 Недоплата — %s.\nПришло %s %s, ожидалось %s %s. Решение за вами.",
-	overpaid:              "🔵 Переплата — %s.\nПришло %s %s, ожидалось %s %s. Подтвердите — и готово.",
-	latePayment:           "🟠 Поздняя оплата — %s.\n%s %s пришли после истечения срока. Отложено на проверку.",
-	statusUpdated:         "🔔 %s теперь в статусе %s.",
+	subscriptionActivated: "✅ Тариф %s активирован.\nОплата %s %s подтверждена. Инфраструктура разблокирована на %d дней.",
+	paymentConfirmed:      "✅ Оплата подтверждена — %s.\n+%s %s направлены на Ваш кошелек.",
+	partialPayment:        "🟡 Частичная оплата — %s.\nПолучено: %s %s. Ожидалось: %s %s. Возможная причина: комиссия биржи при выводе. Требуется Ваше решение.",
+	underpaid:             "🟡 Недоплата — %s.\nПолучено: %s %s. Ожидалось: %s %s. Пожалуйста, проверьте статус платежа.",
+	overpaid:              "🔵 Переплата — %s.\nПолучено: %s %s. Ожидалось: %s %s. Подтвердите для закрытия счета.",
+	latePayment:           "🟠 Просроченный платеж — %s.\n%s %s поступили после истечения срока действия счета. Переведено на ручную проверку.",
+	statusUpdated:         "🔔 Статус счета %s изменен на %s.",
 
-	actionCountAsPaid: "✅ Засчитать оплату",
-	actionWaitTopUp:   "⏳ Ждать доплату",
+	actionCountAsPaid: "✅ Засчитать как оплачен",
+	actionWaitTopUp:   "⏳ Ожидать доплату",
 	actionKeepReview:  "🔍 Оставить на проверке",
 }
 

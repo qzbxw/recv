@@ -3,8 +3,9 @@ import { COPY } from "@/lib/copy";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { JsonLd } from "@/components/JsonLd";
+import type { Locale } from "@/i18n";
 
-export default function HomeClient({ language }: { language: "ru" | "en" }) {
+export default function HomeClient({ language }: { language: Locale }) {
   const copy = COPY[language];
 
   const faqSchema = {

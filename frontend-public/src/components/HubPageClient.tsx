@@ -3,6 +3,7 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 import { NetworkLogo } from "@/components/NetworkLogo";
 import { schemaId } from "@/lib/geo";
+import type { Locale } from "@/i18n";
 
 export type HubCard = {
   title: string;
@@ -15,7 +16,7 @@ export type HubCard = {
 };
 
 export type HubPageProps = {
-  language: "en" | "ru";
+  language: Locale;
   kicker: string;
   title: string;
   description: string;

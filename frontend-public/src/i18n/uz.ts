@@ -1,13 +1,16 @@
 const uz = {
   hero: {
     title: "Komissiyasiz (0%) to'g'ridan-to'g'ri hamyonlaringizga kripto to'lovlarni qabul qiling.",
-    body:
-      "USDT, Gram va TRON uchun nokastodial kripto to'lov shlyuzi. Bizning yuqori samarali to'lov API-mizni yoki aqlli chekautimizni Telegram botlari, SaaS platformalari va global elektron tijorat loyihalariga aylanma komissiyalarisiz integratsiya qiling.",
-    subcopy:
-      "Telegram do'konlari, SaaS billing va raqamli tijorat uchun ishlab chiqilgan.",
+    body: "USDT, Gram va TRON uchun nokastodial kripto to'lov shlyuzi. Bizning yuqori samarali to'lov API-mizni yoki aqlli chekautimizni Telegram botlari, SaaS platformalari va global elektron tijorat loyihalariga aylanma komissiyalarisiz integratsiya qiling.",
+    subcopy: "Telegram do'konlari, SaaS billing va raqamli tijorat uchun ishlab chiqilgan.",
     primary: "Konsolni ishga tushirish",
     secondary: "Hujjatlarni ko'rish",
-    badges: ["To'g'ridan-to'g'ri hamyonga", "0% aylanma komissiyasi", "Nokastodial API", "Imzolangan vebhuklar"],
+    badges: [
+      "To'g'ridan-to'g'ri hamyonga",
+      "0% aylanma komissiyasi",
+      "Nokastodial API",
+      "Imzolangan vebhuklar",
+    ],
   },
   heroPanel: {
     eyebrow: "Infrastruktura",
@@ -30,59 +33,97 @@ const uz = {
         title: "Yagona API v1",
         body: "Barcha likvid tarmoqlar uchun yuqori samarali shlyuz. Bitta integratsiya, cheksiz imkoniyatlar.",
         kicker: "INTEGRATSIYA",
-        size: "large"
+        size: "large",
       },
       {
         id: "checkout",
         title: "Aqlli chekaut",
         body: "Har qanday qurilma va platforma uchun optimallashtirilgan, yuqori konversiyali toza to'lov interfeysi.",
         kicker: "UX",
-        size: "medium"
+        size: "medium",
       },
       {
         id: "direct",
         title: "To'g'ridan-to'g'ri to'lovlar",
         body: "Daromad to'g'ridan-to'g'ri hamyonlaringizga tushadi. Biz mablag'laringizga hech qachon tegmaymiz, saqlamaymiz va vositachilik qilmaymiz.",
         kicker: "ISHONCH",
-        size: "small"
+        size: "small",
       },
       {
         id: "monitoring",
         title: "Real vaqtdagi vatcherlar",
         body: "Kam to'lovlarni aqlli aniqlash tizimiga ega past kechikishli blokcheyn monitoringi.",
         kicker: "BARQARORLIK",
-        size: "small"
+        size: "small",
       },
       {
         id: "tg",
         title: "Telegram uchun native",
         body: "Daromad oqimi va infrastrukturangizni bizning rasmiy Telegram botimiz orqali boshqaring.",
         kicker: "NATIVE",
-        size: "small"
-      }
-    ]
+        size: "small",
+      },
+    ],
   },
   useCases: {
     kicker: "FOYDALANISH HOLATLARI",
     title: "Kripto bizneslar aslida qanday haq olishi uchun mo'ljallangan.",
     tabs: [
-      { id: "tg-shops", title: "TG do'konlar", body: "Telegram ichida tovarlar va raqamli mahsulotlar savdosini lahzali yetkazib berish bilan avtomatlashtiring.", cta: "TG tijoratni o'rganish" },
-      { id: "saas", title: "SaaS billing", body: "Dasturiy ta'minot platformalari uchun ishonchli infrastruktura. Ruxsat etilgan tariflar biznesingiz uchun yuqori rentabellikni anglatadi.", cta: "Marjani optimallashtirish" },
-      { id: "digital", title: "Raqamli tovarlar", body: "Blokcheyn tasdiqlanganidan so'ng darhol kalitlar va akkauntlarni lahzali yetkazib berish.", cta: "Avtomatlashtirishni kengaytirish" },
-      { id: "communities", title: "Hamjamiyatlar", body: "Obuna logikasi bilan yopiq kanal va guruhlarga kirishni avtomatlashtirilgan boshqarish.", cta: "A'zolarni boshqarish" },
-    ]
+      {
+        id: "tg-shops",
+        title: "TG do'konlar",
+        body: "Telegram ichida tovarlar va raqamli mahsulotlar savdosini lahzali yetkazib berish bilan avtomatlashtiring.",
+        cta: "TG tijoratni o'rganish",
+      },
+      {
+        id: "saas",
+        title: "SaaS billing",
+        body: "Dasturiy ta'minot platformalari uchun ishonchli infrastruktura. Ruxsat etilgan tariflar biznesingiz uchun yuqori rentabellikni anglatadi.",
+        cta: "Marjani optimallashtirish",
+      },
+      {
+        id: "digital",
+        title: "Raqamli tovarlar",
+        body: "Blokcheyn tasdiqlanganidan so'ng darhol kalitlar va akkauntlarni lahzali yetkazib berish.",
+        cta: "Avtomatlashtirishni kengaytirish",
+      },
+      {
+        id: "communities",
+        title: "Hamjamiyatlar",
+        body: "Obuna logikasi bilan yopiq kanal va guruhlarga kirishni avtomatlashtirilgan boshqarish.",
+        cta: "A'zolarni boshqarish",
+      },
+    ],
   },
   mcp: {
     kicker: "AI va MCP",
     title: "AI agentlariga siz uchun kripto qabul qilishga ruxsat bering.",
     body: "recv loyihasi Model Context Protocol serverini taqdim etadi, shuning uchun Claude va Cursor kabi agentlar hisob-fakturalarni yaratishi, to'lov holatini tekshirishi va vebhuklarni avtonom tarzda tasdiqlashi mumkin — hech qanday qo'shimcha kod shart emas.",
     tools: [
-      { name: "create_invoice", body: "Istalgan qo'llab-quvvatlanadigan tarmoqda to'lov so'rovlarini yaratish." },
-      { name: "get_invoice", body: "Real vaqtdagi holat va tasdiqlarni tekshirish." },
-      { name: "list_invoices", body: "Yaqindagi to'lov faolligini ko'rib chiqish." },
-      { name: "simulate_payment", body: "Jonli efirga chiqishdan oldin Sandbox interfeysida to'liq jarayonni sinab ko'rish." },
-      { name: "verify_webhook", body: "Kiruvchi bildirishnomalarni xavfsiz tasdiqlash." },
-      { name: "list_supported_networks", body: "Mavjud tarmoqlar va aktivlarni aniqlash." },
+      {
+        name: "create_invoice",
+        body: "Istalgan qo'llab-quvvatlanadigan tarmoqda to'lov so'rovlarini yaratish.",
+      },
+      {
+        name: "get_invoice",
+        body: "Real vaqtdagi holat va tasdiqlarni tekshirish.",
+      },
+      {
+        name: "list_invoices",
+        body: "Yaqindagi to'lov faolligini ko'rib chiqish.",
+      },
+      {
+        name: "simulate_payment",
+        body: "Jonli efirga chiqishdan oldin Sandbox interfeysida to'liq jarayonni sinab ko'rish.",
+      },
+      {
+        name: "verify_webhook",
+        body: "Kiruvchi bildirishnomalarni xavfsiz tasdiqlash.",
+      },
+      {
+        name: "list_supported_networks",
+        body: "Mavjud tarmoqlar va aktivlarni aniqlash.",
+      },
     ],
     cta: "MCP yo'riqnomasini o'qish",
   },
@@ -90,21 +131,57 @@ const uz = {
     kicker: "TARMOQLAR",
     title: "Global ulanish imkoniyati.",
     list: [
-      { slug: "ton", label: "TON" },
-      { slug: "ton_usdt", label: "TON tarmog'idagi USDT" },
-      { slug: "tron", label: "TRON" },
-      { slug: "solana", label: "Solana" },
-      { slug: "base", label: "Base" },
-      { slug: "arbitrum", label: "Arbitrum" },
-      { slug: "bsc", label: "BSC" },
+      {
+        slug: "ton",
+        label: "TON",
+      },
+      {
+        slug: "ton_usdt",
+        label: "TON tarmog'idagi USDT",
+      },
+      {
+        slug: "tron",
+        label: "TRON",
+      },
+      {
+        slug: "solana",
+        label: "Solana",
+      },
+      {
+        slug: "base",
+        label: "Base",
+      },
+      {
+        slug: "arbitrum",
+        label: "Arbitrum",
+      },
+      {
+        slug: "bsc",
+        label: "BSC",
+      },
     ],
     rails: [
-      { name: "GRAM", body: "Telegram-ga asoslangan tijorat va rivojlanayotgan TON ekotizimi uchun native Gram to'lovlari." },
-      { name: "TON tarmog'idagi USDT", body: "TON ekotizimidagi steyblkoin to'lovlari uchun TON tarmog'idagi USDT." },
-      { name: "TRON", body: "Yuqori o'tkazuvchanlik va past xarajatlar bilan USDT hisob-kitoblari bo'yicha global standart." },
-      { name: "BASE", body: "Ishonchli EVM-mos steyblkoin to'lovlari uchun Coinbase-ning L2 tarmog'i." },
-      { name: "BSC", body: "Faol foydalanuvchilarning eng yirik ekotizimlaridan biriga ega yuqori samarali tarmoq." }
-    ]
+      {
+        name: "GRAM",
+        body: "Telegram-ga asoslangan tijorat va rivojlanayotgan TON ekotizimi uchun native Gram to'lovlari.",
+      },
+      {
+        name: "TON tarmog'idagi USDT",
+        body: "TON ekotizimidagi steyblkoin to'lovlari uchun TON tarmog'idagi USDT.",
+      },
+      {
+        name: "TRON",
+        body: "Yuqori o'tkazuvchanlik va past xarajatlar bilan USDT hisob-kitoblari bo'yicha global standart.",
+      },
+      {
+        name: "BASE",
+        body: "Ishonchli EVM-mos steyblkoin to'lovlari uchun Coinbase-ning L2 tarmog'i.",
+      },
+      {
+        name: "BSC",
+        body: "Faol foydalanuvchilarning eng yirik ekotizimlaridan biriga ega yuqori samarali tarmoq.",
+      },
+    ],
   },
   compare: {
     kicker: "EVOLYUTSIYA",
@@ -131,28 +208,50 @@ const uz = {
     trial: {
       name: "Trial",
       price: "0",
-      features: ["Jami 15 ta faol hisob-faktura", "API-ga kirish imkoni yo'q (faqat qo'lda)", "1 ta vebhuk yakuniy nuqtasi", "Telegram bot bildirishnomalari", "1 ta ishchi joy / 1 ta a'zo", "Hamjamiyat yordami"],
-      cta: "Tekin sinab ko'rishni boshlash"
+      features: [
+        "Jami 15 ta faol hisob-faktura",
+        "API-ga kirish imkoni yo'q (faqat qo'lda)",
+        "1 ta vebhuk yakuniy nuqtasi",
+        "Telegram bot bildirishnomalari",
+        "1 ta ishchi joy / 1 ta a'zo",
+        "Hamjamiyat yordami",
+      ],
+      cta: "Tekin sinab ko'rishni boshlash",
     },
     merchant: {
       name: "Merchant",
       price: "9",
       trial: "To'lov havolalari",
-      features: ["To'lov havolalari", "Telegram-oqim", "Qo'lda ko'rib chiqish", "API limiti"],
-      cta: "Merchant-ni faollashtirish"
+      features: [
+        "To'lov havolalari",
+        "Telegram-oqim",
+        "Qo'lda ko'rib chiqish",
+        "API limiti",
+      ],
+      cta: "Merchant-ni faollashtirish",
     },
     developer: {
       name: "Developer",
       price: "29",
-      features: ["To'liq API", "Vebhuklar", "Idempotentlik", "MCP vositalari"],
-      cta: "Developer-ni faollashtirish"
+      features: [
+        "To'liq API",
+        "Vebhuklar",
+        "Idempotentlik",
+        "MCP vositalari",
+      ],
+      cta: "Developer-ni faollashtirish",
     },
     business: {
       name: "Business",
       price: "79",
-      features: ["Jamoalar", "Audit jurnallari", "Kompaniya brendingi", "Oyiga 200k so'rovlar"],
-      cta: "Business-ni faollashtirish"
-    }
+      features: [
+        "Jamoalar",
+        "Audit jurnallari",
+        "Kompaniya brendingi",
+        "Oyiga 200k so'rovlar",
+      ],
+      cta: "Business-ni faollashtirish",
+    },
   },
   faq: {
     kicker: "FAQ",
@@ -192,8 +291,7 @@ const uz = {
   final: {
     kicker: "ISHNI BOSHLASH",
     title: "recv bilan biznesingizni kengaytiring.",
-    body:
-      "Kripto to'lovlarini avtomatlashtirgan va qo'lda bajariladigan xarajatlarni yo'q qilgan soha yetakchilariga qo'shiling.",
+    body: "Kripto to'lovlarini avtomatlashtirgan va qo'lda bajariladigan xarajatlarni yo'q qilgan soha yetakchilariga qo'shiling.",
     primary: "Hozir boshlash",
     secondary: "Hujjatlar",
   },
@@ -215,10 +313,22 @@ const uz = {
   nav: {
     products: {
       title: "Mahsulotlar",
-      checkout: { title: "Chekaut", desc: "Yuqori konversiyali to'lov UI" },
-      api: { title: "API", desc: "Dasturchilar uchun infrastruktura" },
-      invoicing: { title: "Invoyslar", desc: "Professional billing vositalari" },
-      mcp: { title: "MCP agenti", desc: "Muxtor AI agenti vositalari" },
+      checkout: {
+        title: "Chekaut",
+        desc: "Yuqori konversiyali to'lov UI",
+      },
+      api: {
+        title: "API",
+        desc: "Dasturchilar uchun infrastruktura",
+      },
+      invoicing: {
+        title: "Invoyslar",
+        desc: "Professional billing vositalari",
+      },
+      mcp: {
+        title: "MCP agenti",
+        desc: "Muxtor AI agenti vositalari",
+      },
     },
     useCases: {
       title: "Foydalanish holatlari",
@@ -276,7 +386,7 @@ const uz = {
       metadata: {
         title: "Kripto to'lovlarni qabul qilish | GRAM, TRC-20, TON tarmog'idagi USDT uchun nokastodial chekaut",
         description: "Eng yuqori konversiyali kripto chekaut bilan biznesingizni kengaytiring. USDT (TRC-20, TON, Base, BSC) to'lovlarini 0% aylanma komissiyasi bilan qo'llab-quvvatlang. Nokastodial, xavfsiz va Telegram-ga tayyor.",
-        keywords: "kripto to'lovlarni qabul qilish, kripto chekaut shlyuzi, GRAM to'lovlari, TON to'lovlari, TRON USDT shlyuzi, TON tarmog'idagi USDT chekauti, nokastodial kripto to'lov, telegram to'lov boti api, usdt trc20 chekaut"
+        keywords: "kripto to'lovlarni qabul qilish, kripto chekaut shlyuzi, GRAM to'lovlari, TON to'lovlari, TRON USDT shlyuzi, TON tarmog'idagi USDT chekauti, nokastodial kripto to'lov, telegram to'lov boti api, usdt trc20 chekaut",
       },
       kicker: "KONVERSIYA DVIGATELI",
       title: "Chekaut: Kripto UX bo'yicha oltin standart",
@@ -284,64 +394,94 @@ const uz = {
       hero: {
         title: "Maksimal konversiya. Minimal ishqalanish.",
         body: "recv Checkout — tashlab ketilgan savatchalarni tasdiqlangan tranzaksiyalarga aylantirish uchun mo'ljallangan eng so'nggi nokastodial interfeys. Uzluksiz integratsiyalangan, standart bo'yicha ko'p tarmoqli va har bir qurilma uchun optimallashtirilgan.",
-        cta: "Jonli demoni sinab ko'ring"
+        cta: "Jonli demoni sinab ko'ring",
       },
       comparison: {
         title: "recv evolyutsiyasi",
         items: [
           {
             legacy: "Hamyon manzilini qo'lda nusxalash xatolarga va mablag'larning yo'qolishiga olib keladi.",
-            recv: "QR-native oqimi va hamyonning deep link havolalari manzil nusxalash xatolarini kamaytiradi."
+            recv: "QR-native oqimi va hamyonning deep link havolalari manzil nusxalash xatolarini kamaytiradi.",
           },
           {
             legacy: "Mijozlar daqiqalar davomida 'kutilmoqda' ekranlarida qolib ketishadi.",
-            recv: "Hisob-fakturaning jonli holati qo'llab-quvvatlanadigan tarmoqlar kuzatilganda fikr-mulohazani taqdim etadi."
+            recv: "Hisob-fakturaning jonli holati qo'llab-quvvatlanadigan tarmoqlar kuzatilganda fikr-mulohazani taqdim etadi.",
           },
           {
             legacy: "Kam to'lovlar qo'llab-quvvatlash jamoasining kabusi va buyurtmalarning yo'qolishiga sabab bo'ladi.",
-            recv: "Kam to'lovlarni aqlli hal qilish tizimi qolgan aniq balansni kiritishni so'raydi."
-          }
-        ]
+            recv: "Kam to'lovlarni aqlli hal qilish tizimi qolgan aniq balansni kiritishni so'raydi.",
+          },
+        ],
       },
       bento: {
         title: "Mikro-funksiyalar, makro ta'sir",
         items: [
-          { title: "Telegram-ga tayyor", body: "Telegram veb-ilovalarida (Web Apps) va mobil brauzerlarda uzluksiz ishlaydi." },
-          { title: "Deep Link-ga tayyor", body: "Tonkeeper, Phantom va boshqa hamyonlarda to'lov ekranlarini darhol ochadi." },
-          { title: "Real vaqtdagi deltalarni hisoblash", body: "Valyuta kurslari va tarmoq komissiyalarini avtomatik hisoblash." },
-          { title: "Ikki tilli interfeys", body: "Ingliz va rus tillarida to'liq mahalliylashtirilgan to'lov interfeysi." },
-          { title: "UI-ga e'tibor", body: "Tezkor konversiya uchun optimallashtirilgan, ortiqcha narsalardan xoli toza to'lov sahifasi." },
-          { title: "Tarmoq xavfsizligi", body: "Noto'g'ri tarmoq tanlanganda ogohlantiruvchi o'rnatilgan tizim." }
-        ]
+          {
+            title: "Telegram-ga tayyor",
+            body: "Telegram veb-ilovalarida (Web Apps) va mobil brauzerlarda uzluksiz ishlaydi.",
+          },
+          {
+            title: "Deep Link-ga tayyor",
+            body: "Tonkeeper, Phantom va boshqa hamyonlarda to'lov ekranlarini darhol ochadi.",
+          },
+          {
+            title: "Real vaqtdagi deltalarni hisoblash",
+            body: "Valyuta kurslari va tarmoq komissiyalarini avtomatik hisoblash.",
+          },
+          {
+            title: "Ikki tilli interfeys",
+            body: "Ingliz va rus tillarida to'liq mahalliylashtirilgan to'lov interfeysi.",
+          },
+          {
+            title: "UI-ga e'tibor",
+            body: "Tezkor konversiya uchun optimallashtirilgan, ortiqcha narsalardan xoli toza to'lov sahifasi.",
+          },
+          {
+            title: "Tarmoq xavfsizligi",
+            body: "Noto'g'ri tarmoq tanlanganda ogohlantiruvchi o'rnatilgan tizim.",
+          },
+        ],
       },
       deepDive: [
         {
           title: "Kam to'lovlarni aqlli hal qilish",
-          body: "recv kam to'lovlarni tasniflaydi va mijoz yangi buyurtma yaratmasdan to'lovni yakunlashi uchun qolgan balansni ko'rsatishi mumkin. Buyurtmani bajarish va qaytarish qoidalari baribir sotuvchining siyosati bilan belgilanadi."
+          body: "recv kam to'lovlarni tasniflaydi va mijoz yangi buyurtma yaratmasdan to'lovni yakunlashi uchun qolgan balansni ko'rsatishi mumkin. Buyurtmani bajarish va qaytarish qoidalari baribir sotuvchining siyosati bilan belgilanadi.",
         },
         {
           title: "Native Telegram integratsiyasi",
-          body: "Bizning chekaut interfeysimiz mobil brauzerlar va Telegram Mini ilovalari uchun mo'ljallangan. Hamyonning deep link havolalari xaridorlarni mos keladigan hamyonga yo'naltirishi mumkin, tasdiqlash vaqti ise tanlangan tarmoqqa bog'liq bo'lib qoladi."
+          body: "Bizning chekaut interfeysimiz mobil brauzerlar va Telegram Mini ilovalari uchun mo'ljallangan. Hamyonning deep link havolalari xaridorlarni mos keladigan hamyonga yo'naltirishi mumkin, tasdiqlash vaqti ise tanlangan tarmoqqa bog'liq bo'lib qoladi.",
         },
         {
           title: "Tarmoqlararo yagona interfeys",
-          body: "Bu TON-dagi USDT jetton o'tkazmalari bo'ladimi yoki GRAM-ning o'ziga xos memo talablari bo'ladimi, recv murakkablikni bartaraf etadi. Mijozlaringiz blokcheyn texnologiyasidan qat'i nazar, bir xil va mukammal tajribaga ega bo'lishadi, bu esa kognitiv yukni kamaytiradi va ishonchni oshiradi."
-        }
+          body: "Bu TON-dagi USDT jetton o'tkazmalari bo'ladimi yoki GRAM-ning o'ziga xos memo talablari bo'ladimi, recv murakkablikni bartaraf etadi. Mijozlaringiz blokcheyn texnologiyasidan qat'i nazar, bir xil va mukammal tajribaga ega bo'lishadi, bu esa kognitiv yukni kamaytiradi va ishonchni oshiradi.",
+        },
       ],
       stats: [
-        { value: "5", label: "Asosiy tarmoqlar" },
-        { value: "0%", label: "Aylanma komissiyasi" },
-        { value: "2", label: "Tillar" },
-        { value: "HMAC", label: "Vebhukni imzolash" }
+        {
+          value: "5",
+          label: "Asosiy tarmoqlar",
+        },
+        {
+          value: "0%",
+          label: "Aylanma komissiyasi",
+        },
+        {
+          value: "2",
+          label: "Tillar",
+        },
+        {
+          value: "HMAC",
+          label: "Vebhukni imzolash",
+        },
       ],
       finalTitle: "Chekaut konversiyasini optimallashtirishga tayyormisiz?",
-      seo: "recv Checkout — yuqori konversiyali kriptovalyuta tranzaksiyalari uchun mo'ljallangan nokastodial to'lov shlyuzi. Raqamli tijoratda to'siqlarni bartaraf etish uchun mo'ljallangan ushbu interfeys TON, TRON (TRC-20), Base va BSC-ga mos keladigan tarmoqlar bo'ylab to'g'ridan-to'g'ri hamyonga tranzaksiyalarni qo'llab-quvvatlaydi. Asosiy funksional imkoniyatlar dinamik valyuta kursini hisoblash, yirik mobil hamyonlarga deep link havolalarini taqdim etish va qisman tranzaksiyalarni tiklash uchun kam to'lovlarni aqlli hal qilishni o'z ichiga oladi. Vositachi kastodianlarsiz ishlash orqali sotuvchilar o'z likvidligini to'liq nazorat qilishadi va mijozlarga aylanma komissiyalarisiz uzluksiz, ko'p tarmoqli to'lov tajribasini taqdim etishadi."
+      seo: "recv Checkout — yuqori konversiyali kriptovalyuta tranzaksiyalari uchun mo'ljallangan nokastodial to'lov shlyuzi. Raqamli tijoratda to'siqlarni bartaraf etish uchun mo'ljallangan ushbu interfeys TON, TRON (TRC-20), Base va BSC-ga mos keladigan tarmoqlar bo'ylab to'g'ridan-to'g'ri hamyonga tranzaksiyalarni qo'llab-quvvatlaydi. Asosiy funksional imkoniyatlar dinamik valyuta kursini hisoblash, yirik mobil hamyonlarga deep link havolalarini taqdim etish va qisman tranzaksiyalarni tiklash uchun kam to'lovlarni aqlli hal qilishni o'z ichiga oladi. Vositachi kastodianlarsiz ishlash orqali sotuvchilar o'z likvidligini to'liq nazorat qilishadi va mijozlarga aylanma komissiyalarisiz uzluksiz, ko'p tarmoqli to'lov tajribasini taqdim etishadi.",
     },
     apiProduct: {
       metadata: {
         title: "Birlashtirilgan blokcheyn API-si | TON, TRON, EVM uchun vebhuklar va monitoring",
         description: "Dasturchilar uchun kripto to'lovlar infrastrukturasi. Avtomatik takrorlanadigan vebhuklar va HMAC imzolarga ega TON, TRC-20, Base va BSC uchun yagona API.",
-        keywords: "kripto to'lov api, blokcheyn monitoring api, kripto uchun vebhuklar, TON dasturchi api, TRON trc20 api, avtomatlashtirilgan kripto to'lovlar, birlashtirilgan blokcheyn api"
+        keywords: "kripto to'lov api, blokcheyn monitoring api, kripto uchun vebhuklar, TON dasturchi api, TRON trc20 api, avtomatlashtirilgan kripto to'lovlar, birlashtirilgan blokcheyn api",
       },
       kicker: "AVVALO DASTURCHI",
       title: "Kengaytirish uchun API va infrastruktura",
@@ -349,64 +489,94 @@ const uz = {
       hero: {
         title: "Dasturchilar tomonidan dasturchilar uchun yaratilgan.",
         body: "Bizning mustahkam API va yuqori samarali blokcheyn monitoringi dvigatelimiz bilan daromad oqimingizni avtomatlashtiring. Idempotent so'rovlardan tortib HMAC-imzolangan vebhuklargacha.",
-        cta: "Hujjatlarni o'qish"
+        cta: "Hujjatlarni o'qish",
       },
       comparison: {
         title: "Muhandislik mukammalligi",
         items: [
           {
             legacy: "Bir nechta RPC tugunlari va mo'rt brauzerlarni boshqarish.",
-            recv: "Qo'llab-quvvatlanadigan tarmoqlar uchun standartlashtirilgan JSON bilan bitta birlashtirilgan API."
+            recv: "Qo'llab-quvvatlanadigan tarmoqlar uchun standartlashtirilgan JSON bilan bitta birlashtirilgan API.",
           },
           {
             legacy: "Takrorlash logikasi yoki imzolarsiz muvaffaqiyatsiz bo'ladigan vebhuklar.",
-            recv: "Tarifga xos limitlar va HMAC imzolarga ega navbatli takroriy urinishlar."
+            recv: "Tarifga xos limitlar va HMAC imzolarga ega navbatli takroriy urinishlar.",
           },
           {
             legacy: "Bitta tranzaksiyani ikki marta qayta ishlash.",
-            recv: "Idempotentlik nazorati dublikat qayta ishlashning oldini olishga yordam beradi."
-          }
-        ]
+            recv: "Idempotentlik nazorati dublikat qayta ishlashning oldini olishga yordam beradi.",
+          },
+        ],
       },
       bento: {
         title: "Mustahkam infrastruktura",
         items: [
-          { title: "HMAC imzolari", body: "Maksimal xavfsizlik uchun har bir vebhuk SHA-256 bilan imzolanadi." },
-          { title: "Idempotentlik", body: "Native kalitlar bilan ma'lumotlar bazangizni ikki marta yozishdan himoya qiling." },
-          { title: "Tezlikni cheklash", body: "Yuqori o'tkazuvchanlikka ega ilovalar uchun mo'ljallangan darajali kirish." },
-          { title: "SDK va hujjatlar", body: "Tezkor integratsiya uchun zamonaviy OpenAPI spetsifikatsiyalari va kutubxonalari." },
-          { title: "Jurnallarni saqlash", body: "Har bir so'rov va vebhuk urinishining batafsil tarixi." },
-          { title: "Holat kodlari", body: "Taxmin qilinadigan xatolarni qayta ishlash uchun standartlashtirilgan HTTP javoblari." }
-        ]
+          {
+            title: "HMAC imzolari",
+            body: "Maksimal xavfsizlik uchun har bir vebhuk SHA-256 bilan imzolanadi.",
+          },
+          {
+            title: "Idempotentlik",
+            body: "Native kalitlar bilan ma'lumotlar bazangizni ikki marta yozishdan himoya qiling.",
+          },
+          {
+            title: "Tezlikni cheklash",
+            body: "Yuqori o'tkazuvchanlikka ega ilovalar uchun mo'ljallangan darajali kirish.",
+          },
+          {
+            title: "SDK va hujjatlar",
+            body: "Tezkor integratsiya uchun zamonaviy OpenAPI spetsifikatsiyalari va kutubxonalari.",
+          },
+          {
+            title: "Jurnallarni saqlash",
+            body: "Har bir so'rov va vebhuk urinishining batafsil tarixi.",
+          },
+          {
+            title: "Holat kodlari",
+            body: "Taxmin qilinadigan xatolarni qayta ishlash uchun standartlashtirilgan HTTP javoblari.",
+          },
+        ],
       },
       deepDive: [
         {
           title: "Takrorlanadigan vebhuklarni yetkazib berish",
-          body: "Bizning vebhuk dvigatelimiz doimiy navbat va tarifga xos takrorlash byudjetidan foydalanadi. Har bir ma'lumot HMAC bilan imzolanadi; backend tizimingiz imzo va vaqt belgisini tekshirishi, tezda tasdiqlashi va hodisalarni idempotent ravishda qayta ishlashi kerak."
+          body: "Bizning vebhuk dvigatelimiz doimiy navbat va tarifga xos takrorlash byudjetidan foydalanadi. Har bir ma'lumot HMAC bilan imzolanadi; backend tizimingiz imzo va vaqt belgisini tekshirishi, tezda tasdiqlashi va hodisalarni idempotent ravishda qayta ishlashi kerak.",
         },
         {
           title: "Birlashtirilgan zanjir abstraksiyasi",
-          body: "TON, TRON va EVM-ni integratsiya qilish odatda uch xil kutubxona va mantiqiy oqimlarni talab qiladi. recv barcha tarmoqlar uchun bitta sxemani taqdim etadi. TRC-20 USDT uchun xuddi GRAM yoki TON tarmog'idagi USDT kabi hisob-faktura yarating."
+          body: "TON, TRON va EVM-ni integratsiya qilish odatda uch xil kutubxona va mantiqiy oqimlarni talab qiladi. recv barcha tarmoqlar uchun bitta sxemani taqdim etadi. TRC-20 USDT uchun xuddi GRAM yoki TON tarmog'idagi USDT kabi hisob-faktura yarating.",
         },
         {
           title: "Yuqori unumdorlikka ega vatcherlar",
-          body: "recv qo'llab-quvvatlanadigan tarmoqlarni kuzatib boradi va aniqlash va zarur tasdiqlashlardan so'ng hisob-faktura holatini yangilaydi. Vaqt tanlangan tarmoqqa va uning RPC infrastrukturasining mavjudligiga bog'liq."
-        }
+          body: "recv qo'llab-quvvatlanadigan tarmoqlarni kuzatib boradi va aniqlash va zarur tasdiqlashlardan so'ng hisob-faktura holatini yangilaydi. Vaqt tanlangan tarmoqqa va uning RPC infrastrukturasining mavjudligiga bog'liq.",
+        },
       ],
       stats: [
-        { value: "REST", label: "API protokoli" },
-        { value: "HMAC", label: "Vebhukni imzolash" },
-        { value: "Retry", label: "Yetkazib berish navbati" },
-        { value: "Keys", label: "Idempotentlik" }
+        {
+          value: "REST",
+          label: "API protokoli",
+        },
+        {
+          value: "HMAC",
+          label: "Vebhukni imzolash",
+        },
+        {
+          value: "Retry",
+          label: "Yetkazib berish navbati",
+        },
+        {
+          value: "Keys",
+          label: "Idempotentlik",
+        },
       ],
       finalTitle: "Yangi avlod to'lov oqimini bugun quring.",
-      seo: "recv Unified API B2B dasturiy ta'minot, o'yin platformalari va biznes ilovalariga blokcheyn to'lovlarini integratsiya qilish uchun infrastruktura taqdim etadi. Ishlab chiqish jamoalari qo'llab-quvvatlanadigan tarmoqlar uchun bitta REST interfeysidan, dublikat qayta ishlashni oldini olish vaqtidagi idempotentlik nazoratidan va HMAC-SHA256 imzolari bilan takrorlanadigan vebhuk yetkazib berishdan foydalanadilar."
+      seo: "recv Unified API B2B dasturiy ta'minot, o'yin platformalari va biznes ilovalariga blokcheyn to'lovlarini integratsiya qilish uchun infrastruktura taqdim etadi. Ishlab chiqish jamoalari qo'llab-quvvatlanadigan tarmoqlar uchun bitta REST interfeysidan, dublikat qayta ishlashni oldini olish vaqtidagi idempotentlik nazoratidan va HMAC-SHA256 imzolari bilan takrorlanadigan vebhuk yetkazib berishdan foydalanadilar.",
     },
     invoicingProduct: {
       metadata: {
         title: "Professional kripto hisob-fakturalari | 0% komissiyali B2B billing yechimi",
         description: "Professional kripto hisob-fakturalarini chiqaring, kuzating va boshqaring. USDT va native Gram-ni qo'llab-quvvatlash. Nokastodial, avtomatlashtirilgan kuzatish va buxgalteriya hisobi uchun CSV hisobotlari.",
-        keywords: "biznes uchun kripto invoysing, b2b kripto billing, frilans kripto invoyslari, professional usdt billing, kripto to'lovlarni kuzatish, 0 komissiyali kripto invoysing"
+        keywords: "biznes uchun kripto invoysing, b2b kripto billing, frilans kripto invoyslari, professional usdt billing, kripto to'lovlarni kuzatish, 0 komissiyali kripto invoysing",
       },
       kicker: "BIZNES DARAJASI",
       title: "Invoysing: Zamonaviy tijorat uchun professional billing",
@@ -414,58 +584,88 @@ const uz = {
       hero: {
         title: "Kriptoni yaxshi biladiganlar uchun professional billing.",
         body: "Hamyon skrinshotlarini qo'lda tekshirish va jadvallar orqali kuzatishdan voz keching. Mijozlaringiz hurmat qiladigan UI bilan hisob-fakturalarni chiqaring, kuzating va boshqaring.",
-        cta: "Birinchi invoysni yaratish"
+        cta: "Birinchi invoysni yaratish",
       },
       comparison: {
         title: "Ish jarayoningizni yangilang",
         items: [
           {
             legacy: "Telegram DM-larida 'menga ishoning' deb hamyon manzillarini yuborish.",
-            recv: "Real vaqtdagi holatge ega brendli hosted hisob-faktura sahifalari."
+            recv: "Real vaqtdagi holatge ega brendli hosted hisob-faktura sahifalari.",
           },
           {
             legacy: "Mijoz to'lovlarini tekshirish uchun blokcheyn brauzerlarini qo'lda ko'rish.",
-            recv: "To'lov amalga oshirilganda tezkor Telegram va Email bildirishnomalari."
+            recv: "To'lov amalga oshirilganda tezkor Telegram va Email bildirishnomalari.",
           },
           {
             legacy: "Oylik buxgalteriya hisobi uchun chalkash jadvallar.",
-            recv: "CSV/JSON eksport imkoniyatlariga ega markazlashtirilgan konsol."
-          }
-        ]
+            recv: "CSV/JSON eksport imkoniyatlariga ega markazlashtirilgan konsol.",
+          },
+        ],
       },
       bento: {
         title: "To'liq nazorat, nol komissiya",
         items: [
-          { title: "Sotuvchi konsoli", body: "Har bir hisob-faktura va mijozni boshqarish uchun markazlashtirilgan markaz." },
-          { title: "Telegram bildirishnomalari", body: "To'lov aniqlangan soniyada xabar oling." },
-          { title: "Qo'lda boshqarish", body: "Zarurat tug'ilganda tranzaksiyalarni qo'lda tasdiqlash moslashuvchanligi." },
-          { title: "Mijozlar katalogi", body: "Tez-tez to'laydigan mijozlarning manzillari va tafsilotlarini saqlang va boshqaring." },
-          { title: "CSV eksportlari", body: "Soliq va buxgalteriya maqsadlari uchun bir marta bosish orqali hisobot yaratish." },
-          { title: "Brendli havolalar", body: "Har bir billing so'rovi uchun shaxsiy nomlar va tavsiflar." }
-        ]
+          {
+            title: "Sotuvchi konsoli",
+            body: "Har bir hisob-faktura va mijozni boshqarish uchun markazlashtirilgan markaz.",
+          },
+          {
+            title: "Telegram bildirishnomalari",
+            body: "To'lov aniqlangan soniyada xabar oling.",
+          },
+          {
+            title: "Qo'lda boshqarish",
+            body: "Zarurat tug'ilganda tranzaksiyalarni qo'lda tasdiqlash moslashuvchanligi.",
+          },
+          {
+            title: "Mijozlar katalogi",
+            body: "Tez-tez to'laydigan mijozlarning manzillari va tafsilotlarini saqlang va boshqaring.",
+          },
+          {
+            title: "CSV eksportlari",
+            body: "Soliq va buxgalteriya maqsadlari uchun bir marta bosish orqali hisobot yaratish.",
+          },
+          {
+            title: "Brendli havolalar",
+            body: "Har bir billing so'rovi uchun shaxsiy nomlar va tavsiflar.",
+          },
+        ],
       },
       deepDive: [
         {
           title: "B2B ish jarayonini avtomatlashtirish",
-          body: "recv Invoicing shunchaki to'lov havolasidan ko'proq narsaga muhtoj bo'lgan bizneslar uchun mo'ljallangan. Loyihadan tortib hisob-kitobgacha bo'lgan butun hayotiy tsiklni boshqaring. 'Muddati o'tgan' yoki 'Kam to'langan' holatlarini kuzating va har bir bosqichda hamkorlaringiz bilan professional tarzda muloqot qiling."
+          body: "recv Invoicing shunchaki to'lov havolasidan ko'proq narsaga muhtoj bo'lgan bizneslar uchun mo'ljallangan. Loyihadan tortib hisob-kitobgacha bo'lgan butun hayotiy tsiklni boshqaring. 'Muddati o'tgan' yoki 'Kam to'langan' holatlarini kuzating va har bir bosqichda hamkorlaringiz bilan professional tarzda muloqot qiling.",
         },
         {
           title: "To'g'ridan-to'g'ri hamyonga xavfsizligi",
-          body: "Kastodial raqobatchilardan farqli o'laroq, recv never touches the funds in your invoices. Your clients pay you directly on-chain. Our service acts as a professional monitoring layer, ensuring you get notified without having to watch the ledger yourself."
+          body: "Kastodial raqobatchilardan farqli o'laroq, recv never touches the funds in your invoices. Your clients pay you directly on-chain. Our service acts as a professional monitoring layer, ensuring you get notified without having to watch the ledger yourself.",
         },
         {
           title: "Global ko'p valyutali qo'llab-quvvatlash",
-          body: "Bill in USD or any supported stablecoin. recv handles the real-time conversion rates, ensuring that the amount of USDT, GRAM, or SOL requested matches your desired fiat value at the moment the invoice is generated."
-        }
+          body: "Hisoblarni USD yoki istalgan qo'llab-quvvatlanadigan stabilkoinlarda chiqaring. recv real vaqtdagi kurslarni hisoblashni o'z zimmasiga oladi, bu esa invoys yaratilgan paytda so'ralgan USDT, GRAM yoki SOL miqdori siz xohlagan fiat qiymatiga mos kelishini ta'minlaydi.",
+        },
       ],
       stats: [
-        { value: "0%", label: "Eskrou xavfi" },
-        { value: "24/7", label: "Monitoring" },
-        { value: "<1daq", label: "Yaratish" },
-        { value: "100%", label: "Nokastodial" }
+        {
+          value: "0%",
+          label: "Eskrou xavfi",
+        },
+        {
+          value: "24/7",
+          label: "Monitoring",
+        },
+        {
+          value: "<1daq",
+          label: "Yaratish",
+        },
+        {
+          value: "100%",
+          label: "Nokastodial",
+        },
       ],
       finalTitle: "B2B billing tizimingizni hozir professional darajaga ko'taring.",
-      seo: "Streamline corporate financial operations with recv Invoicing, a specialized billing solution tailored for B2B crypto transactions and freelance accounting. The platform enables businesses to generate branded, multi-currency invoices with automated fiat-to-crypto pegging at the time of creation. Administrative features include real-time payment tracking via dedicated Telegram and email notifications, centralized client management, and comprehensive CSV export capabilities to simplify tax reporting and reconciliation. Operating on a zero-fee, direct-transfer model, it modernizes accounts receivable without introducing third-party holding risks."
+      seo: "recv Invoicing B2B va frilans buxgalteriya hisobiga moslashtirilgan professional billing yechimi bo'lib, korporativ moliyaviy operatsiyalarni soddalashtiradi. Platforma korxonalarga brendli va ko'p valyutali invoyslarni yaratish hamda hujjat yaratilgan paytda fiat-kripto kursini avtomatlashtirilgan tarzda aniq belgilash imkonini beradi. Boshqaruv funktsiyalariga Telegram va Email orqali to'lovlarni real vaqt rejimida kuzatish, mijozlar bazasini boshqarish va soliq hisoboti hamda solishtirishni osonlashtirish uchun CSV-eksport imkoniyatlari kiradi. Tizim to'g'ridan-to'g'ri o'tkazmalar modelida komissiyasiz ishlaydi va uchinchi tomon xavflarini istisno qiladi.",
     },
     breadcrumbs: {
       home: "Bosh sahifa",
@@ -481,7 +681,7 @@ const uz = {
       metadata: {
         title: "MCP agent integratsiyasi | Model Context Protocol orqali AI-Native kripto to'lovlari",
         description: "AI agentlarini Model Context Protocol orqali recv platformasiga ulang. Avtonom ish maydonini sozlash, tarif sotib olish, hisob-faktura yaratish va vebhuklarni boshqarish — barchasi LLM orqali.",
-        keywords: "mcp kripto to'lovlari, model context protocol to'lovlari, ai agenti to'lovlari, llm invoys yaratish, avtonom kripto billing, claude mcp recv"
+        keywords: "mcp kripto to'lovlari, model context protocol to'lovlari, ai agenti to'lovlari, llm invoys yaratish, avtonom kripto billing, claude mcp recv",
       },
       kicker: "AI-NATIVE",
       title: "Agentlar davri uchun to'lovlar",
@@ -489,58 +689,88 @@ const uz = {
       hero: {
         title: "Sizning AI agentingiz endi kripto sotuvchisi.",
         body: "recv — native Model Context Protocol serveriga ega birinchi to'lov platformasi. Har qanday MCP-mos keladigan agent boshqaruv paneliga tegmasdan tizimga kirishi, obuna bo'lishi, hisob-fakturalar yaratishi va vebhuklarni tekshirishi mumkin.",
-        cta: "MCP hujjatlarini ko'rish"
+        cta: "MCP hujjatlarini ko'rish",
       },
       comparison: {
         title: "Agentlik farqi",
         items: [
           {
             legacy: "Agentlar insonsiz ro'yxatdan o'tolmaydi, tarif sotib olmaydi yoki API kalitlarini ololmaydi.",
-            recv: "bootstrap_agent_workspace bitta so'rovda ish maydonini yaratadi va kirish tokenini qaytaradi."
+            recv: "bootstrap_agent_workspace bitta so'rovda ish maydonini yaratadi va kirish tokenini qaytaradi.",
           },
           {
             legacy: "LLM-larda to'lov hisob-fakturalarini yaratish yoki ularni tasdiqlashning native usuli yo'q.",
-            recv: "create_invoice va get_invoice — agentingiz to'g'ridan-to'g'ri chaqirishi mumkin bo'lgan birinchi darajali MCP vositalaridir."
+            recv: "create_invoice va get_invoice — agentingiz to'g'ridan-to'g'ri chaqirishi mumkin bo'lgan birinchi darajali MCP vositalaridir.",
           },
           {
             legacy: "Vebhuk imzosini tekshirish uchun backend kodi va maxfiy kalitlar talab qilinadi.",
-            recv: "verify_webhook MCP serverida lokal ravishda ishlaydi — tarmoq so'rovisiz va maxfiy kalitlarni oshkor qilmasdan."
-          }
-        ]
+            recv: "verify_webhook MCP serverida lokal ravishda ishlaydi — tarmoq so'rovisiz va maxfiy kalitlarni oshkor qilmasdan.",
+          },
+        ],
       },
       bento: {
         title: "Agentingiz qutidan chiqishi bilanoq oladigan vositalar",
         items: [
-          { title: "bootstrap_agent_workspace", body: "Sinov ish maydonini yarating va kirish tokenini oling — bu agentning boshlang'ich nuqtaski." },
-          { title: "create_invoice", body: "Istalgan qo'llab-quvvatlanadigan tarmoqda hosted to'lov hisob-fakturasini yarating." },
-          { title: "get_invoice / list_invoices", body: "Holatni so'rash va invoyslar tarixini dasturiy ravishda sahifalarga ajratish." },
-          { title: "create_api_key", body: "Tarif faollashtirilgandan so'ng tegishli ruxsatlarga ega API kalitlarini yaratish." },
-          { title: "create_webhook_endpoint", body: "Imzolangan hodisalarni qabul qilish uchun HTTPS nuqtalarini ro'yxatdan o'tkazish." },
-          { title: "verify_webhook", body: "Tarmoq bo'ylab aylanmasdan lokal ravishda HMAC-SHA256 imzolarini tasdiqlash." }
-        ]
+          {
+            title: "bootstrap_agent_workspace",
+            body: "Sinov ish maydonini yarating va kirish tokenini oling — bu agentning boshlang'ich nuqtaski.",
+          },
+          {
+            title: "create_invoice",
+            body: "Istalgan qo'llab-quvvatlanadigan tarmoqda hosted to'lov hisob-fakturasini yarating.",
+          },
+          {
+            title: "get_invoice / list_invoices",
+            body: "Holatni so'rash va invoyslar tarixini dasturiy ravishda sahifalarga ajratish.",
+          },
+          {
+            title: "create_api_key",
+            body: "Tarif faollashtirilgandan so'ng tegishli ruxsatlarga ega API kalitlarini yaratish.",
+          },
+          {
+            title: "create_webhook_endpoint",
+            body: "Imzolangan hodisalarni qabul qilish uchun HTTPS nuqtalarini ro'yxatdan o'tkazish.",
+          },
+          {
+            title: "verify_webhook",
+            body: "Tarmoq bo'ylab aylanmasdan lokal ravishda HMAC-SHA256 imzolarini tasdiqlash.",
+          },
+        ],
       },
       deepDive: [
         {
           title: "Inson aralashuvisiz agentlarni ro'yxatdan o'tkazish",
-          body: "AI agenti inson ishtirokisiz recv-da to'liq ro'yxatdan o'tishi mumkin. U bootstrap_agent_workspace-ni chaqiradi, kirish tokenini oladi, create_subscription_checkout orqali Developer yoki Business obunasini sotib oladi, to'langunga qadar get_checkout_invoice-ni so'raydi, so'ngra o'zining API kalitini yaratadi. Butun jarayon MCP vositalarini ketma-ket chaqirish sifatida ifodalanishi mumkin."
+          body: "AI agenti inson ishtirokisiz recv-da to'liq ro'yxatdan o'tishi mumkin. U bootstrap_agent_workspace-ni chaqiradi, kirish tokenini oladi, create_subscription_checkout orqali Developer yoki Business obunasini sotib oladi, to'langunga qadar get_checkout_invoice-ni so'raydi, so'ngra o'zining API kalitini yaratadi. Butun jarayon MCP vositalarini ketma-ket chaqirish sifatida ifodalanishi mumkin.",
         },
         {
           title: "Istalgan MCP-mos keladigan ish vaqti",
-          body: "recv MCP serveri stdio orqali ishlaydi va Claude Desktop, Claude Code, Cursor, Cline, Continue va Model Context Protocol spetsifikatsiyasini amalga oshiradigan har qanday boshqa xost bilan ishlaydi. Uni RECV_API_KEY va RECV_ACCESS_TOKEN bilan mcp.json-ga qo'shing va agentingiz darhol to'lov imkoniyatlariga ega bo'ladi."
+          body: "recv MCP serveri stdio orqali ishlaydi va Claude Desktop, Claude Code, Cursor, Cline, Continue va Model Context Protocol spetsifikatsiyasini amalga oshiradigan har qanday boshqa xost bilan ishlaydi. Uni RECV_API_KEY va RECV_ACCESS_TOKEN bilan mcp.json-ga qo'shing va agentingiz darhol to'lov imkoniyatlariga ega bo'ladi.",
         },
         {
           title: "Dizayn bo'yicha xavfsiz",
-          body: "Vebhukni tasdiqlash MCP jarayoni ichida sodir bo'ladi — sizning so'rov tanangiz va maxfiy kalitingiz hech qachon lokal ish vaqtini tark etmaydi. API kalitlari invoices:read va invoices:write ruxsatlari bilan cheklangan. Agent faqat o'ziga kerak bo'lgan narsani ko'radi va har bir to'lov hodisasi yuborilishidan oldin kriptografik tarzda imzolanadi."
-        }
+          body: "Vebhukni tasdiqlash MCP jarayoni ichida sodir bo'ladi — sizning so'rov tanangiz va maxfiy kalitingiz hech qachon lokal ish vaqtini tark etmaydi. API kalitlari invoices:read va invoices:write ruxsatlari bilan cheklangan. Agent faqat o'ziga kerak bo'lgan narsani ko'radi va har bir to'lov hodisasi yuborilishidan oldin kriptografik tarzda imzolanadi.",
+        },
       ],
       stats: [
-        { value: "12", label: "MCP vositalari" },
-        { value: "stdio", label: "Transport" },
-        { value: "7+", label: "Tarmoqlar" },
-        { value: "0", label: "Inson qadamlari" }
+        {
+          value: "12",
+          label: "MCP vositalari",
+        },
+        {
+          value: "stdio",
+          label: "Transport",
+        },
+        {
+          value: "7+",
+          label: "Tarmoqlar",
+        },
+        {
+          value: "0",
+          label: "Inson qadamlari",
+        },
       ],
       finalTitle: "Agentingizga daromad olish huquqini bering.",
-      seo: "recv MCP (Model Context Protocol) integratsiyasi AI agentlari va LLM-ga asoslangan ilovalarga kripto to'lovlarining to'liq jarayonini avtonom boshqarish imkonini beradi. Claude Desktop, Claude Code, Cursor yoki har qanday MCP-mos xostda ishlaydigan agentlar bootstrap_agent_workspace-ni chaqirib, o'zlarini ro'yxatdan o'tkazishlari, obuna rejasini sotib olishlari, API kalitlarini yaratishlari, TON, TRON, Solana, Base, Arbitrum va BSC tarmoqlari bo'ylab to'lov hisob-fakturalarini yaratishlari va kuzatishlari hamda hodisalarga asoslangan to'lov oqimlari uchun vebhuk nuqtalarini ro'yxatdan o'tkazishlari mumkin. verify_webhook vositasi tarmoqqa sirlarni oshkor qilmasdan lokal HMAC-SHA256 imzosini tekshirishni amalga oshiradi. Bu recv platformasini avtonom dasturiy ta'minotning agentlik davri uchun mo'ljallangan birinchi to'lov infratuzilmasiga aylantiradi."
+      seo: "recv MCP (Model Context Protocol) integratsiyasi AI agentlari va LLM-ga asoslangan ilovalarga kripto to'lovlarining to'liq jarayonini avtonom boshqarish imkonini beradi. Claude Desktop, Claude Code, Cursor yoki har qanday MCP-mos xostda ishlaydigan agentlar bootstrap_agent_workspace-ni chaqirib, o'zlarini ro'yxatdan o'tkazishlari, obuna rejasini sotib olishlari, API kalitlarini yaratishlari, TON, TRON, Solana, Base, Arbitrum va BSC tarmoqlari bo'ylab to'lov hisob-fakturalarini yaratishlari va kuzatishlari hamda hodisalarga asoslangan to'lov oqimlari uchun vebhuk nuqtalarini ro'yxatdan o'tkazishlari mumkin. verify_webhook vositasi tarmoqqa sirlarni oshkor qilmasdan lokal HMAC-SHA256 imzosini tekshirishni amalga oshiradi. Bu recv platformasini avtonom dasturiy ta'minotning agentlik davri uchun mo'ljallangan birinchi to'lov infratuzilmasiga aylantiradi.",
     },
     productsHub: {
       title: "Har bir biznes ko'lami uchun yechimlar",
@@ -565,13 +795,13 @@ const uz = {
         title: "MCP agenti",
         desc: "AI agentlariga to'lovlarni avtonom tarzda qabul qilishiga ruxsat bering. Native Model Context Protocol integratsiyasi — sizning AI inson aralashuvisiz ish joylarini sozlaydi, tariflarni sotib oladi va hisob-fakturalarni yaratadi.",
         link: "Batafsil ma'lumot",
-      }
+      },
     },
     networksHub: {
       title: "Universal blokcheyn ulanishi",
       description: "Biz biznes va markazlashtirilmagan likvidlik o'rtasidagi tafovutni bartaraf etamiz. recv bitta integratsiya orqali barcha asosiy protokollarni qo'llab-quvvatlaydi.",
       kicker: "TARMOQLAR",
-      explanation: "Barcha qo'llab-quvvatlanadigan tarmoqlar to'g'ridan-to'g'ri hamyon asosida ishlaydi. recv sotuvchi mablag'larini saqlamaydi; sotuvchilar hamyon xavfsizligi va operatsiyalari uchun javobgar bo'lib qoladilar."
+      explanation: "Barcha qo'llab-quvvatlanadigan tarmoqlar to'g'ridan-to'g'ri hamyon asosida ishlaydi. recv sotuvchi mablag'larini saqlamaydi; sotuvchilar hamyon xavfsizligi va operatsiyalari uchun javobgar bo'lib qoladilar.",
     },
     networkPages: {
       ton: {
@@ -591,9 +821,18 @@ const uz = {
           title: "checkout.network.ton",
           amount: "79.00 USDT",
           items: [
-            { label: "Yo'nalish", value: "TON" },
-            { label: "Moslashtirish", value: "Sharh" },
-            { label: "To'lov", value: "To'g'ridan-to'g'ri" },
+            {
+              label: "Yo'nalish",
+              value: "TON",
+            },
+            {
+              label: "Moslashtirish",
+              value: "Sharh",
+            },
+            {
+              label: "To'lov",
+              value: "To'g'ridan-to'g'ri",
+            },
           ],
         },
         assets: {
@@ -601,9 +840,18 @@ const uz = {
           title: "Xaridorga yo'naltirilgan chekaut uchun TON-native aktivlari.",
           body: "Telegram-native to'lov oqimlari uchun TON-dan va ishchi joyingizda faollashtirilganda qo'llab-quvvatlanadigan Jetton-lardan foydalaning.",
           items: [
-            { name: "GRAM", body: "Oddiy Telegram va hamyon-native to'lovlar uchun native Gram o'tkazmalari." },
-            { name: "Jettonlar", body: "Qo'llab-quvvatlanadigan TON Jettonlari mos keladigan hamyonlar uchun chekaut variantlari sifatida ko'rsatilishi mumkin." },
-            { name: "TON tarmog'idagi USDT", body: "Sotuvchi sozlamalaringizda aktiv faollashtirilgan TON tarmog'ida steyblkoin chekautidan foydalaning." },
+            {
+              name: "GRAM",
+              body: "Oddiy Telegram va hamyon-native to'lovlar uchun native Gram o'tkazmalari.",
+            },
+            {
+              name: "Jettonlar",
+              body: "Qo'llab-quvvatlanadigan TON Jettonlari mos keladigan hamyonlar uchun chekaut variantlari sifatida ko'rsatilishi mumkin.",
+            },
+            {
+              name: "TON tarmog'idagi USDT",
+              body: "Sotuvchi sozlamalaringizda aktiv faollashtirilgan TON tarmog'ida steyblkoin chekautidan foydalaning.",
+            },
           ],
         },
         why: {
@@ -615,10 +863,22 @@ const uz = {
           kicker: "CHEKAUT VA API MEXANIKASI",
           title: "To'lov sharhlari TON mos kelishini ishonchli qiladi.",
           steps: [
-            { title: "Invoys yaratish", body: "Chekaut yoki API to'g'ri miqdor, aktiv, manzil va kerakli sharh bilan Gram to'lov so'rovini yaratadi." },
-            { title: "To'lovni ko'rsatish", body: "Xaridor QR, nusxa ko'chirilishi mumkin bo'lgan manzil, miqdor va aniq sharh ko'rsatmalari mavjud bo'lgan sahifani ko'radi." },
-            { title: "O'tkazmani aniqlash", body: "recv vatcherlari kiruvchi o'tkazmani miqdor va kerakli to'lov sharhi bo'yicha moslashtiradi." },
-            { title: "Hodisani yuborish", body: "Boshqaruv panelingiz yoki vebhukingiz buyurtmani bajarish, kirish yoki buyurtma yangilanishi uchun to'langanlik holatini qabul qiladi." },
+            {
+              title: "Invoys yaratish",
+              body: "Chekaut yoki API to'g'ri miqdor, aktiv, manzil va kerakli sharh bilan Gram to'lov so'rovini yaratadi.",
+            },
+            {
+              title: "To'lovni ko'rsatish",
+              body: "Xaridor QR, nusxa ko'chirilishi mumkin bo'lgan manzil, miqdor va aniq sharh ko'rsatmalari mavjud bo'lgan sahifani ko'radi.",
+            },
+            {
+              title: "O'tkazmani aniqlash",
+              body: "recv vatcherlari kiruvchi o'tkazmani miqdor va kerakli to'lov sharhi bo'yicha moslashtiradi.",
+            },
+            {
+              title: "Hodisani yuborish",
+              body: "Boshqaruv panelingiz yoki vebhukingiz buyurtmani bajarish, kirish yoki buyurtma yangilanishi uchun to'langanlik holatini qabul qiladi.",
+            },
           ],
         },
         limitations: {
@@ -631,25 +891,55 @@ const uz = {
           title: "Telegram orqali olib boriladigan daromad uchun eng yaxshisi.",
           body: "TON xaridor sayohati chatda yoki Telegram Mini ilovasida boshlanganda eng kuchli hisoblanadi.",
           items: [
-            { name: "Telegram do'konlari", body: "Buyurtmalar uchun chekaut havolalarini yarating va xaridorlardan skrinshot so'rashni to'xtating." },
-            { name: "Pullik hamjamiyatlar", body: "A'zolik to'lovlarini yopiq kanallar va guruhlarga kirish qarorlari bilan bog'lang." },
-            { name: "Raqamli tovarlar", body: "Telegram-native do'konlardan fayllar, kalitlar va kirish huquqini soting." },
+            {
+              name: "Telegram do'konlari",
+              body: "Buyurtmalar uchun chekaut havolalarini yarating va xaridorlardan skrinshot so'rashni to'xtating.",
+            },
+            {
+              name: "Pullik hamjamiyatlar",
+              body: "A'zolik to'lovlarini yopiq kanallar va guruhlarga kirish qarorlari bilan bog'lang.",
+            },
+            {
+              name: "Raqamli tovarlar",
+              body: "Telegram-native do'konlardan fayllar, kalitlar va kirish huquqini soting.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "GRAM to'lov oqimini quring.",
           links: [
-            { kicker: "Foydalanish holati", label: "Telegram Shops", body: "Chekaut havolalari va jonli to'lov holatlari bilan Telegram tijorat oqimlari.", href: "/use-cases/telegram-shops" },
-            { kicker: "Mahsulot", label: "Checkout", body: "TON-da GRAM buyurtmalari uchun hosted to'lov ekranlari.", href: "/products/checkout" },
-            { kicker: "Plan", label: "Merchant", body: "Sotuvchilar va operatorlar uchun boshqaruv paneli ish jarayoni.", href: "/merchant" },
+            {
+              kicker: "Foydalanish holati",
+              label: "Telegram-do'konlar",
+              body: "Chekaut havolalari va jonli to'lov holatlari bilan Telegram tijorat oqimlari.",
+              href: "/use-cases/telegram-shops",
+            },
+            {
+              kicker: "Mahsulot",
+              label: "Checkout",
+              body: "TON-da GRAM buyurtmalari uchun hosted to'lov ekranlari.",
+              href: "/products/checkout",
+            },
+            {
+              kicker: "Tarif",
+              label: "Merchant",
+              body: "Sotuvchilar va operatorlar uchun boshqaruv paneli ish jarayoni.",
+              href: "/merchant",
+            },
           ],
         },
         cta: {
           title: "To'g'ridan-to'g'ri hisob-kitob bilan Gram chekautini ishga tushiring.",
           body: "Gram to'lovlarini qabul qilish, o'tkazmalarni avtomatik aniqlash va mijozlar to'lovlarini to'g'ridan-to'g'ri hamyoningizga yo'naltirish uchun recv-dan foydalaning.",
-          primary: { label: "Gram-ni qabul qilishni boshlash", href: "/app/auth" },
-          secondary: { label: "Checkout-ni o'rganish", href: "/products/checkout" },
+          primary: {
+            label: "Gram-ni qabul qilishni boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "Checkout-ni o'rganish",
+            href: "/products/checkout",
+          },
         },
         seoLabel: "TON tarmog'i to'lov tafsilotlari",
         seo: "recv buyurtma yoki kirish avtomatizatsiyasi uchun hosted Chekaut, API invoyslarini yaratish, to'lov sharhlari, blokcheyn vatcherlari, to'g'ridan-to'g'ri hamyonga hisob-kitoblar va vebhuklar bilan Gram to'lovlarini qo'llab-quvvatlaydi.",
@@ -671,9 +961,18 @@ const uz = {
           title: "invoice.network.tron",
           amount: "199.00 USDT",
           items: [
-            { label: "Aktiv", value: "USDT TRC-20" },
-            { label: "Moslashtirish", value: "Miqdor" },
-            { label: "Vebhuk", value: "Imzolangan" },
+            {
+              label: "Aktiv",
+              value: "USDT TRC-20",
+            },
+            {
+              label: "Moslashtirish",
+              value: "Miqdor",
+            },
+            {
+              label: "Vebhuk",
+              value: "Imzolangan",
+            },
           ],
         },
         assets: {
@@ -681,9 +980,18 @@ const uz = {
           title: "Birinchi navbatda USDT steyblkoinini qabul qilish.",
           body: "TRON odatda prognoz qilinadigan USD nominatsiyasidagi to'lovlar va allaqachon TRC-20 o'tkazmalardan foydalanadigan mijozlar uchun tanlanadi.",
           items: [
-            { name: "USDT TRC-20", body: "Chekaut, SaaS billing va B2B invoys to'lovlari uchun asosiy steyblkoin yo'nalishi." },
-            { name: "TRX", body: "Tranzaksiya xarajatlari va operatsion balanslar uchun hamyonlar tomonidan ishlatiladigan native TRON aktivi." },
-            { name: "Sozlangan tokenlar", body: "Ishchi joyingizda faollashtirilgan joyda qo'shimcha TRC-20 aktivlari bilan ishlash mumkin." },
+            {
+              name: "USDT TRC-20",
+              body: "Chekaut, SaaS billing va B2B invoys to'lovlari uchun asosiy steyblkoin yo'nalishi.",
+            },
+            {
+              name: "TRX",
+              body: "Tranzaksiya xarajatlari va operatsion balanslar uchun hamyonlar tomonidan ishlatiladigan native TRON aktivi.",
+            },
+            {
+              name: "Sozlangan tokenlar",
+              body: "Ishchi joyingizda faollashtirilgan joyda qo'shimcha TRC-20 aktivlari bilan ishlash mumkin.",
+            },
           ],
         },
         why: {
@@ -695,10 +1003,22 @@ const uz = {
           kicker: "CHEKOUT VA API MEXANIKASI",
           title: "TRC-20 o'tkazmalari uchun aniq invoys mosligi.",
           steps: [
-            { title: "Invoys yaratish", body: "Chekaut yoki API aniq USDT miqdori va maqsadli hamyon uchun TRON invoysini yaratadi." },
-            { title: "Xaridorni yo'naltirish", body: "Chekaut TRC-20 tarmog'i ko'rsatmalari, QR, manzil va jonli to'lov holatini ko'rsatadi." },
-            { title: "O'tkazmani kuzatish", body: "recv vatcherlari kiruvchi TRC-20 o'tkazmasini aniqlaydi va uni invoysga moslashtiradi." },
-            { title: "To'lovni tasdiqlash", body: "Imzolangan vebhuklar va boshqaruv paneli hodisalari buyurtma, invoys yoki obunangizni to'langan holatga o'tkazadi." },
+            {
+              title: "Invoys yaratish",
+              body: "Chekaut yoki API aniq USDT miqdori va maqsadli hamyon uchun TRON invoysini yaratadi.",
+            },
+            {
+              title: "Xaridorni yo'naltirish",
+              body: "Chekaut TRC-20 tarmog'i ko'rsatmalari, QR, manzil va jonli to'lov holatini ko'rsatadi.",
+            },
+            {
+              title: "O'tkazmani kuzatish",
+              body: "recv vatcherlari kiruvchi TRC-20 o'tkazmasini aniqlaydi va uni invoysga moslashtiradi.",
+            },
+            {
+              title: "To'lovni tasdiqlash",
+              body: "Imzolangan vebhuklar va boshqaruv paneli hodisalari buyurtma, invoys yoki obunangizni to'langan holatga o'tkazadi.",
+            },
           ],
         },
         limitations: {
@@ -711,32 +1031,62 @@ const uz = {
           title: "Steyblkoin ko'p ishlatiladigan mahsulotlar uchun eng yaxshisi.",
           body: "Narxlar USD nominatsiyasida bo'lsa va xaridorlar USDT bilan to'lashni kutishsa, TRON-dan foydalaning.",
           items: [
-            { name: "SaaS billing", body: "Prognoz qilinadigan steyblkoin miqdori bilan obuna to'lovlari va yangilanishlarini yig'ing." },
-            { name: "Biznes invoyslari", body: "Mijozlar TRC-20 USDT-ni afzal ko'radigan joyda to'lov so'rovlarini yuboring." },
-            { name: "Raqamli tovarlar", body: "Kalitlar, fayllar va akkauntlarga kirish uchun tanish steyblkoin variantini taklif qiling." },
+            {
+              name: "SaaS billing",
+              body: "Prognoz qilinadigan steyblkoin miqdori bilan obuna to'lovlari va yangilanishlarini yig'ing.",
+            },
+            {
+              name: "Biznes invoyslari",
+              body: "Mijozlar TRC-20 USDT-ni afzal ko'radigan joyda to'lov so'rovlarini yuboring.",
+            },
+            {
+              name: "Raqamli tovarlar",
+              body: "Kalitlar, fayllar va akkauntlarga kirish uchun tanish steyblkoin variantini taklif qiling.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "USDT talabi atrofida quring.",
           links: [
-            { kicker: "Steyblkoin", label: "USDT Checkout", body: "USDT nominatsiyasidagi buyurtmalar uchun hosted to'lov sahifalaridan foydalaning.", href: "/products/checkout" },
-            { kicker: "Foydalanish holati", label: "SaaS Billing", body: "Obuna to'lov oqimlari uchun API va vebhuklar.", href: "/use-cases/saas-billing" },
-            { kicker: "Plan", label: "Business", body: "To'lov operatsiyalari uchun yuqori limitlar va jamoaviy ish jarayoni.", href: "/business" },
+            {
+              kicker: "Steyblkoin",
+              label: "USDT Checkout",
+              body: "USDT nominatsiyasidagi buyurtmalar uchun hosted to'lov sahifalaridan foydalaning.",
+              href: "/products/checkout",
+            },
+            {
+              kicker: "Foydalanish holati",
+              label: "SaaS Billing",
+              body: "Obuna to'lov oqimlari uchun API va vebhuklar.",
+              href: "/use-cases/saas-billing",
+            },
+            {
+              kicker: "Tarif",
+              label: "Business",
+              body: "To'lov operatsiyalari uchun yuqori limitlar va jamoaviy ish jarayoni.",
+              href: "/business",
+            },
           ],
         },
         cta: {
           title: "Qo'lda solishtirmasdan TRON USDT-ni qabul qiling.",
           body: "TRC-20 invoyslarini chiqarish, o'tkazmalarni real vaqtda kuzatish va steyblkoin to'lovlarini biznes tizimlaringizga ulash uchun recv-dan foydalaning.",
-          primary: { label: "USDT bilan boshlash", href: "/app/auth" },
-          secondary: { label: "Business-ni ko'rish", href: "/business" },
+          primary: {
+            label: "USDT bilan boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "Business-ni ko'rish",
+            href: "/business",
+          },
         },
         seoLabel: "TRON USDT to'lov tafsilotlari",
         seo: "recv Checkout, API invoyslari, TRC-20 vatcher aniqlashi, imzolangan vebhuklar, to'g'ridan-to'g'ri hamyonga hisob-kitoblar va SaaS hamda biznes foydalanish holatlari uchun steyblkoin to'lov oqimlari orqali TRON USDT to'lovlarini amalga oshirish imkonini beradi.",
       },
       ton_usdt: {
         name: "TON tarmog'idagi USDT",
-        fullName: "Tether USDT on TON",
+        fullName: "TON tarmog'idagi Tether USDT",
         metadata: {
           title: "TON tarmog'ida USDT to'lovlarini qabul qilish | TON-da steyblkoin chekauti",
           description: "recv bilan The Open Network (TON) tarmog'ida USDT steyblkoinini qabul qiling. Hosted Checkout, API invoyslari, sharhlar bo'yicha avtomatlashtirilgan moslashtirish va to'g'ridan-to'g'ri hamyonga to'lovlar.",
@@ -751,9 +1101,18 @@ const uz = {
           title: "checkout.network.ton_usdt",
           amount: "49.00 USDT",
           items: [
-            { label: "Aktiv", value: "USDT (Jetton)" },
-            { label: "Tarmoq", value: "TON" },
-            { label: "Moslashtirish", value: "Sharh" },
+            {
+              label: "Aktiv",
+              value: "USDT (Jetton)",
+            },
+            {
+              label: "Tarmoq",
+              value: "TON",
+            },
+            {
+              label: "Moslashtirish",
+              value: "Sharh",
+            },
           ],
         },
         assets: {
@@ -761,9 +1120,18 @@ const uz = {
           title: "USDT native TON Jettoni sifatida.",
           body: "Telegram-ning native ekotizimidan foydalangan holda xaridorlarni narx o'zgaruvchanligiga duchor qilmasdan, The Open Network tarmog'ida USD-ga bog'langan steyblkoin to'lovlarini yig'ing.",
           items: [
-            { name: "TON tarmog'idagi USDT", body: "Telegram Wallet va Tonkeeper-da keng qo'llaniladigan TON blokcheynidagi rasmiy USD₮ Jettoni." },
-            { name: "GRAM", body: "Jetton yuborishda tranzaksiya komissiyalari (gaz) uchun ishlatiladigan native TON tarmog'i aktivi." },
-            { name: "To'g'ridan-to'g'ri to'lovlar", body: "USDT saqlash muddatlarisiz va vositachilarsiz to'g'ridan-to'g'ri sizning nokastodial TON hamyoningizga tushadi." },
+            {
+              name: "TON tarmog'idagi USDT",
+              body: "Telegram Wallet va Tonkeeper-da keng qo'llaniladigan TON blokcheynidagi rasmiy USD₮ Jettoni.",
+            },
+            {
+              name: "GRAM",
+              body: "Jetton yuborishda tranzaksiya komissiyalari (gaz) uchun ishlatiladigan native TON tarmog'i aktivi.",
+            },
+            {
+              name: "To'g'ridan-to'g'ri to'lovlar",
+              body: "USDT saqlash muddatlarisiz va vositachilarsiz to'g'ridan-to'g'ri sizning nokastodial TON hamyoningizga tushadi.",
+            },
           ],
         },
         why: {
@@ -775,10 +1143,22 @@ const uz = {
           kicker: "AVTOMATLASHTIRILGAN DETEKTOR",
           title: "Maxsus sharhlar bilan Jetton o'tkazmalari monitoringi.",
           steps: [
-            { title: "Invoys yaratish", body: "Aniq USDT miqdori va kerakli to'lov sharhini ko'rsatuvchi TON tarmog'idagi USDT invoysini yarating." },
-            { title: "Tafsilotlarni taqdim etish", body: "Chekaut qabul qiluvchi TON manzili, QR kodi va kerakli to'lov sharhini ko'rsatadi." },
-            { title: "Blokcheynni kuzatish", body: "recv to'g'ri sharhga ega mos keladigan USDT Jetton o'tkazmalarini aniqlash uchun TON blokcheyn tranzaksiyalarini kuzatib boradi." },
-            { title: "Backend-ni ishga tushirish", body: "Avtomatlashtirilgan vebhuk to'lov tasdiqlanganda ilovangizni xabardor qiladi, darhol kirishni ochadi yoki buyurtmalarni yakunlaydi." },
+            {
+              title: "Invoys yaratish",
+              body: "Aniq USDT miqdori va kerakli to'lov sharhini ko'rsatuvchi TON tarmog'idagi USDT invoysini yarating.",
+            },
+            {
+              title: "Tafsilotlarni taqdim etish",
+              body: "Chekaut qabul qiluvchi TON manzili, QR kodi va kerakli to'lov sharhini ko'rsatadi.",
+            },
+            {
+              title: "Blokcheynni kuzatish",
+              body: "recv to'g'ri sharhga ega mos keladigan USDT Jetton o'tkazmalarini aniqlash uchun TON blokcheyn tranzaksiyalarini kuzatib boradi.",
+            },
+            {
+              title: "Backend-ni ishga tushirish",
+              body: "Avtomatlashtirilgan vebhuk to'lov tasdiqlanganda ilovangizni xabardor qiladi, darhol kirishni ochadi yoki buyurtmalarni yakunlaydi.",
+            },
           ],
         },
         limitations: {
@@ -791,25 +1171,55 @@ const uz = {
           title: "Telegram tijorat va botlari uchun mo'ljallangan.",
           body: "TON-dagi USDT dollar-pegged narx belgilashni xohlaydigan, lekin mahsulotlarni Telegram ekotizimida sotadigan bizneslar uchun ideal.",
           items: [
-            { name: "Telegram Mini Apps", body: "Ilovangiz yoki botingiz ichida bir marta bosish orqali TON-dagi USDT to'lovlarini faollashtiring." },
-            { name: "Raqamli obunalar", body: "Muntazam a'zolik, kurslar yoki yopiq guruhlarga kirishni barqaror dollar qiymatlarida hisob-faktura qiling." },
-            { name: "E-Commerce", body: "Telegram va TON-mos keladigan hamyonlardan foydalangan holda global mijozlarga jismoniy yoki raqamli tovarlarni soting." },
+            {
+              name: "Telegram Mini Ilovalari",
+              body: "Ilovangiz yoki botingiz ichida bir marta bosish orqali TON-dagi USDT to'lovlarini faollashtiring.",
+            },
+            {
+              name: "Raqamli obunalar",
+              body: "Muntazam a'zolik, kurslar yoki yopiq guruhlarga kirishni barqaror dollar qiymatlarida hisob-faktura qiling.",
+            },
+            {
+              name: "Raqamli tijorat",
+              body: "Telegram va TON-mos keladigan hamyonlardan foydalangan holda global mijozlarga jismoniy yoki raqamli tovarlarni soting.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "TON-da USDT to'lov oqimini quring.",
           links: [
-            { kicker: "Foydalanish holati", label: "Telegram Shops", body: "Telegram-da do'kon to'lovlari va buyurtmalarini avtomatlashtiring.", href: "/use-cases/telegram-shops" },
-            { kicker: "Mahsulot", label: "Checkout", body: "Ko'p tarmoqli qo'llab-quvvatlashga ega hosted to'lov sahifalari.", href: "/products/checkout" },
-            { kicker: "Mahsulot", label: "API", body: "recv-ni shaxsiy backend ilovangizga to'g'ridan-to'g'ri integratsiya qiling.", href: "/products/api" },
+            {
+              kicker: "Foydalanish holati",
+              label: "Telegram-do'konlar",
+              body: "Telegram-da do'kon to'lovlari va buyurtmalarini avtomatlashtiring.",
+              href: "/use-cases/telegram-shops",
+            },
+            {
+              kicker: "Mahsulot",
+              label: "Checkout",
+              body: "Ko'p tarmoqli qo'llab-quvvatlashga ega hosted to'lov sahifalari.",
+              href: "/products/checkout",
+            },
+            {
+              kicker: "Mahsulot",
+              label: "API",
+              body: "recv-ni shaxsiy backend ilovangizga to'g'ridan-to'g'ri integratsiya qiling.",
+              href: "/products/api",
+            },
           ],
         },
         cta: {
           title: "Bugun TON-da USDT qabul qilishni boshlang.",
           body: "TON-da steyblkoin chekautlarini sozlang, sharhlar orqali invoys mos kelishini avtomatlashtiring va to'lovlarni to'g'ridan-to'g'ri o'z hamyoningizga qabul qiling.",
-          primary: { label: "Boshlash", href: "/app/auth" },
-          secondary: { label: "API hujjatlarini ko'rish", href: "/docs" },
+          primary: {
+            label: "Boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "API hujjatlarini ko'rish",
+            href: "/docs",
+          },
         },
         seoLabel: "TON-dagi USDT to'lov shlyuzi tafsilotlari",
         seo: "recv Telegram botlari va Mini ilovalari uchun hosted Checkout, API invoysini yaratish, kerakli sharhlar bo'yicha moslashtirish, blokcheyn vatcherlari va to'g'ridan-to'g'ri hamyonga hisob-kitoblar bilan TON-da USDT to'lovlarini qo'llab-quvvatlaydi.",
@@ -831,9 +1241,18 @@ const uz = {
           title: "payment.network.solana",
           amount: "49.00 USDT",
           items: [
-            { label: "Aktivlar", value: "SPL USDT" },
-            { label: "Oqim", value: "API" },
-            { label: "Holat", value: "Aniqlangan" },
+            {
+              label: "Aktivlar",
+              value: "SPL USDT",
+            },
+            {
+              label: "Oqim",
+              value: "API",
+            },
+            {
+              label: "Holat",
+              value: "Aniqlangan",
+            },
           ],
         },
         assets: {
@@ -841,7 +1260,10 @@ const uz = {
           title: "Solana-da USDT SPL to'lovlari.",
           body: "Solana qo'llab-quvvatlashi Solana tarmog'ida tezkor steyblkoin to'lovlariga muhtoj bo'lgan jamoalarga mos keladi.",
           items: [
-            { name: "SPL USDT", body: "Maksimal tezlik va past komissiyalarga ega USD nominatsiyasidagi to'lovlar uchun Solana-dagi standart steyblkoin." },
+            {
+              name: "SPL USDT",
+              body: "Maksimal tezlik va past komissiyalarga ega USD nominatsiyasidagi to'lovlar uchun Solana-dagi standart steyblkoin.",
+            },
           ],
         },
         why: {
@@ -853,10 +1275,22 @@ const uz = {
           kicker: "CHEKOUT VA API MEXANIKASI",
           title: "SOL va SPL aktivlari uchun yagona invoys oqimi.",
           steps: [
-            { title: "Invoys yaratish", body: "Sizning backend-ingiz recv API orqali Solana invoysini yaratadi yoki hosted Checkout-dan foydalanadi." },
-            { title: "Hamyon ma'lumotlarini ko'rsatish", body: "Chekaut tarmoq, aktiv, miqdor, manzil va QR-ni xaridorga qulay ekranda ko'rsatadi." },
-            { title: "O'tkazmani kuzatish", body: "recv native yoki SPL o'tkazmalarini kuzatib boradi va to'lovni invoysga moslashtiradi." },
-            { title: "Backend-ni ishga tushirish", body: "Imzolangan vebhuk mahsulotingizga kirishni ochish, tovarlarni yetkazib berish yoki holatni yangilash kerakligini aytadi." },
+            {
+              title: "Invoys yaratish",
+              body: "Sizning backend-ingiz recv API orqali Solana invoysini yaratadi yoki hosted Checkout-dan foydalanadi.",
+            },
+            {
+              title: "Hamyon ma'lumotlarini ko'rsatish",
+              body: "Chekaut tarmoq, aktiv, miqdor, manzil va QR-ni xaridorga qulay ekranda ko'rsatadi.",
+            },
+            {
+              title: "O'tkazmani kuzatish",
+              body: "recv native yoki SPL o'tkazmalarini kuzatib boradi va to'lovni invoysga moslashtiradi.",
+            },
+            {
+              title: "Backend-ni ishga tushirish",
+              body: "Imzolangan vebhuk mahsulotingizga kirishni ochish, tovarlarni yetkazib berish yoki holatni yangilash kerakligini aytadi.",
+            },
           ],
         },
         limitations: {
@@ -869,25 +1303,55 @@ const uz = {
           title: "web3-native mahsulotlar uchun eng yaxshisi.",
           body: "To'lovlar allaqachon dasturchilar, ijodkorlar yoki kripto-native xaridorlar bilan muloqot qiladigan mahsulotning bir qismi bo'lsa, Solana foydali bo'ladi.",
           items: [
-            { name: "Dasturchi vositalari", body: "Backend-dan invoyslar yarating va avtomatlashtirilgan kirish uchun vebhuklardan foydalaning." },
-            { name: "Raqamli tovarlar", body: "Solana hamyon foydalanuvchilariga kalitlar, yuklamalar yoki litsenziyalarni soting." },
-            { name: "Web3 ilovalar", body: "Solana ekotizimida faol bo'lgan foydalanuvchilar uchun tezkor to'lov variantini qo'shing." },
+            {
+              name: "Dasturchi vositalari",
+              body: "Backend-dan invoyslar yarating va avtomatlashtirilgan kirish uchun vebhuklardan foydalaning.",
+            },
+            {
+              name: "Raqamli tovarlar",
+              body: "Solana hamyon foydalanuvchilariga kalitlar, yuklamalar yoki litsenziyalarni soting.",
+            },
+            {
+              name: "Web3 ilovalar",
+              body: "Solana ekotizimida faol bo'lgan foydalanuvchilar uchun tezkor to'lov variantini qo'shing.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "Solana-ni backend-ga ulang.",
           links: [
-            { kicker: "Mahsulot", label: "API", body: "Invoyslar yarating va normallashtirilgan to'lov hodisalarini qabul qiling.", href: "/products/api" },
-            { kicker: "Plan", label: "Developer", body: "Ishlab chiqarish integratsiyasi uchun API va vebhuklar.", href: "/dev" },
-            { kicker: "Docs", label: "Integration", body: "To'lovlarni avtomatlashtirish bo'yicha dasturchi hujjatlarini o'qing.", href: "/docs" },
+            {
+              kicker: "Mahsulot",
+              label: "API",
+              body: "Invoyslar yarating va normallashtirilgan to'lov hodisalarini qabul qiling.",
+              href: "/products/api",
+            },
+            {
+              kicker: "Tarif",
+              label: "Developer",
+              body: "Ishlab chiqarish integratsiyasi uchun API va vebhuklar.",
+              href: "/dev",
+            },
+            {
+              kicker: "Docs",
+              label: "Integration",
+              body: "To'lovlarni avtomatlashtirish bo'yicha dasturchi hujjatlarini o'qing.",
+              href: "/docs",
+            },
           ],
         },
         cta: {
           title: "Mahsulotingizga Solana to'lovlarini qo'shing.",
           body: "Solana aktivlarini qabul qilish va imzolangan hodisalar orqali to'lov holatini boshqarish uchun recv API va Checkout-dan foydalaning.",
-          primary: { label: "Integratsiyani boshlash", href: "/app/auth" },
-          secondary: { label: "API-ni o'rganish", href: "/products/api" },
+          primary: {
+            label: "Integratsiyani boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "API-ni o'rganish",
+            href: "/products/api",
+          },
         },
         seoLabel: "Solana tarmog'i to'lov tafsilotlari",
         seo: "recv SOL va sozlangan SPL aktivlari bilan Solana to'lovlarini, hosted Checkout, API invoysini yaratish, blokcheyn vatcherlari, imzolangan vebhuklar va dasturchilarga yo'naltirilgan to'lov avtomatizatsiyasini qo'llab-quvvatlaydi.",
@@ -909,9 +1373,18 @@ const uz = {
           title: "payment.network.base",
           amount: "99.00 USDT",
           items: [
-            { label: "Yo'nalish", value: "Base" },
-            { label: "Aktivlar", value: "ERC-20 USDT" },
-            { label: "API", value: "Yagona" },
+            {
+              label: "Yo'nalish",
+              value: "Base",
+            },
+            {
+              label: "Aktivlar",
+              value: "ERC-20 USDT",
+            },
+            {
+              label: "API",
+              value: "Yagona",
+            },
           ],
         },
         assets: {
@@ -919,7 +1392,10 @@ const uz = {
           title: "Base-da USDT.",
           body: "Coinbase-ga mos keladigan yoki EVM-mos keladigan L2 yo'nalishlarida ishlaydigan xaridorlar uchun Base-dan foydalaning.",
           items: [
-            { name: "Base-dagi USDT", body: "Tezkor va arzon tranzaksiyalar uchun Coinbase-ning L2 tarmog'ida USDT steyblkoin o'tkazmasi." },
+            {
+              name: "Base-dagi USDT",
+              body: "Tezkor va arzon tranzaksiyalar uchun Coinbase-ning L2 tarmog'ida USDT steyblkoin o'tkazmasi.",
+            },
           ],
         },
         why: {
@@ -931,10 +1407,22 @@ const uz = {
           kicker: "CHEKOUT VA API MEXANIKASI",
           title: "Base-ga xos vatcher bilan bir xil recv oqimi.",
           steps: [
-            { title: "Invoys yaratish", body: "Chekaut yoki API-dan to'lanadigan tarmoq sifatida Base va sozlangan aktiv bilan foydalaning." },
-            { title: "To'lovni taqdim etish", body: "Xaridor Base tarmog'i ko'rsatmalari, miqdor, manzil va QR-ni ko'radi." },
-            { title: "Tarmoqni kuzatish", body: "recv Base tarmog'idagi native va ERC-20 o'tkazmalarini kuzatadi va ularni invoyslarga moslashtiradi." },
-            { title: "Vebhuk chiqarish", body: "Sizning backend-ingiz boshqa qo'llab-quvvatlanadigan tarmoqlar bo'ylab ishlatiladigan normallashtirilgan to'lov holatini qabul qiladi." },
+            {
+              title: "Invoys yaratish",
+              body: "Chekaut yoki API-dan to'lanadigan tarmoq sifatida Base va sozlangan aktiv bilan foydalaning.",
+            },
+            {
+              title: "To'lovni taqdim etish",
+              body: "Xaridor Base tarmog'i ko'rsatmalari, miqdor, manzil va QR-ni ko'radi.",
+            },
+            {
+              title: "Tarmoqni kuzatish",
+              body: "recv Base tarmog'idagi native va ERC-20 o'tkazmalarini kuzatadi va ularni invoyslarga moslashtiradi.",
+            },
+            {
+              title: "Vebhuk chiqarish",
+              body: "Sizning backend-ingiz boshqa qo'llab-quvvatlanadigan tarmoqlar bo'ylab ishlatiladigan normallashtirilgan to'lov holatini qabul qiladi.",
+            },
           ],
         },
         limitations: {
@@ -947,25 +1435,55 @@ const uz = {
           title: "EVM-ga yo'naltirilgan chekaut uchun eng yaxshisi.",
           body: "Mijozlaringiz allaqachon EVM hamyonlaridan yoki Coinbase-ga mos keladigan onchain mahsulotlaridan foydalanganda Base yaxshi ishlaydi.",
           items: [
-            { name: "Biznes chekauti", body: "Yuqori hajmli to'lov oqimlari uchun arzonroq EVM variantini taklif qiling." },
-            { name: "API integratsiyalari", body: "Alohida invoys va vebhuk logikasini yaratmasdan Base-ni qo'shing." },
-            { name: "Raqamli mahsulotlar", body: "Base hamyonlari va steyblkoinlarini afzal ko'radigan web3 xaridorlariga xizmat ko'rsatige." },
+            {
+              name: "Biznes chekauti",
+              body: "Yuqori hajmli to'lov oqimlari uchun arzonroq EVM variantini taklif qiling.",
+            },
+            {
+              name: "API integratsiyalari",
+              body: "Alohida invoys va vebhuk logikasini yaratmasdan Base-ni qo'shing.",
+            },
+            {
+              name: "Raqamli mahsulotlar",
+              body: "Base hamyonlari va steyblkoinlarini afzal ko'radigan web3 xaridorlariga xizmat ko'rsatige.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "Biznes to'lovlariga Base-ni qo'shing.",
           links: [
-            { kicker: "Mahsulot", label: "API", body: "Yagona invoys yaratish va vebhuk hodisalari.", href: "/products/api" },
-            { kicker: "Plan", label: "Business", body: "Kengaytirish uchun yuqori limitlar va jamoaviy operatsiyalar.", href: "/business" },
-            { kicker: "Plan", label: "Developer", body: "Backend integratsiyalari uchun ishlab chiqarish API kirish imkoni.", href: "/dev" },
+            {
+              kicker: "Mahsulot",
+              label: "API",
+              body: "Yagona invoys yaratish va vebhuk hodisalari.",
+              href: "/products/api",
+            },
+            {
+              kicker: "Tarif",
+              label: "Business",
+              body: "Kengaytirish uchun yuqori limitlar va jamoaviy operatsiyalar.",
+              href: "/business",
+            },
+            {
+              kicker: "Tarif",
+              label: "Developer",
+              body: "Backend integratsiyalari uchun ishlab chiqarish API kirish imkoni.",
+              href: "/dev",
+            },
           ],
         },
         cta: {
           title: "Bitta integratsiya orqali Base to'lovlarini qabul qiling.",
           body: "Base chekautini qo'shish, o'tkazmalarni kuzatish va backend to'lov logikangizni tarmoqlar bo'ylab barqaror saqlash uchun recv-dan foydalaning.",
-          primary: { label: "Integratsiyani boshlash", href: "/app/auth" },
-          secondary: { label: "API-ni o'rganish", href: "/products/api" },
+          primary: {
+            label: "Integratsiyani boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "API-ni o'rganish",
+            href: "/products/api",
+          },
         },
         seoLabel: "Base tarmog'i to'lov tafsilotlari",
         seo: "recv ETH va sozlangan ERC-20 aktivlari bilan Base to'lovlarini, hosted Checkout, API invoyslarini, Base vatcherlarini, normallashtirilgan vebhuklarni, to'g'ridan-to'g'ri hamyonga hisob-kitoblarni va biznes to'lov jarayonlarini qo'llab-quvvatlaydi.",
@@ -987,9 +1505,18 @@ const uz = {
           title: "payment.network.bsc",
           amount: "149.00 USDT",
           items: [
-            { label: "Yo'nalish", value: "BSC" },
-            { label: "Aktivlar", value: "BEP-20 USDT" },
-            { label: "Holat", value: "Faol" },
+            {
+              label: "Yo'nalish",
+              value: "BSC",
+            },
+            {
+              label: "Aktivlar",
+              value: "BEP-20 USDT",
+            },
+            {
+              label: "Holat",
+              value: "Faol",
+            },
           ],
         },
         assets: {
@@ -997,7 +1524,10 @@ const uz = {
           title: "BEP-20 USDT chekaut variantlari.",
           body: "BSC mijozlarga token o'tkazmalari uchun tanish bo'lgan past komissiyali to'lov tarmog'ini taqdim etadi.",
           items: [
-            { name: "BEP-20 USDT", body: "BNB Smart Chain-da USDT saqlaydigan xaridorlar uchun steyblkoin chekauti." },
+            {
+              name: "BEP-20 USDT",
+              body: "BNB Smart Chain-da USDT saqlaydigan xaridorlar uchun steyblkoin chekauti.",
+            },
           ],
         },
         why: {
@@ -1009,10 +1539,22 @@ const uz = {
           kicker: "CHEKOUT VA API MEXANIKASI",
           title: "Alohida biznes logikasisiz BEP-20 monitoringi.",
           steps: [
-            { title: "Invoys yaratish", body: "Hosted Checkout yoki recv API orqali BSC va to'lanadigan aktivni tanlang." },
-            { title: "Ko'rsatmalarni ko'rsatish", body: "Chekaut BSC tarmog'i tafsilotlarini, QR, manzil, miqdor va to'lov holatini ko'rsatadi." },
-            { title: "O'tkazmani aniqlash", body: "recv vatcherlari invoys uchun native BNB va BEP-20 o'tkazmalarini kuzatib boradi." },
-            { title: "Tizimni yangilash", body: "Boshqaruv paneli va vebhuklar tasdiqlangandan keyin buyurtma, invoys yoki akkaunt holatingizni yangilaydi." },
+            {
+              title: "Invoys yaratish",
+              body: "Hosted Checkout yoki recv API orqali BSC va to'lanadigan aktivni tanlang.",
+            },
+            {
+              title: "Ko'rsatmalarni ko'rsatish",
+              body: "Chekaut BSC tarmog'i tafsilotlarini, QR, manzil, miqdor va to'lov holatini ko'rsatadi.",
+            },
+            {
+              title: "O'tkazmani aniqlash",
+              body: "recv vatcherlari invoys uchun native BNB va BEP-20 o'tkazmalarini kuzatib boradi.",
+            },
+            {
+              title: "Tizimni yangilash",
+              body: "Boshqaruv paneli va vebhuklar tasdiqlangandan keyin buyurtma, invoys yoki akkaunt holatingizni yangilaydi.",
+            },
           ],
         },
         limitations: {
@@ -1025,25 +1567,55 @@ const uz = {
           title: "Chakana va biznes chekauti uchun eng yaxshisi.",
           body: "Xaridorlaringiz bazasi allaqachon BEP-20 aktivlariga ega bo'lsa yoki arzon EVM-mos variantni xohlasa, BSC-dan foydalaning.",
           items: [
-            { name: "Biznes to'lovlari", body: "Allaqachon BSC hamyonlaridan foydalanadigan mijozlardan steyblkoinlarni qabul qiling." },
-            { name: "Chekaut havolalari", body: "Har bir buyurtma uchun aniq BSC ko'rsatmalari bilan to'lov sahifalarini yarating." },
-            { name: "API avtomatizatsiyasi", body: "BEP-20 to'lov hodisalarini backend ish jarayoningizga yo'naltiring." },
+            {
+              name: "Biznes to'lovlari",
+              body: "Allaqachon BSC hamyonlaridan foydalanadigan mijozlardan steyblkoinlarni qabul qiling.",
+            },
+            {
+              name: "Chekaut havolalari",
+              body: "Har bir buyurtma uchun aniq BSC ko'rsatmalari bilan to'lov sahifalarini yarating.",
+            },
+            {
+              name: "API avtomatizatsiyasi",
+              body: "BEP-20 to'lov hodisalarini backend ish jarayoningizga yo'naltiring.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "BSC-ni operatsiyalarga ulang.",
           links: [
-            { kicker: "Mahsulot", label: "API", body: "BSC to'lovlari uchun yagona invoyslar va vebhuklar.", href: "/products/api" },
-            { kicker: "Plan", label: "Business", body: "Rivojlanayotgan to'lov hajmi uchun jamoa va limit tuzilishi.", href: "/business" },
-            { kicker: "Mahsulot", label: "Checkout", body: "Buyurtmalar va invoyslar uchun hosted BSC to'lov sahifalari.", href: "/products/checkout" },
+            {
+              kicker: "Mahsulot",
+              label: "API",
+              body: "BSC to'lovlari uchun yagona invoyslar va vebhuklar.",
+              href: "/products/api",
+            },
+            {
+              kicker: "Tarif",
+              label: "Business",
+              body: "Rivojlanayotgan to'lov hajmi uchun jamoa va limit tuzilishi.",
+              href: "/business",
+            },
+            {
+              kicker: "Mahsulot",
+              label: "Checkout",
+              body: "Buyurtmalar va invoyslar uchun hosted BSC to'lov sahifalari.",
+              href: "/products/checkout",
+            },
           ],
         },
         cta: {
           title: "Qo'shimcha solishtirmasdan BSC to'lovlarini qo'shing.",
           body: "Checkout, API invoyslari and real vaqtdagi to'lov hodisalari orqali BNB Smart Chain o'tkazmalarini qabul qilish uchun recv-dan foydalaning.",
-          primary: { label: "BSC-ni qabul qilishni boshlash", href: "/app/auth" },
-          secondary: { label: "Business-ni ko'rish", href: "/business" },
+          primary: {
+            label: "BSC-ni qabul qilishni boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "Business-ni ko'rish",
+            href: "/business",
+          },
         },
         seoLabel: "BSC tarmog'i to'lov tafsilotlari",
         seo: "recv BNB va sozlangan BEP-20 aktivlari bilan BSC to'lovlarini, hosted Checkout, API invoysini yaratish, blokcheyn vatcherlari, vebhuklar va biznes to'lov oqimlari uchun to'g'ridan-to'g'ri hamyonga hisob-kitobni qo'llab-quvvatlaydi.",
@@ -1065,9 +1637,18 @@ const uz = {
           title: "payment.network.arbitrum",
           amount: "249.00 USDT",
           items: [
-            { label: "Yo'nalish", value: "Base One" },
-            { label: "Aktivlar", value: "ERC-20 USDT" },
-            { label: "Hisob-kitob", value: "To'g'ridan-to'g'ri" },
+            {
+              label: "Yo'nalish",
+              value: "Base One",
+            },
+            {
+              label: "Aktivlar",
+              value: "ERC-20 USDT",
+            },
+            {
+              label: "Hisob-kitob",
+              value: "To'g'ridan-to'g'ri",
+            },
           ],
         },
         assets: {
@@ -1075,7 +1656,10 @@ const uz = {
           title: "Base-native USDT to'lovlari.",
           body: "Asosiy tarmoqqa qaraganda pastroq tranzaksiya xarajatlariga ega Base-mos keladigan aktivlarni xohlaydigan mijozlar uchun Base-dan foydalaning.",
           items: [
-            { name: "Base-dagi USDT", body: "Yuqori darajada kengaytiriladigan USD nominatsiyasidagi to'lovlar uchun Base One layer 2 tarmog'ida USDT steyblkoin o'tkazmasi." },
+            {
+              name: "Base-dagi USDT",
+              body: "Yuqori darajada kengaytiriladigan USD nominatsiyasidagi to'lovlar uchun Base One layer 2 tarmog'ida USDT steyblkoin o'tkazmasi.",
+            },
           ],
         },
         why: {
@@ -1087,10 +1671,22 @@ const uz = {
           kicker: "CHEKOUT VA API MEXANIKASI",
           title: "Base o'tkazmalari uchun normallashtirilgan hodisalar.",
           steps: [
-            { title: "Invoys yaratish", body: "To'lanadigan tarmoq sifatida Base One bilan recv Checkout yoki API-dan foydalaning." },
-            { title: "To'lovni yo'naltirish", body: "Xaridor Base-ga xos manzil, miqdor, aktiv va QR ko'rsatmalarini ko'radi." },
-            { title: "O'tkazmani kuzatish", body: "recv vatcherlari Base One tarmog'ida native va ERC-20 o'tkazmalarini aniqlaydi." },
-            { title: "Backend-ni sinxronlashtirish", body: "Imzolangan vebhuklar sizning buyurtmangiz yoki billing tizimingizni boshqa tarmoqlar bilan bir xil hodisa ko'rinishida yangilaydi." },
+            {
+              title: "Invoys yaratish",
+              body: "To'lanadigan tarmoq sifatida Base One bilan recv Checkout yoki API-dan foydalaning.",
+            },
+            {
+              title: "To'lovni yo'naltirish",
+              body: "Xaridor Base-ga xos manzil, miqdor, aktiv va QR ko'rsatmalarini ko'radi.",
+            },
+            {
+              title: "O'tkazmani kuzatish",
+              body: "recv vatcherlari Base One tarmog'ida native va ERC-20 o'tkazmalarini aniqlaydi.",
+            },
+            {
+              title: "Backend-ni sinxronlashtirish",
+              body: "Imzolangan vebhuklar sizning buyurtmangiz yoki billing tizimingizni boshqa tarmoqlar bilan bir xil hodisa ko'rinishida yangilaydi.",
+            },
           ],
         },
         limitations: {
@@ -1103,25 +1699,55 @@ const uz = {
           title: "EVM-native bizneslar uchun eng yaxshisi.",
           body: "Base xaridorlaringiz Base L2 muhitlarida ishlayotgan jamoalar uchun yaxshi ishlaydi.",
           items: [
-            { name: "API to'lovlari", body: "Backend orqali boshqariladigan invoys va vebhuk oqimlariga Base-ni qo'shing." },
-            { name: "Biznes billingi", body: "Base-mos xaridorlardan steyblkoin invoyslarini yig'ing." },
-            { name: "Web3 xizmatlari", body: "Muntazam yoki bir martalik xizmatlar uchun L2 hisob-kitoblarini afzal ko'radigan xaridorlarni qo'llab-quvvatlang." },
+            {
+              name: "API to'lovlari",
+              body: "Backend orqali boshqariladigan invoys va vebhuk oqimlariga Base-ni qo'shing.",
+            },
+            {
+              name: "Biznes billingi",
+              body: "Base-mos xaridorlardan steyblkoin invoyslarini yig'ing.",
+            },
+            {
+              name: "Web3 xizmatlari",
+              body: "Muntazam yoki bir martalik xizmatlar uchun L2 hisob-kitoblarini afzal ko'radigan xaridorlarni qo'llab-quvvatlang.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "Base-dan ishlab chiqarish oqimlarida foydalaning.",
           links: [
-            { kicker: "Mahsulot", label: "API", body: "Base invoyslarini yarating va imzolangan to'lov hodisalarini qayta ishlang.", href: "/products/api" },
-            { kicker: "Plan", label: "Business", body: "Jamoa funksiyalari bilan EVM to'lov operatsiyalarini kengaytiring.", href: "/business" },
-            { kicker: "Plan", label: "Developer", body: "Ishlab chiqarish jamoalari uchun backend integratsiyasiga kirish imkoni.", href: "/dev" },
+            {
+              kicker: "Mahsulot",
+              label: "API",
+              body: "Base invoyslarini yarating va imzolangan to'lov hodisalarini qayta ishlang.",
+              href: "/products/api",
+            },
+            {
+              kicker: "Tarif",
+              label: "Business",
+              body: "Jamoa funksiyalari bilan EVM to'lov operatsiyalarini kengaytiring.",
+              href: "/business",
+            },
+            {
+              kicker: "Tarif",
+              label: "Developer",
+              body: "Ishlab chiqarish jamoalari uchun backend integratsiyasiga kirish imkoni.",
+              href: "/dev",
+            },
           ],
         },
         cta: {
           title: "Chekaut stekingizga Base to'lovlarini qo'shing.",
           body: "Base One to'lovlarini qabul qilish, o'tkazmalarni kuzatish va hisob-kitobni to'g'ridan-to'g'ri hamyoningizda saqlash uchun recv-dan foydalaning.",
-          primary: { label: "Integratsiyani boshlash", href: "/app/auth" },
-          secondary: { label: "API-ni o'rganish", href: "/products/api" },
+          primary: {
+            label: "Integratsiyani boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "API-ni o'rganish",
+            href: "/products/api",
+          },
         },
         seoLabel: "Base tarmog'i to'lov tafsilotlari",
         seo: "recv ETH va sozlangan ERC-20 aktivlari bilan Base One to'lovlarini, hosted Checkout, API invoyslarini, blokcheyn vatcherlarini, imzolangan vebhuklarni va EVM biznes ish jarayonlari uchun to'g'ridan-to'g'ri hamyonga hisob-kitobni qo'llab-quvvatlaydi.",
@@ -1134,7 +1760,7 @@ const uz = {
       customUseCase: {
         title: "Sizda o'ziga xos foydalanish holati bormi?",
         body: "Bizning API-miz har qanday to'lov oqimini quvvatlantirish uchun etarlicha moslashuvchan. recv sizning maxsus biznesingizga qanday yordam berishi mumkinligini muhokama qilaylik.",
-      }
+      },
     },
     useCasePages: {
       "telegram-shops": {
@@ -1153,9 +1779,18 @@ const uz = {
           title: "Telegram buyurtmasi #4821",
           amount: "79.00 USDT",
           items: [
-            { label: "Tarmoq", value: "TON" },
-            { label: "Holat", value: "Aniqlangan" },
-            { label: "To'lov", value: "To'g'ridan-to'g'ri" },
+            {
+              label: "Tarmoq",
+              value: "TON",
+            },
+            {
+              label: "Holat",
+              value: "Aniqlangan",
+            },
+            {
+              label: "To'lov",
+              value: "To'g'ridan-to'g'ri",
+            },
           ],
         },
         problem: {
@@ -1180,7 +1815,7 @@ const uz = {
             linkLabel: "Checkout-ni o'rganish",
           },
           plan: {
-            label: "Plan",
+            label: "Tarif",
             title: "Merchant",
             body: "Biznes egalari uchun boshlang'ich nuqta. Qo'lda havola yaratish, tranzaksiyalar tarixi va real vaqtdagi bildirishnomalarni o'z ichiga oladi.",
             href: "/merchant",
@@ -1192,37 +1827,84 @@ const uz = {
           title: "GRAM va steyblkoinlar uchun optimallashtirilgan",
           body: "Telegram-native xaridorlar uchun TON tarmog'idagi GRAM-dan foydalaning yoki global steyblkoin foydalanuvchilari uchun USDT (TRC-20) to'lovlarini qo'llab-quvvatlang.",
           items: [
-            { name: "GRAM", body: "Telegram-ga asoslangan tijorat va rivojlanayotgan TON ekotizimi uchun native valyuta." },
-            { name: "TRON USDT", body: "Yuqori o'tkazuvchanlik va past xarajatlar bilan USDT hisob-kitoblari bo'yicha global standart." },
-            { name: "Solana / Base", body: "web3-native auditoriyalar uchun yuqori samarali L1/L2 muqobillari." },
+            {
+              name: "TON",
+              body: "Telegram-ga asoslangan tijorat va rivojlanayotgan TON ekotizimi uchun native valyuta.",
+            },
+            {
+              name: "TRON USDT",
+              body: "Yuqori o'tkazuvchanlik va past xarajatlar bilan USDT hisob-kitoblari bo'yicha global standart.",
+            },
+            {
+              name: "Solana / Base",
+              body: "web3-native auditoriyalar uchun yuqori samarali L1/L2 muqobillari.",
+            },
           ],
         },
         flow: {
           kicker: "INTEGRATSIYA OQIMI",
           title: "Chatdan to yetkazib berishgacha",
           steps: [
-            { title: "Invoys yaratildi", body: "Sotuvchi yoki bot ma'lum bir Telegram buyurtmasi uchun to'lov so'rovini yaratadi." },
-            { title: "Chekaut ochildi", body: "Xaridor aniq miqdor, manzil va QR ko'rsatilgan hosted havolani ochadi." },
-            { title: "O'tkazma aniqlandi", body: "recv vatcherlari on-chain o'tkazmani aniqlaydi va miqdorni darhol tekshiradi." },
-            { title: "Buyurtma tasdiqlandi", body: "Boshqaruv paneli buyurtmani darhol bajarish imkonini beruvchi to'langanlik holatini bildiradi." },
+            {
+              title: "Invoys yaratildi",
+              body: "Sotuvchi yoki bot ma'lum bir Telegram buyurtmasi uchun to'lov so'rovini yaratadi.",
+            },
+            {
+              title: "Chekaut ochildi",
+              body: "Xaridor aniq miqdor, manzil va QR ko'rsatilgan hosted havolani ochadi.",
+            },
+            {
+              title: "O'tkazma aniqlandi",
+              body: "recv vatcherlari on-chain o'tkazmani aniqlaydi va miqdorni darhol tekshiradi.",
+            },
+            {
+              title: "Buyurtma tasdiqlandi",
+              body: "Boshqaruv paneli buyurtmani darhol bajarish imkonini beruvchi to'langanlik holatini bildiradi.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "Telegram stekingizni quring.",
           links: [
-            { kicker: "Tarmoq", label: "GRAM on TON", body: "Telegram Mini ilovalari uchun native to'lov yo'nalishlari.", href: "/networks/ton" },
-            { kicker: "Mahsulot", label: "Checkout Engine", body: "Har bir savdo oqimi uchun hosted ekranlar.", href: "/products/checkout" },
-            { kicker: "Plan", label: "Merchant Tier", body: "Qo'lda to'lov operatsiyalari uchun boshqaruv paneli.", href: "/merchant" },
+            {
+              kicker: "Tarmoq",
+              label: "TON tarmog'ida GRAM",
+              body: "Telegram Mini ilovalari uchun native to'lov yo'nalishlari.",
+              href: "/networks/ton",
+            },
+            {
+              kicker: "Mahsulot",
+              label: "Checkout tizimi",
+              body: "Har bir savdo oqimi uchun hosted ekranlar.",
+              href: "/products/checkout",
+            },
+            {
+              kicker: "Tarif",
+              label: "Merchant tarifi",
+              body: "Qo'lda to'lov operatsiyalari uchun boshqaruv paneli.",
+              href: "/merchant",
+            },
           ],
         },
         cta: {
           title: "Telegram tijoratingizni avtomatlashtirishga tayyormisiz?",
           body: "Skrinshotlarni tekshirishni to'xtating. Siz biznesingizni kengaytirishga e'tibor qaratayotganingizda, blokcheyn monitoringini recv-ga topshiring.",
-          primary: { label: "To'lovlarni qabul qilishni boshlash", href: "/app/auth" },
-          secondary: { label: "Checkout-ni o'rganish", href: "/products/checkout" },
+          primary: {
+            label: "To'lovlarni qabul qilishni boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "Checkout-ni o'rganish",
+            href: "/products/checkout",
+          },
         },
-        features: ["GRAM va Jetton-larni qo'llab-quvvatlash", "Real vaqtdagi buyurtma holati", "To'g'ridan-to'g'ri hamyonga to'lovlar", "Telegram Mini ilovalariga moslashtirilgan"],
+        features: [
+          "GRAM va Jetton-larni qo'llab-quvvatlash",
+          "Real vaqtdagi buyurtma holati",
+          "To'g'ridan-to'g'ri hamyonga to'lovlar",
+          "Telegram Mini ilovalariga moslashtirilgan",
+        ],
         seoLabel: "Telegram do'koni kripto to'lovlari hujjatlari",
         seo: "recv Telegram do'konlariga hosted chekaut havolalari, TON qo'llab-quvvatlashi, steyblkoin tarmoqlari, to'g'ridan-to'g'ri hamyonga hisob-kitob va buyurtmalarni bajarish uchun real vaqtda to'lovlarni aniqlash bilan kripto to'lovlarini qabul qilish imkonini beradi.",
       },
@@ -1242,9 +1924,18 @@ const uz = {
           title: "subscription.renewal.paid",
           amount: "199.00 USDT",
           items: [
-            { label: "API", value: "Idempotent" },
-            { label: "Vebhuk", value: "HMAC" },
-            { label: "Plan", value: "Developer" },
+            {
+              label: "API",
+              value: "Idempotent",
+            },
+            {
+              label: "Vebhuk",
+              value: "HMAC",
+            },
+            {
+              label: "Tarif",
+              value: "Developer",
+            },
           ],
         },
         problem: {
@@ -1263,13 +1954,13 @@ const uz = {
           body: "To'liq dasturiy nazorat va yuqori so'rov o'tkazuvchanligiga muhtoj bo'lgan jamoalar uchun ishlab chiqilgan.",
           product: {
             label: "Mahsulot",
-            title: "API & Webhooks",
+            title: "API va vebxuklar",
             body: "Idempotent invoys yaratish va billing tizimi hodisalari uchun takrorlash navbati.",
             href: "/products/api",
             linkLabel: "API hujjatlarini o'qish",
           },
           plan: {
-            label: "Plan",
+            label: "Tarif",
             title: "Developer / Business",
             body: "Kengaytirilayotgan dasturiy platformalar uchun to'liq API kirish imkoni, HMAC imzolari va yuqori tezlik cheklovlarini o'z ichiga oladi.",
             href: "/dev",
@@ -1281,37 +1972,84 @@ const uz = {
           title: "Universal tarmoqlarni qo'llab-quvvatlash",
           body: "Biznes barqarorligi uchun standart ravishda USDT (TRC-20)-ni qo'shing yoki pastroq EVM tranzaksiyalari uchun Base va Base-ni qo'shing.",
           items: [
-            { name: "TRON USDT", body: "USD nominatsiyasidagi steyblkoin billingi uchun soha standarti." },
-            { name: "Base / Base", body: "Past komissiyali Base ekotizimi to'lovlari uchun optimallashtirilgan L2 tarmoqlari." },
-            { name: "GRAM / USDT on TON", body: "web3-native foydalanuvchilar bazasi uchun yuqori samarali variantlar." },
+            {
+              name: "TRON USDT",
+              body: "USD nominatsiyasidagi steyblkoin billingi uchun soha standarti.",
+            },
+            {
+              name: "Base / Base",
+              body: "Past komissiyali Base ekotizimi to'lovlari uchun optimallashtirilgan L2 tarmoqlari.",
+            },
+            {
+              name: "TON tarmog'ida GRAM / USDT",
+              body: "web3-native foydalanuvchilar bazasi uchun yuqori samarali variantlar.",
+            },
           ],
         },
         flow: {
           kicker: "INTEGRATSIYA OQIMI",
           title: "Avtomatlashtirilgan yangilanish davri",
           steps: [
-            { title: "Invoys chiqarildi", body: "Sizning billing xizmatingiz idempotentlik kaliti bilan recv invoysini yaratadi." },
-            { title: "Xaridor xabardor qilindi", body: "Mijoz sizning shaxsiy UI yoki bizning hosted chekautimiz orqali to'laydi." },
-            { title: "Hodisa tasdiqlandi", body: "Sizning backend-ingiz HMAC imzosini tekshiradi va 'to'langan' hodisasini qayta ishlaydi." },
-            { title: "Kirish uzaytirildi", body: "Obuna holati qo'lda aralashuvsiz ma'lumotlar bazangizda yangilanadi." },
+            {
+              title: "Invoys chiqarildi",
+              body: "Sizning billing xizmatingiz idempotentlik kaliti bilan recv invoysini yaratadi.",
+            },
+            {
+              title: "Xaridor xabardor qilindi",
+              body: "Mijoz sizning shaxsiy UI yoki bizning hosted chekautimiz orqali to'laydi.",
+            },
+            {
+              title: "Hodisa tasdiqlandi",
+              body: "Sizning backend-ingiz HMAC imzosini tekshiradi va 'to'langan' hodisasini qayta ishlaydi.",
+            },
+            {
+              title: "Kirish uzaytirildi",
+              body: "Obuna holati qo'lda aralashuvsiz ma'lumotlar bazangizda yangilanadi.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "Billing dvigatelini integratsiya qiling.",
           links: [
-            { kicker: "Mahsulot", label: "Unified API", body: "To'lovlarni avtomatlashtirish uchun RESTful ibtidoiylari.", href: "/products/api" },
-            { kicker: "Docs", label: "Webhooks Guide", body: "Imzolangan to'lov callback-larini qanday boshqarish kerak.", href: "/docs/webhooks" },
-            { kicker: "Plan", label: "Business Tier", body: "Jamoa kirish imkoni va yuqori so'rov limitlari.", href: "/business" },
+            {
+              kicker: "Mahsulot",
+              label: "Unified API",
+              body: "To'lovlarni avtomatlashtirish uchun RESTful ibtidoiylari.",
+              href: "/products/api",
+            },
+            {
+              kicker: "Docs",
+              label: "Vebxuklar qo'llanmasi",
+              body: "Imzolangan to'lov callback-larini qanday boshqarish kerak.",
+              href: "/docs/webhooks",
+            },
+            {
+              kicker: "Tarif",
+              label: "Business tarifi",
+              body: "Jamoa kirish imkoni va yuqori so'rov limitlari.",
+              href: "/business",
+            },
           ],
         },
         cta: {
           title: "Ishonchli kripto billing bilan SaaS-ni kengaytiring.",
           body: "Kastodial shlyuzlarga 5% to'lashni to'xtating. Unumdorlik va xavfsizlik uchun ishlab chiqilgan fiksatsiyalangan tarifli infratuzilmaga o'ting.",
-          primary: { label: "Hozir boshlash", href: "/app/auth" },
-          secondary: { label: "API hujjatlarini o'qish", href: "/products/api" },
+          primary: {
+            label: "Hozir boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "API hujjatlarini o'qish",
+            href: "/products/api",
+          },
         },
-        features: ["Idempotent API so'rovlari", "HMAC-SHA256 vebhuklari", "Obunalarni boshqarish", "Ko'p tarmoqli vaqtinchalik yondashuv"],
+        features: [
+          "Idempotent API so'rovlari",
+          "HMAC-SHA256 vebhuklari",
+          "Obunalarni boshqarish",
+          "Ko'p tarmoqli vaqtinchalik yondashuv",
+        ],
         seoLabel: "SaaS kripto billing infrastrukturasi tafsilotlari",
         seo: "recv SaaS platformalariga idempotent API chaqiruvlari, HMAC-imzolangan vebhuklar va 0% aylanma komissiyasi bilan TON, TRON va EVM tarmoqlarini universal qo'llab-quvvatlashga ega mustahkam kripto billing infratuzilmasini taqdim etadi.",
       },
@@ -1331,9 +2069,18 @@ const uz = {
           title: "license.delivery.ready",
           amount: "49.00 USDT",
           items: [
-            { label: "Mahsulot", value: "Checkout" },
-            { label: "Vebhuk", value: "Paid" },
-            { label: "Xavf", value: "Qaytarib olish yo'q" },
+            {
+              label: "Mahsulot",
+              value: "Checkout",
+            },
+            {
+              label: "Vebhuk",
+              value: "Paid",
+            },
+            {
+              label: "Xavf",
+              value: "Qaytarib olish yo'q",
+            },
           ],
         },
         problem: {
@@ -1352,13 +2099,13 @@ const uz = {
           body: "To'lovlar uchun hosted UI va avtomatlashtirilgan litsenziya yetkazib berish uchun API-dan foydalanadigan gibrid yondashuv.",
           product: {
             label: "Mahsulot",
-            title: "Checkout & API",
+            title: "Checkout va API",
             body: "Yetkazib berishni avtomatlashtirish uchun backend hodisalari bilan birlashtirilgan tayyor to'lov interfeysi.",
             href: "/products/checkout",
             linkLabel: "Yechimlarni o'rganish",
           },
           plan: {
-            label: "Plan",
+            label: "Tarif",
             title: "Merchant / Developer",
             body: "Kam hajmlar uchun Merchant; vebhuk orqali to'liq yetkazib berishga muhtoj jamoalar uchun Developer rejalari.",
             href: "/dev",
@@ -1370,37 +2117,84 @@ const uz = {
           title: "Global steyblkoin talabini qo'llab-quvvatlang",
           body: "Xaridorlaringiz allaqachon saqlaydigan aktivlarni qo'llab-quvvatlang. Dasturlar uchun TRON USDT standart bo'lsa, Telegram orqali tarqatish uchun TON va TON-dagi USDT juda mos keladi.",
           items: [
-            { name: "TRON USDT", body: "Dasturiy ta'minot va o'yin xaridorlari afzal ko'radigan past komissiyali steyblkoin o'tkazmalari." },
-            { name: "GRAM", body: "Telegram ekotizimida sotiladigan raqamli aktivlar uchun native tanlov." },
-            { name: "USDT on TON", body: "Tezkor raqamli savdo uchun tezkor, tasdiqlashdan xabardor monitoring." },
+            {
+              name: "TRON USDT",
+              body: "Dasturiy ta'minot va o'yin xaridorlari afzal ko'radigan past komissiyali steyblkoin o'tkazmalari.",
+            },
+            {
+              name: "TON",
+              body: "Telegram ekotizimida sotiladigan raqamli aktivlar uchun native tanlov.",
+            },
+            {
+              name: "TON tarmog'ida USDT",
+              body: "Tezkor raqamli savdo uchun tezkor, tasdiqlashdan xabardor monitoring.",
+            },
           ],
         },
         flow: {
           kicker: "INTEGRATSIYA OQIMI",
           title: "To'lovdan yuklab olishgacha",
           steps: [
-            { title: "Buyurtma yaratildi", body: "Sizning do'koningiz raqamli tovar uchun noyob recv chekaut havolasini yaratadi." },
-            { title: "To'lov tasdiqlandi", body: "recv vatcherlari tranzaksiyani aniqlaydi va uni buyurtma bilan solishtiradi." },
-            { title: "Vebhuk qabul qilindi", body: "Sizning yetkazib berish xizmati to'lovni tasdiqlovchi imzolangan hodisani qabul qiladi." },
-            { title: "Kirish huquqi berildi", body: "Litsenziya kaliti yoki yuklab olish havolasi mijozga avtomatik ravishda yuboriladi." },
+            {
+              title: "Buyurtma yaratildi",
+              body: "Sizning do'koningiz raqamli tovar uchun noyob recv chekaut havolasini yaratadi.",
+            },
+            {
+              title: "To'lov tasdiqlandi",
+              body: "recv vatcherlari tranzaksiyani aniqlaydi va uni buyurtma bilan solishtiradi.",
+            },
+            {
+              title: "Vebhuk qabul qilindi",
+              body: "Sizning yetkazib berish xizmati to'lovni tasdiqlovchi imzolangan hodisani qabul qiladi.",
+            },
+            {
+              title: "Kirish huquqi berildi",
+              body: "Litsenziya kaliti yoki yuklab olish havolasi mijozga avtomatik ravishda yuboriladi.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "Raqamli yetkazib berishni avtomatlashtiring.",
           links: [
-            { kicker: "Mahsulot", label: "Checkout UI", body: "Tayyor to'lov ekranlari.", href: "/products/checkout" },
-            { kicker: "Mahsulot", label: "Unified API", body: "Invoyslarni dasturiy ravishda yarating.", href: "/products/api" },
-            { kicker: "Docs", label: "Webhooks", body: "To'lov hodisalarida yetkazib berishni ishga tushiring.", href: "/docs/webhooks" },
+            {
+              kicker: "Mahsulot",
+              label: "Checkout UI",
+              body: "Tayyor to'lov ekranlari.",
+              href: "/products/checkout",
+            },
+            {
+              kicker: "Mahsulot",
+              label: "Unified API",
+              body: "Invoyslarni dasturiy ravishda yarating.",
+              href: "/products/api",
+            },
+            {
+              kicker: "Docs",
+              label: "Vebxuklar",
+              body: "To'lov hodisalarida yetkazib berishni ishga tushiring.",
+              href: "/docs/webhooks",
+            },
           ],
         },
         cta: {
           title: "Raqamli do'koningizni avtomatlashtirishga tayyormisiz?",
           body: "0% aylanma komissiyasi va lahzali on-chain yetkazib berish signallari uchun recv-ga o'ting.",
-          primary: { label: "Hozir sotishni boshlash", href: "/app/auth" },
-          secondary: { label: "API-ni o'rganish", href: "/products/api" },
+          primary: {
+            label: "Hozir sotishni boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "API-ni o'rganish",
+            href: "/products/api",
+          },
         },
-        features: ["Tezkor to'lovni aniqlash", "Avtomatlashtirilgan vebhuklar", "Past komissiyali tarmoqlar", "Qaytarib olish xavfi yo'q"],
+        features: [
+          "Tezkor to'lovni aniqlash",
+          "Avtomatlashtirilgan vebhuklar",
+          "Past komissiyali tarmoqlar",
+          "Qaytarib olish xavfi yo'q",
+        ],
         seoLabel: "Raqamli tovarlar kripto to'lovlarini avtomatlashtirish tafsilotlari",
         seo: "recv raqamli mahsulotlar uchun avtomatlashtirilgan kripto chekautini taqdim etadi, imzolangan vebhuklar, ko'p tarmoqli monitoring va 0% komissiyali to'g'ridan-to'g'ri hamyonga to'lovlar orqali lahzali yetkazib berishni qo'llab-quvvatlaydi.",
       },
@@ -1420,9 +2214,18 @@ const uz = {
           title: "member.access.granted",
           amount: "29.00 USDT",
           items: [
-            { label: "Tarmoq", value: "TON" },
-            { label: "Kanal", value: "Yopiq" },
-            { label: "Plan", value: "Merchant" },
+            {
+              label: "Tarmoq",
+              value: "TON",
+            },
+            {
+              label: "Kanal",
+              value: "Yopiq",
+            },
+            {
+              label: "Tarif",
+              value: "Merchant",
+            },
           ],
         },
         problem: {
@@ -1447,7 +2250,7 @@ const uz = {
             linkLabel: "Checkout-ni o'rganish",
           },
           plan: {
-            label: "Plan",
+            label: "Tarif",
             title: "Merchant",
             body: "Qo'lda invoyslarni kuzatish, real vaqtdagi Telegram bildirishnomalari va ijodkorlar uchun 0% aylanma komissiyasini o'z ichiga oladi.",
             href: "/merchant",
@@ -1459,37 +2262,84 @@ const uz = {
           title: "Telegram hamjamiyatlari uchun GRAM-first",
           body: "GRAM on TON Telegram a'zolari uchun native tanlov bo'lsa, TRON USDT global obunachilar uchun barqaror zaxira hisoblanadi.",
           items: [
-            { name: "GRAM", body: "Telegram-native hamjamiyatlari uchun eng kam to'siqli tajriba." },
-            { name: "TRON USDT", body: "USD nominatsiyasidagi a'zolik uchun ishonchli steyblkoin varianti." },
-            { name: "Base / Base", body: "web3-native guruhlar va markazlashtirilmagan tashkilotlar uchun juda mos keladi." },
+            {
+              name: "TON",
+              body: "Telegram-native hamjamiyatlari uchun eng kam to'siqli tajriba.",
+            },
+            {
+              name: "TRON USDT",
+              body: "USD nominatsiyasidagi a'zolik uchun ishonchli steyblkoin varianti.",
+            },
+            {
+              name: "Base / Base",
+              body: "web3-native guruhlar va markazlashtirilmagan tashkilotlar uchun juda mos keladi.",
+            },
           ],
         },
         flow: {
           kicker: "INTEGRATSIYA OQIMI",
           title: "To'lovdan hamjamiyatga kirishgacha",
           steps: [
-            { title: "Ruxsatnoma tanlandi", body: "Foydalanuvchi a'zolik darajasini yoki yangilash muddatini tanlaydi." },
-            { title: "Chekaut ochildi", body: "recv aniq tarmoq/aktiv ma'lumotlari bilan noyob to'lov so'rovini yaratadi." },
-            { title: "To'lov tasdiqlandi", body: "Bizning vatcherlarimiz real vaqt rejimida blokcheyndagi o'tkazmani tasdiqlaydi." },
-            { title: "Kirish ishga tushdi", body: "Sizning boshqaruv botingiz 'to'langan' hodisasi yuborilgandan so'ng foydalanuvchini taklif qiladi." },
+            {
+              title: "Ruxsatnoma tanlandi",
+              body: "Foydalanuvchi a'zolik darajasini yoki yangilash muddatini tanlaydi.",
+            },
+            {
+              title: "Chekaut ochildi",
+              body: "recv aniq tarmoq/aktiv ma'lumotlari bilan noyob to'lov so'rovini yaratadi.",
+            },
+            {
+              title: "To'lov tasdiqlandi",
+              body: "Bizning vatcherlarimiz real vaqt rejimida blokcheyndagi o'tkazmani tasdiqlaydi.",
+            },
+            {
+              title: "Kirish ishga tushdi",
+              body: "Sizning boshqaruv botingiz 'to'langan' hodisasi yuborilgandan so'ng foydalanuvchini taklif qiladi.",
+            },
           ],
         },
         related: {
           kicker: "TEGISHLI",
           title: "Hamjamiyat to'lovlarini ulang.",
           links: [
-            { kicker: "Tarmoq", label: "GRAM on TON", body: "Telegram a'zoliklari uchun native to'lov zanjirlari.", href: "/networks/ton" },
-            { kicker: "Use Case", label: "Telegram Shops", body: "Commerce flows for physical/digital goods.", href: "/use-cases/telegram-shops" },
-            { kicker: "Plan", label: "Merchant Tier", body: "Dashboard for community operators.", href: "/merchant" },
+            {
+              kicker: "Tarmoq",
+              label: "TON tarmog'ida GRAM",
+              body: "Telegram a'zoliklari uchun native to'lov zanjirlari.",
+              href: "/networks/ton",
+            },
+            {
+              kicker: "Foydalanish holati",
+              label: "Telegram-do'konlar",
+              body: "Jismoniy va raqamli tovarlar uchun savdo jarayonlari.",
+              href: "/use-cases/telegram-shops",
+            },
+            {
+              kicker: "Tarif",
+              label: "Merchant tarifi",
+              body: "Kanal va guruh operatorlari uchun boshqaruv paneli.",
+              href: "/merchant",
+            },
           ],
         },
         cta: {
           title: "Bugun pullik hamjamiyatingizni professional darajaga olib chiqing.",
           body: "Avtomatlashtirilgan to'lov oqimiga o'ting va shaxsiy xabarlarda skrinshot so'rashni to'xtating. Direct-to-wallet, 0% fees.",
-          primary: { label: "To'lovlarni qabul qilishni boshlash", href: "/app/auth" },
-          secondary: { label: "Merchant-ni ko'rish", href: "/merchant" },
+          primary: {
+            label: "To'lovlarni qabul qilishni boshlash",
+            href: "/app/auth",
+          },
+          secondary: {
+            label: "Merchant-ni ko'rish",
+            href: "/merchant",
+          },
         },
-        features: ["GRAM va Jetton Native", "Avtomatlashtirilgan kirish signallari", "A'zolikni yangilashni kuzatish", "Foizli komissiyalar yo'q"],
+        features: [
+          "GRAM va Jetton Native",
+          "Avtomatlashtirilgan kirish signallari",
+          "A'zolikni yangilashni kuzatish",
+          "Foizli komissiyalar yo'q",
+        ],
         seoLabel: "Pullik hamjamiyat kripto to'lovi tafsilotlari",
         seo: "recv pullik hamjamiyatlarga Telegram kanallari va yopiq guruhlar uchun kriptovalyuta qabul qilish imkonini beradi, TON qo'llab-quvvatlashi, vebhuklar orqali avtomatlashtirilgan kirish signallari va 0% aylanma komissiyasini o'z ichiga oladi.",
       },
@@ -1499,63 +2349,91 @@ const uz = {
       description: "recv-ni qo'lda tekshirish va kastodial shlyuzlar bilan solishtiring: to'g'ridan-to'g'ri hamyonga hisob-kitoblar, nol aylanma komissiyalari, imzolangan vebhuklar va qo'llab-quvvatlanadigan to'lov tarmoqlari.",
       kicker: "TAQQOSLASH",
       items: [
-        { title: "recv va Qo'lda tekshirish solishtiruvi", slug: "recv-vs-manual", body: "Avtomatlashtirish inson xatolarini qanday yo'q qilishini va operatsiyalarni kengaytirishini bilib oling." },
-        { title: "recv va Kastodial shlyuzlar solishtiruvi", slug: "recv-vs-custodial", body: "Nega nokastodial infrastruktura biznesingiz uchun xavfsizroq va tejamkorroq ekanligi haqibe." },
-        { title: "recv va NowPayments solishtiruvi", slug: "nowpayments", body: "Komissiyalar, nazorat va integratsiya moslashuvchanligining to'g'ridan-to'g'ri solishtiruvi." },
-        { title: "recv va Coinbase Commerce solishtiruvi", slug: "coinbase-commerce", body: "Nokastodial to'g'ridan-to'g'ri to'lovlar va Coinbase-ning hosted balans modeli solishtiruvi." },
-        { title: "recv va BitPay solishtiruvi", slug: "bitpay", body: "Fiksatsiyalangan obunalar va BitPay-ning foizli to'lov tuzilmasi solishtiruvi." },
-        { title: "recv va CoinGate solishtiruvi", slug: "coingate", body: "Dasturchilar uchun mo'ljallangan protokol va CoinGate-ning sotuvchiga yo'naltirilgan platformasi solishtiruvi." },
-        { title: "recv va Cryptomus solishtiruvi", slug: "cryptomus", body: "Atomar on-chain to'lovlar va Cryptomus-ning ichki hamyon boshqaruvi solishtiruvi." },
-      ]
+        {
+          title: "recv va Qo'lda tekshirish solishtiruvi",
+          slug: "recv-vs-manual",
+          body: "Avtomatlashtirish inson xatolarini qanday yo'q qilishini va operatsiyalarni kengaytirishini bilib oling.",
+        },
+        {
+          title: "recv va Kastodial shlyuzlar solishtiruvi",
+          slug: "recv-vs-custodial",
+          body: "Nega nokastodial infrastruktura biznesingiz uchun xavfsizroq va tejamkorroq ekanligi haqibe.",
+        },
+        {
+          title: "recv va NowPayments solishtiruvi",
+          slug: "nowpayments",
+          body: "Komissiyalar, nazorat va integratsiya moslashuvchanligining to'g'ridan-to'g'ri solishtiruvi.",
+        },
+        {
+          title: "recv va Coinbase Commerce solishtiruvi",
+          slug: "coinbase-commerce",
+          body: "Nokastodial to'g'ridan-to'g'ri to'lovlar va Coinbase-ning hosted balans modeli solishtiruvi.",
+        },
+        {
+          title: "recv va BitPay solishtiruvi",
+          slug: "bitpay",
+          body: "Fiksatsiyalangan obunalar va BitPay-ning foizli to'lov tuzilmasi solishtiruvi.",
+        },
+        {
+          title: "recv va CoinGate solishtiruvi",
+          slug: "coingate",
+          body: "Dasturchilar uchun mo'ljallangan protokol va CoinGate-ning sotuvchiga yo'naltirilgan platformasi solishtiruvi.",
+        },
+        {
+          title: "recv va Cryptomus solishtiruvi",
+          slug: "cryptomus",
+          body: "Atomar on-chain to'lovlar va Cryptomus-ning ichki hamyon boshqaruvi solishtiruvi.",
+        },
+      ],
     },
     comparePages: {
       "recv-vs-manual": {
         name: "Qo'lda to'lovlar",
         title: "recv va Qo'lda to'lovlar solishtiruvi: Nega avtomatlashtirish kerak?",
         description: "Avtomatlashtirilgan nokastodial qayta ishlashni qo'lda hamyon kuzatish bilan solishtirish. recv inson xatolarini qanday yo'q qilishini va kripto operatsiyalaringizni qanday kengaytirishini bilib oling.",
-        kicker: "AUTOMATION",
+        kicker: "AVTOMATLASHTIRISH",
         points: [
           {
             title: "Kengaytiriluvchanlik",
             competitor: "Kengaytirish imkonsiz. Every transaction requires manual verification and manual accounting.",
-            recv: "Avtomatlashtirilgan invoys kuzatish va vebhuklar har bir to'lov uchun qo'lda bajariladigan ishlarni kamaytiradi."
+            recv: "Avtomatlashtirilgan invoys kuzatish va vebhuklar har bir to'lov uchun qo'lda bajariladigan ishlarni kamaytiradi.",
           },
           {
             title: "Aniqlik",
             competitor: "Inson xatolarining yuqori xavfi. Hamyon manzillaridagi xatolar, o'tkazib yuborilgan to'lovlar yoki noto'g'ri tarmoq o'tkazmalari.",
-            recv: "Avtomatlashtirilgan moslashtirish qo'lda kiritish xatolarini kamaytiradi, istisno holatlar esa baribir ko'rib chiqilishi mumkin bo'lib qoladi."
+            recv: "Avtomatlashtirilgan moslashtirish qo'lda kiritish xatolarini kamaytiradi, istisno holatlar esa baribir ko'rib chiqilishi mumkin bo'lib qoladi.",
           },
           {
             title: "Mijoz UX",
             competitor: "Sekin va asabiy. Mijozlar qo'lda tasdiqlash va mahsulot yetkazib berishni soatlab kutishadi.",
-            recv: "Tasdiqlangan invoys holati sotuvchi siyosatiga muvofiq avtomatlashtirilgan yetkazib berishni ishga tushirishi mumkin."
-          }
-        ]
+            recv: "Tasdiqlangan invoys holati sotuvchi siyosatiga muvofiq avtomatlashtirilgan yetkazib berishni ishga tushirishi mumkin.",
+          },
+        ],
       },
       "recv-vs-custodial": {
         name: "Kastodial shlyuzlar",
         title: "recv va Kastodial shlyuzlar solishtiruvi: Nokastodial afzallik",
         description: "recv-ning to'g'ridan-to'g'ri hamyon infratuzilmasini va fiksatsiyalangan tarifli narxlarini kastodial to'lov protsessorlari bilan solishtiring.",
-        kicker: "SOVEREIGNTY",
+        kicker: "MUSTAQILLIK",
         points: [
           {
             title: "Mablag'larni nazorat qilish",
             competitor: "Uchinchi tomon vasiyligi. Akkauntlarning muzlatilishi, pul yechishdagi kechikishlar va platforma bankrotligi xavfi.",
-            recv: "100% Nokastodial. Mablag'lar to'g'ridan-to'g'ri hamyoningizga tushadi. Biz pulingizga hech qachon tegmaymiz va saqlamaymiz."
+            recv: "100% Nokastodial. Mablag'lar to'g'ridan-to'g'ri hamyoningizga tushadi. Biz pulingizga hech qachon tegmaymiz va saqlamaymiz.",
           },
           {
             title: "Komissiya tuzilishi",
             competitor: "Narxlar foizga asoslangan, hisob-kitob yoki konversiya to'lovlarini o'z ichiga olishi mumkin; joriy shartlar provayder bilan tekshirilishi kerak.",
-            recv: "Fiksatsiyalangan obuna. Aylanma komissiyasi 0%. Sizning hajmingizdan qat'i nazar, prognoz qilinadigan xarajatlar."
+            recv: "Fiksatsiyalangan obuna. Aylanma komissiyasi 0%. Sizning hajmingizdan qat'i nazar, prognoz qilinadigan xarajatlar.",
           },
           {
             title: "Muvofiqlik va Maxfiylik",
             competitor: "Qattiq KYC/KYB talablari va ma'lumotlarni almashish. Uchinchi tomon siyosati o'zgarishlariga bog'liqlik.",
-            recv: "Avvalo maxfiylik infratuzilmasi. Foydalanuvchilaringiz bilan munosabatlarni o'zingiz saqlab qolasiz."
-          }
-        ]
+            recv: "Avvalo maxfiylik infratuzilmasi. Foydalanuvchilaringiz bilan munosabatlarni o'zingiz saqlab qolasiz.",
+          },
+        ],
       },
-      "nowpayments": {
+      nowpayments: {
         name: "NowPayments",
         title: "recv va NowPayments solishtiruvi: Nazorat va Qulaylik",
         description: "Ikkita ma'lumotli kripto to'lov yechimining batafsil solishtiruvi. Choose the one that fits your scaling needs.",
@@ -1564,19 +2442,19 @@ const uz = {
           {
             title: "To'lov modeli",
             competitor: "Ichki balans tizimi. Siz pulni qo'lda yechib olishingiz yoki avtomatlashtirilgan to'lov davrlarini kutishingiz kerak.",
-            recv: "Atomar to'lovlar. Har bir tranzaksiya blokcheynda tasdiqlanishi bilanoq hamyoningizga kelib tushadi."
+            recv: "Atomar to'lovlar. Har bir tranzaksiya blokcheynda tasdiqlanishi bilanoq hamyoningizga kelib tushadi.",
           },
           {
             title: "Komissiya",
             competitor: "Narxlar va tarmoq xarajatlari provayderning joriy e'lon qilingan shartlariga muvofiq belgilanadi.",
-            recv: "0% komissiya. Faqat fiksatsiyalangan obunangizni va standart tarmoq gaz komissiyalarini to'lang."
+            recv: "0% komissiya. Faqat fiksatsiyalangan obunangizni va standart tarmoq gaz komissiyalarini to'lang.",
           },
           {
             title: "Integratsiya",
             competitor: "Xususiy API va standart plaginlar. Umumiy elektron tijorat platformalariga e'tibor qaratilgan.",
-            recv: "Avvalo dasturchi protokoli. Yuqori unumdorlikka ega SaaS, Telegram Mini ilovalari va shaxsiy loyihalar uchun optimallashtirilgan."
-          }
-        ]
+            recv: "Avvalo dasturchi protokoli. Yuqori unumdorlikka ega SaaS, Telegram Mini ilovalari va shaxsiy loyihalar uchun optimallashtirilgan.",
+          },
+        ],
       },
       "coinbase-commerce": {
         name: "Coinbase Commerce",
@@ -1587,21 +2465,21 @@ const uz = {
           {
             title: "Mablag'lar vasiyligi",
             competitor: "Vasiylik va hisob-kitob xatti-harakati joriy Coinbase Commerce mahsulot sozlamalari va shartlariga muvofiq amalga oshiriladi.",
-            recv: "Sof nokastodial. Har bir tasdiqlangan to'lov to'g'ridan-to'g'ri hamyoningiz manziliga tushadi. recv hech qachon mablag'laringizga tegmaydi."
+            recv: "Sof nokastodial. Har bir tasdiqlangan to'lov to'g'ridan-to'g'ri hamyoningiz manziliga tushadi. recv hech qachon mablag'laringizga tegmaydi.",
           },
           {
             title: "Komissiya modeli",
             competitor: "Tranzaksiya narxlari Coinbase Commerce-ning joriy e'lon qilingan shartlariga muvofiq belgilanadi.",
-            recv: "0% aylanma komissiyasi. Faqat oylik fiksatsiyalangan obuna. To'lov hajmidan qat'i nazar, yalpi marjangiz o'zgarishsiz qoladi."
+            recv: "0% aylanma komissiyasi. Faqat oylik fiksatsiyalangan obuna. To'lov hajmidan qat'i nazar, yalpi marjangiz o'zgarishsiz qoladi.",
           },
           {
             title: "Tarmoq moslashuvchanligi",
             competitor: "Mavjud tarmoqlar va aktivlar joriy Coinbase Commerce hujjatlariga muvofiq amalga oshiriladi.",
-            recv: "recv qo'llab-quvvatlanadigan tarmoq va aktiv kombinatsiyalarini hujjatlashtiradi va Telegram Mini ilovalari uchun mos chekautni taqdim etadi."
-          }
-        ]
+            recv: "recv qo'llab-quvvatlanadigan tarmoq va aktiv kombinatsiyalarini hujjatlashtiradi va Telegram Mini ilovalari uchun mos chekautni taqdim etadi.",
+          },
+        ],
       },
-      "bitpay": {
+      bitpay: {
         name: "BitPay",
         title: "recv va BitPay solishtiruvi: Fiksatsiyalangan obuna va foizli komissiyalar",
         description: "recv-ning obuna narxlarini va to'g'ridan-to'g'ri hisob-kitoblarini BitPay bilan joriy rasmiy narxlash va hisob-kitob hujjatlari yordamida solishtiring.",
@@ -1610,21 +2488,21 @@ const uz = {
           {
             title: "Xarajatlar tuzilishi",
             competitor: "Tranzaksiya va hisob-kitob narxlari BitPay-ning joriy e'lon qilingan shartlariga muvofiq belgilanadi.",
-            recv: "Fiksatsiyalangan oylik obuna. Foizli komissiyalar nolga teng. Xarajatlar tranzaksiya hajmidan to'liq mustaqil."
+            recv: "Fiksatsiyalangan oylik obuna. Foizli komissiyalar nolga teng. Xarajatlar tranzaksiya hajmidan to'liq mustaqil.",
           },
           {
             title: "Hisob-kitob tezligi",
             competitor: "Hisob-kitob usullari va vaqti sotuvchining BitPay sozlamalari va joriy shartlariga muvofiq amalga oshiriladi.",
-            recv: "Atomar on-chain hisob-kitob. Mablag'lar hamyoningizga mijoz to'lovi dengan bir xil blokda kelib tushadi."
+            recv: "Atomar on-chain hisob-kitob. Mablag'lar hamyoningizga mijoz to'lovi dengan bir xil blokda kelib tushadi.",
           },
           {
             title: "Dasturchi tajribasi",
             competitor: "Qattiq muvofiqlik talablari, KYB jarayonlari va cheklangan API kirish darajalariga ega korporativ yo'naltirilgan API.",
-            recv: "API kirish imkoni, imzolangan vebhuklar va dasturiy invoys boshqaruvi; sotuvchilar amaldagi muvofiqlik talablari uchun o'zlari javobgar bo'lib qoladilar."
-          }
-        ]
+            recv: "API kirish imkoni, imzolangan vebhuklar va dasturiy invoys boshqaruvi; sotuvchilar amaldagi muvofiqlik talablari uchun o'zlari javobgar bo'lib qoladilar.",
+          },
+        ],
       },
-      "coingate": {
+      coingate: {
         name: "CoinGate",
         title: "recv va CoinGate solishtiruvi: To'g'ridan-to'g'ri to'lovlar va birinchi navbatda konversiya modeli",
         description: "CoinGate hisob-kitobdan oldin kriptovalyutani fiatga aylantiradi. recv mijozingiz to'lagan kripto aktivni to'g'ridan-to'g'ri hamyoningizga nol konversiya yo'qotishi bilan yetkazib beradi.",
@@ -1633,21 +2511,21 @@ const uz = {
           {
             title: "Hisob-kitob aktivi",
             competitor: "CoinGate sukut bo'yicha fiat konversiyasini amalga oshiradi, bu esa mablag'larni olishdan oldin valyuta xavfi va qo'shimcha ishlov berish bosqichlarini keltirib chiqaradi.",
-            recv: "Native kripto hisob-kitob. Siz to'langan aktivni aynan qabul qilasiz — USDT USDTligicha, GRAM GRAMligicha hamyoningizda qoladi."
+            recv: "Native kripto hisob-kitob. Siz to'langan aktivni aynan qabul qilasiz — USDT USDTligicha, GRAM GRAMligicha hamyoningizda qoladi.",
           },
           {
             title: "Komissiya",
             competitor: "1% tranzaksiya komissiyasi va konversiya spredi. Konversiya kurslari qo'shilganda haqiqiy xarajat 2% dan oshishi mumkin.",
-            recv: "Tranzaksiyalar uchun 0% komissiya. Qancha ishlashingizdan qat'i nazar, faqat oylik fiksatsiyalangan obuna."
+            recv: "Tranzaksiyalar uchun 0% komissiya. Qancha ishlashingizdan qat'i nazar, faqat oylik fiksatsiyalangan obuna.",
           },
           {
             title: "Moslashtirish",
             competitor: "Standart hosted chekaut sahifalari. To'lov interfeysi, brending va mijozlar oqimi ustidan cheklangan nazorat.",
-            recv: "To'liq API kirish, brendingizga ega hosted chekaut yoki vebhuk orqali boshqariladigan oqimlar — har bir qadamda tanlov o'zingizda."
-          }
-        ]
+            recv: "To'liq API kirish, brendingizga ega hosted chekaut yoki vebhuk orqali boshqariladigan oqimlar — har bir qadamda tanlov o'zingizda.",
+          },
+        ],
       },
-      "cryptomus": {
+      cryptomus: {
         name: "Cryptomus",
         title: "recv va Cryptomus solishtiruvi: On-Chain to'lovlar va ichki hamyon",
         description: "Cryptomus to'lovdan oldin to'lovlarni ichki balans orqali yo'naltiradi. recv dizayn bo'yicha nokastodialdir — hamyoningiz to'g'ridan-to'g'ri on-chain mablag'larni qabul qiladi, ichki balans ishlatilmaydi.",
@@ -1656,20 +2534,20 @@ const uz = {
           {
             title: "To'lov arxitekturasi",
             competitor: "Cryptomus ichki hamyonni saqlaydi. Siz pul yechib olishni so'rashingiz kerak, bu esa kechikish va uchinchi tomonga bog'liqlikni keltirib chiqaradi.",
-            recv: "Ichki hamyon yo'q. Har bir tasdiqlangan to'lov to'g'ridan-to'g'ri manzilingizga on-chain tasdiqlanadi. recv pul oqimida ko'rinmaydi."
+            recv: "Ichki hamyon yo'q. Har bir tasdiqlangan to'lov to'g'ridan-to'g'ri manzilingizga on-chain tasdiqlanadi. recv pul oqimida ko'rinmaydi.",
           },
           {
             title: "Komissiya shaffofligi",
             competitor: "Tarifga qarab 0.4–1% tranzaksiya komissiyalari. Komissiyalar yuqori hajmda to'planadi va mablag'lar sizga yetib borguncha ushlab qolinadi.",
-            recv: "Tranzaksiya komissiyalari nolga teng. Fiksatsiyalangan obuna. Mijoz yuborgan narsani faqat tarmoq gaz komissiyasini chegirib ko'rasiz."
+            recv: "Tranzaksiya komissiyalari nolga teng. Fiksatsiyalangan obuna. Mijoz yuborgan narsani faqat tarmoq gaz komissiyasini chegirib ko'rasiz.",
           },
           {
             title: "Telegram integratsiyasi",
-            competitor: "Basic Telegram bot integrations. Not designed for Telegram Mini App payment flows or high-frequency bot-driven commerce.",
-            recv: "Telegram uchun qurilgan. GRAM va TON tarmog'idagi USDT-ni qo'llab-quvvatlash, Mini ilovalar bilan mos keladigan chekaut va Telegram bildirishnomalari qutidan chiqishi bilanoq mavjud."
-          }
-        ]
-      }
+            competitor: "Telegram botlari bilan oddiy integratsiyalar. Telegram Mini App to'lov oqimlari yoki yuqori chastotali savdo botlari uchun mo'ljallanmagan.",
+            recv: "Telegram uchun qurilgan. GRAM va TON tarmog'idagi USDT-ni qo'llab-quvvatlash, Mini ilovalar bilan mos keladigan chekaut va Telegram bildirishnomalari qutidan chiqishi bilanoq mavjud.",
+          },
+        ],
+      },
     },
     statusHub: {
       title: "Tizim holati",
@@ -1702,106 +2580,190 @@ const uz = {
       badge: "recv Merchant",
       title: "Kripto qabul qiling. 0% aylanma komissiyasi.",
       body: "Qo'lda va yarim avtomatlashtirilgan to'lovlarni qabul qilish uchun professional boshqaruv paneli. Hamyonlaringizga to'g'ridan-to'g'ri to'lovlar va to'liq nazorat.",
-      priceLabel: "$9",
+      priceLabel: "9$",
       period: "oyiga",
       stats: [
-        { value: "0%", label: "Komissiya" },
-        { value: "100%", label: "Nokastodial" },
-        { value: "Jonli", label: "Dashboard" },
-        { value: "Oddiy", label: "Analitika" },
+        {
+          value: "0%",
+          label: "Komissiya",
+        },
+        {
+          value: "100%",
+          label: "Nokastodial",
+        },
+        {
+          value: "Jonli",
+          label: "Dashboard",
+        },
+        {
+          value: "Oddiy",
+          label: "Analitika",
+        },
       ],
       features: [
-        { title: "Cheksiz invoyslar", body: "Qo'shimcha komissiyalarsiz har qanday summa uchun cheksiz to'lov havolalarini yarating." },
-        { title: "Qo'lda boshqarish", body: "Kam to'lovlar yoki mijozlar xatosi bo'lganda to'lovlarni qo'lda tasdiqlang." },
-        { title: "To'g'ridan-to'g'ri hamyonga", body: "Mablag'lar mijozdan to'g'ridan-to'g'ri manzilingizga o'tadi. Biz pulingizga hech qachon tegmaymiz." },
-        { title: "Tezkor bildirishnomalar", body: "Har bir tranzaksiya uchun real vaqtde Telegram orqali xabar oling." },
+        {
+          title: "Cheksiz invoyslar",
+          body: "Qo'shimcha komissiyalarsiz har qanday summa uchun cheksiz to'lov havolalarini yarating.",
+        },
+        {
+          title: "Qo'lda boshqarish",
+          body: "Kam to'lovlar yoki mijozlar xatosi bo'lganda to'lovlarni qo'lda tasdiqlang.",
+        },
+        {
+          title: "To'g'ridan-to'g'ri hamyonga",
+          body: "Mablag'lar mijozdan to'g'ridan-to'g'ri manzilingizga o'tadi. Biz pulingizga hech qachon tegmaymiz.",
+        },
+        {
+          title: "Tezkor bildirishnomalar",
+          body: "Har bir tranzaksiya uchun real vaqtde Telegram orqali xabar oling.",
+        },
       ],
       flow: [
-        { title: "Profilni sozlash", body: "Tezkor Telegram ro'yxatdan o'tishi va TON, TRON yoki EVM to'lov tafsilotlarini qo'shish." },
-        { title: "Invoys yaratish", body: "Bizning tushunarli boshqaruv panelimiz orqali bir necha marta bosishda to'lov havolalarini yarating." },
-        { title: "Real vaqtda kuzatish", body: "Jonli blokcheyn monitoringi. Biz tranzaksiyalarni avtomatik ravishda tasdiqlaymiz." },
+        {
+          title: "Profilni sozlash",
+          body: "Tezkor Telegram ro'yxatdan o'tishi va TON, TRON yoki EVM to'lov tafsilotlarini qo'shish.",
+        },
+        {
+          title: "Invoys yaratish",
+          body: "Bizning tushunarli boshqaruv panelimiz orqali bir necha marta bosishda to'lov havolalarini yarating.",
+        },
+        {
+          title: "Real vaqtda kuzatish",
+          body: "Jonli blokcheyn monitoringi. Biz tranzaksiyalarni avtomatik ravishda tasdiqlaymiz.",
+        },
       ],
-      code: `// Qo'lda invoys havolasi
-// https://recv.money/app/checkout/demo
-// Merchant tarifi uchun kod talab qilinmaydi.
-// Shunchaki havolani ulashing va to'lovni qabul qiling.`
+      code: "// Qo'lda invoys havolasi\n// https://recv.money/app/checkout/demo\n// Merchant tarifi uchun kod talab qilinmaydi.\n// Shunchaki havolani ulashing va to'lovni qabul qiling.",
     },
     developer: {
       badge: "recv Developer",
       title: "Kripto to'lovlari infrastrukturasi. Nazorat sizning qo'lingizda.",
       body: "To'liq biznes avtomatizatsiyasi uchun professional API va vebhuklar. To'g'ridan-to'g'ri to'lovlar va nol aylanma komissiyasi.",
-      priceLabel: "$29",
+      priceLabel: "29$",
       period: "oyiga",
       stats: [
-        { value: "50k", label: "So'rovlar/oy" },
-        { value: "3", label: "A'zolar" },
-        { value: "3", label: "Ish joylari" },
-        { value: "Standart", label: "Yordam" },
+        {
+          value: "50k",
+          label: "So'rovlar/oy",
+        },
+        {
+          value: "3",
+          label: "A'zolar",
+        },
+        {
+          value: "3",
+          label: "Ish joylari",
+        },
+        {
+          value: "Standart",
+          label: "Yordam",
+        },
       ],
       features: [
-        { title: "Vebhuk yetkazib berish", body: "Avtomatlashtirilgan takrorlashlar va HMAC imzolarga ega navbatli yetkazib berish." },
-        { title: "Real vaqtda monitoring", body: "Tranzaksiyalarni kuzatish qo'llab-quvvatlanadigan tarmoqlar tasdiqlanishi bilan invoys holatini yangilaydi." },
-        { title: "Yagona API v1", body: "GRAM, TON tarmog'idagi USDT, TRON, Base va BSC uchun yagona interfeys." },
-        { title: "Idempotentlik", body: "API darajaside dublikat tranzaksiyalardan o'rnatilgan himoya." },
+        {
+          title: "Vebhuk yetkazib berish",
+          body: "Avtomatlashtirilgan takrorlashlar va HMAC imzolarga ega navbatli yetkazib berish.",
+        },
+        {
+          title: "Real vaqtda monitoring",
+          body: "Tranzaksiyalarni kuzatish qo'llab-quvvatlanadigan tarmoqlar tasdiqlanishi bilan invoys holatini yangilaydi.",
+        },
+        {
+          title: "Yagona API v1",
+          body: "GRAM, TON tarmog'idagi USDT, TRON, Base va BSC uchun yagona interfeys.",
+        },
+        {
+          title: "Idempotentlik",
+          body: "API darajaside dublikat tranzaksiyalardan o'rnatilgan himoya.",
+        },
       ],
       flow: [
-        { title: "API kalitlarini olish", body: "Jonli live_ kalitlarini yarating. Xavfsiz backend integratsiyasi uchun ruxsatlarni boshqaring." },
-        { title: "Vebhukni sozlash", body: "Tezkor bildirishnomalar uchun HMAC-SHA256 imzoli callback-larni sozlang." },
-        { title: "Avtomatlashtirilgan ishlov berish", body: "Bizning vatcherlarimiz tranzaksiyalarni 24/7 kuzatib, to'lovlarni avtonom tasdiqlaydi." },
+        {
+          title: "API kalitlarini olish",
+          body: "Jonli live_ kalitlarini yarating. Xavfsiz backend integratsiyasi uchun ruxsatlarni boshqaring.",
+        },
+        {
+          title: "Vebhukni sozlash",
+          body: "Tezkor bildirishnomalar uchun HMAC-SHA256 imzoli callback-larni sozlang.",
+        },
+        {
+          title: "Avtomatlashtirilgan ishlov berish",
+          body: "Bizning vatcherlarimiz tranzaksiyalarni 24/7 kuzatib, to'lovlarni avtonom tasdiqlaydi.",
+        },
       ],
-      code: `// recv API orqali invoys yaratish
-const res = await fetch("https://api.recv.money/v1/invoices", {
-  method: "POST",
-  headers: { "X-API-Key": "live_..." },
-  body: JSON.stringify({
-    title: "Order #99",
-    base_amount_usd: "29.00",
-    payable_network: "TON"
-  })
-});
-const inv = await res.json();`
+      code: "// recv API orqali invoys yaratish\nconst res = await fetch(\"https://api.recv.money/v1/invoices\", {\n  method: \"POST\",\n  headers: { \"X-API-Key\": \"live_...\" },\n  body: JSON.stringify({\n    title: \"Order #99\",\n    base_amount_usd: \"29.00\",\n    payable_network: \"TON\"\n  })\n});\nconst inv = await res.json();",
     },
     business: {
       badge: "recv Business",
       title: "Kengaytiriladigan qayta ishlash. O'sayotgan jamoalar uchun.",
       body: "Kattaroq to'lov hajmiga ega bizneslar uchun kengaytirilgan API limitlari, jamoa kirishi va ustuvor yordam.",
-      priceLabel: "$79",
+      priceLabel: "79$",
       period: "oyiga",
       stats: [
-        { value: "200k", label: "So'rovlar/oy" },
-        { value: "10", label: "A'zolar" },
-        { value: "10", label: "Ish joylari" },
-        { value: "Ustuvor", label: "Yordam" },
+        {
+          value: "200k",
+          label: "So'rovlar/oy",
+        },
+        {
+          value: "10",
+          label: "A'zolar",
+        },
+        {
+          value: "10",
+          label: "Ish joylari",
+        },
+        {
+          value: "Ustuvor",
+          label: "Yordam",
+        },
       ],
       features: [
-        { title: "Kengaytirilgan analitika", body: "Ishchi joylar bo'ylab to'lovlar, konversiya va mijozlarni saqlab qolish bo'yicha batafsil ma'lumotlar." },
-        { title: "Jamoaviy hamkorlik", body: "Ruxsatlarni aniq boshqarish bilan jamoangizga 10 tagacha a'zolarni qo'shing." },
-        { title: "Ko'p ish joylari", body: "Bitta obuna ostida 10 tagacha mustaqil loyihalarni boshqaring." },
-        { title: "Kengaytirilgan limitlar", body: "Yuqori API kvotalari va faol vebhuk limitlarining oshirilishi." },
+        {
+          title: "Kengaytirilgan analitika",
+          body: "Ishchi joylar bo'ylab to'lovlar, konversiya va mijozlarni saqlab qolish bo'yicha batafsil ma'lumotlar.",
+        },
+        {
+          title: "Jamoaviy hamkorlik",
+          body: "Ruxsatlarni aniq boshqarish bilan jamoangizga 10 tagacha a'zolarni qo'shing.",
+        },
+        {
+          title: "Ko'p ish joylari",
+          body: "Bitta obuna ostida 10 tagacha mustaqil loyihalarni boshqaring.",
+        },
+        {
+          title: "Kengaytirilgan limitlar",
+          body: "Yuqori API kvotalari va faol vebhuk limitlarining oshirilishi.",
+        },
       ],
       flow: [
-        { title: "Jamoani ro'yxatdan o'tkazish", body: "Jamoa a'zolarini taklif qiling va loyihalaringizni boshqarish uchun rollarni tayinlang." },
-        { title: "Ish joylarini ajratish", body: "Turli biznes yo'nalishlari uchun mustaqil muhitlarni sozlang." },
-        { title: "Ustuvorlik bilan kengayish", body: "Maxsus monitoring navbatlari va 24/7 ustuvor yordam bilan ishlang." },
+        {
+          title: "Jamoani ro'yxatdan o'tkazish",
+          body: "Jamoa a'zolarini taklif qiling va loyihalaringizni boshqarish uchun rollarni tayinlang.",
+        },
+        {
+          title: "Ish joylarini ajratish",
+          body: "Turli biznes yo'nalishlari uchun mustaqil muhitlarni sozlang.",
+        },
+        {
+          title: "Ustuvorlik bilan kengayish",
+          body: "Maxsus monitoring navbatlari va 24/7 ustuvor yordam bilan ishlang.",
+        },
       ],
-      code: `// Multi-Workspace Management
-// Manage up to 10 workspaces
-// Isolated API keys and team seats
-// Advanced Analytics enabled`
+      code: "// Multi-Workspace Management\n// Manage up to 10 workspaces\n// Isolated API keys and team seats\n// Advanced Analytics enabled",
     },
   },
   legal: {
     privacy: {
       kicker: "MAXFIYLIK SIYOSATI",
       title: "MAXFIYLIK SIYOSATI",
-      summary:
-        "USHBU HUJJATNI DIQQAT BILAN O'QING. RECV DASTURIY TA'MINOTI, BOSHQARUV PANELI, API YOKI OMMAVIY CHEKAUT SAHIFALARIGA KIRISH ORQALI SIZ USHBU HUJJATDA TAVSIFLANGAN MA'LUMOTLARNI QAYTA ISHLASHGA O'ZINGIZNING ROZILIGINGIZNI BILDIRASIZ. AGAR ROZI BO'LMASANGIZ, XIZMATDAN FOYDALANISHNI DARHOL TO'XTATISHINGIZ KERAK.",
+      summary: "USHBU HUJJATNI DIQQAT BILAN O'QING. RECV DASTURIY TA'MINOTI, BOSHQARUV PANELI, API YOKI OMMAVIY CHEKAUT SAHIFALARIGA KIRISH ORQALI SIZ USHBU HUJJATDA TAVSIFLANGAN MA'LUMOTLARNI QAYTA ISHLASHGA O'ZINGIZNING ROZILIGINGIZNI BILDIRASIZ. AGAR ROZI BO'LMASANGIZ, XIZMATDAN FOYDALANISHNI DARHOL TO'XTATISHINGIZ KERAK.",
       updatedLabel: "Oxirgi yangilanish",
       operatorLabel: "Kuchga kirish sanasi",
-      metaItems: ["Oxirgi yangilanish: 14-iyun, 2026-yil", "Kuchga kirish sanasi: 14-iyun, 2026-yil"],
+      metaItems: [
+        "Oxirgi yangilanish: 14-iyun, 2026-yil",
+        "Kuchga kirish sanasi: 14-iyun, 2026-yil",
+      ],
       draftTitle: "Xizmat ko'rsatuvchi va ma'lumotlar nazoratchisi",
-      draftBody:
-        "Xizmat recv.money veb-sayti operatorlari (“recv”, “Kompaniya”, “biz”) tomonidan boshqariladi. Bildirishnomalar va so'rovlar quyidagi aloqa kanallariga yuborilishi mumkin:",
+      draftBody: "Xizmat recv.money veb-sayti operatorlari (“recv”, “Kompaniya”, “biz”) tomonidan boshqariladi. Bildirishnomalar va so'rovlar quyidagi aloqa kanallariga yuborilishi mumkin:",
       draftItems: [
         "Yuridik bildirishnomalar: legal@recv.money",
         "Maxfiylik bo'yicha so'rovlar: privacy@recv.money",
@@ -1811,7 +2773,7 @@ const inv = await res.json();`
         {
           title: "1. MUQADDIMA VA QAMROV",
           paragraphs: [
-            'Ushbu Maxfiylik siyosati ("Siyosat") siz ("Sotuvchi", "Foydalanuvchi") yoki sizning oxirgi foydalanuvchilaringiz ("Mijozlar") bizning dasturiy ta\'minot xizmatimiz, Telegram botlarimiz, API nuqtalarimiz va ommaviy chekaut interfeyslarimiz (birgalikda "Xizmat") bilan o\'zaro aloqada bo\'lganda recv ("Kompaniya", "biz", "bizning") ma\'lumotlarni qanday to\'plashi, qayta ishlashi, ishlatishi va himoya qilishini belgilaydi.',
+            "Ushbu Maxfiylik siyosati (\"Siyosat\") siz (\"Sotuvchi\", \"Foydalanuvchi\") yoki sizning oxirgi foydalanuvchilaringiz (\"Mijozlar\") bizning dasturiy ta'minot xizmatimiz, Telegram botlarimiz, API nuqtalarimiz va ommaviy chekaut interfeyslarimiz (birgalikda \"Xizmat\") bilan o'zaro aloqada bo'lganda recv (\"Kompaniya\", \"biz\", \"bizning\") ma'lumotlarni qanday to'plashi, qayta ishlashi, ishlatishi va himoya qilishini belgilaydi.",
             "Ushbu Siyosat global ma'lumotlarni himoya qilish tamoyillariga muvofiq ishlab chiqilgan bo'lib, kriptografik blokcheyn texnologiyasining ommaviy, o'zgarmas va markazlashtirilmagan tabiatini aniq tan oladi.",
           ],
         },
@@ -1826,7 +2788,7 @@ const inv = await res.json();`
         {
           title: "3. BIZ TO'PLAYDIGAN MA'LUMOTLAR TOIFALARI",
           paragraphs: [
-            '"Direct-to-Wallet" yo\'naltirish va bildirishnoma arxitekturasini ta\'minlash uchun biz ma\'lumotlarni to\'plashni qat\'iy ravishda quyidagi toifalar bilan cheklaymiz:',
+            "\"Direct-to-Wallet\" yo'naltirish va bildirishnoma arxitekturasini ta'minlash uchun biz ma'lumotlarni to'plashni qat'iy ravishda quyidagi toifalar bilan cheklaymiz:",
             "3.1. Sotuvchi akkaunti ma'lumotlari: Sotuvchi Telegram Mini ilovasi yoki Boti orqali tizimga kirganda, biz avtomatik ravishda Telegram foydalanuvchi identifikatori, Telegram foydalanuvchi nomi va elektron pochta manzilini (agar ixtiyoriy ravishda taqdim etilsa yoki ma'lum billing tariflari uchun talab qilinsa) to'playmiz va saqlaymiz.",
             "3.2. Operatsion infratuzilma ma'lumotlari: Xizmat ko'rsatishni osonlashtirish uchun Sotuvchi ommaviy blokcheyn to'lov hamyon manzillarini, afzal ko'rilgan standart tarmoqlarni, vebhuk URL nuqtalarini va tegishli kriptografik sirlarni sozlashi kerak.",
             "3.3. Mijoz va tranzaksiyaga oid metadata: Mijoz ommaviy ravishda yaratilgan chekaut URL-ga kirganda, biz hisob-faktura metadatalarini (Nom, Asosiy miqdor, Amal qilish muddati), vaqtinchalik HTTP so'rov ma'lumotlarini (IP manzillar, User-Agent satrlari) va vatcherlarimiz orqali blokcheyndan olingan hodisalarni (TX Hash, Miqdor, Qabul qiluvchi, Kuzatilgan vaqt) qayta ishlaymiz.",
@@ -1836,7 +2798,7 @@ const inv = await res.json();`
         {
           title: "4. HISOB-FAKTURA METADATALARI UCHUN QAT'IY JAVOBGARLIK",
           paragraphs: [
-            '4.1. Sotuvchi tomonidan ma\'lumotlarni kiritish: Xizmat Sotuvchilarga hisob-fakturalarga shaxsiy "Nomlar" berishga ruxsat beradi. Sotuvchi hisob-faktura nomiga, to\'lov sharhiga yoki vebhuk ma\'lumotlariga o\'z mijozlarining Shaxsiy ma\'lumotlarini (PII) kiritmaslikka rozi bo\'ladi.',
+            "4.1. Sotuvchi tomonidan ma'lumotlarni kiritish: Xizmat Sotuvchilarga hisob-fakturalarga shaxsiy \"Nomlar\" berishga ruxsat beradi. Sotuvchi hisob-faktura nomiga, to'lov sharhiga yoki vebhuk ma'lumotlariga o'z mijozlarining Shaxsiy ma'lumotlarini (PII) kiritmaslikka rozi bo'ladi.",
             "4.2. Ommaviy chekautning ochiqligi: Sotuvchi chekaut URL-manzili havolaga ega bo'lgan har qanday shaxs uchun ochiq ekanligini tan oladi. Ushbu sahifada ommaviy invoys ID, invoys nomi, to'lanishi kerak bo'lgan summa va qabul qiluvchi manzil ko'rinadi. Kompaniya Sotuvchi tomonidan invoys metadatalarini anonimlashtirmaslik natijasida oshkor bo'lgan shaxsiy ma'lumotlar uchun javobgar emas.",
           ],
         },
@@ -1900,14 +2862,15 @@ const inv = await res.json();`
     terms: {
       kicker: "XIZMAT KO'RSATISH SHARTLARI",
       title: "XIZMAT KO'RSATISH SHARTLARI",
-      summary:
-        "USHBU KENG QAMROVLI SHARTNOMANI DIQQAT BILAN O'QING. UNDA MAJBURIY ARBITRAJ SHARTI, GURUHVIY DA'VOLARDAN VOZ KECHISH VA HUQUQLARINGIZGA MODDIY TA'SIR QILUVCHI JAVOBGARLIKNI CHEKLASH BAXSLARI MAVJUD. RECV DASTURIY TA'MINOTI, API YOKI VEBHUKLARIGA KIRISH ORQALI SIZ USHBU SHARTLAR BILAN BOG'LANISHGA ROZILIK BILDIRASIZ.",
+      summary: "USHBU KENG QAMROVLI SHARTNOMANI DIQQAT BILAN O'QING. UNDA MAJBURIY ARBITRAJ SHARTI, GURUHVIY DA'VOLARDAN VOZ KECHISH VA HUQUQLARINGIZGA MODDIY TA'SIR QILUVCHI JAVOBGARLIKNI CHEKLASH BAXSLARI MAVJUD. RECV DASTURIY TA'MINOTI, API YOKI VEBHUKLARIGA KIRISH ORQALI SIZ USHBU SHARTLAR BILAN BOG'LANISHGA ROZILIK BILDIRASIZ.",
       updatedLabel: "Oxirgi yangilanish",
       operatorLabel: "Kuchga kirish sanasi",
-      metaItems: ["Oxirgi yangilanish: 14-iyun, 2026-yil", "Kuchga kirish sanasi: 14-iyun, 2026-yil"],
+      metaItems: [
+        "Oxirgi yangilanish: 14-iyun, 2026-yil",
+        "Kuchga kirish sanasi: 14-iyun, 2026-yil",
+      ],
       draftTitle: "Shartnoma tuzuvchi tomon",
-      draftBody:
-        "Ushbu Shartnoma Sotuvchi va recv.money veb-sayti operatorlari (“recv”, “Kompaniya”, “biz”) o'rtasida tuzilgan.",
+      draftBody: "Ushbu Shartnoma Sotuvchi va recv.money veb-sayti operatorlari (“recv”, “Kompaniya”, “biz”) o'rtasida tuzilgan.",
       draftItems: [
         "Qamrov: dasturiy ta'minot, API, vebhuklar, blokcheyn monitoringi",
         "Model: nokastodial, to'g'ridan-to'g'ri hamyonga",
@@ -1917,7 +2880,7 @@ const inv = await res.json();`
         {
           title: "1. MUQADDIMA VA SHARTLARNI QABUL QILISH",
           paragraphs: [
-            '1.1. Shartnoma tomonlari: Ushbu Xizmat ko\'rsatish shartnomasi ("Shartnoma") siz (shaxsiy yoki yuridik shaxs nomidan, keyingi o\'rinlarda "Sotuvchi", "siz" yoki "sizning") va recv (keyingi o\'rinlarda "Kompaniya", "biz", "bizning" yoki "Xizmat ko\'rsatuvchi") o\'rtasidagi yuridik majburiy shartnomadir.',
+            "1.1. Shartnoma tomonlari: Ushbu Xizmat ko'rsatish shartnomasi (\"Shartnoma\") siz (shaxsiy yoki yuridik shaxs nomidan, keyingi o'rinlarda \"Sotuvchi\", \"siz\" yoki \"sizning\") va recv (keyingi o'rinlarda \"Kompaniya\", \"biz\", \"bizning\" yoki \"Xizmat ko'rsatuvchi\") o'rtasidagi yuridik majburiy shartnomadir.",
             "1.2. Shartnoma tuzish huquqi: Telegram autentifikatsiyasi yoki bizning API orqali Xizmatdan foydalanish orqali siz kamida o'n sakkiz (18) yoshda ekanligingizni, ushbu Shartnomani tuzish uchun huquqiy layoqatga ega ekanligingizni va agar yuridik shaxs nomidan ish yuritsangiz, ushbu tashkilotni bog'lash uchun zarur vakolatlarga ega ekanligingizni kafolatlaysiz.",
             "1.3. O'zgartirishlar: Biz istalgan vaqtda ushbu Shartnomaga o'zgartirish kiritish huquqini saqlab qolamiz. Har qanday o'zgartirishlar e'lon qilingandan so'ng Xizmatdan foydalanishni davom ettirishingiz o'zgartirilgan shartlarni qabul qilganingizni anglatadi.",
           ],
@@ -1925,7 +2888,7 @@ const inv = await res.json();`
         {
           title: "2. XIZMATNING TA'RIFI",
           paragraphs: [
-            '2.1. Dasturiy ta\'minot xizmat sifatida (SaaS): "Xizmat" faqat Kompaniya tomonidan taqdim etiladigan xususiy, nokastodial dasturiy ta\'minot vositachiligini anglatadi. Bunga boshqaruv paneli, chekaut sahifasi generatorlari, aqlli moslashtirish algoritmlari, API nuqtalari, vebhuk yetkazib berish tizimlari va blokcheyn monitoringi logikasi ("Vatcherlar") kiradi.',
+            "2.1. Dasturiy ta'minot xizmat sifatida (SaaS): \"Xizmat\" faqat Kompaniya tomonidan taqdim etiladigan xususiy, nokastodial dasturiy ta'minot vositachiligini anglatadi. Bunga boshqaruv paneli, chekaut sahifasi generatorlari, aqlli moslashtirish algoritmlari, API nuqtalari, vebhuk yetkazib berish tizimlari va blokcheyn monitoringi logikasi (\"Vatcherlar\") kiradi.",
             "2.2. Nokastodial ma'lumotlar qatlami: Siz Xizmat faqat axborot ma'lumotlar qatlami va vizual interfeys sifatida ishlashini tan olasiz. Xizmat ommaviy, markazlashtirilmagan blokcheyn reyestrlarini (masalan, TON, TRON, Solana, Base, BSC tarmoqlari) tahlil qiladi va ushbu ma'lumotlarni vizuallashtiradi.",
             "2.3. Moliyaviy vositachilikning yo'qligi: Kompaniya to'lov protsessori, to'lov shlyuzi, pul o'tkazuvchisi, kliring palatasi, depozitariy, ishonchli vakil yoki moliyaviy muassasa emas. Texnik arxitekturaning hech bir nuqtasida Kompaniya Sotuvchi yoki Sotuvchining oxirgi foydalanuvchilariga (\"Mijozlar\") tegishli fiat valyutasini, raqamli aktivlarini yoki kriptografik shaxsiy kalitlarini qabul qilmaydi, ushlab turmaydi, nazorat qilmaydi yoki egalik qilmaydi.",
             "2.4. Hamyonga to'g'ridan-to'g'ri o'tkazish: Raqamli aktivlarning barcha o'tkazmalari ommaviy blokcheynda faqat va to'g'ridan-to'g'ri Mijozning shaxsiy yoki kastodial hamyonidan Sotuvchining belgilangan hamyon manziliga amalga oshiriladi.",
@@ -1987,7 +2950,7 @@ const inv = await res.json();`
         {
           title: "10. KAFOLATLARNING YO'QLIGI",
           paragraphs: [
-            'XIZMAT, API VA BARCHA TEGISHLI INFRATUZILMA "XUDDI SHUNDAY" VA "MAVJUD BO\'LGANIDAGI" ASOSIDA TAQDIM ETILADI. KOMPANIYA HAR QANDAY KAFOLATLARNI, JUMLADAN SOTILISHI, MA\'LUM MAQSADLARGA MUVOFIQLIGI VA BUZILMASLIK KAFOLATLARINI RAD ETADI.',
+            "XIZMAT, API VA BARCHA TEGISHLI INFRATUZILMA \"XUDDI SHUNDAY\" VA \"MAVJUD BO'LGANIDAGI\" ASOSIDA TAQDIM ETILADI. KOMPANIYA HAR QANDAY KAFOLATLARNI, JUMLADAN SOTILISHI, MA'LUM MAQSADLARGA MUVOFIQLIGI VA BUZILMASLIK KAFOLATLARINI RAD ETADI.",
           ],
         },
         {
@@ -2030,14 +2993,15 @@ const inv = await res.json();`
     dpa: {
       kicker: "MA'LUMOTLARNI QAYTA ISHLASH ILOVASI",
       title: "MA'LUMOTLARNI QAYTA ISHLASH ILOVASI",
-      summary:
-        "Ushbu Ma'lumotlarni qayta ishlash ilovasi (“DPA”) Xizmat ko'rsatish doirasida recv tomonidan Sotuvchi nomidan Mijoz Shaxsiy ma'lumotlarini qayta ishlashni tartibga soladi.",
+      summary: "Ushbu Ma'lumotlarni qayta ishlash ilovasi (“DPA”) Xizmat ko'rsatish doirasida recv tomonidan Sotuvchi nomidan Mijoz Shaxsiy ma'lumotlarini qayta ishlashni tartibga soladi.",
       updatedLabel: "Oxirgi yangilanish",
       operatorLabel: "Kuchga kirish sanasi",
-      metaItems: ["Oxirgi yangilanish: 14-iyun, 2026-yil", "Kuchga kirish sanasi: 14-iyun, 2026-yil"],
+      metaItems: [
+        "Oxirgi yangilanish: 14-iyun, 2026-yil",
+        "Kuchga kirish sanasi: 14-iyun, 2026-yil",
+      ],
       draftTitle: "Qayta ishlash doirasi",
-      draftBody:
-        "Ushbu DPA recv faqat Sotuvchi nomidan Mijoz Shaxsiy ma'lumotlarini qayta ishlagan taqdirda amal qiladi. Ushbu kontekstda Sotuvchi Nazoratchi, recv esa Protsessor sifatida ishlaydi.",
+      draftBody: "Ushbu DPA recv faqat Sotuvchi nomidan Mijoz Shaxsiy ma'lumotlarini qayta ishlagan taqdirda amal qiladi. Ushbu kontekstda Sotuvchi Nazoratchi, recv esa Protsessor sifatida ishlaydi.",
       draftItems: [
         "Nazoratchi: Sotuvchi",
         "Protsessor: recv",
@@ -2080,14 +3044,15 @@ const inv = await res.json();`
     subprocessors: {
       kicker: "TASDIQLANGAN YORDAMCHI PROTSESSORLAR",
       title: "TASDIQLANGAN YORDAMCHI PROTSESSORLAR RO'YXATI",
-      summary:
-        "Quyida recv nomidan xizmat infratuzilmamizni yetkazib berish uchun ma'lumotlarni qayta ishlashga vakolatli uchinchi tomon yordamchi protsessorlarining faol ro'yxati keltirilgan.",
+      summary: "Quyida recv nomidan xizmat infratuzilmamizni yetkazib berish uchun ma'lumotlarni qayta ishlashga vakolatli uchinchi tomon yordamchi protsessorlarining faol ro'yxati keltirilgan.",
       updatedLabel: "Oxirgi yangilanish",
       operatorLabel: "Kuchga kirish sanasi",
-      metaItems: ["Oxirgi yangilanish: 14-iyun, 2026-yil", "Kuchga kirish sanasi: 14-iyun, 2026-yil"],
+      metaItems: [
+        "Oxirgi yangilanish: 14-iyun, 2026-yil",
+        "Kuchga kirish sanasi: 14-iyun, 2026-yil",
+      ],
       draftTitle: "Ruxsat berish",
-      draftBody:
-        "Sotuvchi quyida ko'rsatilgan uchinchi tomon infratuzilma va xizmat ko'rsatuvchi provayderlarining jalb qilinishiga ruxsat beradi. Ro'yxatdagi barcha yordamchi protsessorlar teng darajadagi xavfsizlik standartlariga ega ma'lumotlarni qayta ishlash shartnomalarini imzolaganlar.",
+      draftBody: "Sotuvchi quyida ko'rsatilgan uchinchi tomon infratuzilma va xizmat ko'rsatuvchi provayderlarining jalb qilinishiga ruxsat beradi. Ro'yxatdagi barcha yordamchi protsessorlar teng darajadagi xavfsizlik standartlariga ega ma'lumotlarni qayta ishlash shartnomalarini imzolaganlar.",
       draftItems: [
         "Infratuzilma xostingi",
         "Blokcheyn RPC xizmatlari",

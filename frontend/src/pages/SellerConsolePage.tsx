@@ -3381,7 +3381,8 @@ export function SellerConsolePage() {
                         {comparePlans.map(plan => {
                           const isCurrent = plan.code === session.me.plan.code;
                           const isSelected = plan.code === billingForm.plan;
-                          const desc = planDescriptions[plan.code]?.[language] || "";
+                          const descLanguage = language === "ru" ? "ru" : "en";
+                          const desc = planDescriptions[plan.code]?.[descLanguage] || "";
                           
                           return (
                             <div key={plan.code} className={`dev-plan-card console-billing__plan-card console-spotlight-card ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""}`}>

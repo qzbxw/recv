@@ -1,4 +1,5 @@
 import type { StaticMarketingPageCopy } from "@/components/marketing/StaticMarketingPage";
+import type { Locale } from "@/i18n";
 
 type StaticPageKey = "security" | "about" | "contact" | "integrations" | "customers" | "changelog" | "help";
 
@@ -162,5 +163,9 @@ export const STATIC_PAGE_COPY: Record<StaticPageKey, { en: StaticMarketingPageCo
     },
   },
 };
+
+export function getStaticPageCopy(page: StaticPageKey, locale: Locale): StaticMarketingPageCopy {
+  return STATIC_PAGE_COPY[page][locale === "ru" ? "ru" : "en"];
+}
 
 export type { StaticPageKey };

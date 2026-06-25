@@ -565,7 +565,7 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			SubscriptionDays: 30,
 		}
 		msg := buildInvoiceNotificationMessage("en", inv, "paid_exact", amount)
-		if !strings.Contains(msg, "is live") {
+		if !strings.Contains(msg, "plan activated") {
 			t.Fatalf("expected subscription message, got: %s", msg)
 		}
 	})
@@ -580,7 +580,7 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			SubscriptionDays: 30,
 		}
 		msg := buildInvoiceNotificationMessage("en", inv, "paid_exact", amount)
-		if !strings.Contains(msg, "is live") {
+		if !strings.Contains(msg, "plan activated") {
 			t.Fatalf("expected subscription message for trial plan, got: %s", msg)
 		}
 	})
@@ -594,7 +594,7 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableAmount:  expected,
 		}
 		msg := buildInvoiceNotificationMessage("en", inv, "paid_exact", amount)
-		if !strings.Contains(msg, "Paid") || !strings.Contains(msg, "INV-001") {
+		if !strings.Contains(msg, "Payment Confirmed") || !strings.Contains(msg, "INV-001") {
 			t.Fatalf("unexpected message: %s", msg)
 		}
 	})
@@ -608,7 +608,7 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableAmount:  expected,
 		}
 		msg := buildInvoiceNotificationMessage("en", inv, "underpaid_fee_window", amount)
-		if !strings.Contains(msg, "exchange fee") {
+		if !strings.Contains(msg, "exchange withdrawal fees") {
 			t.Fatalf("expected fee window message, got: %s", msg)
 		}
 	})
@@ -622,7 +622,7 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableAmount:  expected,
 		}
 		msg := buildInvoiceNotificationMessage("en", inv, "underpaid", amount)
-		if !strings.Contains(msg, "Short payment") {
+		if !strings.Contains(msg, "Underpayment Detected") {
 			t.Fatalf("expected underpaid message, got: %s", msg)
 		}
 	})
@@ -636,7 +636,7 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableAmount:  expected,
 		}
 		msg := buildInvoiceNotificationMessage("en", inv, "overpaid", decimal.RequireFromString("12.000000"))
-		if !strings.Contains(msg, "Overpaid") {
+		if !strings.Contains(msg, "Overpayment Detected") {
 			t.Fatalf("expected overpaid message, got: %s", msg)
 		}
 	})
@@ -650,7 +650,7 @@ func TestBuildInvoiceNotificationMessage(t *testing.T) {
 			PayableAmount:  expected,
 		}
 		msg := buildInvoiceNotificationMessage("en", inv, "late_payment", amount)
-		if !strings.Contains(msg, "Late arrival") {
+		if !strings.Contains(msg, "Late Payment Detected") {
 			t.Fatalf("expected manual review message, got: %s", msg)
 		}
 	})

@@ -332,10 +332,11 @@ if (signature !== expected) {
   },
 } as const;
 
-type CheckoutText = (typeof productContent)[Locale]["checkoutProduct"];
-type ApiText = (typeof productContent)[Locale]["apiProduct"];
-type InvoicingText = (typeof productContent)[Locale]["invoicingProduct"];
-type McpText = (typeof productContent)[Locale]["mcpProduct"];
+type ProductContentLocale = keyof typeof productContent;
+type CheckoutText = (typeof productContent)[ProductContentLocale]["checkoutProduct"];
+type ApiText = (typeof productContent)[ProductContentLocale]["apiProduct"];
+type InvoicingText = (typeof productContent)[ProductContentLocale]["invoicingProduct"];
+type McpText = (typeof productContent)[ProductContentLocale]["mcpProduct"];
 type ProductText = CheckoutText | ApiText | InvoicingText | McpText;
 
 function localizedPath(language: Locale, path: string) {
