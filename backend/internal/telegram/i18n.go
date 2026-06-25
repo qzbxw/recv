@@ -36,9 +36,11 @@ type botCopy struct {
 	btnLanguage        string
 	btnOpenCheckout    string
 	btnOpenConsole     string
+	btnOpenStats       string
 	btnPricing         string
 	btnDocs            string
 	btnSetWallet       string // %s = network label
+	btnAddWallet       string
 	btnDisable         string // %s = network label
 	btnNewInvoiceShort string
 	btnPayPlan         string // %s = plan name
@@ -66,6 +68,7 @@ type botCopy struct {
 	walletsAddFirst   string
 	walletPromptEVM   string
 	walletPromptSOL   string
+	walletPromptTRON  string
 	walletPromptOther string // %s = network
 	walletInvalidHint string // appended note line, %s = error
 
@@ -77,7 +80,7 @@ type botCopy struct {
 	invoiceStep3        string // %s wallet, %s title, %s amount
 	invoiceTitleEmpty   string
 	invoiceAmountBad    string
-	invoiceCreated      string // %s id, %s title, %s amount, %s network, %d minutes
+	invoiceCreated      string // %s id, %s title, %s amount_usd, %s network, %s expires_at, %s checkout_url
 	invoiceTrialReached string
 
 	// Upgrade
@@ -148,9 +151,9 @@ var enCopy = botCopy{
 	homePlanActive: "⭐ %s active until %s",
 	homeTrialLeft:  "Trial · %d free invoices left",
 
-	startTitle: "<b>recv</b> — skip complex merchants. Accept USDT in Telegram",
-	startBody:  "Generate a payment link in 10 seconds and get crypto straight to your wallet. No revenue cuts.",
-	startProof: "First invoices are on us. Upgrade only when the real cash starts rolling in.",
+	startTitle: "<b>Welcome to recv</b> — non-custodial crypto acquiring for your business",
+	startBody:  "Accept USDT and other crypto payments directly in Telegram. No intermediaries, holds or hidden fees — funds go straight to your own wallet.",
+	startProof: "Set up payment acceptance in 1 minute.",
 
 	btnNewInvoice:      "＋ New invoice",
 	btnRecentInvoices:  "🧾 Recent",
@@ -163,13 +166,15 @@ var enCopy = botCopy{
 	btnLanguage:        "🌐 Language",
 	btnOpenCheckout:    "💳 Open checkout",
 	btnOpenConsole:     "↗ Try Mini app",
+	btnOpenStats:       "📊 Stats in Mini app",
 	btnPricing:         "Plans on site",
 	btnDocs:            "Docs",
 	btnSetWallet:       "Set %s",
+	btnAddWallet:       "＋ Add wallet",
 	btnDisable:         "Remove %s",
 	btnNewInvoiceShort: "＋ One more",
 	btnPayPlan:         "Pay for %s",
-	btnStartSetup:      "Setup wallet",
+	btnStartSetup:      "⚙️ Setup wallet",
 	btnHowPlans:        "What's the cost?",
 	minuteSuffix:       "min",
 
@@ -186,10 +191,11 @@ var enCopy = botCopy{
 	walletsEmpty:      "No wallets yet. Add one and money lands straight in your pocket — recv never touches it.",
 	walletsSaved:      "✅ Wallet saved.",
 	walletsDisabled:   "Wallet removed.",
-	walletsAddFirst:   "Add a payout wallet first — that's where the money goes.",
-	walletPromptEVM:   "<b>Set your EVM wallet</b>\n\nOne address covers Ethereum, Base, Arbitrum and BSC. Send it in your next message.",
-	walletPromptSOL:   "<b>Set your Solana wallet</b>\n\nThis address receives your Solana stablecoin payments. Send it in your next message.",
-	walletPromptOther: "<b>Set your %s wallet</b>\n\nSend the address in your next message.",
+	walletsAddFirst:   "<b>A payout wallet is required to create an invoice.</b>\n\nTo let customers pay invoices and route funds to you, connect a payout wallet first. It only takes a few seconds.",
+	walletPromptEVM:   "<b>Wallet connection: EVM</b>\n\nPlease send your EVM wallet address in this chat. Customer payments on supported EVM networks will be routed to this address.\n\nExample: <code>0x...</code>\n\nCheck that the address is copied exactly.",
+	walletPromptSOL:   "<b>Wallet connection: Solana</b>\n\nPlease send your Solana wallet address in this chat. Customer payments on Solana will be routed to this address.\n\nExample: <code>So...</code>\n\nCheck that the address is copied exactly.",
+	walletPromptTRON:  "<b>Wallet connection: TRON (TRC-20)</b>\n\nPlease send your TRON wallet address in this chat. Customer payments on TRON will be routed to this address.\n\nExample: <code>T...</code>\n\nCheck that the address is copied exactly.",
+	walletPromptOther: "<b>Wallet connection: %s</b>\n\nPlease send your wallet address in this chat. Customer payments will be routed to this address.\n\nCheck that the address is copied exactly.",
 	walletInvalidHint: "⚠️ %s — give it another shot.",
 
 	invoicePickWallet:   "<b>New invoice</b>\n\nWhich wallet should get paid?",
@@ -199,7 +205,7 @@ var enCopy = botCopy{
 	invoiceStep3:        "<b>New invoice</b> · step 3 of 3\nWallet · %s\nTitle · %s\nAmount · %s USD\n\nHow long should this link stay live?",
 	invoiceTitleEmpty:   "A title can't be empty — send a few words.",
 	invoiceAmountBad:    "That's not a valid amount. Send a positive number in USD, like 49.90.",
-	invoiceCreated:      "✅ <b>Invoice %s is live</b>\n\n%s\n%s %s · expires in %d min\n\nShare the checkout link below.",
+	invoiceCreated:      "✅ <b>Invoice created successfully</b>\n\nID: <code>%s</code>\nPurpose: %s\nAmount: %s USD\nNetwork: %s\nValid until: %s\n\nCopy the link below and send it to your customer:\n<code>%s</code>",
 	invoiceTrialReached: "The trial links are spent. Pick Merchant for simple payment links, or Developer if you want API and webhooks too.",
 
 	plansTitle:      "⭐ <b>recv plans</b>",
@@ -218,26 +224,26 @@ var enCopy = botCopy{
 
 	languageTitle: "🌐 <b>Language</b>\n\nThis applies everywhere — bot, app and payment alerts stay in sync.",
 
-	reminderNoWallet:        "👛 <b>Set up your payout wallet</b>\n\nYou haven't added a payout wallet yet. Add it now to receive USDT payments directly to your self-custody address.",
-	reminderNoWallet2:       "⚠️ <b>Still no payout wallet?</b>\n\nWithout a payout wallet, you cannot accept crypto. Link your wallet in 10 seconds to start collecting payments directly to your address!",
+	reminderNoWallet:        "<b>Your recv account is almost ready.</b>\n\nYou are one step away from accepting crypto payments. Add your wallet address to create your first invoice. Your funds always remain under your control.",
+	reminderNoWallet2:       "<b>Need help with setup?</b>\n\nAdding a wallet is safe: we use it only to route payments directly to you. Choose a network and send the address to start.",
 	reminderNoWallet3:       "💬 <b>Need help setting up your wallet?</b>\n\nWe noticed you haven't added a wallet yet. If you have any questions or face any issues, reach out to our support at @recvmoneysupport!",
 	reminderNoWallet4:       "🔒 <b>Self-custody is freedom</b>\n\nUnlike traditional payment gateways, recv goes straight to your wallet. You keep 100% of your earnings. Set up your wallet now!",
 	reminderNoWallet5:       "📞 <b>Let's set it up together</b>\n\nStill haven't added a wallet? It's okay if you are new to crypto. Message @recvmoneysupport and we'll guide you step by step!",
-	reminderNoInvoice:       "＋ <b>Create your first invoice</b>\n\nYou've set up your wallet, but haven't created an invoice yet! Generate a payment link in 10 seconds and share it with your clients.",
+	reminderNoInvoice:       "<b>Your wallet is connected and ready to receive payments.</b>\n\nCreate your first test invoice now to see how easily your customers can complete payment.",
 	reminderNoInvoice2:      "⚡ <b>Start accepting USDT today!</b>\n\nYour payout wallet is configured and ready. Generate a checkout link right here in the chat and send it to your clients.",
 	reminderNoInvoice3:      "🙋 <b>Stuck on creating your first invoice?</b>\n\nWe are here to help! If you have custom requirements or questions about integrations, contact our support team at @recvmoneysupport.",
 	reminderNoInvoice4:      "💸 <b>Accept USDT in 10 seconds</b>\n\nReady to get paid? Type /invoice right now to generate your first secure payment link.",
 	reminderNoInvoice5:      "⚙️ <b>Custom integration?</b>\n\nIf you need APIs, custom bots, webhooks, or shopping cart plugins, reach out to @recvmoneysupport and we will build it for you.",
-	reminderTrialExhausted:  "💡 <b>Trial limit reached</b>\n\nYou've exhausted your free trial invoices. Choose a plan to resume accepting USDT with zero checkout friction.",
-	reminderTrialExhausted2: "💰 <b>Zero revenue cuts</b>\n\nWith recv plans, you pay a flat monthly fee and keep 100% of your customer volume. Unlock your plan today!",
+	reminderTrialExhausted:  "⚠️ <b>Your trial has ended.</b>\n\nYou have used the free invoice limit. To keep accepting payments without interruption and access advanced analytics, activate the right plan.",
+	reminderTrialExhausted2: "<b>Do not miss customer payments.</b>\n\nNew payment acceptance is paused. Switch to Merchant, Business or Developer to restore full workspace functionality.",
 	reminderTrialExhausted3: "💬 <b>Custom limits or questions?</b>\n\nIf you have a high volume, special requirements, or want to discuss pricing, chat with us at @recvmoneysupport.",
 	reminderExpired:         "⏳ <b>Need help with checkouts?</b>\n\nYour checkout link has expired unpaid. Let us know if you need help testing the payment flow or setting up your integration!",
 	reminderExpired2:        "🔄 <b>Give it another try!</b>\n\nCreate a new checkout link and try paying it yourself using a test network or real USDT to see how fast and easy the payment confirmation works!",
 	reminderExpired3:        "💬 <b>Need help testing checkouts?</b>\n\nIf you have questions about payment confirmation or fees, feel free to ask our support team at @recvmoneysupport.",
 	reminderExpired4:        "🛠️ <b>Need webhooks or integration help?</b>\n\nIf you're having issues with payment callbacks, API, or just testing flows, let's look at it. Message @recvmoneysupport!",
 	reminderExpired5:        "👋 <b>Let's make checkout work</b>\n\nWe want to make sure you successfully receive your first payment. Reach out to @recvmoneysupport for help.",
-	reminderInactive:        "📈 <b>Keep sales running</b>\n\nIt's been a week since your last payment link activity. Keep your checkout flow smooth and automated with recv.",
-	reminderInactive2:       "⭐ <b>Boost your checkout conversion!</b>\n\nDid you know that recv payment links can be integrated into websites, apps, and Telegram mini-apps? Reach out to @recvmoneysupport for setup tips.",
+	reminderInactive:        "<b>We noticed you have not created new invoices recently.</b>\n\nrecv has new business features available for your workspace. Open the app to issue an invoice or review current statistics.",
+	reminderInactive2:       "<b>We noticed you have not created new invoices recently.</b>\n\nrecv has new business features available for your workspace. Open the app to issue an invoice or review current statistics.",
 	reminderInactive3:       "👋 <b>We miss you!</b>\n\nYour automated payment flow is still waiting for you. Create a checkout link now or let us know at @recvmoneysupport if you have any feedback!",
 	reminderInactive4:       "🚀 <b>Accept payments directly in Telegram</b>\n\nOur Telegram Mini App and bot make it easier than ever to accept USDT. Start a new checkout link today.",
 	reminderInactive5:       "🎁 <b>Have feedback for us?</b>\n\nWe'd love to hear how we can improve. Reach out to @recvmoneysupport to share feedback or request custom features.",
@@ -265,9 +271,9 @@ var ruCopy = botCopy{
 	homePlanActive: "⭐ %s активен до %s",
 	homeTrialLeft:  "Пробный период · осталось %d бесплатных счетов",
 
-	startTitle: "<b>recv</b> — забудьте про сложные мерчанты. Принимайте USDT в Telegram",
-	startBody:  "Ссылка на оплату за 10 секунд — и крипта уже на вашем кошельке. Без процентов от ваших продаж.",
-	startProof: "Первые счета — за наш счёт. Переходите на тариф, когда пойдёт реальный кэш.",
+	startTitle: "<b>Добро пожаловать в recv</b> — Ваш некастодиальный криптоэквайринг.",
+	startBody:  "Принимайте платежи в USDT и других криптовалютах напрямую в Telegram. Никаких посредников, холдов и скрытых комиссий — средства поступают мгновенно на Ваш личный кошелёк.",
+	startProof: "Настройте приём платежей за 1 минуту.",
 
 	btnNewInvoice:      "＋ Новый счёт",
 	btnRecentInvoices:  "🧾 Последние",
@@ -280,13 +286,15 @@ var ruCopy = botCopy{
 	btnLanguage:        "🌐 Язык",
 	btnOpenCheckout:    "💳 Открыть оплату",
 	btnOpenConsole:     "↗ Попробовать Mini app",
+	btnOpenStats:       "📊 Статистика в Mini App",
 	btnPricing:         "Тарифы на сайте",
 	btnDocs:            "Документация",
 	btnSetWallet:       "Указать %s",
+	btnAddWallet:       "➕ Привязать кошелёк",
 	btnDisable:         "Убрать %s",
 	btnNewInvoiceShort: "＋ Ещё один",
 	btnPayPlan:         "Оплатить %s",
-	btnStartSetup:      "Настроить кошелёк",
+	btnStartSetup:      "⚙️ Настроить кошелёк",
 	btnHowPlans:        "Сколько это стоит?",
 	minuteSuffix:       "мин",
 
@@ -303,10 +311,11 @@ var ruCopy = botCopy{
 	walletsEmpty:      "Кошельков пока нет. Добавьте — деньги пойдут напрямую вам, recv их не касается.",
 	walletsSaved:      "✅ Кошелёк сохранён.",
 	walletsDisabled:   "Кошелёк убран.",
-	walletsAddFirst:   "Сначала добавьте кошелёк — туда придут деньги.",
-	walletPromptEVM:   "<b>Укажите EVM-кошелёк</b>\n\nОдин адрес для Ethereum, Base, Arbitrum и BSC. Пришлите его следующим сообщением.",
-	walletPromptSOL:   "<b>Укажите Solana-кошелёк</b>\n\nНа этот адрес придут стейблкоин-платежи в Solana. Пришлите его следующим сообщением.",
-	walletPromptOther: "<b>Укажите %s-кошелёк</b>\n\nПришлите адрес следующим сообщением.",
+	walletsAddFirst:   "<b>Для создания счёта необходим кошелёк.</b>\n\nЧтобы Ваши клиенты могли оплатить счёт, а Вы — получить средства, пожалуйста, привяжите кошелёк для выплат. Это займет несколько секунд.",
+	walletPromptEVM:   "<b>Подключение кошелька: EVM</b>\n\nПожалуйста, отправьте в чат адрес Вашего EVM-кошелька. На этот адрес будут автоматически поступать платежи клиентов в поддерживаемых EVM-сетях.\n\nПример: <code>0x...</code>\n\nУбедитесь, что копируете точный адрес.",
+	walletPromptSOL:   "<b>Подключение кошелька: Solana</b>\n\nПожалуйста, отправьте в чат адрес Вашего кошелька в сети Solana. На этот адрес будут автоматически поступать платежи клиентов в Solana.\n\nПример: <code>So...</code>\n\nУбедитесь, что копируете точный адрес.",
+	walletPromptTRON:  "<b>Подключение кошелька: TRON (TRC-20)</b>\n\nПожалуйста, отправьте в чат адрес Вашего кошелька в сети TRON.\nНа этот адрес будут автоматически поступать все платежи от Ваших клиентов.\n\nПример: <code>T...</code>\n\nУбедитесь, что копируете точный адрес.",
+	walletPromptOther: "<b>Подключение кошелька: %s</b>\n\nПожалуйста, отправьте в чат адрес Вашего кошелька. На этот адрес будут автоматически поступать платежи клиентов.\n\nУбедитесь, что копируете точный адрес.",
 	walletInvalidHint: "⚠️ %s — попробуйте ещё раз.",
 
 	invoicePickWallet:   "<b>Новый счёт</b>\n\nНа какой кошелёк принять оплату?",
@@ -316,7 +325,7 @@ var ruCopy = botCopy{
 	invoiceStep3:        "<b>Новый счёт</b> · шаг 3 из 3\nКошелёк · %s\nНазвание · %s\nСумма · %s USD\n\nСколько ссылка должна быть активна?",
 	invoiceTitleEmpty:   "Название не может быть пустым — пришлите пару слов.",
 	invoiceAmountBad:    "Это не похоже на сумму. Пришлите положительное число в USD, например 49.90.",
-	invoiceCreated:      "✅ <b>Счёт %s создан</b>\n\n%s\n%s %s · истекает через %d мин\n\nСсылка на оплату — ниже.",
+	invoiceCreated:      "✅ <b>Счёт успешно создан</b>\n\nID: <code>%s</code>\nНазначение: %s\nСумма: %s USD\nСеть: %s\nДействителен до: %s\n\nСкопируйте ссылку ниже и отправьте её клиенту для оплаты:\n<code>%s</code>",
 	invoiceTrialReached: "Пробные ссылки закончились. Берите Merchant для обычных оплат или Developer, если нужны API и вебхуки.",
 
 	plansTitle:      "⭐ <b>Тарифы recv</b>",
@@ -335,26 +344,26 @@ var ruCopy = botCopy{
 
 	languageTitle: "🌐 <b>Язык</b>\n\nПрименяется везде — бот, приложение и уведомления об оплате синхронизированы.",
 
-	reminderNoWallet:        "👛 <b>Настройте кошелёк для выплат</b>\n\nВы ещё не добавили кошелёк для выплат. Добавьте его сейчас, чтобы принимать платежи в USDT напрямую на свой личный адрес.",
-	reminderNoWallet2:       "⚠️ <b>Всё ещё нет кошелька для выплат?</b>\n\nБез кошелька вы не сможете принимать криптовалюту. Привяжите адрес за 10 секунд, чтобы начать принимать платежи напрямую!",
+	reminderNoWallet:        "<b>Ваш аккаунт recv почти готов к работе.</b>\n\nВы находитесь в одном шаге от приёма криптоплатежей. Добавьте адрес Вашего кошелька, чтобы создать первый счёт. Ваши средства всегда остаются под Вашим контролем.",
+	reminderNoWallet2:       "<b>Возникли сложности с настройкой?</b>\n\nДобавление кошелька безопасно: мы используем его только для маршрутизации платежей напрямую Вам. Выберите сеть и отправьте адрес, чтобы начать.",
 	reminderNoWallet3:       "💬 <b>Нужна помощь с настройкой кошелька?</b>\n\nМы заметили, что вы ещё не добавили кошелёк. Если у вас возникли вопросы или трудности, напишите в нашу поддержку @recvmoneysupport!",
 	reminderNoWallet4:       "🔒 <b>Некастодиальные платежи — это свобода</b>\n\nВ отличие от других систем, recv отправляет средства прямо на ваш личный кошелёк. 100% дохода остаётся вам. Привяжите кошелёк прямо сейчас!",
 	reminderNoWallet5:       "📞 <b>Давайте настроим кошелёк вместе</b>\n\nВсё ещё не добавили кошелёк? Если вы новичок в крипте, напишите нам в поддержку @recvmoneysupport — мы поможем во всём разобраться!",
-	reminderNoInvoice:       "＋ <b>Создайте первый счёт</b>\n\nКошелёк настроен, но вы ещё не создали ни одного счёта! Сделайте ссылку на оплату за 10 секунд и отправьте клиентам.",
+	reminderNoInvoice:       "<b>Ваш кошелёк подключен и готов к приёму платежей.</b>\n\nСоздайте первый тестовый счёт прямо сейчас, чтобы увидеть, как легко Ваши клиенты смогут производить оплату.",
 	reminderNoInvoice2:      "⚡ <b>Начните принимать USDT уже сегодня!</b>\n\nВаш кошелёк для выплат настроен и готов к работе. Создайте ссылку на оплату прямо в этом чате и отправьте её клиентам.",
 	reminderNoInvoice3:      "🙋 <b>Не получается создать первый счёт?</b>\n\nМы поможем! Если у вас есть особые требования или вопросы по интеграции, напишите нашей команде поддержки @recvmoneysupport.",
 	reminderNoInvoice4:      "💸 <b>Принимайте USDT за 10 секунд</b>\n\nГотовы получить первую оплату? Напишите /invoice прямо сейчас, чтобы создать ссылку на оплату.",
 	reminderNoInvoice5:      "⚙️ <b>Нужна интеграция?</b>\n\nЕсли вам нужны API, вебхуки, кастомные боты или плагины для корзины, напишите в @recvmoneysupport, и мы поможем с интеграцией.",
-	reminderTrialExhausted:  "💡 <b>Лимит пробного периода исчерпан</b>\n\nВы использовали все бесплатные счета. Выберите тариф, чтобы продолжить принимать USDT без задержек.",
-	reminderTrialExhausted2: "💰 <b>0% комиссии с продаж</b>\n\nНа тарифах recv вы платите фиксированную подписку и забираете 100% оборота. Активируйте тариф сегодня!",
+	reminderTrialExhausted:  "⚠️ <b>Ваш пробный период завершен.</b>\n\nВы успешно использовали лимит бесплатных счетов. Чтобы продолжить принимать платежи без остановок и получить доступ к расширенной аналитике, пожалуйста, активируйте подходящий тарифный план.",
+	reminderTrialExhausted2: "<b>Не упускайте платежи от Ваших клиентов.</b>\n\nПриём новых оплат приостановлен. Перейдите на тариф Merchant, Business или Developer, чтобы вернуть полную функциональность Вашего воркспейса.",
 	reminderTrialExhausted3: "💬 <b>Индивидуальные условия?</b>\n\nЕсли у вас большие объёмы, особые требования или вопросы по тарифам, напишите нам в @recvmoneysupport.",
 	reminderExpired:         "⏳ <b>Нужна помощь со счетами?</b>\n\nСрок оплаты по вашей ссылке истек. Напишите нам, если нужна помощь с тестированием платежей или интеграцией!",
 	reminderExpired2:        "🔄 <b>Попробуйте ещё раз!</b>\n\nСоздайте новую ссылку на оплату и попробуйте оплатить её сами в тестовой сети или реальным USDT, чтобы увидеть, как быстро и просто работает подтверждение!",
 	reminderExpired3:        "💬 <b>Нужна помощь в тестировании оплаты?</b>\n\nЕсли у вас есть вопросы по поводу подтверждения платежей или комиссий, не стесняйтесь писать нашей поддержке @recvmoneysupport.",
 	reminderExpired4:        "🛠️ <b>Нужна помощь с интеграцией или вебхуками?</b>\n\nЕсли возникли сложности с коллбэками оплаты, API или тестированием, напишите нам в @recvmoneysupport!",
 	reminderExpired5:        "👋 <b>Давайте запустим ваши продажи</b>\n\nМы хотим, чтобы вы успешно приняли свой первый платёж. Наша поддержка всегда на связи в @recvmoneysupport.",
-	reminderInactive:        "📈 <b>Принимайте оплаты на автопилоте</b>\n\nПрошла неделя с момента создания вашего последнего счёта. recv поможет автоматизировать приём крипты без лишних сложностей.",
-	reminderInactive2:       "⭐ <b>Повысьте конверсию ваших продаж!</b>\n\nЗнаете ли вы, что платежные ссылки recv можно встраивать в сайты, приложения и Telegram Mini Apps? Напишите @recvmoneysupport для получения советов по настройке.",
+	reminderInactive:        "<b>Мы заметили, что Вы давно не создавали новых счетов.</b>\n\nВ recv появились новые функции для Вашего бизнеса. Откройте приложение, чтобы выставить счёт или проверить актуальную статистику.",
+	reminderInactive2:       "<b>Мы заметили, что Вы давно не создавали новых счетов.</b>\n\nВ recv появились новые функции для Вашего бизнеса. Откройте приложение, чтобы выставить счёт или проверить актуальную статистику.",
 	reminderInactive3:       "👋 <b>Мы скучаем по вам!</b>\n\nВаша автоматическая касса всё ещё ждёт вас. Создайте ссылку на оплату прямо сейчас или поделитесь отзывом с нашей поддержкой @recvmoneysupport!",
 	reminderInactive4:       "🚀 <b>Принимайте оплаты прямо в Telegram</b>\n\nНаше Mini App и бот делают приём USDT максимально простым. Создайте новый счёт уже сегодня!",
 	reminderInactive5:       "🎁 <b>Поделитесь вашим отзывом</b>\n\nМы хотим сделать сервис лучше. Напишите нам в @recvmoneysupport и расскажите, каких функций вам не хватает!",
@@ -397,9 +406,11 @@ var esCopy = botCopy{
 	btnLanguage:        "🌐 Idioma",
 	btnOpenCheckout:    "💳 Abrir pago",
 	btnOpenConsole:     "↗ Probar Mini app",
+	btnOpenStats:       "📊 Estadísticas en Mini app",
 	btnPricing:         "Planes en la web",
 	btnDocs:            "Docs",
 	btnSetWallet:       "Configurar %s",
+	btnAddWallet:       "＋ Agregar billetera",
 	btnDisable:         "Quitar %s",
 	btnNewInvoiceShort: "＋ Una más",
 	btnPayPlan:         "Pagar %s",
@@ -423,6 +434,7 @@ var esCopy = botCopy{
 	walletsAddFirst:   "Agrega una billetera de pago primero — ahí es donde va el dinero.",
 	walletPromptEVM:   "<b>Configura tu billetera EVM</b>\n\nUna sola dirección cubre Ethereum, Base, Arbitrum y BSC. Envíala en tu próximo mensaje.",
 	walletPromptSOL:   "<b>Configura tu billetera Solana</b>\n\nEsta dirección recibe tus pagos de stablecoins en Solana. Envíala en tu próximo mensaje.",
+	walletPromptTRON:  "<b>Conexión de billetera: TRON (TRC-20)</b>\n\nEnvía en este chat la dirección de tu billetera TRON. Los pagos de tus clientes en TRON se dirigirán a esta dirección.\n\nEjemplo: <code>T...</code>\n\nComprueba que la dirección esté copiada exactamente.",
 	walletPromptOther: "<b>Configura tu billetera %s</b>\n\nEnvía la dirección en tu próximo mensaje.",
 	walletInvalidHint: "⚠️ %s — inténtalo de nuevo.",
 
@@ -433,7 +445,7 @@ var esCopy = botCopy{
 	invoiceStep3:        "<b>Nueva factura</b> · paso 3 de 3\nBilletera · %s\nTítulo · %s\nMonto · %s USD\n\n¿Cuánto tiempo debe estar activo este enlace?",
 	invoiceTitleEmpty:   "El título no puede estar vacío — envía unas palabras.",
 	invoiceAmountBad:    "Monto no válido. Envía un número positivo en USD, como 49.90.",
-	invoiceCreated:      "✅ <b>Factura %s activa</b>\n\n%s\n%s %s · expira en %d min\n\nComparte el enlace de pago de abajo.",
+	invoiceCreated:      "✅ <b>Factura creada correctamente</b>\n\nID: <code>%s</code>\nConcepto: %s\nImporte: %s USD\nRed: %s\nVálida hasta: %s\n\nCopia el enlace de abajo y envíalo a tu cliente:\n<code>%s</code>",
 	invoiceTrialReached: "Se agotaron los enlaces de prueba. Elige Merchant para enlaces de pago simples, o Developer si quieres API y webhooks.",
 
 	plansTitle:      "⭐ <b>Planes recv</b>",
@@ -514,9 +526,11 @@ var ptCopy = botCopy{
 	btnLanguage:        "🌐 Idioma",
 	btnOpenCheckout:    "💳 Abrir pagamento",
 	btnOpenConsole:     "↗ Testar Mini app",
+	btnOpenStats:       "📊 Estatísticas no Mini app",
 	btnPricing:         "Planos no site",
 	btnDocs:            "Docs",
 	btnSetWallet:       "Configurar %s",
+	btnAddWallet:       "＋ Vincular carteira",
 	btnDisable:         "Remover %s",
 	btnNewInvoiceShort: "＋ Mais um",
 	btnPayPlan:         "Pagar %s",
@@ -540,6 +554,7 @@ var ptCopy = botCopy{
 	walletsAddFirst:   "Adicione uma carteira de saque primeiro — é para lá que vai o dinheiro.",
 	walletPromptEVM:   "<b>Configure sua carteira EVM</b>\n\nUm único endereço serve para Ethereum, Base, Arbitrum e BSC. Envie na próxima mensagem.",
 	walletPromptSOL:   "<b>Configure sua carteira Solana</b>\n\nEste endereço receberá seus pagamentos de stablecoins na Solana. Envie na próxima mensagem.",
+	walletPromptTRON:  "<b>Conexão de carteira: TRON (TRC-20)</b>\n\nEnvie neste chat o endereço da sua carteira TRON. Os pagamentos dos clientes em TRON serão roteados para este endereço.\n\nExemplo: <code>T...</code>\n\nConfira se o endereço foi copiado exatamente.",
 	walletPromptOther: "<b>Configure sua carteira %s</b>\n\nEnvie o endereço na próxima mensagem.",
 	walletInvalidHint: "⚠️ %s — tente novamente.",
 
@@ -550,7 +565,7 @@ var ptCopy = botCopy{
 	invoiceStep3:        "<b>Nova fatura</b> · etapa 3 de 3\nCarteira · %s\nTítulo · %s\nValor · %s USD\n\nPor quanto tempo o link deve ficar ativo?",
 	invoiceTitleEmpty:   "O título não pode ser vazio — envie algumas palavras.",
 	invoiceAmountBad:    "Valor inválido. Envie um número positivo em USD, como 49.90.",
-	invoiceCreated:      "✅ <b>Fatura %s ativa</b>\n\n%s\n%s %s · expira em %d min\n\nCompartilhe o link de pagamento abaixo.",
+	invoiceCreated:      "✅ <b>Fatura criada com sucesso</b>\n\nID: <code>%s</code>\nFinalidade: %s\nValor: %s USD\nRede: %s\nVálida até: %s\n\nCopie o link abaixo e envie ao cliente:\n<code>%s</code>",
 	invoiceTrialReached: "Os links de teste acabaram. Escolha Merchant para links simples, ou Developer para ter API e webhooks.",
 
 	plansTitle:      "⭐ <b>Planos recv</b>",

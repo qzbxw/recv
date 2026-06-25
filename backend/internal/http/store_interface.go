@@ -112,4 +112,8 @@ type httpStore interface {
 	ListPromoCodes(ctx context.Context) ([]store.PromoCode, error)
 	DeletePromoCode(ctx context.Context, id int64) error
 	RedeemPromoCode(ctx context.Context, workspaceID int64, code string) (store.Workspace, error)
+	CreateScheduledBroadcast(ctx context.Context, message string, scheduledAt time.Time) (store.ScheduledBroadcast, error)
+	ListScheduledBroadcasts(ctx context.Context) ([]store.ScheduledBroadcast, error)
+	UpdateScheduledBroadcast(ctx context.Context, id int64, message string, scheduledAt time.Time) (store.ScheduledBroadcast, error)
+	DeleteScheduledBroadcast(ctx context.Context, id int64) error
 }

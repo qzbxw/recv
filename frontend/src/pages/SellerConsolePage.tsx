@@ -177,6 +177,7 @@ function UsageBar({ label, value, limit, suffix }: { label: string; value: numbe
 }
 
 function formatPlanLimit(value: number | null | undefined, fallback = "∞") {
+  if (value === 0) return "0";
   return typeof value === "number" && Number.isFinite(value) && value > 0
     ? value.toLocaleString()
     : fallback;
@@ -850,12 +851,12 @@ export function SellerConsolePage() {
   }
 
   useEffect(() => {
-    const hasApi = session?.me.plan.has_api || import.meta.env.DEV;
+    const hasApi = session?.me.plan.has_api || environment === 'test' || import.meta.env.DEV;
     if (activePanel === "developer" && session?.token && hasApi) {
       void loadDeveloperData(session.token);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePanel, session?.token]);
+  }, [activePanel, session?.token, environment]);
 
   async function onResendDelivery(id: number) {
     if (!session) return;
@@ -1279,7 +1280,7 @@ export function SellerConsolePage() {
   const basePaidRevenue = paidInvoices.reduce((sum, inv) => sum + (Number(inv.base_amount_usd) || 0), 0);
   const paidRevenue = showDemoData ? 12450.00 : basePaidRevenue;
   
-  const hasApi = session.me.plan.has_api || import.meta.env.DEV;
+  const hasApi = session.me.plan.has_api || environment === 'test' || import.meta.env.DEV;
   const connectedProviderMap = new Map(session.authIdentities.map(identity => [identity.provider, identity]));
   const authProviderRows = [
     { provider: "telegram" as const, label: "Telegram", action: "", identity: connectedProviderMap.get("telegram") },
@@ -2830,13 +2831,61 @@ export function SellerConsolePage() {
                   <p>{t.developer.subtitle}</p>
                 </div>
 
-                {!(session.me.plan.has_api || import.meta.env.DEV) ? (
+                {!(session.me.plan.has_api || environment === 'test' || import.meta.env.DEV) ? (
                   <div className="dev-portal__locked-state">
                     <h3>{t.developer.locked}</h3>
                     <button className="dev-btn dev-btn--primary" onClick={() => setActivePanel("billing")}>{t.promo.action}</button>
                   </div>
                 ) : (
                   <>
+                    {!session.me.plan.has_api && environment === 'test' && (
+                      <div className="dev-card settings-profile-card" style={{ 
+                        marginBottom: '1.5rem', 
+                        background: 'linear-gradient(135deg, rgba(242, 177, 74, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                        borderColor: 'rgba(242, 177, 74, 0.25)',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '1rem',
+                        padding: '1.25rem 1.5rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: '280px' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f2b14a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                          <div style={{ textAlign: 'left' }}>
+                            <strong style={{ display: 'block', color: '#fff', fontSize: '0.9rem', marginBottom: '0.15rem' }}>
+                              {language === 'ru' ? 'Тестовый доступ к API' : 'Test API Access'}
+                            </strong>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: '1.4' }}>
+                              {language === 'ru' 
+                                ? 'Вы тестируете API в тестовой сети. Перейдите на план Developer или Business для приема реальных платежей в Live-сети.'
+                                : 'You are testing the API in test mode. Upgrade to Developer or Business plan to accept real payments in the Live network.'}
+                            </span>
+                          </div>
+                        </div>
+                        <button 
+                          type="button" 
+                          className="dev-btn dev-btn--primary dev-btn--compact" 
+                          onClick={() => setActivePanel("billing")}
+                          style={{ 
+                            width: 'auto', 
+                            padding: '0.5rem 1rem', 
+                            background: 'linear-gradient(135deg, #f2b14a 0%, #e0972c 100%)',
+                            border: 'none',
+                            color: '#000',
+                            fontWeight: 700,
+                            boxShadow: '0 4px 12px rgba(242, 177, 74, 0.2)'
+                          }}
+                        >
+                          {language === 'ru' ? 'Подключить Live' : 'Go Live / Upgrade'}
+                        </button>
+                      </div>
+                    )}
                     {devUsage && (
                       <div className="dev-card console-spotlight-card console-developer__usage-card">
                         <div className="console-card-spotlight" />
@@ -3614,151 +3663,271 @@ export function SellerConsolePage() {
               </div>
             )}
 
-            {activePanel === "settings" && (
-              <div className="dev-portal__section portal-animate-in">
-                <div className="dev-portal__section-header">
-                  <h2>{t.settings.title}</h2>
-                  <p>{t.settings.subtitle}</p>
-                </div>
-                <div className="dev-card dev-card--max-width console-spotlight-card">
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <div className="dev-portal__section-header dev-portal__section-header--margin">
-                    <h3>{t.settings.account}</h3>
-                  </div>
-                  <div className="dev-settings-grid">
-                    <div className="dev-settings-row">
-                      <span className="dev-settings-row__label">{t.settings.workspaceId}</span>
-                      <code className="dev-settings-row__value">#{session.me.workspace.id} ({workspaceName})</code>
-                    </div>
-                    <div className="dev-settings-row">
-                      <span className="dev-settings-row__label">{t.settings.planLabel}</span>
-                      <span className="dev-settings-row__value">{session.me.plan.name}</span>
-                    </div>
-                    <div className="dev-settings-row">
-                      <span className="dev-settings-row__label">{t.settings.memberSince}</span>
-                      <span className="dev-settings-row__value">{new Date(session.me.workspace.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </div>
+            {activePanel === "settings" && (() => {
+              const isTrial = session.me.plan.code === 'trial';
+              const endsAt = session.me.workspace.subscription_ends_at;
+              let subscriptionExpiryMsg = "";
+              if (isTrial) {
+                subscriptionExpiryMsg = language === 'ru' 
+                  ? 'Тестовый доступ. Выберите тариф для активации.' 
+                  : 'Trial access. Select a plan to upgrade.';
+              } else if (endsAt) {
+                const diffTime = new Date(endsAt).getTime() - Date.now();
+                const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const formattedDate = new Date(endsAt).toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                });
+                if (remainingDays > 0) {
+                  subscriptionExpiryMsg = language === 'ru' 
+                    ? `Действует до ${formattedDate} (осталось ${remainingDays} дн.)` 
+                    : `Active until ${formattedDate} (${remainingDays} days left)`;
+                } else {
+                  subscriptionExpiryMsg = language === 'ru' 
+                    ? `Истёк ${formattedDate}` 
+                    : `Expired on ${formattedDate}`;
+                }
+              } else {
+                subscriptionExpiryMsg = language === 'ru' ? 'Подписка активна' : 'Subscription active';
+              }
 
-                <div className="dev-card dev-card--max-width console-spotlight-card">
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <form onSubmit={onUpdateEmail} className="dev-form">
-                    <div className="dev-input-group">
-                      <label>{t.settings.email}</label>
-                      <input
-                        className="dev-input"
-                        type="email"
-                        value={emailForm}
-                        placeholder={t.settings.emailPlaceholder}
-                        onChange={e => { setEmailForm(e.target.value); setEmailNotice(""); }}
-                      />
-                      <p className="dev-settings__hint">{t.settings.emailHint}</p>
-                    </div>
-                    <button type="submit" className="dev-btn dev-btn--primary">{t.settings.save}</button>
-                    {emailNotice ? <div className="alert alert--success alert--margin">{emailNotice}</div> : null}
-                  </form>
-                </div>
+              const upgradeButtonLabel = language === 'ru' 
+                ? (isTrial ? 'Купить подписку' : 'Продлить или изменить тариф')
+                : (isTrial ? 'Buy Subscription' : 'Extend / Manage Plan');
 
-                <div className="dev-card dev-card--max-width console-spotlight-card">
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <div className="dev-portal__section-header dev-portal__section-header--margin">
-                    <h3>{t.settings.connectedAccounts}</h3>
-                    <p>{t.settings.connectedAccountsHint}</p>
+              const displayProfileName = session.me.workspace.email || session.me.user.username || workspaceName;
+
+              const rpmLimit = typeof session.me.plan.requests_per_minute === 'number' 
+                ? session.me.plan.requests_per_minute 
+                : ((session.me.plan as any).rpm_limit as number | undefined);
+              const monthlyCap = typeof session.me.plan.monthly_request_cap === 'number' 
+                ? session.me.plan.monthly_request_cap 
+                : ((session.me.plan as any).monthly_cap as number | undefined);
+
+              return (
+                <div className="dev-portal__section console-settings portal-animate-in">
+                  <div className="dev-portal__section-header">
+                    <h2>{t.settings.title}</h2>
+                    <p>{t.settings.subtitle}</p>
                   </div>
-                  <div className="auth-link-list">
-                    {authProviderRows.map(row => {
-                      const connected = Boolean(row.identity);
-                      const detail = row.identity?.email || (row.identity?.username ? `@${row.identity.username}` : row.identity?.provider_user_id || "");
-                      return (
-                        <div key={row.provider} className="auth-link-row">
-                          <div className="auth-link-row__provider">
-                            <div className={`auth-provider-mark auth-provider-mark--${row.provider}`}>
-                              {row.provider === "github" ? <GithubIcon /> : row.provider === "google" ? <GoogleIcon /> : <TelegramIcon />}
+                  
+                  <div className="settings-dashboard-grid">
+                    {/* Left Column */}
+                    <div className="dev-settings-column" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      
+                      {/* Profile & Subscription Card */}
+                      <div className="dev-card settings-profile-card console-settings__profile-card">
+                        <div className="console-card-spotlight" />
+                        <div className="console-dogfood-glow" />
+                        
+                        <div className="settings-profile-header">
+                          <div className="settings-avatar-circle">
+                            {displayProfileName ? displayProfileName[0] : 'U'}
+                          </div>
+                          <div className="settings-profile-info">
+                            <h3 className="settings-profile-title">{displayProfileName}</h3>
+                            <p className="settings-profile-subtitle" style={{ color: 'var(--muted)' }}>
+                              {t.settings.workspaceId}: #{session.me.workspace.id} ({workspaceName})
+                            </p>
+                            <p className="settings-profile-subtitle" style={{ color: 'var(--muted)' }}>
+                              {t.settings.memberSince}: {new Date(session.me.workspace.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="settings-divider" />
+
+                        <div className="settings-subscription-status">
+                          <div className="settings-subscription-header">
+                            <span className="settings-subscription-label">{t.settings.planLabel}</span>
+                            <span className={`billing-status-card__badge billing-status-card__badge--${session.me.plan.code}`}>
+                              {session.me.plan.name}
+                            </span>
+                          </div>
+                          <div className="settings-expiry-text">
+                            {subscriptionExpiryMsg}
+                          </div>
+                        </div>
+
+                        <button 
+                          type="button" 
+                          className="settings-upgrade-btn"
+                          onClick={() => setActivePanel("billing")}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                          </svg>
+                          {upgradeButtonLabel}
+                        </button>
+                      </div>
+
+                      {/* Network environment mode switcher */}
+                      <div className="dev-card settings-profile-card console-settings__env-card">
+                        <div className="console-card-spotlight" />
+                        <div className="console-dogfood-glow" />
+                        <div className="dev-portal__section-header dev-portal__section-header--margin" style={{ marginBottom: '1rem' }}>
+                          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{language === 'ru' ? 'Режим сети' : 'Network Environment'}</h3>
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'var(--muted)' }}>
+                            {language === 'ru' 
+                              ? 'Выберите Live (реальные транзакции) или Test (симуляция).' 
+                              : 'Toggle between Live (real transactions) and Test (simulated sandbox) environments.'}
+                          </p>
+                        </div>
+                        <div className="settings-env-toggle">
+                          <button 
+                            type="button"
+                            className={`settings-env-btn ${environment === 'live' ? 'active live' : ''}`}
+                            onClick={() => setEnvironment('live')}
+                          >
+                            {t.common.liveMode}
+                          </button>
+                          <button 
+                            type="button"
+                            className={`settings-env-btn ${environment === 'test' ? 'active test' : ''}`}
+                            onClick={() => setEnvironment('test')}
+                          >
+                            {t.common.testMode}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Interface Language & Logout Card */}
+                      <div className="dev-card settings-profile-card console-settings__session-card">
+                        <div className="console-card-spotlight" />
+                        <div className="console-dogfood-glow" />
+                        <div className="dev-input-group" style={{ marginBottom: 0 }}>
+                          <label style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+                            {t.settings.language}
+                          </label>
+                          <LanguageSelect value={language} onChange={(next) => void onSetLanguage(next)} ariaLabel={t.settings.language} className="console-language-picker" menuPlacement="bottom" />
+                        </div>
+
+                        <div className="settings-logout-row">
+                          <div>
+                            <strong style={{ display: 'block', fontSize: '0.85rem', color: '#fff' }}>{t.settings.session}</strong>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{t.settings.logoutHint}</span>
+                          </div>
+                          <button 
+                            type="button"
+                            className="dev-btn dev-btn--compact settings-logout-btn" 
+                            onClick={handleLogout}
+                            style={{ width: 'auto', minWidth: '100px' }}
+                          >
+                            {t.nav.logout}
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Right Column */}
+                    <div className="dev-settings-column" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      
+                      {/* Contact Email card */}
+                      <div className="dev-card settings-profile-card console-settings__email-card">
+                        <div className="console-card-spotlight" />
+                        <div className="console-dogfood-glow" />
+                        <form onSubmit={onUpdateEmail} className="dev-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <div className="dev-input-group" style={{ marginBottom: 0 }}>
+                            <label style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+                              {t.settings.email}
+                            </label>
+                            <input
+                              className="dev-input"
+                              type="email"
+                              value={emailForm}
+                              placeholder={t.settings.emailPlaceholder}
+                              onChange={e => { setEmailForm(e.target.value); setEmailNotice(""); }}
+                              style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+                            />
+                            <p className="dev-settings__hint" style={{ marginTop: '0.4rem', fontSize: '0.78rem', color: 'var(--muted)', lineHeight: '1.4' }}>
+                              {t.settings.emailHint}
+                            </p>
+                          </div>
+                          <button type="submit" className="dev-btn dev-btn--primary console-settings__save-btn" style={{ alignSelf: 'flex-start', minWidth: '160px' }}>
+                            {t.settings.save}
+                          </button>
+                          {emailNotice ? <div className="alert alert--success" style={{ marginTop: '0.5rem' }}>{emailNotice}</div> : null}
+                        </form>
+                      </div>
+
+                      {/* Connected accounts */}
+                      <div className="dev-card settings-profile-card console-settings__accounts-card">
+                        <div className="console-card-spotlight" />
+                        <div className="console-dogfood-glow" />
+                        <div className="dev-portal__section-header dev-portal__section-header--margin" style={{ marginBottom: '1.25rem' }}>
+                          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.settings.connectedAccounts}</h3>
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'var(--muted)' }}>{t.settings.connectedAccountsHint}</p>
+                        </div>
+                        <div className="auth-link-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          {authProviderRows.map(row => {
+                            const connected = Boolean(row.identity);
+                            const detail = row.identity?.email || (row.identity?.username ? `@${row.identity.username}` : row.identity?.provider_user_id || "");
+                            return (
+                              <div key={row.provider} className="auth-link-row console-settings__auth-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '12px' }}>
+                                <div className="auth-link-row__provider" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                  <div className={`auth-provider-mark auth-provider-mark--${row.provider}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {row.provider === "github" ? <GithubIcon /> : row.provider === "google" ? <GoogleIcon /> : <TelegramIcon />}
+                                  </div>
+                                  <div className="console-settings__auth-copy" style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{row.label}</strong>
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{connected ? detail || t.settings.connected : t.settings.notConnected}</span>
+                                  </div>
+                                </div>
+                                {connected ? (
+                                  <span className="auth-link-row__status" style={{ fontSize: '0.8rem', color: 'var(--ok)', fontWeight: 600 }}>{t.settings.connected}</span>
+                                ) : row.provider === "telegram" ? (
+                                  <span className="auth-link-row__status auth-link-row__status--muted" style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{t.settings.notConnected}</span>
+                                ) : (
+                                  <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" style={{ width: 'auto', minHeight: '32px' }} onClick={() => void onLinkProvider(row.provider)} disabled={linkingProvider === row.provider}>
+                                    {linkingProvider === row.provider ? t.settings.linkStarted : row.action}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Usage limits */}
+                      {hasApi && (
+                        <div className="dev-card settings-profile-card console-settings__usage-card">
+                          <div className="console-card-spotlight" />
+                          <div className="console-dogfood-glow" />
+                          <div className="dev-portal__section-header dev-portal__section-header--margin" style={{ marginBottom: '1rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.usage.title}</h3>
+                            <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'var(--muted)' }}>{t.usage.subtitle}</p>
+                          </div>
+                          <div className="settings-stats-grid">
+                            <div className="settings-stat-item">
+                              <span className="settings-stat-label">{t.usage.rpm}</span>
+                              <div className="settings-stat-value">{formatPlanLimit(rpmLimit, t.common.unlimited)}</div>
                             </div>
-                            <div>
-                              <strong>{row.label}</strong>
-                              <span>{connected ? detail || t.settings.connected : t.settings.notConnected}</span>
+                            <div className="settings-stat-item">
+                              <span className="settings-stat-label">{t.usage.monthly}</span>
+                              <div className="settings-stat-value">{formatPlanLimit(monthlyCap, t.common.unlimited)}</div>
+                            </div>
+                            <div className="settings-stat-item">
+                              <span className="settings-stat-label">{t.usage.keys}</span>
+                              <div className="settings-stat-value">{filteredKeys.length}/{formatPlanLimit(session.me.plan.api_key_limit, t.common.unlimited)}</div>
                             </div>
                           </div>
-                          {connected ? (
-                            <span className="auth-link-row__status">{t.settings.connected}</span>
-                          ) : row.provider === "telegram" ? (
-                            <span className="auth-link-row__status auth-link-row__status--muted">{t.settings.notConnected}</span>
-                          ) : (
-                            <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => void onLinkProvider(row.provider)} disabled={linkingProvider === row.provider}>
-                              {linkingProvider === row.provider ? t.settings.linkStarted : row.action}
-                            </button>
+                          {import.meta.env.DEV && !session.me.plan.has_api && (
+                            <p className="dev-settings__hint" style={{ marginTop: '1rem', fontSize: '0.75rem', fontStyle: 'italic', color: 'var(--muted)', lineHeight: '1.4' }}>
+                              {language === 'ru' 
+                                ? '* Лимиты API/ключей временно симулируются в режиме разработки (Dev Mode)' 
+                                : '* API/key limits are temporarily simulated in local development (Dev Mode)'}
+                            </p>
                           )}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                      )}
 
-                {hasApi && (
-                  <div className="dev-card dev-card--max-width console-spotlight-card">
-                    <div className="console-card-spotlight" />
-                    <div className="console-dogfood-glow" />
-                    <div className="dev-portal__section-header dev-portal__section-header--margin">
-                      <h3>{t.usage.title}</h3>
-                      <p>{t.usage.subtitle}</p>
-                    </div>
-                    <div className="dev-widget-grid">
-                      <div className="dev-card dev-widget console-spotlight-card">
-                        <div className="console-card-spotlight" />
-                        <div className="console-dogfood-glow" />
-                        <span className="dev-widget__label">{t.usage.rpm}</span>
-                        <div className="dev-widget__value">{formatPlanLimit(session.me.plan.requests_per_minute, t.common.unlimited)}</div>
-                      </div>
-                      <div className="dev-card dev-widget console-spotlight-card">
-                        <div className="console-card-spotlight" />
-                        <div className="console-dogfood-glow" />
-                        <span className="dev-widget__label">{t.usage.monthly}</span>
-                        <div className="dev-widget__value">{formatPlanLimit(session.me.plan.monthly_request_cap, t.common.unlimited)}</div>
-                      </div>
-                      <div className="dev-card dev-widget console-spotlight-card">
-                        <div className="console-card-spotlight" />
-                        <div className="console-dogfood-glow" />
-                        <span className="dev-widget__label">{t.usage.keys}</span>
-                        <div className="dev-widget__value">{filteredKeys.length}/{formatPlanLimit(session.me.plan.api_key_limit, t.common.unlimited)}</div>
-                      </div>
                     </div>
                   </div>
-                )}
-
-                <div className="dev-card dev-card--max-width console-spotlight-card">
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <div className="dev-portal__section-header dev-portal__section-header--margin">
-                    <h3>{language === 'ru' ? 'Режим сети' : 'Network Environment'}</h3>
-                    <p>{language === 'ru' ? 'Выберите Live (реальные блокчейн-транзакции) или Test (тестовая сеть для симуляций).' : 'Toggle between Live (real blockchain transactions) and Test (simulated sandbox) environments.'}</p>
-                  </div>
-                  <div className="env-toggle" style={{ display: 'flex', gap: '8px', maxWidth: '320px' }}>
-                    <button style={{ flex: 1, height: '36px', fontSize: '13px' }} className={`env-toggle__btn ${environment === 'live' ? 'is-active' : ''}`} onClick={() => setEnvironment('live')}>{t.common.liveMode}</button>
-                    <button style={{ flex: 1, height: '36px', fontSize: '13px' }} className={`env-toggle__btn ${environment === 'test' ? 'is-active' : ''}`} onClick={() => setEnvironment('test')}>{t.common.testMode}</button>
-                  </div>
                 </div>
-
-                <div className="dev-card dev-card--max-width console-spotlight-card">
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  <div className="dev-input-group">
-                    <label>{t.settings.language}</label>
-                    <LanguageSelect value={language} onChange={(next) => void onSetLanguage(next)} ariaLabel={t.settings.language} className="console-language-picker" />
-                  </div>
-
-                  <div className="dev-card--danger-zone">
-                    <label className="dev-settings__label--danger">{t.settings.session}</label>
-                    <p className="dev-settings__hint">{t.settings.logoutHint}</p>
-                    <button className="dev-btn dev-btn--danger dev-btn--full-width" onClick={handleLogout}>{t.nav.logout}</button>
-                  </div>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>

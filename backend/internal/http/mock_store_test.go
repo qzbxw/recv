@@ -536,3 +536,29 @@ func (m *mockHTTPStore) DeletePromoCode(ctx context.Context, id int64) error {
 func (m *mockHTTPStore) RedeemPromoCode(ctx context.Context, workspaceID int64, code string) (store.Workspace, error) {
 	return m.real.RedeemPromoCode(ctx, workspaceID, code)
 }
+
+func (m *mockHTTPStore) CreateScheduledBroadcast(ctx context.Context, message string, scheduledAt time.Time) (store.ScheduledBroadcast, error) {
+	return m.real.CreateScheduledBroadcast(ctx, message, scheduledAt)
+}
+
+func (m *mockHTTPStore) ListScheduledBroadcasts(ctx context.Context) ([]store.ScheduledBroadcast, error) {
+	return m.real.ListScheduledBroadcasts(ctx)
+}
+
+func (m *mockHTTPStore) UpdateScheduledBroadcast(ctx context.Context, id int64, message string, scheduledAt time.Time) (store.ScheduledBroadcast, error) {
+	return m.real.UpdateScheduledBroadcast(ctx, id, message, scheduledAt)
+}
+
+func (m *mockHTTPStore) DeleteScheduledBroadcast(ctx context.Context, id int64) error {
+	return m.real.DeleteScheduledBroadcast(ctx, id)
+}
+
+func (m *mockHTTPStore) CreateTelegramBroadcast(ctx context.Context, message string) (int64, error) {
+	return m.real.CreateTelegramBroadcast(ctx, message)
+}
+
+func (m *mockHTTPStore) GetEligibleTelegramBroadcastUsersCount(ctx context.Context) (int64, error) {
+	return m.real.GetEligibleTelegramBroadcastUsersCount(ctx)
+}
+
+

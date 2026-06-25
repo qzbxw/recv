@@ -489,6 +489,7 @@ func TestBotWorkerCallbackFlowsWithStore(t *testing.T) {
 		"screen:wallets",
 		"screen:invoice",
 		"screen:upgrade",
+		"screen:plans",
 		"wallet:set:EVM",
 		"invoice:new:" + strconv.FormatInt(wallet.ID, 10),
 		"invoice:network:" + strconv.FormatInt(wallet.ID, 10) + ":BASE",
@@ -775,6 +776,9 @@ func TestHandleCallbackScreenUpgrade(t *testing.T) {
 	// Test screen:upgrade callback
 	if err := worker.handleCallback(ctx, botCallback("screen:upgrade", messageID, chatID, user)); err != nil {
 		t.Fatalf("screen:upgrade callback returned error: %v", err)
+	}
+	if err := worker.handleCallback(ctx, botCallback("screen:plans", messageID, chatID, user)); err != nil {
+		t.Fatalf("screen:plans callback returned error: %v", err)
 	}
 	if err := worker.handleCallback(ctx, botCallback("plan:select:developer", messageID, chatID, user)); err != nil {
 		t.Fatalf("plan select callback returned error: %v", err)
@@ -1086,7 +1090,7 @@ func TestBotWorkerConversationCreatesInvoiceAndKeepsBoundaries(t *testing.T) {
 		t.Fatalf("expected invoice creation to reset session, got %+v", worker.session(chatID))
 	}
 
-	if !requests.sawText("A title can't be empty") || !requests.sawText("That's not a valid amount") || !requests.sawText("Invoice "+invoices[0].PublicID+" is live") {
+	if !requests.sawText("A title can't be empty") || !requests.sawText("That's not a valid amount") || !requests.sawText("Invoice created successfully") || !requests.sawText("/checkout/"+invoices[0].PublicID) {
 		t.Fatalf("expected validation and success messages to be sent, got %#v", requests.texts)
 	}
 	merchantInvoiceID := invoices[0].ID

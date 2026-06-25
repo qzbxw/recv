@@ -523,3 +523,14 @@ type WorkspaceRetentionCandidate struct {
 	PlanCode                string
 }
 
+type ScheduledBroadcast struct {
+	ID          int64      `json:"id"`
+	Message     string     `json:"message"`
+	ScheduledAt time.Time  `json:"scheduled_at"`
+	Status      string     `json:"status"` // "pending", "sent"
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	SentAt      *time.Time `json:"sent_at,omitempty"`
+}
+
+

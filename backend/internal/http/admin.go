@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -856,4 +857,141 @@ func (s *Server) handleAdminCreateBroadcast(c *gin.Context) {
 		"queued_count": queued,
 	})
 }
+
+func (s *Server) handleAdminListScheduledBroadcasts(c *gin.Context) {
+	list, err := s.store.ListScheduledBroadcasts(c.Request.Context())
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, list)
+}
+
+func (s *Server) handleAdminCreateScheduledBroadcast(c *gin.Context) {
+	var body struct {
+		Message     string `json:"message"`
+		ScheduledAt string `json:"scheduled_at"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	msg := strings.TrimSpace(body.Message)
+	if msg == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
+		return
+	}
+
+	scheduledTime, err := time.Parse(time.RFC3339, body.ScheduledAt)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid scheduled_at format, expected RFC3339"})
+		return
+	}
+
+	if scheduledTime.Before(time.Now()) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cannot schedule broadcast in the past"})
+		return
+	}
+
+	b, err := s.store.CreateScheduledBroadcast(c.Request.Context(), msg, scheduledTime)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "telegram_scheduled_broadcast_create", "telegram", fmt.Sprintf("%d", b.ID), gin.H{
+		"message_length": len(msg),
+		"scheduled_at":   b.ScheduledAt,
+	})
+
+	c.JSON(http.StatusOK, b)
+}
+
+func (s *Server) handleAdminUpdateScheduledBroadcast(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	var body struct {
+		Message     string `json:"message"`
+		ScheduledAt string `json:"scheduled_at"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	msg := strings.TrimSpace(body.Message)
+	if msg == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
+		return
+	}
+
+	scheduledTime, err := time.Parse(time.RFC3339, body.ScheduledAt)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid scheduled_at format, expected RFC3339"})
+		return
+	}
+
+	if scheduledTime.Before(time.Now()) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cannot schedule broadcast in the past"})
+		return
+	}
+
+	b, err := s.store.UpdateScheduledBroadcast(c.Request.Context(), id, msg, scheduledTime)
+	if err != nil {
+		if errors.Is(err, store.ErrScheduledBroadcastNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		if errors.Is(err, store.ErrScheduledBroadcastNotPending) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "telegram_scheduled_broadcast_update", "telegram", fmt.Sprintf("%d", b.ID), gin.H{
+		"message_length": len(msg),
+		"scheduled_at":   b.ScheduledAt,
+	})
+
+	c.JSON(http.StatusOK, b)
+}
+
+func (s *Server) handleAdminDeleteScheduledBroadcast(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	err = s.store.DeleteScheduledBroadcast(c.Request.Context(), id)
+	if err != nil {
+		if errors.Is(err, store.ErrScheduledBroadcastNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		if errors.Is(err, store.ErrScheduledBroadcastNotPending) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		respondError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	adminCtx := adminFromContext(c)
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "telegram_scheduled_broadcast_delete", "telegram", idStr, nil)
+
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
 

@@ -333,4 +333,38 @@ export async function sendAdminBroadcast(token: string, payload: { message: stri
   }, token);
 }
 
+export interface ScheduledBroadcast {
+  id: number;
+  message: string;
+  scheduled_at: string;
+  status: "pending" | "sent";
+  created_at: string;
+  updated_at: string;
+  sent_at?: string;
+}
+
+export async function fetchAdminScheduledBroadcasts(token: string) {
+  return request<ScheduledBroadcast[]>("/api/admin/telegram/broadcasts/scheduled", {}, token);
+}
+
+export async function createAdminScheduledBroadcast(token: string, payload: { message: string; scheduled_at: string }) {
+  return request<ScheduledBroadcast>("/api/admin/telegram/broadcasts/scheduled", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function updateAdminScheduledBroadcast(token: string, id: number, payload: { message: string; scheduled_at: string }) {
+  return request<ScheduledBroadcast>(`/api/admin/telegram/broadcasts/scheduled/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export async function deleteAdminScheduledBroadcast(token: string, id: number) {
+  return request<{ ok: boolean }>(`/api/admin/telegram/broadcasts/scheduled/${id}`, {
+    method: "DELETE",
+  }, token);
+}
+
 

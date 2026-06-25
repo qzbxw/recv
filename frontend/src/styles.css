@@ -16482,3 +16482,426 @@ html, body {
     font-size: 1.15rem;
   }
 }
+
+/* Redesigned Settings Dashboard Styles */
+.settings-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .settings-dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+}
+
+/* Premium Profile & Subscription Card */
+.settings-profile-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  padding: 1.5rem !important;
+  overflow: hidden;
+}
+
+.settings-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.settings-avatar-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  text-transform: uppercase;
+}
+
+.settings-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.settings-profile-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.settings-profile-subtitle {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.settings-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 1.25rem 0;
+  width: 100%;
+}
+
+/* Subscription status section */
+.settings-subscription-status {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.25rem;
+}
+
+.settings-subscription-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.settings-subscription-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.settings-subscription-value {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.settings-plan-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.settings-expiry-text {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.settings-expiry-text.expired {
+  color: var(--danger);
+}
+
+/* Custom premium button */
+.settings-upgrade-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: #ffffff !important;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  width: 100%;
+  text-decoration: none;
+}
+
+.settings-upgrade-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  background: linear-gradient(135deg, #9333ea 0%, #4f46e5 100%);
+}
+
+.settings-upgrade-btn:active {
+  transform: translateY(0);
+}
+
+/* Settings stats blocks */
+.settings-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  .settings-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settings-stat-item {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 12px !important;
+  padding: 0.8rem 1rem !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.settings-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.settings-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Env switcher segmented control */
+.settings-env-toggle {
+  display: flex;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.settings-env-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-env-btn.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.settings-env-btn.active.live {
+  background: linear-gradient(135deg, rgba(99, 215, 157, 0.15) 0%, rgba(99, 215, 157, 0.05) 100%);
+  color: var(--ok);
+  border: 1px solid rgba(99, 215, 157, 0.2);
+}
+
+.settings-env-btn.active.test {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Danger zone logout row */
+.settings-logout-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-logout-btn {
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+.settings-logout-btn:hover {
+  background: #ef4444 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Settings console responsive polish. */
+.dev-portal--console .console-settings,
+.dev-portal--console .console-settings * {
+  min-width: 0;
+}
+
+.dev-portal--console .console-settings .settings-dashboard-grid {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+}
+
+.dev-portal--console .console-settings .settings-profile-card {
+  border-radius: 14px !important;
+}
+
+.dev-portal--console .console-settings .settings-profile-info,
+.dev-portal--console .console-settings .settings-profile-title,
+.dev-portal--console .console-settings .settings-profile-subtitle,
+.dev-portal--console .console-settings .settings-expiry-text,
+.dev-portal--console .console-settings .settings-stat-label,
+.dev-portal--console .console-settings .settings-stat-value,
+.dev-portal--console .console-settings .dev-settings__hint,
+.dev-portal--console .console-settings__auth-copy,
+.dev-portal--console .console-settings__auth-copy strong,
+.dev-portal--console .console-settings__auth-copy span {
+  overflow-wrap: anywhere;
+}
+
+.dev-portal--console .console-settings .settings-profile-header {
+  align-items: flex-start;
+}
+
+.dev-portal--console .console-settings .settings-avatar-circle,
+.dev-portal--console .console-settings .auth-provider-mark {
+  flex: 0 0 auto;
+}
+
+.dev-portal--console .console-settings .settings-subscription-header,
+.dev-portal--console .console-settings .settings-logout-row,
+.dev-portal--console .console-settings__auth-row {
+  min-width: 0;
+}
+
+.dev-portal--console .console-settings .settings-env-toggle {
+  width: 100%;
+}
+
+.dev-portal--console .console-settings .settings-env-btn {
+  min-height: 42px;
+  white-space: normal;
+}
+
+.dev-portal--console .console-settings .console-language-picker,
+.dev-portal--console .console-settings .console-language-picker .custom-select-trigger,
+.dev-portal--console .console-settings .dev-input {
+  width: 100%;
+}
+
+.dev-portal--console .console-settings__save-btn {
+  min-height: 42px;
+}
+
+.dev-portal--console .console-settings .settings-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dev-portal--console .console-settings .settings-stat-item {
+  min-height: 84px;
+}
+
+@media (max-width: 1024px) {
+  .dev-portal--console .console-settings .settings-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dev-portal--console .console-settings .settings-profile-card {
+    padding: 1rem !important;
+  }
+
+  .dev-portal--console .console-settings .settings-profile-header {
+    gap: 0.85rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .dev-portal--console .console-settings .settings-avatar-circle {
+    width: 42px;
+    height: 42px;
+    font-size: 1.05rem;
+  }
+
+  .dev-portal--console .console-settings .settings-profile-title {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .dev-portal--console .console-settings .settings-subscription-status {
+    padding: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .dev-portal--console .console-settings .settings-subscription-header {
+    gap: 0.65rem;
+    align-items: flex-start;
+  }
+
+  .dev-portal--console .console-settings .settings-upgrade-btn,
+  .dev-portal--console .console-settings__save-btn {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .dev-portal--console .console-settings__save-btn {
+    align-self: stretch !important;
+  }
+
+  .dev-portal--console .console-settings__auth-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.85rem !important;
+    align-items: center !important;
+    padding: 0.85rem !important;
+  }
+
+  .dev-portal--console .console-settings__auth-row .dev-btn {
+    width: auto;
+    min-width: 92px;
+  }
+}
+
+@media (max-width: 520px) {
+  .dev-portal--console .console-settings .settings-profile-header,
+  .dev-portal--console .console-settings .settings-subscription-header,
+  .dev-portal--console .console-settings .settings-logout-row,
+  .dev-portal--console .console-settings__auth-row {
+    grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .dev-portal--console .console-settings .settings-profile-header {
+    display: grid;
+  }
+
+  .dev-portal--console .console-settings .settings-avatar-circle {
+    justify-self: start;
+  }
+
+  .dev-portal--console .console-settings .settings-logout-btn,
+  .dev-portal--console .console-settings__auth-row .dev-btn,
+  .dev-portal--console .console-settings__auth-row .auth-link-row__status {
+    width: 100% !important;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .dev-portal--console .console-settings .settings-env-toggle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dev-portal--console .console-settings .settings-stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

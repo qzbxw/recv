@@ -14,6 +14,7 @@ type CustomSelectProps<T extends string> = {
   onChange: (value: T) => void;
   ariaLabel?: string;
   disabled?: boolean;
+  menuPlacement?: "auto" | "top" | "bottom";
 };
 
 type MenuRect = { top: number; left: number; width: number; placement: "top" | "bottom" };
@@ -24,6 +25,7 @@ export function CustomSelect<T extends string>({
   onChange,
   ariaLabel,
   disabled = false,
+  menuPlacement = "auto",
 }: CustomSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [menuRect, setMenuRect] = useState<MenuRect>({ top: 0, left: 0, width: 0, placement: "bottom" });
@@ -40,7 +42,9 @@ export function CustomSelect<T extends string>({
     const estimatedMenuHeight = Math.min(320, options.length * 52 + 18);
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
-    const placement: "top" | "bottom" = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow ? "top" : "bottom";
+    const placement: "top" | "bottom" = menuPlacement === "auto"
+      ? (spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow ? "top" : "bottom")
+      : menuPlacement;
     setMenuRect({
       top: placement === "bottom" ? rect.bottom + 6 : rect.top - 6,
       left: rect.left,

@@ -40,6 +40,11 @@ import {
   fetchAdminWallets,
   fetchAdminBroadcastCount,
   sendAdminBroadcast,
+  fetchAdminScheduledBroadcasts,
+  createAdminScheduledBroadcast,
+  updateAdminScheduledBroadcast,
+  deleteAdminScheduledBroadcast,
+  type ScheduledBroadcast,
 } from "../lib/api";
 import { ApiError } from "../lib/errors";
 import { CustomSelect } from "../components/CustomSelect";
@@ -2754,6 +2759,20 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // Scheduling states
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledTime, setScheduledTime] = useState("");
+  const [scheduledBroadcasts, setScheduledBroadcasts] = useState<ScheduledBroadcast[]>([]);
+  const [loadingScheduled, setLoadingScheduled] = useState(false);
+  const [editingBroadcast, setEditingBroadcast] = useState<ScheduledBroadcast | null>(null);
+
+  const formatLocalDatetime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   const fetchCount = useCallback(() => {
     setLoading(true);
     fetchAdminBroadcastCount(token)
@@ -2762,30 +2781,126 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
       .finally(() => setLoading(false));
   }, [token, setError]);
 
+  const loadScheduled = useCallback(() => {
+    setLoadingScheduled(true);
+    fetchAdminScheduledBroadcasts(token)
+      .then(res => setScheduledBroadcasts(res))
+      .catch(err => setError(err instanceof Error ? err.message : "Failed to load scheduled broadcasts"))
+      .finally(() => setLoadingScheduled(false));
+  }, [token, setError]);
+
   useEffect(() => {
     fetchCount();
-  }, [fetchCount]);
+    loadScheduled();
+  }, [fetchCount, loadScheduled]);
 
-  async function handleSend(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!message.trim()) {
       setError("Message content cannot be empty.");
       return;
     }
-    if (!window.confirm(`Are you sure you want to send this broadcast to ${recipientCount ?? "all"} users?`)) {
+
+    if (editingBroadcast) {
+      if (!scheduledTime) {
+        setError("Scheduled date & time is required.");
+        return;
+      }
+      setSending(true);
+      setError("");
+      try {
+        await updateAdminScheduledBroadcast(token, editingBroadcast.id, {
+          message: message.trim(),
+          scheduled_at: new Date(scheduledTime).toISOString(),
+        });
+        setToast("Scheduled broadcast successfully updated.");
+        handleCancelEdit();
+        loadScheduled();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to update scheduled broadcast");
+      } finally {
+        setSending(false);
+      }
       return;
     }
-    setSending(true);
+
+    if (isScheduled) {
+      if (!scheduledTime) {
+        setError("Scheduled date & time is required.");
+        return;
+      }
+      const parsedTime = new Date(scheduledTime);
+      if (parsedTime.getTime() <= Date.now()) {
+        setError("Scheduled date & time must be in the future.");
+        return;
+      }
+      setSending(true);
+      setError("");
+      try {
+        await createAdminScheduledBroadcast(token, {
+          message: message.trim(),
+          scheduled_at: parsedTime.toISOString(),
+        });
+        setToast("Broadcast successfully scheduled.");
+        setMessage("");
+        setScheduledTime("");
+        setIsScheduled(false);
+        loadScheduled();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to schedule broadcast");
+      } finally {
+        setSending(false);
+      }
+    } else {
+      if (!window.confirm(`Are you sure you want to send this broadcast to ${recipientCount ?? "all"} users?`)) {
+        return;
+      }
+      setSending(true);
+      setError("");
+      try {
+        const res = await sendAdminBroadcast(token, { message: message.trim() });
+        setToast(`Broadcast successfully queued for ${res.queued_count} users.`);
+        setMessage("");
+        fetchCount();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to send broadcast");
+      } finally {
+        setSending(false);
+      }
+    }
+  }
+
+  function handleStartEdit(sb: ScheduledBroadcast) {
+    setEditingBroadcast(sb);
+    setMessage(sb.message);
+    setIsScheduled(true);
+    setScheduledTime(formatLocalDatetime(sb.scheduled_at));
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleCancelEdit() {
+    setEditingBroadcast(null);
+    setMessage("");
+    setIsScheduled(false);
+    setScheduledTime("");
+    setError("");
+  }
+
+  async function handleDelete(sb: ScheduledBroadcast) {
+    if (!window.confirm("Are you sure you want to delete/cancel this scheduled broadcast?")) {
+      return;
+    }
     setError("");
     try {
-      const res = await sendAdminBroadcast(token, { message: message.trim() });
-      setToast(`Broadcast successfully queued for ${res.queued_count} users.`);
-      setMessage("");
-      fetchCount();
+      await deleteAdminScheduledBroadcast(token, sb.id);
+      setToast("Scheduled broadcast deleted/cancelled successfully.");
+      if (editingBroadcast?.id === sb.id) {
+        handleCancelEdit();
+      }
+      loadScheduled();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send broadcast");
-    } finally {
-      setSending(false);
+      setError(err instanceof Error ? err.message : "Failed to delete scheduled broadcast");
     }
   }
 
@@ -2795,7 +2910,11 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
 
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove} style={{ marginBottom: "2rem" }}>
         <div className="console-card-spotlight" />
-        <form onSubmit={handleSend} className="dev-form">
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>{editingBroadcast ? "Edit Scheduled Broadcast" : "New Broadcast"}</h3>
+          {editingBroadcast && <p>You are editing scheduled broadcast #{editingBroadcast.id}.</p>}
+        </div>
+        <form onSubmit={handleSubmit} className="dev-form">
           <div className="dev-input-group">
             <label>Message Text (HTML formatted)</label>
             <textarea
@@ -2809,7 +2928,39 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
             <span className="dev-input-hint">Supported tags: &lt;b&gt;, &lt;i&gt;, &lt;code&gt;, &lt;a href=&quot;...&quot;&gt;. Links will have web page preview disabled by default.</span>
           </div>
 
-          {recipientCount !== null && (
+          {!editingBroadcast && (
+            <div className="dev-input-group dev-input-group--checkbox" style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: "1rem 0" }}>
+              <input
+                type="checkbox"
+                id="isScheduled"
+                checked={isScheduled}
+                onChange={e => {
+                  setIsScheduled(e.target.checked);
+                  if (e.target.checked && !scheduledTime) {
+                    const oneHourLater = new Date(Date.now() + 60 * 60 * 1000);
+                    setScheduledTime(formatLocalDatetime(oneHourLater.toISOString()));
+                  }
+                }}
+                style={{ width: "auto", cursor: "pointer" }}
+              />
+              <label htmlFor="isScheduled" style={{ marginBottom: 0, cursor: "pointer", userSelect: "none" }}>Schedule this broadcast for later</label>
+            </div>
+          )}
+
+          {(isScheduled || editingBroadcast) && (
+            <div className="dev-input-group" style={{ maxWidth: "300px", marginBottom: "1rem" }}>
+              <label>Scheduled Date & Time (Local Time)</label>
+              <input
+                type="datetime-local"
+                className="dev-input"
+                value={scheduledTime}
+                onChange={e => setScheduledTime(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          {!isScheduled && !editingBroadcast && recipientCount !== null && (
             <div style={{ margin: "1rem 0", fontSize: "0.9rem", opacity: 0.8 }}>
               This broadcast will be sent to <strong>{recipientCount}</strong> active Telegram bot users (excluding blocked users and users who blocked the bot).
             </div>
@@ -2817,13 +2968,106 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
 
           <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
             <button type="submit" className="dev-btn dev-btn--primary" disabled={sending || loading || !message.trim()}>
-              {sending ? "Queuing Broadcast..." : "Send Broadcast"}
+              {editingBroadcast
+                ? (sending ? "Updating..." : "Save Changes")
+                : isScheduled
+                  ? (sending ? "Scheduling..." : "Schedule Broadcast")
+                  : (sending ? "Queuing..." : "Send Broadcast")
+              }
             </button>
-            <button type="button" className="dev-btn dev-btn--secondary" onClick={fetchCount} disabled={loading}>
-              Refresh Recipient Count
-            </button>
+            {editingBroadcast && (
+              <button type="button" className="dev-btn dev-btn--secondary" onClick={handleCancelEdit} disabled={sending}>
+                Cancel
+              </button>
+            )}
+            {!editingBroadcast && (
+              <button type="button" className="dev-btn dev-btn--secondary" onClick={fetchCount} disabled={loading}>
+                Refresh Recipient Count
+              </button>
+            )}
           </div>
         </form>
+      </div>
+
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h3>Scheduled Broadcasts</h3>
+            <p>Queue and history of scheduled telegram broadcast posts.</p>
+          </div>
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--micro" onClick={loadScheduled} disabled={loadingScheduled}>
+            Refresh Queue
+          </button>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Message Snippet</th>
+                <th>Scheduled At</th>
+                <th>Sent At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadingScheduled && scheduledBroadcasts.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="admin-table-empty">Loading scheduled broadcasts...</td>
+                </tr>
+              )}
+              {!loadingScheduled && scheduledBroadcasts.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="admin-table-empty">No scheduled broadcasts found.</td>
+                </tr>
+              )}
+              {scheduledBroadcasts.map(sb => {
+                const isPending = sb.status === "pending";
+                return (
+                  <tr key={sb.id} style={{ opacity: isPending ? 1 : 0.75 }}>
+                    <td>#{sb.id}</td>
+                    <td>
+                      <span className={`dev-api-badge dev-status-badge dev-status-badge--${isPending ? "warning" : "success"}`}>
+                        {sb.status}
+                      </span>
+                    </td>
+                    <td style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={sb.message}>
+                      {sb.message}
+                    </td>
+                    <td>{formatDateTime(sb.scheduled_at)}</td>
+                    <td>{sb.sent_at ? formatDateTime(sb.sent_at) : "—"}</td>
+                    <td>
+                      {isPending ? (
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <button
+                            type="button"
+                            className="dev-btn dev-btn--secondary dev-btn--micro"
+                            onClick={() => handleStartEdit(sb)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="dev-btn dev-btn--secondary dev-btn--micro"
+                            style={{ color: "#ff4d4f", borderColor: "#ff4d4f" }}
+                            onClick={() => handleDelete(sb)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: "0.85rem", opacity: 0.5 }}>Completed</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

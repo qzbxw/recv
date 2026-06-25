@@ -157,6 +157,13 @@ func (b *BotWorker) Run(ctx context.Context) error {
 	}()
 	defer func() { <-retentionDone }()
 
+	scheduledBroadcastsDone := make(chan struct{})
+	go func() {
+		defer close(scheduledBroadcastsDone)
+		b.runScheduledBroadcastsLoop(ctx)
+	}()
+	defer func() { <-scheduledBroadcastsDone }()
+
 	if strings.TrimSpace(b.token) == "" {
 		b.logger.Info("telegram bot token is empty, running webhook delivery worker without Telegram polling")
 		<-ctx.Done()
@@ -349,7 +356,7 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		err = b.renderInvoiceWalletPicker(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
 	case data == "screen:invoices":
 		err = b.renderRecentInvoices(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
-	case data == "screen:upgrade":
+	case data == "screen:upgrade", data == "screen:plans":
 		err = b.renderPlans(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID, "")
 	case data == "screen:language":
 		err = b.renderLanguage(ctx, workspace, query.Message.Chat.ID, query.Message.MessageID)
@@ -369,7 +376,10 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		session.Flow = flowWalletAddress
 		session.WalletNetwork = network
 		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.walletAddressPrompt(c, network), b.recvKeyboard([][]tgInlineKeyboardButton{
-			{{Text: c.btnBack, CallbackData: "screen:wallets"}},
+			{
+				{Text: c.btnBack, CallbackData: "screen:wallets"},
+				{Text: c.btnCancel, CallbackData: "nav:home"},
+			},
 		}))
 	case strings.HasPrefix(data, "wallet:disable:"):
 		walletID, parseErr := strconv.ParseInt(strings.TrimPrefix(data, "wallet:disable:"), 10, 64)
@@ -554,7 +564,10 @@ func (b *BotWorker) handleWalletAddressInput(ctx context.Context, workspace stor
 	if err := validateWallet(session.WalletNetwork, address); err != nil {
 		hint := fmt.Sprintf(c.walletInvalidHint, esc(err.Error()))
 		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, b.walletAddressPrompt(c, session.WalletNetwork)+"\n\n"+hint, b.recvKeyboard([][]tgInlineKeyboardButton{
-			{{Text: c.btnBack, CallbackData: "screen:wallets"}},
+			{
+				{Text: c.btnBack, CallbackData: "screen:wallets"},
+				{Text: c.btnCancel, CallbackData: "nav:home"},
+			},
 		}))
 	}
 
@@ -628,9 +641,10 @@ func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Wor
 		return err
 	}
 
-	b.resetSession(chatID)
 	checkoutURL := b.appURL("/checkout/" + invoice.PublicID)
-	text := fmt.Sprintf(c.invoiceCreated, esc(invoice.PublicID), esc(invoice.Title), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)), minutes)
+	expiresAt := invoice.ExpiresAt.Format("2006-01-02 15:04 MST")
+	text := fmt.Sprintf(c.invoiceCreated, esc(invoice.PublicID), esc(invoice.Title), esc(session.DraftInvoice.Amount), esc(string(invoice.PayableNetwork)), esc(expiresAt), esc(checkoutURL))
+	b.resetSession(chatID)
 	return b.editMessage(ctx, chatID, messageID, text, b.recvKeyboard([][]tgInlineKeyboardButton{
 		{{Text: c.btnOpenCheckout, URL: checkoutURL}},
 		{{Text: c.btnNewInvoiceShort, CallbackData: "screen:invoice"}, {Text: c.btnHome, CallbackData: "nav:home"}},
@@ -715,7 +729,7 @@ func (b *BotWorker) renderAcquisitionStart(ctx context.Context, workspace store.
 		},
 		{
 			{Text: c.btnNewInvoice, CallbackData: "screen:invoice"},
-			{Text: c.btnHowPlans, CallbackData: "screen:upgrade"},
+			{Text: c.btnPlans, CallbackData: "screen:upgrade"},
 		},
 		{
 			{Text: c.btnLanguage, CallbackData: "screen:language"},
@@ -841,7 +855,10 @@ func (b *BotWorker) renderInvoiceWalletPicker(ctx context.Context, workspace sto
 		return err
 	}
 	if len(wallets) == 0 {
-		return b.renderWallets(ctx, workspace, chatID, messageID, c.walletsAddFirst)
+		return b.sendOrEdit(ctx, chatID, messageID, c.walletsAddFirst, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnAddWallet, CallbackData: "screen:wallets"}},
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
 	}
 
 	rows := make([][]tgInlineKeyboardButton, 0, len(wallets)+1)
@@ -939,6 +956,8 @@ func (b *BotWorker) walletAddressPrompt(c botCopy, network store.Network) string
 		return c.walletPromptEVM
 	case store.NetworkSOLANA:
 		return c.walletPromptSOL
+	case store.NetworkTRON:
+		return c.walletPromptTRON
 	default:
 		return fmt.Sprintf(c.walletPromptOther, esc(string(network)))
 	}
@@ -1338,17 +1357,18 @@ func (b *BotWorker) processRetentionReminders(ctx context.Context) error {
 
 		if c.WalletCount == 0 {
 			age := now.Sub(c.CreatedAt)
-			if c.RetentionStage == nil && age >= 4*time.Hour {
+			if c.RetentionStage == nil && age >= 24*time.Hour {
 				stage = "no_wallet"
 				message = copy.reminderNoWallet
 				actions = []notificationAction{
 					{Kind: "callback", Text: copy.btnStartSetup, Data: "screen:wallets"},
 				}
-			} else if c.RetentionStage != nil && *c.RetentionStage == "no_wallet" && age >= 24*time.Hour {
+			} else if c.RetentionStage != nil && *c.RetentionStage == "no_wallet" && age >= 72*time.Hour {
 				stage = "no_wallet_2"
 				message = copy.reminderNoWallet2
 				actions = []notificationAction{
 					{Kind: "callback", Text: copy.btnStartSetup, Data: "screen:wallets"},
+					{Kind: "url", Text: copy.btnOpenConsole, URL: b.appURL("/console")},
 				}
 			} else if c.RetentionStage != nil && *c.RetentionStage == "no_wallet_2" && age >= 48*time.Hour {
 				stage = "no_wallet_3"
@@ -1377,19 +1397,19 @@ func (b *BotWorker) processRetentionReminders(ctx context.Context) error {
 					stage = "trial_exhausted"
 					message = copy.reminderTrialExhausted
 					actions = []notificationAction{
-						{Kind: "callback", Text: copy.btnPlans, Data: "screen:plans"},
+						{Kind: "callback", Text: copy.btnPlans, Data: "screen:upgrade"},
 					}
-				} else if c.RetentionStage != nil && *c.RetentionStage == "trial_exhausted" && sinceLastInvoice >= 48*time.Hour {
+				} else if c.RetentionStage != nil && *c.RetentionStage == "trial_exhausted" && sinceLastInvoice >= 72*time.Hour {
 					stage = "trial_exhausted_2"
 					message = copy.reminderTrialExhausted2
 					actions = []notificationAction{
-						{Kind: "callback", Text: copy.btnPlans, Data: "screen:plans"},
+						{Kind: "callback", Text: copy.btnPlans, Data: "screen:upgrade"},
 					}
-				} else if c.RetentionStage != nil && *c.RetentionStage == "trial_exhausted_2" && sinceLastInvoice >= 72*time.Hour {
+				} else if c.RetentionStage != nil && *c.RetentionStage == "trial_exhausted_2" && sinceLastInvoice >= 120*time.Hour {
 					stage = "trial_exhausted_3"
 					message = copy.reminderTrialExhausted3
 					actions = []notificationAction{
-						{Kind: "callback", Text: copy.btnPlans, Data: "screen:plans"},
+						{Kind: "callback", Text: copy.btnPlans, Data: "screen:upgrade"},
 					}
 				}
 			}
@@ -1472,13 +1492,13 @@ func (b *BotWorker) processRetentionReminders(ctx context.Context) error {
 			if c.LastInvoiceCreatedAt != nil {
 				sinceLastInvoice := now.Sub(*c.LastInvoiceCreatedAt)
 				isNewCategory := c.RetentionStage == nil || (*c.RetentionStage != "inactive_merchant" && *c.RetentionStage != "inactive_merchant_2" && *c.RetentionStage != "inactive_merchant_3" && *c.RetentionStage != "inactive_merchant_4" && *c.RetentionStage != "inactive_merchant_5")
-				if sinceLastInvoice >= 7*24*time.Hour {
+				if sinceLastInvoice >= 14*24*time.Hour {
 					if isNewCategory {
 						stage = "inactive_merchant"
 						message = copy.reminderInactive
 						actions = []notificationAction{
 							{Kind: "callback", Text: copy.btnNewInvoice, Data: "screen:invoice"},
-							{Kind: "callback", Text: copy.btnHome, Data: "nav:home"},
+							{Kind: "url", Text: copy.btnOpenStats, URL: b.appURL("/console")},
 						}
 					} else if c.RetentionStage != nil && *c.RetentionStage == "inactive_merchant" && sinceLastInvoice >= 14*24*time.Hour {
 						stage = "inactive_merchant_2"
@@ -1540,4 +1560,45 @@ func isTelegramBlockedErr(err error) bool {
 		strings.Contains(msg, "Forbidden: user is deactivated") ||
 		strings.Contains(msg, "Forbidden: bot can't initiate conversation with a user") ||
 		strings.Contains(msg, "chat not found")
+}
+
+func (b *BotWorker) runScheduledBroadcastsLoop(ctx context.Context) {
+	// Check every 30 seconds
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	// Initial run
+	if err := b.processScheduledBroadcasts(ctx); err != nil {
+		b.logger.Error("process scheduled broadcasts", "error", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := b.processScheduledBroadcasts(ctx); err != nil {
+				b.logger.Error("process scheduled broadcasts", "error", err)
+			}
+		}
+	}
+}
+
+func (b *BotWorker) processScheduledBroadcasts(ctx context.Context) error {
+	pending, err := b.store.GetPendingScheduledBroadcasts(ctx)
+	if err != nil {
+		return fmt.Errorf("get pending scheduled broadcasts: %w", err)
+	}
+
+	for _, sb := range pending {
+		b.logger.Info("processing scheduled broadcast", "id", sb.ID)
+		queuedCount, err := b.store.ProcessScheduledBroadcast(ctx, sb.ID)
+		if err != nil {
+			b.logger.Error("failed to process scheduled broadcast", "id", sb.ID, "error", err)
+			continue
+		}
+		b.logger.Info("scheduled broadcast queued successfully", "id", sb.ID, "queued_count", queuedCount)
+	}
+
+	return nil
 }

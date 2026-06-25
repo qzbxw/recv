@@ -61,7 +61,7 @@ func (s *Server) apiKeyMiddleware() gin.HandlerFunc {
 		}
 
 		plan := workspace.EffectivePlan(time.Now())
-		if !plan.HasAPI && s.cfg.AppEnv != "development" {
+		if !plan.HasAPI && record.Mode != "test" && s.cfg.AppEnv != "development" {
 			metrics.IncLimitDecision("api_access", "denied", "plan")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "current plan does not include Developer or Business API access"})
 			return
