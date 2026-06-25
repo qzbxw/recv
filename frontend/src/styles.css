@@ -11964,6 +11964,10 @@ html {
   width: 100%;
 }
 
+.admin-toolbar__form--wallets {
+  grid-template-columns: minmax(240px, 1.8fr) repeat(3, minmax(150px, 0.8fr)) minmax(120px, auto);
+}
+
 .admin-manage {
   margin-top: 1rem;
   padding-top: 1rem;
@@ -13815,6 +13819,139 @@ html, body {
   letter-spacing: 0;
 }
 
+.admin-export-actions,
+.admin-section-header-actions,
+.admin-form-actions,
+.admin-wallet-actions,
+.admin-segmented-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.admin-export-actions {
+  justify-content: flex-end;
+}
+
+.admin-section-header-actions {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.admin-section-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: -0.25rem 0 0.75rem;
+}
+
+.admin-form-panel {
+  margin-bottom: 0.85rem;
+}
+
+.admin-form-grid {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.admin-form-grid--four {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.admin-form-grid--two {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.admin-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-discount-badge {
+  background-color: #27c24c !important;
+  border-color: #27c24c !important;
+  color: #fff !important;
+  width: max-content;
+  white-space: nowrap;
+}
+
+.admin-wallet-actions {
+  align-items: flex-start;
+}
+
+.admin-wallet-actions .dev-btn {
+  padding: 0.2rem 0.45rem !important;
+}
+
+.admin-wallet-address {
+  white-space: normal !important;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.admin-broadcast-textarea {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  resize: vertical;
+  min-height: 180px;
+}
+
+.admin-checkbox-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.admin-checkbox-row label {
+  margin-bottom: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-checkbox-input {
+  width: auto !important;
+  cursor: pointer;
+}
+
+.admin-schedule-field {
+  max-width: 300px;
+  margin-bottom: 1rem;
+}
+
+.admin-recipient-note,
+.admin-completed-label {
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 0.9rem;
+}
+
+.admin-recipient-note {
+  margin: 1rem 0;
+}
+
+.admin-form-actions {
+  margin-top: 1.5rem;
+}
+
+.admin-row-muted {
+  opacity: 0.72;
+}
+
+.admin-message-snippet {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-sales-table--compact {
+  min-width: 720px;
+}
+
 .admin-insight-grid,
 .admin-lead-grid {
   display: grid;
@@ -13944,6 +14081,39 @@ html, body {
     align-items: stretch !important;
     flex-direction: column !important;
     gap: 0.75rem !important;
+  }
+
+  .admin-export-actions,
+  .admin-section-header-actions,
+  .admin-form-actions,
+  .admin-wallet-actions,
+  .admin-segmented-row {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .admin-export-actions .dev-btn,
+  .admin-section-header-actions .dev-btn,
+  .admin-form-actions .dev-btn,
+  .admin-wallet-actions .dev-btn,
+  .admin-segmented-row .dev-btn,
+  .admin-export-actions .custom-select {
+    width: 100%;
+  }
+
+  .admin-toggle-grid,
+  .admin-form-grid--four,
+  .admin-form-grid--two {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-section-toolbar {
+    justify-content: stretch;
+  }
+
+  .admin-section-toolbar .dev-btn {
+    width: 100%;
   }
 
   .admin-ops .admin-toolbar.dev-toolbar > .dev-input {

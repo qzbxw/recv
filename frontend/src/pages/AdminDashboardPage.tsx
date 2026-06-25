@@ -72,7 +72,7 @@ import type {
   AdminWalletListResponse,
 } from "../lib/types";
 
-type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "wallets" | "webhooks" | "analytics" | "partners" | "audit" | "content" | "settings" | "promocodes" | "broadcast";
+type PanelKey = "overview" | "invoices" | "review" | "workspaces" | "wallets" | "webhooks" | "analytics" | "utm" | "partners" | "audit" | "content" | "settings" | "promocodes" | "broadcast";
 
 type Filters = { status: string; kind: string; query: string; page: number; page_size: number };
 const DEFAULT_FILTERS: Filters = { status: "all", kind: "all", query: "", page: 1, page_size: 50 };
@@ -147,6 +147,26 @@ function adminNetworkLabel(network: string) {
   return formatNetworkLabel(network as import("../lib/types").Network);
 }
 
+type CSVValue = string | number | boolean | null | undefined;
+
+function csvEscape(value: CSVValue) {
+  const text = value === null || value === undefined ? "" : String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function downloadCSV(filename: string, headers: string[], rows: CSVValue[][]) {
+  const csv = [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
   overview: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" /><rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" /></svg>,
   invoices: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="16" y2="17" /></svg>,
@@ -155,6 +175,7 @@ const ICONS: Record<PanelKey | "logout" | "refresh", React.ReactNode> = {
   wallets: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" ry="2" /><path d="M16 8h.01" /><path d="M12 8h.01" /><path d="M8 8h.01" /><path d="M3 12h18" /><path d="M16 16h4" /></svg>,
   webhooks: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
   analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
+  utm: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93" /><path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L13 19.07" /></svg>,
   partners: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" opacity="0" /><path d="M18 8a3 3 0 1 0-6 0c0 1.5.7 2.4 1.6 3.1.5.4.4 1.2-.2 1.4C10.5 13.6 8 15.2 8 18h12c0-2.8-2.5-4.4-5.4-5.5-.6-.2-.7-1-.2-1.4.9-.7 1.6-1.6 1.6-3.1z" /><path d="M9 11a2.5 2.5 0 1 0-5 0c0 1.2.6 2 1.3 2.6.4.3.3 1-.2 1.2C3.1 15.6 1 16.9 1 19h6" /></svg>,
   audit: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
   content: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></svg>,
@@ -238,7 +259,7 @@ export function AdminDashboardPage() {
       } else if (panel === "workspaces") {
         const nextWorkspaces = await fetchAdminWorkspaces(tok);
         setWorkspaces(nextWorkspaces.items || []);
-      } else if (panel === "analytics") {
+      } else if (panel === "analytics" || panel === "utm") {
         const [nextAnalytics, nextVitals, nextUTM] = await Promise.all([
           fetchAdminAnalytics(tok, { group_by: analyticsGroupBy }),
           fetchAdminWebVitals(tok).catch(() => null),
@@ -420,6 +441,7 @@ export function AdminDashboardPage() {
       items: [
         { key: "webhooks", label: "Webhooks", badge: overview?.failed_webhook_queue?.length || 0 },
         { key: "analytics", label: "Analytics" },
+        { key: "utm", label: "UTM Builder" },
         { key: "partners", label: "Partners" },
         { key: "audit", label: "Audit log" },
         { key: "content", label: "Content & SEO" },
@@ -527,7 +549,11 @@ export function AdminDashboardPage() {
             )}
 
             {activePanel === "analytics" && (
-              <AnalyticsPanel analytics={analytics} webVitals={webVitals} utmReport={utmReport} groupBy={analyticsGroupBy} onGroupBy={(g) => void reloadAnalytics(g)} setToast={setToast} />
+              <AnalyticsPanel analytics={analytics} webVitals={webVitals} utmReport={utmReport} groupBy={analyticsGroupBy} onGroupBy={(g) => void reloadAnalytics(g)} />
+            )}
+
+            {activePanel === "utm" && (
+              <UTMBuilderPanel utmReport={utmReport} setToast={setToast} />
             )}
 
             {activePanel === "partners" && (
@@ -1203,10 +1229,10 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
         </span>
       </div>
       <div className="dev-form">
-        <div style={{ display: "flex", gap: "16px", marginBottom: "16px", flexWrap: "wrap" }}>
-          <div className="dev-input-group" style={{ flex: "1 1 200px" }}>
+        <div className="admin-toggle-grid">
+          <div className="dev-input-group">
             <label>Link Target</label>
-            <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+            <div className="admin-segmented-row">
               <button
                 type="button"
                 className={`dev-btn dev-btn--compact ${target === "web" ? "dev-btn--primary" : "dev-btn--secondary"}`}
@@ -1224,9 +1250,9 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
             </div>
           </div>
 
-          <div className="dev-input-group" style={{ flex: "1 1 200px" }}>
+          <div className="dev-input-group">
             <label>Platform / Traffic Source</label>
-            <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+            <div className="admin-segmented-row">
               <button
                 type="button"
                 className={`dev-btn dev-btn--compact ${platform === "tg" ? "dev-btn--primary" : "dev-btn--secondary"}`}
@@ -1292,6 +1318,68 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
               Copy
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UTMBuilderPanel({ utmReport, setToast }: { utmReport: UTMReport | null; setToast: (message: string) => void }) {
+  const campaigns = utmReport?.campaigns || [];
+  const totalVisits = campaigns.reduce((sum, row) => sum + row.visits, 0);
+  const totalVisitors = campaigns.reduce((sum, row) => sum + row.unique_visitors, 0);
+  const totalSignups = campaigns.reduce((sum, row) => sum + row.signups, 0);
+  const topSources = [...campaigns]
+    .sort((a, b) => b.unique_visitors - a.unique_visitors || b.signups - a.signups)
+    .slice(0, 5);
+  const exportCampaigns = () => downloadCSV(
+    "utm-campaigns.csv",
+    ["source", "medium", "campaign", "visits", "unique_visitors", "events", "docs_opened", "app_opens", "bot_opens", "signup_starts", "signups", "paying_workspaces", "paid_usd"],
+    campaigns.map((row) => [row.source, row.medium, row.campaign, row.visits, row.unique_visitors, row.events, row.docs_opened, row.app_opens, row.bot_opens, row.signup_starts, row.signups, row.paying_workspaces, row.paid_usd]),
+  );
+  const exportLeads = () => downloadCSV(
+    "utm-leads.csv",
+    ["attribution_id", "workspace_id", "workspace_name", "workspace_email", "source", "medium", "campaign", "landing_path", "first_seen_at", "last_seen_at", "event_count", "docs_opened", "app_opens", "signup_started", "signed_up_at"],
+    (utmReport?.leads || []).map((lead) => [lead.attribution_id, lead.workspace_id, lead.workspace_name, lead.workspace_email, lead.source, lead.medium, lead.campaign, lead.landing_path, lead.first_seen_at, lead.last_seen_at, lead.event_count, lead.docs_opened, lead.app_opens, lead.signup_started, lead.signed_up_at]),
+  );
+
+  return (
+    <div className="dev-portal__section portal-animate-in">
+      <PanelHeader title="UTM Builder" subtitle="Create clean campaign links, then inspect the latest tracked source performance separately from core analytics.">
+        <div className="admin-export-actions">
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={exportCampaigns}>Export campaigns</button>
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={exportLeads}>Export leads</button>
+        </div>
+      </PanelHeader>
+      <div className="dev-metrics-grid">
+        <MetricCard label="Tracked visits" value={String(totalVisits)} meta={`${totalVisitors} unique visitors`} />
+        <MetricCard label="Attributed signups" value={String(totalSignups)} meta={totalVisitors ? `${((totalSignups / totalVisitors) * 100).toFixed(1)}% visitor CR` : "No visitors yet"} />
+        <MetricCard label="Campaigns" value={String(campaigns.length)} meta={utmReport ? `${formatDateTime(utmReport.from)} to ${formatDateTime(utmReport.to)}` : "Loading report"} />
+      </div>
+      <UTMLinkBuilder setToast={setToast} />
+      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
+        <div className="console-card-spotlight" />
+        <div className="dev-portal__section-header dev-portal__section-header--margin">
+          <h3>Top sources</h3>
+          <span className="dev-card__note-text">A compact check that the links you create are producing usable attribution.</span>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-sales-table admin-sales-table--compact">
+            <thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Unique</th><th>Signups</th><th>Revenue</th></tr></thead>
+            <tbody>
+              {topSources.map((row) => (
+                <tr key={`${row.source}|${row.medium}|${row.campaign}`}>
+                  <td><span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{row.source || "Direct"}</span></td>
+                  <td>{row.medium || "-"}</td>
+                  <td>{row.campaign || "-"}</td>
+                  <td>{row.unique_visitors}</td>
+                  <td>{row.signups}</td>
+                  <td>{formatMoney(row.paid_usd)}</td>
+                </tr>
+              ))}
+              {topSources.length === 0 && <tr><td colSpan={6} className="admin-table-empty">No UTM traffic yet.</td></tr>}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1456,9 +1544,21 @@ function PartnersPanel({ token, setToast, setError }: {
     }
   }
 
+  const activePartners = partners.filter((partner) => !partner.is_archived);
+  const partnersRevenue = partners.reduce((sum, partner) => sum + Number(partner.revenue_usd || 0), 0);
+  const partnersOwed = partners.reduce((sum, partner) => sum + Number(partner.owed_usd || 0), 0);
+  const partnerSignups = partners.reduce((sum, partner) => sum + partner.signups, 0);
+
   return (
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Referral partners" subtitle="25% recurring (auto-bumps to 30% at 10 referrals paying in the same month), optional launch rate. Payouts in USDT are sent manually and recorded here." />
+
+      <div className="dev-metrics-grid">
+        <MetricCard label="Active partners" value={String(activePartners.length)} meta={`${partners.length} total records`} />
+        <MetricCard label="Partner signups" value={String(partnerSignups)} meta="tracked referred workspaces" />
+        <MetricCard label="Referred revenue" value={formatMoney(partnersRevenue)} meta="subscription payments" />
+        <MetricCard label="Owed" value={formatMoney(partnersOwed)} meta="minus recorded payouts" />
+      </div>
 
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
@@ -1696,13 +1796,12 @@ function UTMBehaviorDetail({ row }: { row: UTMReport["campaigns"][number] }) {
   );
 }
 
-function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, setToast }: {
+function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy }: {
   analytics: AdminAnalyticsResponse | null;
   webVitals: WebVitalsReport | null;
   utmReport: UTMReport | null;
   groupBy: string;
   onGroupBy: (g: "date" | "network" | "plan" | "mode") => void;
-  setToast: (message: string) => void;
 }) {
   const vital = (name: "LCP" | "INP" | "CLS") => webVitals?.metrics.find((metric) => metric.metric_name === name);
   const formatVital = (name: "LCP" | "INP" | "CLS") => {
@@ -1737,11 +1836,83 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
     "paid",
   ].map((key) => activationByKey.get(key) || { key, label: key.replace(/_/g, " "), count: 0, workspaces: 0, paid_usd: "0" });
   const countryRows = [...countries].slice(0, 12);
+  const pathRows = [
+    ...(utmReport?.top_landings || []).map((row) => ({ section: "landing", ...row })),
+    ...(utmReport?.top_pages || []).map((row) => ({ section: "page", ...row })),
+    ...(utmReport?.top_docs || []).map((row) => ({ section: "docs", ...row })),
+  ];
+  const exportBreakdown = () => downloadCSV(
+    `analytics-breakdown-${groupBy}.csv`,
+    ["bucket", "created_invoices", "paid_invoices", "manual_review_invoices", "underpaid_invoices", "paid_volume_usd"],
+    (analytics?.breakdown || []).map((row) => [row.bucket, row.created_invoices, row.paid_invoices, row.manual_review_invoices, row.underpaid_invoices, row.paid_volume_usd]),
+  );
+  const exportCampaigns = () => downloadCSV(
+    "analytics-campaigns.csv",
+    ["source", "medium", "campaign", "visits", "unique_visitors", "events", "docs_opened", "app_opens", "bot_opens", "signup_starts", "signups", "paying_workspaces", "paid_usd"],
+    campaigns.map((row) => [row.source, row.medium, row.campaign, row.visits, row.unique_visitors, row.events, row.docs_opened, row.app_opens, row.bot_opens, row.signup_starts, row.signups, row.paying_workspaces, row.paid_usd]),
+  );
+  const exportCountries = () => downloadCSV(
+    "analytics-countries.csv",
+    ["country", "visits", "unique_visitors", "app_opens", "bot_opens", "signup_starts", "signups", "workspace_created", "wallet_connected", "invoice_created", "test_payment_simulated", "live_invoice_created", "paid", "paid_usd"],
+    countries.map((row) => [row.country, row.visits, row.unique_visitors, row.app_opens, row.bot_opens, row.signup_starts, row.signups, row.workspace_created, row.wallet_connected, row.invoice_created, row.test_payment_simulated, row.live_invoice_created, row.paid, row.paid_usd]),
+  );
+  const exportPaths = () => downloadCSV(
+    "analytics-paths.csv",
+    ["section", "path", "title", "visitors", "events", "signup_visitors"],
+    pathRows.map((row) => [row.section, row.path, row.title, row.visitors, row.events, row.signup_visitors]),
+  );
+  const exportLeads = () => downloadCSV(
+    "analytics-leads.csv",
+    ["attribution_id", "workspace_id", "workspace_name", "workspace_email", "source", "medium", "campaign", "term", "content", "landing_path", "referrer", "first_seen_at", "last_seen_at", "event_count", "docs_opened", "app_opens", "signup_started", "signed_up_at"],
+    leads.map((lead) => [lead.attribution_id, lead.workspace_id, lead.workspace_name, lead.workspace_email, lead.source, lead.medium, lead.campaign, lead.term, lead.content, lead.landing_path, lead.referrer, lead.first_seen_at, lead.last_seen_at, lead.event_count, lead.docs_opened, lead.app_opens, lead.signup_started, lead.signed_up_at]),
+  );
+  const exportAll = () => {
+    const summaryRows: CSVValue[][] = [
+      ["metric", "value"],
+      ["from", analytics?.from || utmReport?.from || webVitals?.from || ""],
+      ["to", analytics?.to || utmReport?.to || webVitals?.to || ""],
+      ["mrr_usd", analytics?.mrr_usd || ""],
+      ["arr_usd", analytics?.arr_usd || ""],
+      ["paid_volume_usd", analytics?.paid_volume_usd || ""],
+      ["active_merchants", analytics?.active_merchants || 0],
+      ["created_invoices", analytics?.created_invoices || 0],
+      ["paid_invoices", analytics?.paid_invoices || 0],
+      ["manual_review_rate", analytics?.manual_review_rate || "0"],
+      ["failed_webhook_rate", analytics?.failed_webhook_rate || "0"],
+      ["underpaid_share", analytics?.underpaid_share || "0"],
+    ];
+    const sections: Array<{ title: string; headers: string[]; rows: CSVValue[][] }> = [
+      { title: "summary", headers: ["metric", "value"], rows: summaryRows.slice(1) },
+      { title: "breakdown", headers: ["bucket", "created_invoices", "paid_invoices", "manual_review_invoices", "underpaid_invoices", "paid_volume_usd"], rows: (analytics?.breakdown || []).map((row) => [row.bucket, row.created_invoices, row.paid_invoices, row.manual_review_invoices, row.underpaid_invoices, row.paid_volume_usd]) },
+      { title: "activation", headers: ["key", "label", "count", "workspaces", "paid_usd"], rows: activationSteps.map((row) => [row.key, row.label, row.count, row.workspaces, row.paid_usd]) },
+      { title: "campaigns", headers: ["source", "medium", "campaign", "visits", "unique_visitors", "events", "docs_opened", "app_opens", "bot_opens", "signup_starts", "signups", "paying_workspaces", "paid_usd"], rows: campaigns.map((row) => [row.source, row.medium, row.campaign, row.visits, row.unique_visitors, row.events, row.docs_opened, row.app_opens, row.bot_opens, row.signup_starts, row.signups, row.paying_workspaces, row.paid_usd]) },
+      { title: "countries", headers: ["country", "visits", "unique_visitors", "app_opens", "bot_opens", "signup_starts", "signups", "workspace_created", "wallet_connected", "invoice_created", "test_payment_simulated", "live_invoice_created", "paid", "paid_usd"], rows: countries.map((row) => [row.country, row.visits, row.unique_visitors, row.app_opens, row.bot_opens, row.signup_starts, row.signups, row.workspace_created, row.wallet_connected, row.invoice_created, row.test_payment_simulated, row.live_invoice_created, row.paid, row.paid_usd]) },
+      { title: "paths", headers: ["section", "path", "title", "visitors", "events", "signup_visitors"], rows: pathRows.map((row) => [row.section, row.path, row.title, row.visitors, row.events, row.signup_visitors]) },
+      { title: "leads", headers: ["attribution_id", "workspace_id", "workspace_name", "workspace_email", "source", "medium", "campaign", "term", "content", "landing_path", "referrer", "first_seen_at", "last_seen_at", "event_count", "docs_opened", "app_opens", "signup_started", "signed_up_at"], rows: leads.map((lead) => [lead.attribution_id, lead.workspace_id, lead.workspace_name, lead.workspace_email, lead.source, lead.medium, lead.campaign, lead.term, lead.content, lead.landing_path, lead.referrer, lead.first_seen_at, lead.last_seen_at, lead.event_count, lead.docs_opened, lead.app_opens, lead.signup_started, lead.signed_up_at]) },
+    ];
+    const rows = sections.flatMap((section, index) => [
+      ...(index === 0 ? [] : [[] as CSVValue[]]),
+      [`# ${section.title}`],
+      section.headers,
+      ...section.rows,
+    ]);
+    const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "analytics-full-export.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
   return (
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Analytics" subtitle="Revenue, conversion and reliability metrics across the platform.">
-        <div className="admin-groupby">
+        <div className="admin-panel-head__actions admin-export-actions">
           <CustomSelect value={groupBy} options={GROUP_BY_OPTIONS} ariaLabel="Group by" onChange={(v) => onGroupBy(v as "date" | "network" | "plan" | "mode")} />
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={exportAll}>Export all CSV</button>
         </div>
       </PanelHeader>
       <div className="dev-metrics-grid">
@@ -1771,7 +1942,6 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
           );
         })}
       </div>
-      <UTMLinkBuilder setToast={setToast} />
       <div className="dev-portal__section-header dev-portal__section-header--margin">
         <h3>Activation funnel</h3>
         <span className="dev-card__note-text">Workspace creation through paid invoices, rolling 365 days</span>
@@ -1788,9 +1958,12 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
         <summary>Country funnel</summary>
         <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
           <div className="console-card-spotlight" />
-          <div className="dev-portal__section-header dev-portal__section-header--margin">
-            <h3>Country-level funnel</h3>
-            <span className="dev-card__note-text">Country comes from CDN geo headers on UTM visits and events.</span>
+          <div className="dev-portal__section-header dev-portal__section-header--margin admin-section-header-actions">
+            <div>
+              <h3>Country-level funnel</h3>
+              <span className="dev-card__note-text">Country comes from CDN geo headers on UTM visits and events.</span>
+            </div>
+            <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={exportCountries}>Export CSV</button>
           </div>
           <div className="admin-table-wrap">
             <table className="admin-sales-table admin-sales-table--utm">
@@ -1860,9 +2033,12 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
         <summary>Campaign table</summary>
         <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
-        <div className="dev-portal__section-header dev-portal__section-header--margin">
-          <h3>Campaign tracking</h3>
-          <span className="dev-card__note-text">Full campaign table with post-click behavior.</span>
+        <div className="dev-portal__section-header dev-portal__section-header--margin admin-section-header-actions">
+          <div>
+            <h3>Campaign tracking</h3>
+            <span className="dev-card__note-text">Full campaign table with post-click behavior.</span>
+          </div>
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={exportCampaigns}>Export CSV</button>
         </div>
         <div className="admin-table-wrap">
           <table className="admin-sales-table admin-sales-table--utm">
@@ -1894,6 +2070,9 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
 
       <details className="admin-details">
         <summary>Top paths</summary>
+        <div className="admin-section-toolbar">
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={exportPaths}>Export CSV</button>
+        </div>
         <div className="admin-grid admin-grid--two">
           <UTMPathTable title="Top campaign landings" rows={utmReport?.top_landings || []} empty="No attributed landings yet." activityLabel="Visits" />
           <UTMPathTable title="Top pages before signup" rows={utmReport?.top_pages || []} empty="No attributed page activity yet." />
@@ -1920,9 +2099,12 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
         <summary>Recent lead journeys</summary>
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
-        <div className="dev-portal__section-header dev-portal__section-header--margin">
-          <h3>Recent attributed leads</h3>
-          <span className="dev-card__note-text">Latest visitors with UTM/ref attribution and their first 30 tracked actions.</span>
+        <div className="dev-portal__section-header dev-portal__section-header--margin admin-section-header-actions">
+          <div>
+            <h3>Recent attributed leads</h3>
+            <span className="dev-card__note-text">Latest visitors with UTM/ref attribution and their first 30 tracked actions.</span>
+          </div>
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={exportLeads}>Export CSV</button>
         </div>
         <div className="admin-table-wrap">
           <table className="admin-sales-table admin-sales-table--journeys">
@@ -1971,8 +2153,9 @@ function AnalyticsPanel({ analytics, webVitals, utmReport, groupBy, onGroupBy, s
         <summary>Breakdown by {groupBy}</summary>
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
-        <div className="dev-portal__section-header dev-portal__section-header--margin">
+        <div className="dev-portal__section-header dev-portal__section-header--margin admin-section-header-actions">
           <h3>Breakdown ({groupBy})</h3>
+          <button type="button" className="dev-btn dev-btn--secondary dev-btn--compact" onClick={exportBreakdown}>Export CSV</button>
         </div>
         <div className="admin-table-wrap">
           <table className="admin-sales-table">
@@ -2372,7 +2555,7 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Promo Codes" subtitle="Generate discount and subscription promo codes for users." />
 
-      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove} style={{ marginBottom: "2rem" }}>
+      <div className="dev-card console-spotlight-card admin-form-panel" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
         <div className="dev-portal__section-header dev-portal__section-header--margin">
           <h3>Create Promo Code</h3>
@@ -2380,7 +2563,7 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
         </div>
 
         <form onSubmit={handleCreate} className="dev-form">
-          <div className="dev-preset-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", width: "100%", marginBottom: "1rem" }}>
+          <div className="admin-form-grid admin-form-grid--four">
             <div className="dev-input-group">
               <label>Promo Code</label>
               <input
@@ -2430,7 +2613,7 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
             </div>
           </div>
 
-          <div className="dev-preset-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", width: "100%", marginBottom: "1rem" }}>
+          <div className="admin-form-grid admin-form-grid--two">
             <div className="dev-input-group">
               <label>Expiration Date (Optional)</label>
               <input
@@ -2508,7 +2691,7 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
                   </td>
                   <td>
                     {promo.discount_percent > 0 ? (
-                      <span className="dev-api-badge dev-api-badge--post dev-api-badge--micro" style={{ backgroundColor: "#27c24c", borderColor: "#27c24c", color: "#fff" }}>
+                      <span className="dev-api-badge dev-api-badge--post dev-api-badge--micro admin-discount-badge">
                         {promo.discount_percent}% off
                       </span>
                     ) : (
@@ -2524,9 +2707,8 @@ function PromoCodesPanel({ token, setToast, setError }: { token: string; setToas
                   <td>{formatDateTime(promo.created_at)}</td>
                   <td>
                     <button
-                      className="dev-btn dev-btn--secondary dev-btn--micro"
                       onClick={() => handleDelete(promo.id)}
-                      style={{ color: "#ff4d4f", borderColor: "#ff4d4f" }}
+                      className="dev-btn dev-btn--secondary dev-btn--micro dev-btn--danger-color"
                     >
                       Delete
                     </button>
@@ -2600,7 +2782,7 @@ function WalletsPanel({
       <div className="dev-card dev-toolbar console-spotlight-card admin-toolbar" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
         <form
-          className="admin-toolbar__form"
+          className="admin-toolbar__form admin-toolbar__form--wallets"
           onSubmit={(e) => {
             e.preventDefault();
             onApplyFilters({ ...filters, query });
@@ -2637,7 +2819,6 @@ function WalletsPanel({
           <CustomSelect
             value={filters.is_active}
             options={[
-              { value: "all", label: "All Statuses" },
               { value: "all", label: "All Statuses" },
               { value: "active", label: "Active" },
               { value: "inactive", label: "Inactive" },
@@ -2683,15 +2864,14 @@ function WalletsPanel({
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <code className="dev-wallet-address" title={w.address} style={{ wordBreak: "break-all", whiteSpace: "normal" }}>
+                    <div className="admin-wallet-actions">
+                      <code className="dev-wallet-address admin-wallet-address" title={w.address}>
                         {w.address}
                       </code>
                       <button
                         type="button"
                         className="dev-btn dev-btn--secondary dev-btn--micro"
                         onClick={() => void copyAddress(w.address)}
-                        style={{ padding: "2px 6px" }}
                       >
                         Copy
                       </button>
@@ -2700,7 +2880,6 @@ function WalletsPanel({
                         target="_blank"
                         rel="noreferrer"
                         className="dev-btn dev-btn--secondary dev-btn--micro dev-btn--centered"
-                        style={{ padding: "2px 6px", textDecoration: "none" }}
                       >
                         Scan ↗
                       </a>
@@ -2908,7 +3087,7 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
     <div className="dev-portal__section portal-animate-in">
       <PanelHeader title="Telegram Broadcast" subtitle="Broadcast updates or announcements to all active bot users." />
 
-      <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove} style={{ marginBottom: "2rem" }}>
+      <div className="dev-card console-spotlight-card admin-form-panel" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
         <div className="dev-portal__section-header dev-portal__section-header--margin">
           <h3>{editingBroadcast ? "Edit Scheduled Broadcast" : "New Broadcast"}</h3>
@@ -2918,18 +3097,17 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
           <div className="dev-input-group">
             <label>Message Text (HTML formatted)</label>
             <textarea
-              className="dev-input"
               rows={8}
               placeholder="e.g. <b>Hello!</b> We have updated our services. Check out..."
               value={message}
               onChange={e => setMessage(e.target.value)}
-              style={{ fontFamily: "monospace", resize: "vertical" }}
+              className="dev-input admin-broadcast-textarea"
             />
             <span className="dev-input-hint">Supported tags: &lt;b&gt;, &lt;i&gt;, &lt;code&gt;, &lt;a href=&quot;...&quot;&gt;. Links will have web page preview disabled by default.</span>
           </div>
 
           {!editingBroadcast && (
-            <div className="dev-input-group dev-input-group--checkbox" style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: "1rem 0" }}>
+            <div className="dev-input-group dev-input-group--checkbox admin-checkbox-row">
               <input
                 type="checkbox"
                 id="isScheduled"
@@ -2941,14 +3119,14 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
                     setScheduledTime(formatLocalDatetime(oneHourLater.toISOString()));
                   }
                 }}
-                style={{ width: "auto", cursor: "pointer" }}
+                className="admin-checkbox-input"
               />
-              <label htmlFor="isScheduled" style={{ marginBottom: 0, cursor: "pointer", userSelect: "none" }}>Schedule this broadcast for later</label>
+              <label htmlFor="isScheduled">Schedule this broadcast for later</label>
             </div>
           )}
 
           {(isScheduled || editingBroadcast) && (
-            <div className="dev-input-group" style={{ maxWidth: "300px", marginBottom: "1rem" }}>
+            <div className="dev-input-group admin-schedule-field">
               <label>Scheduled Date & Time (Local Time)</label>
               <input
                 type="datetime-local"
@@ -2961,12 +3139,12 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
           )}
 
           {!isScheduled && !editingBroadcast && recipientCount !== null && (
-            <div style={{ margin: "1rem 0", fontSize: "0.9rem", opacity: 0.8 }}>
+            <div className="admin-recipient-note">
               This broadcast will be sent to <strong>{recipientCount}</strong> active Telegram bot users (excluding blocked users and users who blocked the bot).
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
+          <div className="admin-form-actions">
             <button type="submit" className="dev-btn dev-btn--primary" disabled={sending || loading || !message.trim()}>
               {editingBroadcast
                 ? (sending ? "Updating..." : "Save Changes")
@@ -2991,7 +3169,7 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
 
       <div className="dev-card console-spotlight-card" onMouseMove={handleMouseMove}>
         <div className="console-card-spotlight" />
-        <div className="dev-portal__section-header dev-portal__section-header--margin" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="dev-portal__section-header dev-portal__section-header--margin admin-section-header-actions">
           <div>
             <h3>Scheduled Broadcasts</h3>
             <p>Queue and history of scheduled telegram broadcast posts.</p>
@@ -3027,21 +3205,21 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
               {scheduledBroadcasts.map(sb => {
                 const isPending = sb.status === "pending";
                 return (
-                  <tr key={sb.id} style={{ opacity: isPending ? 1 : 0.75 }}>
+                  <tr key={sb.id} className={isPending ? undefined : "admin-row-muted"}>
                     <td>#{sb.id}</td>
                     <td>
                       <span className={`dev-api-badge dev-status-badge dev-status-badge--${isPending ? "warning" : "success"}`}>
                         {sb.status}
                       </span>
                     </td>
-                    <td style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={sb.message}>
+                    <td className="admin-message-snippet" title={sb.message}>
                       {sb.message}
                     </td>
                     <td>{formatDateTime(sb.scheduled_at)}</td>
                     <td>{sb.sent_at ? formatDateTime(sb.sent_at) : "—"}</td>
                     <td>
                       {isPending ? (
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <div className="admin-actions">
                           <button
                             type="button"
                             className="dev-btn dev-btn--secondary dev-btn--micro"
@@ -3051,15 +3229,14 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
                           </button>
                           <button
                             type="button"
-                            className="dev-btn dev-btn--secondary dev-btn--micro"
-                            style={{ color: "#ff4d4f", borderColor: "#ff4d4f" }}
+                            className="dev-btn dev-btn--secondary dev-btn--micro dev-btn--danger-color"
                             onClick={() => handleDelete(sb)}
                           >
                             Remove
                           </button>
                         </div>
                       ) : (
-                        <span style={{ fontSize: "0.85rem", opacity: 0.5 }}>Completed</span>
+                        <span className="admin-completed-label">Completed</span>
                       )}
                     </td>
                   </tr>
@@ -3072,5 +3249,3 @@ function BroadcastPanel({ token, setToast, setError }: { token: string; setToast
     </div>
   );
 }
-
-
