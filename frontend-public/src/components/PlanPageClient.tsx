@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MarketingLayout } from "./marketing/MarketingLayout";
 import { FaqAccordion } from "./marketing/FaqAccordion";
 import { JsonLd } from "./JsonLd";
-import { PUBLIC_MARKETING_COPY, PUBLIC_PLAN_COPY } from "@/i18n";
+import { type Locale, PUBLIC_MARKETING_COPY, PUBLIC_PLAN_COPY } from "@/i18n";
 import { planSEOEn } from "@/i18n/plans.en";
 import { planSEORu } from "@/i18n/plans.ru";
 import { schemaId, softwareApplicationJsonLd } from "@/lib/geo";
@@ -28,11 +28,11 @@ function isGradientWord(raw: string) {
   return GRADIENT_WORDS.has(clean);
 }
 
-export function PlanPage({ variant, language }: { variant: Variant; language: "ru" | "en" }) {
+export function PlanPage({ variant, language }: { variant: Variant; language: Locale }) {
   const text = PUBLIC_PLAN_COPY[language];
   const marketing = PUBLIC_MARKETING_COPY[language];
   const product = text[variant];
-  const seoText = language === "en" ? planSEOEn[variant] : planSEORu[variant];
+  const seoText = language === "ru" ? planSEORu[variant] : planSEOEn[variant];
 
 
 

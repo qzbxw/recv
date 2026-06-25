@@ -1,6 +1,7 @@
 import { PlanPage } from "@/components/PlanPageClient";
 import { Metadata } from "next";
 import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
+import { normalizeLocale } from "@/i18n";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -8,7 +9,7 @@ type Props = {
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { locale: rawLocale } = await props.params;
-  const locale = rawLocale === "ru" ? "ru" : "en";
+  const locale = normalizeLocale(rawLocale);
   const description = metadataDescription(locale, locale === "ru"
     ? "Принимайте криптоплатежи напрямую на свои кошельки через checkout recv, консоль продавца и уведомления о статусе."
     : "Accept crypto payments directly to your wallets with recv hosted checkout, a merchant console, and payment status notifications.");
@@ -29,5 +30,5 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
 export default async function Page(props: Props) {
   const { locale } = await props.params;
-  return <PlanPage variant="merchant" language={locale === "ru" ? "ru" : "en"} />;
+  return <PlanPage variant="merchant" language={normalizeLocale(locale)} />;
 }

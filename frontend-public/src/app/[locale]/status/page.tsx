@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { StatusPageClient } from "@/components/StatusPageClient";
-import { PUBLIC_MARKETING_COPY } from "@/i18n";
-import { metadataDescription, socialImages } from "@/lib/seo";
+import { normalizeLocale, PUBLIC_MARKETING_COPY } from "@/i18n";
+import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -9,7 +9,7 @@ type Props = {
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { locale } = await props.params;
-  const lang = locale === "ru" ? "ru" : "en";
+  const lang = normalizeLocale(locale);
   const copy = PUBLIC_MARKETING_COPY[lang];
   const description = metadataDescription(lang, copy.statusHub.description);
 
@@ -18,11 +18,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     description,
     alternates: {
       canonical: `/${lang}/status`,
-      languages: {
-        en: "/en/status",
-        ru: "/ru/status",
-        "x-default": "/en/status",
-      },
+      languages: languageAlternates("/status"),
     },
     openGraph: {
       title: `${copy.statusHub.title} | recv`,
@@ -34,5 +30,5 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
 export default async function Page(props: Props) {
   const { locale } = await props.params;
-  return <StatusPageClient language={locale === "ru" ? "ru" : "en"} />;
+  return <StatusPageClient language={normalizeLocale(locale)} />;
 }

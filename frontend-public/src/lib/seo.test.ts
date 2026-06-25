@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import manifest from "@/app/manifest";
+import { GET as sitemapIndexGET } from "@/app/sitemap.xml/route";
 import { GET as sitemapFileGET } from "@/app/sitemaps/[locale]/[file]/route";
+import { LOCALES } from "@/i18n";
 import { robotsBody } from "@/lib/seo";
 import {
   absoluteBrandLogoUrl,
@@ -142,20 +144,32 @@ describe("SEO generation", () => {
     ])).toBe("2026-06-21T00:00:00.000Z");
   });
 
-  it("serves the English page sitemap route as crawlable XML", async () => {
+  it("serves every localized page sitemap from the sitemap index as crawlable XML", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://example.com";
-    const response = await sitemapFileGET(
-      new Request("https://example.com/sitemaps/en/pages.xml"),
-      { params: Promise.resolve({ locale: "en", file: "pages.xml" }) },
-    );
-    const body = await response.text();
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain("application/xml");
-    expect(body).toContain("<urlset");
-    expect(body).toContain("<loc>https://example.com/en</loc>");
-    expect(body).toContain("<loc>https://example.com/en/dpa</loc>");
-    expect(body).toContain("<loc>https://example.com/en/subprocessors</loc>");
-    expect(body).toContain('hreflang="ru"');
+    const indexResponse = await sitemapIndexGET();
+    const indexBody = await indexResponse.text();
+    expect(indexResponse.status).toBe(200);
+
+    for (const locale of LOCALES) {
+      expect(indexBody).toContain(`<loc>https://example.com/sitemaps/${locale}/pages.xml</loc>`);
+
+      const response = await sitemapFileGET(
+        new Request(`https://example.com/sitemaps/${locale}/pages.xml`),
+        { params: Promise.resolve({ locale, file: "pages.xml" }) },
+      );
+      const body = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain("application/xml");
+      expect(body).toContain("<urlset");
+      expect(body).toContain(`<loc>https://example.com/${locale}</loc>`);
+      expect(body).toContain(`<loc>https://example.com/${locale}/dpa</loc>`);
+      expect(body).toContain(`<loc>https://example.com/${locale}/subprocessors</loc>`);
+      for (const alternateLocale of LOCALES) {
+        expect(body).toContain(`hreflang="${alternateLocale}"`);
+      }
+      expect(body).toContain('hreflang="x-default"');
+    }
   });
 });

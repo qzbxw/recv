@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MarketingLayout } from "./marketing/MarketingLayout";
-import { PUBLIC_LEGAL_COPY as COPY } from "@/i18n";
+import { type Locale, PUBLIC_LEGAL_COPY as COPY } from "@/i18n";
 
 type LegalVariant = "privacy" | "terms" | "dpa" | "subprocessors";
 type LegalSection = {
@@ -37,10 +37,13 @@ const LEGAL_PROFILE = {
   effectiveDate: {
     ru: "13 марта 2026",
     en: "March 13, 2026",
+    uk: "13 березня 2026",
+    uz: "2026-yil 13-mart",
+    de: "13. März 2026",
   },
-} as const;const legalCopy = COPY as unknown as Record<LegalVariant, Record<"ru" | "en", LegalCopy>>;
+} as const;const legalCopy = COPY as unknown as Record<LegalVariant, Record<Locale, LegalCopy>>;
 
-export function LegalPage({ variant, language }: { variant: LegalVariant; language: "ru" | "en" }) {
+export function LegalPage({ variant, language }: { variant: LegalVariant; language: Locale }) {
   const copy = legalCopy[variant][language];
 
   return (

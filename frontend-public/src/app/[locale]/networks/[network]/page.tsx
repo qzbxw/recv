@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { NetworkDetailClient, type NetworkDetailPageCopy } from "@/components/NetworkDetailClient";
-import { getCopy, normalizeLocale } from "@/i18n";
+import { getCopy, LOCALES, normalizeLocale } from "@/i18n";
 import { softwareApplicationJsonLd } from "@/lib/geo";
-import { metadataDescription, socialImages } from "@/lib/seo";
+import { languageAlternates, metadataDescription, socialImages } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ network: string; locale: string }>;
@@ -28,8 +28,7 @@ function isNetworkSlug(value: string): value is SupportedNetworkSlug {
 }
 
 export async function generateStaticParams() {
-  const locales = ["en", "ru"];
-  return locales.flatMap((locale) =>
+  return LOCALES.flatMap((locale) =>
     NETWORK_SLUGS.map((network) => ({ locale, network }))
   );
 }
@@ -43,11 +42,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       title: `${locale === "ru" ? "USDT в TON" : "USDT on TON"} | recv`,
       alternates: {
         canonical: `/${locale}/networks/ton`,
-        languages: {
-          en: "/en/networks/ton",
-          ru: "/ru/networks/ton",
-          "x-default": "/en/networks/ton",
-        },
+        languages: languageAlternates("/networks/ton"),
       },
     };
   }
@@ -61,11 +56,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     description: metadataDescription(locale, page.metadata.description),
     alternates: {
       canonical: `/${locale}/networks/${network}`,
-      languages: {
-        en: `/en/networks/${network}`,
-        ru: `/ru/networks/${network}`,
-        "x-default": `/en/networks/${network}`,
-      },
+      languages: languageAlternates(`/networks/${network}`),
     },
     openGraph: {
       title: page.metadata.title,

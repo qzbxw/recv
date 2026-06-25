@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import { PUBLIC_MARKETING_COPY } from "@/i18n";
+import { type Locale, PUBLIC_MARKETING_COPY } from "@/i18n";
 
 function StatusDot({ color = "green" }: { color?: "green" | "yellow" | "red" }) {
   const colors = {
@@ -26,7 +26,7 @@ function StatusBadge({ label, color = "green" }: { label: string; color?: "green
   );
 }
 
-export function StatusPageClient({ language }: { language: "ru" | "en" }) {
+export function StatusPageClient({ language }: { language: Locale }) {
   const copy = PUBLIC_MARKETING_COPY[language];
 
   const services = [
