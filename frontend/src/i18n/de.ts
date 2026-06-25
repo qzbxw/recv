@@ -1296,21 +1296,21 @@ const de = {
           ]
         },
         {
-          title: "2. REMOTE PROCEDURE CALL (RPC) NODE PROVIDERS",
+          title: "2. REMOTE PROCEDURE CALL (RPC) NODE-PROVIDER",
           paragraphs: [
             "• Zweck: Abfrage von Blockchain-Block-Headern, Überwachung von Ziel-Wallets und Auslesen von Mempools (z. B. TonCenter, TronGrid und standardmäßige öffentliche Nodes).",
             "• Ort: Global verteilt."
           ]
         },
         {
-          title: "3. CLOUD PLATFORMS AND EDGE NETWORKS",
+          title: "3. CLOUD-PLATTFORMEN UND EDGE-NETZWERKE",
           paragraphs: [
             "• Zweck: Bereitstellung von Serverumgebungen, sicherem Datenbank-Hosting und globalem Edge-Anfrage-Routing.",
             "• Ort: Europäische Union / Vereinigte Staaten."
           ]
         },
         {
-          title: "4. EXCHANGE RATE APIs AND ORACLES",
+          title: "4. WECHSELKURS-APIS UND ORAKEL",
           paragraphs: [
             "• Zweck: Abrufen öffentlicher Echtzeit-Wechselkurse für Kryptowährungen (z. B. CoinGecko-API) zur Berechnung von USD-äquivalenten Rechnungswerten.",
             "• Ort: Global."

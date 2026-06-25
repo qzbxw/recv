@@ -885,7 +885,7 @@ const uz: typeof en = {
           ],
         },
         {
-          title: "15. TIL VA TARCJIMALAR",
+          title: "15. TIL VA TARJIMALAR",
           paragraphs: [
             "15.1. Ushbu Shartnoma ingliz va rus tillarida tuzilgan. Inglizcha versiya va ruscha tarjima o'rtasida har qanday nomuvofiqlik yuzaga kelgan taqdirda, inglizcha versiya ustuvor hisoblanadi va yuridik kuchga ega bo'ladi.",
           ],
