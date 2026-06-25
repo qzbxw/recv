@@ -64,6 +64,27 @@ describe("managed redirect proxy", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("redirects docs and blog from non-content locales to English", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    for (const [source, target] of [
+      ["/uk/docs/introduction", "/en/docs/introduction"],
+      ["/uz/blog", "/en/blog"],
+      ["/de/blog/trc20-payment-api", "/en/blog/trc20-payment-api"],
+    ]) {
+      const response = await proxy(
+        new NextRequest(`https://recv.money${source}?utm_source=partner`),
+      );
+
+      expect(response.status, source).toBe(308);
+      expect(response.headers.get("location"), source).toBe(
+        `https://recv.money${target}?utm_source=partner`,
+      );
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("passes the OG image generator through without locale redirects", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

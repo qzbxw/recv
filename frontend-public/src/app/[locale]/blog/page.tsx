@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { BlogIndexClient, type BlogPostSummary } from "@/components/blog/BlogIndexClient";
 import { getPublishedBlogPosts } from "@/lib/blog";
 import { FALLBACK_BLOG_POSTS } from "@/lib/blog-articles";
@@ -35,6 +36,9 @@ export async function generateMetadata(props: {
 
 export default async function BlogIndex(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
+  if (locale !== "ru" && locale !== "en") {
+    redirect("/en/blog");
+  }
   const language = locale === "ru" ? "ru" : "en";
   const posts = (await getPublishedBlogPosts(language)).filter((post) => post.slug) as BlogPostSummary[];
   const isDevOrTest = process.env.PLAYWRIGHT_TEST === "true";

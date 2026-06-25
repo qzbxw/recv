@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getDocBySlug, getAllDocSlugs } from "@/lib/docs";
 import { metadataDescription, socialImages } from "@/lib/seo";
 import { MDXRemote } from "next-mdx-remote/rsc";
@@ -31,6 +31,9 @@ export async function generateMetadata(props: {
   params: Promise<{ locale: string; slug: string[] }>;
 }): Promise<Metadata> {
   const { locale: rawLocale, slug } = await props.params;
+  if (rawLocale !== "ru" && rawLocale !== "en") {
+    redirect(`/en/docs/${slug.join("/")}`);
+  }
   const locale = normalizeLocale(rawLocale);
   const doc = getDocBySlug(slug, locale);
   if (!doc) {
@@ -78,6 +81,9 @@ export default async function DocPage(props: {
   params: Promise<{ locale: string; slug: string[] }>;
 }) {
   const { locale: rawLocale, slug } = await props.params;
+  if (rawLocale !== "ru" && rawLocale !== "en") {
+    redirect(`/en/docs/${slug.join("/")}`);
+  }
   const locale = normalizeLocale(rawLocale);
   const doc = getDocBySlug(slug, locale);
 

@@ -20,11 +20,34 @@ if [ ! -d .git ]; then
   exit 1
 fi
 
-# Получаем целевой коммит для деплоя (по умолчанию текущий HEAD)
-DEPLOY_SHA="${1:-$(git rev-parse HEAD)}"
 previous_sha="$(git rev-parse HEAD)"
+requested_ref="${1:-}"
+
+current_branch="$(git symbolic-ref --quiet --short HEAD || true)"
+if [ -z "$current_branch" ]; then
+  current_branch="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##' || true)"
+fi
+current_branch="${current_branch:-main}"
 
 echo "Текущий коммит: $previous_sha"
+
+if [ -n "$requested_ref" ]; then
+  echo "Запрошенный ref/SHA: $requested_ref"
+  echo "--> Обновление refs из origin..."
+  git fetch --prune origin
+  DEPLOY_SHA="$(git rev-parse --verify "${requested_ref}^{commit}")"
+else
+  echo "Целевой ref не передан. Обновляем ветку $current_branch из origin..."
+  git fetch --prune origin "$current_branch"
+  if git show-ref --verify --quiet "refs/heads/$current_branch"; then
+    git checkout --force "$current_branch"
+  else
+    git checkout --force -B "$current_branch" "origin/$current_branch"
+  fi
+  git pull --ff-only origin "$current_branch"
+  DEPLOY_SHA="$(git rev-parse HEAD)"
+fi
+
 echo "Целевой коммит: $DEPLOY_SHA"
 
 # Функция для обновления переменных в .env
@@ -73,8 +96,9 @@ if grep -Eq '^RESTIC_REPOSITORY=.+$' .env && grep -Eq '^RESTIC_PASSWORD=.+$' .en
   docker compose --profile ops run --rm restic backup /backup || echo "Предупреждение: Сбой резервного копирования restic" >&2
 fi
 
-# 3. Переключаемся на целевой коммит (если он отличается)
-if [ "$previous_sha" != "$DEPLOY_SHA" ]; then
+# 3. Переключаемся на целевой коммит, если он был явно передан.
+# Без аргумента deploy уже сделал fast-forward pull и остается на ветке.
+if [ -n "$requested_ref" ] && [ "$previous_sha" != "$DEPLOY_SHA" ]; then
   echo "--> Переключение рабочей копии на коммит $DEPLOY_SHA..."
   git checkout --force --detach "$DEPLOY_SHA"
 fi

@@ -3,10 +3,12 @@ import { COPY } from "@/lib/copy";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { JsonLd } from "@/components/JsonLd";
+import { NetworkLogo } from "@/components/NetworkLogo";
 import type { Locale } from "@/i18n";
 
 export default function HomeClient({ language }: { language: Locale }) {
   const copy = COPY[language];
+  const docsLocale = language === "ru" ? "ru" : "en";
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -66,7 +68,7 @@ export default function HomeClient({ language }: { language: Locale }) {
                 </Link>
               </div>
 
-              <Link className="lend-secondary w-full sm:w-auto px-10 py-5 text-lg sm:min-w-[240px] rounded-2xl group/sec flex items-center justify-center" href={`/${language}/docs`}>
+              <Link className="lend-secondary w-full sm:w-auto px-10 py-5 text-lg sm:min-w-[240px] rounded-2xl group/sec flex items-center justify-center" href={`/${docsLocale}/docs`}>
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   {copy.hero.secondary}
                   <span className="group-hover/sec:translate-x-1.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">→</span>
@@ -141,8 +143,9 @@ export default function HomeClient({ language }: { language: Locale }) {
                   <Link
                     key={`${i}-${net.slug}`}
                     href={`/${language}/networks/${net.slug}`}
-                    className="lend-marquee-item group transition-all duration-500 hover:text-accent hover:border-accent/30 hover:bg-accent/5"
+                    className="lend-marquee-item group flex items-center gap-3 transition-all duration-500 hover:text-accent hover:border-accent/30 hover:bg-accent/5"
                   >
+                    <NetworkLogo network={net.slug} className="network-logo--sm" />
                     <span className="font-bold">{net.label}</span>
                   </Link>
                 ))}

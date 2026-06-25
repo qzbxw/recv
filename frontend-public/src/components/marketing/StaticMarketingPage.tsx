@@ -53,6 +53,7 @@ export function StaticMarketingPage({
 }) {
   const locale = normalizeLocale(rawLocale);
   const siteCopy = getCopy(locale);
+  const docsLocale = locale === "ru" ? "ru" : "en";
 
 
   const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://recv.money").replace(/\/+$/, "");
@@ -116,7 +117,7 @@ export function StaticMarketingPage({
                 </span>
               </Link>
             </div>
-            <Link className="lend-secondary px-9 py-4 text-base min-w-[220px] rounded-2xl group/sec flex items-center justify-center" href={`/${locale}/docs`}>
+            <Link className="lend-secondary px-9 py-4 text-base min-w-[220px] rounded-2xl group/sec flex items-center justify-center" href={`/${docsLocale}/docs`}>
               <span className="relative z-10 flex items-center justify-center gap-2">
                 {siteCopy.nav.docs}
                 <span className="group-hover/sec:translate-x-1.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">→</span>
@@ -177,7 +178,7 @@ export function StaticMarketingPage({
               {siteCopy.hero.primary}
               <span className="group-hover/btn:translate-x-1.5 transition-transform duration-500">→</span>
             </Link>
-            <Link className="lend-secondary px-12 py-5 text-lg font-bold rounded-2xl min-w-[240px] flex items-center justify-center gap-2" href={`/${locale}/docs`}>
+            <Link className="lend-secondary px-12 py-5 text-lg font-bold rounded-2xl min-w-[240px] flex items-center justify-center gap-2" href={`/${docsLocale}/docs`}>
               {siteCopy.nav.docs}
             </Link>
           </div>

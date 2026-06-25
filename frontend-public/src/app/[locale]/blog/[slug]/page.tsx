@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { BlogPostClient } from "@/components/blog/BlogPostClient";
 import { lookupPublishedBlogPost, type PublicBlogPost } from "@/lib/blog";
@@ -38,6 +38,9 @@ export async function generateMetadata(
   props: Props
 ): Promise<Metadata> {
   const params = await props.params;
+  if (params.locale !== "ru" && params.locale !== "en") {
+    redirect(`/en/blog/${params.slug}`);
+  }
   const language = params.locale === "ru" ? "ru" : "en";
   const post = await resolveBlogPost(params.slug, language);
 
@@ -87,6 +90,9 @@ export async function generateMetadata(
 
 export default async function BlogPost(props: Props) {
   const params = await props.params;
+  if (params.locale !== "ru" && params.locale !== "en") {
+    redirect(`/en/blog/${params.slug}`);
+  }
   const language = params.locale === "ru" ? "ru" : "en";
   const post = await resolveBlogPost(params.slug, language);
 

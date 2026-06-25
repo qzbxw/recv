@@ -2,12 +2,12 @@ import Link from "next/link";
 import { 
   ArrowRight, 
   ShieldCheck, 
-  Layers, 
-  Globe
+  Layers
 } from "lucide-react";
 import { MarketingLayout } from "./marketing/MarketingLayout";
 import { JsonLd } from "./JsonLd";
 import { BreadcrumbJsonLd } from "./BreadcrumbJsonLd";
+import { NetworkLogo } from "@/components/NetworkLogo";
 import { Locale } from "@/i18n";
 import { schemaId, softwareApplicationJsonLd } from "@/lib/geo";
 import "./marketing/plans/plans.css";
@@ -112,6 +112,17 @@ const GRADIENT_WORDS = new Set([
   "webhooks",
   "recv",
 ]);
+
+function networkLogoSlug(name: string) {
+  const value = name.toLowerCase();
+  if (value.includes("gram") || value.includes("ton")) return "ton";
+  if (value.includes("tron") || value.includes("trc")) return "tron";
+  if (value.includes("solana")) return "solana";
+  if (value.includes("base")) return "base";
+  if (value.includes("arbitrum")) return "arbitrum";
+  if (value.includes("bsc") || value.includes("bnb")) return "bsc";
+  return value;
+}
 
 function isGradientWord(raw: string) {
   const clean = raw.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()—]/g, "").toLowerCase();
@@ -310,7 +321,7 @@ export function UseCasePageClient({ usecase, locale, copy }: Props) {
                 <div className="lend-card-spotlight" />
                 <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-4">
-                    <Globe size={20} className="text-accent group-hover:scale-115 transition-transform duration-500" />
+                    <NetworkLogo network={networkLogoSlug(network.name)} className="network-logo--sm group-hover:scale-110 transition-transform duration-500" />
                     <strong className="text-lg font-bold text-white group-hover:text-white transition-colors">{network.name}</strong>
                   </div>
                   <p className="text-sm text-white/55 leading-relaxed group-hover:text-white/70 transition-opacity">{network.body}</p>

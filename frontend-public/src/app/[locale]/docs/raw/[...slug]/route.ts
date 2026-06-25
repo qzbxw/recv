@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDocBySlug } from "@/lib/docs";
 
 export async function GET(
@@ -6,6 +6,9 @@ export async function GET(
   { params }: { params: Promise<{ locale: string; slug: string[] }> }
 ) {
   const { locale, slug } = await params;
+  if (locale !== "ru" && locale !== "en") {
+    return NextResponse.redirect(new URL(`/en/docs/raw/${slug.join("/")}`, request.url), 308);
+  }
   
   try {
     const doc = getDocBySlug(slug, locale);

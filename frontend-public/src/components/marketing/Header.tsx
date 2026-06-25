@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, X, Zap, CreditCard, Code, Bot } from "lucide-react";
+import { ChevronDown, Globe2, Menu, X, Zap, CreditCard, Code, Bot } from "lucide-react";
 import type { PublicCopy } from "@/lib/copy";
 import { LOCALES, type Locale } from "@/i18n";
 import { NetworkLogo } from "@/components/NetworkLogo";
@@ -17,6 +17,10 @@ const LANGUAGE_LABELS: Record<Locale, string> = {
   uz: "UZ",
   de: "DE",
 };
+
+function contentLocale(language: Locale) {
+  return language === "ru" ? "ru" : "en";
+}
 
 /** Swap the leading locale segment of the current path to the target locale. */
 function swapLocaleInPath(pathname: string | null, target: Locale) {
@@ -36,6 +40,7 @@ export function Header({ language, nav }: { language: Locale; nav: PublicCopy["n
   const localeAlternates = useLocaleAlternates();
   const localeHref = (target: Locale) =>
     localeAlternates?.[target] ?? swapLocaleInPath(pathname, target);
+  const docsBlogLocale = contentLocale(language);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -178,22 +183,36 @@ export function Header({ language, nav }: { language: Locale; nav: PublicCopy["n
               </div>
             </div>
 
-            <Link href={`/${language}/docs/introduction`} className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+            <Link href={`/${docsBlogLocale}/docs/introduction`} className="text-sm font-medium text-white/70 hover:text-white transition-colors">
               {nav.docs}
             </Link>
-            <Link href={`/${language}/blog`} className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+            <Link href={`/${docsBlogLocale}/blog`} className="text-sm font-medium text-white/70 hover:text-white transition-colors">
               {nav.blog}
             </Link>
           </nav>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
-              {LOCALES.map((locale) => (
-                <Link key={locale} href={localeHref(locale)} className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === locale ? "lang-btn-active" : "lang-btn-inactive"}`}>
-                  {LANGUAGE_LABELS[locale]}
-                </Link>
-              ))}
-            </div>
+            <details className="lang-dropdown group relative">
+              <summary className="lang-dropdown-trigger flex cursor-pointer list-none items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-bold text-white/80 transition-colors hover:bg-white/10">
+                <Globe2 className="h-3.5 w-3.5 text-white/50" />
+                <span>{LANGUAGE_LABELS[language]}</span>
+                <ChevronDown className="h-3.5 w-3.5 text-white/40 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="lang-dropdown-menu absolute right-0 top-full z-[120] mt-3 min-w-[132px] rounded-2xl border border-white/10 bg-black/90 p-1.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
+                {LOCALES.map((locale) => (
+                  <Link
+                    key={locale}
+                    href={localeHref(locale)}
+                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors ${
+                      language === locale ? "bg-white/10 text-white" : "text-white/55 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <span>{LANGUAGE_LABELS[locale]}</span>
+                    {language === locale ? <span className="h-1.5 w-1.5 rounded-full bg-accent" /> : null}
+                  </Link>
+                ))}
+              </div>
+            </details>
             
             <Link href="/app/auth" className="hidden sm:flex header-console-btn transition-all">
               {nav.console}
@@ -232,8 +251,8 @@ export function Header({ language, nav }: { language: Locale; nav: PublicCopy["n
             </div>
 
             <div className="flex flex-col gap-6 pt-8 border-t border-white/5">
-              <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/docs/introduction`} className="text-xl font-bold text-white/60">{nav.docs}</Link>
-              <Link onClick={() => setIsMenuOpen(false)} href={`/${language}/blog`} className="text-xl font-bold text-white/60">{nav.blog}</Link>
+              <Link onClick={() => setIsMenuOpen(false)} href={`/${docsBlogLocale}/docs/introduction`} className="text-xl font-bold text-white/60">{nav.docs}</Link>
+              <Link onClick={() => setIsMenuOpen(false)} href={`/${docsBlogLocale}/blog`} className="text-xl font-bold text-white/60">{nav.blog}</Link>
               <Link onClick={() => setIsMenuOpen(false)} href="/app/auth" className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 !text-white text-center font-bold text-lg mt-4 shadow-[0_12px_32px_rgba(124,58,237,0.4)] flex items-center justify-center gap-2">
                 {nav.console}
                 <span aria-hidden>→</span>

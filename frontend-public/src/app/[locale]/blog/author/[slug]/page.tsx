@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
 import Image from "next/image";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
@@ -56,6 +56,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
 export default async function AuthorPage(props: Props) {
   const { slug, locale } = await props.params;
+  if (locale !== "ru" && locale !== "en") {
+    redirect(`/en/blog/author/${slug}`);
+  }
   const author = AUTHORS[slug as keyof typeof AUTHORS];
 
   if (!author) notFound();

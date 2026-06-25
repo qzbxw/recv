@@ -35,6 +35,12 @@ function requestLocale(pathname: string) {
   return ["en", "ru", "uk", "uz", "de"].includes(locale) ? locale : "en";
 }
 
+function unsupportedContentLocaleRedirect(pathname: string) {
+  const match = pathname.match(/^\/(uk|uz|de)\/(docs|blog)(?:\/.*)?$/);
+  if (!match) return null;
+  return `/en${pathname.slice(match[1].length + 1)}`;
+}
+
 function isPassthrough(pathname: string) {
   return (
     PUBLIC_FILE.test(pathname) ||
@@ -115,6 +121,12 @@ export async function proxy(request: NextRequest) {
 
   if (!isPassthrough(pathname) && !/^\/(en|ru|uk|uz|de)(?:\/|$)/.test(pathname)) {
     url.pathname = `/en${pathname}`;
+    return NextResponse.redirect(url, 308);
+  }
+
+  const contentRedirect = unsupportedContentLocaleRedirect(pathname);
+  if (contentRedirect) {
+    url.pathname = contentRedirect;
     return NextResponse.redirect(url, 308);
   }
 

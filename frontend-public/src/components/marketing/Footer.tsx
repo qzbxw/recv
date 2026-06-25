@@ -6,6 +6,7 @@ export function Footer({ language }: { language: Locale }) {
   const copy = getCopy(language);
   const nav = copy.nav;
   const f = copy.footer;
+  const docsBlogLocale = language === "ru" ? "ru" : "en";
 
   return (
     <footer className="relative bg-[#020202] border-t border-purple-500/10 pt-24 pb-12 overflow-hidden">
@@ -62,8 +63,8 @@ export function Footer({ language }: { language: Locale }) {
           <div>
             <div className="text-xs font-bold uppercase tracking-widest text-white/50 mb-6">{f.resources}</div>
             <ul className="space-y-4">
-              <li><Link href={`/${language}/docs/introduction`} className="lend-footer-link">{nav.docs}</Link></li>
-              <li><Link href={`/${language}/blog`} className="lend-footer-link">{nav.blog}</Link></li>
+              <li><Link href={`/${docsBlogLocale}/docs/introduction`} className="lend-footer-link">{nav.docs}</Link></li>
+              <li><Link href={`/${docsBlogLocale}/blog`} className="lend-footer-link">{nav.blog}</Link></li>
               <li><Link href={`/${language}/privacy`} className="lend-footer-link">{f.privacy}</Link></li>
               <li><Link href={`/${language}/terms`} className="lend-footer-link">{f.terms}</Link></li>
             </ul>
