@@ -131,26 +131,26 @@ const en = {
       trial: {
         name: "Trial",
         price: "0",
-        features: ["15 live invoices total", "No API access (manual only)", "1 Webhook endpoint", "Telegram bot notifications", "1 Workspace / 1 Seat", "Community support"],
+        features: ["15 live invoices total", "No API access (manual only)", "Telegram bot notifications", "Community support"],
         cta: "Start Free Trial"
       },
       merchant: {
         name: "Merchant",
         price: "9",
         trial: "Payment links",
-        features: ["Payment links", "Telegram-flow", "Manual review", "API limit"],
+        features: ["Payment links", "Telegram checkout", "Manual invoice review", "Basic analytics"],
         cta: "Activate Merchant"
       },
       developer: {
         name: "Developer",
         price: "29",
-        features: ["Full API", "Webhooks", "Idempotency", "MCP tools"],
+        features: ["Full API access", "Webhook integrations", "Idempotency keys", "MCP tools"],
         cta: "Activate Developer"
       },
       business: {
         name: "Business",
         price: "79",
-        features: ["Teams", "Audit logs", "Custom branding", "200k monthly requests"],
+        features: ["Team seats", "Audit logs", "Custom branding", "200k monthly requests"],
         cta: "Activate Business"
       }
     },

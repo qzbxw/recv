@@ -172,19 +172,19 @@ const ru = {
         name: "Merchant",
         price: "9",
         trial: "Trial: 15 live-инвойсов бесплатно",
-        features: ["Payment links", "Telegram-flow", "Manual review", "Лимит API"],
+        features: ["Платежные ссылки", "Оплата в Telegram-боте", "Ручная проверка счетов", "Базовая аналитика"],
         cta: "Начать работу"
       },
       api: {
         name: "Developer",
         price: "29",
-        features: ["Полный API", "Webhooks", "Идемпотентность", "MCP-инструменты"],
+        features: ["Полный доступ к API", "Webhooks-интеграции", "Ключи идемпотентности", "MCP-инструменты"],
         cta: "Подробнее об API"
       },
       business: {
         name: "Business",
         price: "79",
-        features: ["Команды", "Audit logs", "Кастом-брендинг", "0% комиссия"],
+        features: ["Доступ для команд", "Аудит-логи", "Кастом-брендинг", "200k запросов в месяц"],
         cta: "Обновить"
       }
     },

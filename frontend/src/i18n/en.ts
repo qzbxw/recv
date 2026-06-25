@@ -172,19 +172,19 @@ const en = {
         name: "Merchant",
         price: "9",
         trial: "Trial: 15 live invoices free",
-        features: ["Payment links", "Telegram-flow", "Manual review", "API limit"],
+        features: ["Payment links", "Telegram checkout", "Manual invoice review", "Basic analytics"],
         cta: "Get Started"
       },
       api: {
         name: "Developer",
         price: "29",
-        features: ["Full API", "Webhooks", "Idempotency", "MCP tools"],
+        features: ["Full API access", "Webhook integrations", "Idempotency keys", "MCP tools"],
         cta: "Explore API"
       },
       business: {
         name: "Business",
         price: "79",
-        features: ["Teams", "Audit logs", "Custom branding", "0% commission"],
+        features: ["Team seats", "Audit logs", "Custom branding", "200k monthly requests"],
         cta: "Upgrade"
       }
     },

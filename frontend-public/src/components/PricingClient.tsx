@@ -58,73 +58,70 @@ export function PricingClient({ locale }: { locale: string }) {
       {/* PRICING CARDS */}
       <section className="lend-pricing-cards-section py-12 md:py-20 pb-24" data-reveal>
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lend-reveal--2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lend-reveal--2">
             {tiers.map((tier, idx) => {
               const item = copy.pricing[tier];
               const isPopular = tier === POPULAR_TIER;
+              const isPro = tier === "business";
               const isCustom = isNaN(Number(item.price));
               const href = tier === "trial" ? "/app/auth" : `/${locale}/${TIER_LINKS[tier]}`;
 
               return (
-                <article
-                  key={tier}
-                  className={`lend-card lend-spotlight-card group relative flex flex-col p-8 transition-all duration-700 hover:scale-[1.02] ${isPopular ? "border-accent/40 bg-accent/[0.04]" : ""}`}
+                <div 
+                  key={tier} 
+                  className={`lend-pricing-card lend-spotlight-card ${isPro ? 'lend-pricing-card--pro' : ''} ${isPopular ? 'is-popular' : ''} group`}
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
                   <div className="lend-card-spotlight" />
+                  <div className="lend-pricing-glow" />
                   {isPopular && (
-                    <div className="absolute -top-px left-1/2 -translate-x-1/2">
-                      <span className="block text-[9px] font-black tracking-[0.3em] uppercase text-accent bg-accent/[0.1] border border-accent/30 px-4 py-1 rounded-b-xl">
-                        {copy.pricing.popular}
-                      </span>
+                    <div className="lend-popular-badge">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse mr-2" />
+                      <span>{copy.pricing.popular || "Popular"}</span>
                     </div>
                   )}
-
-                  {/* Background number */}
-                  <div className="absolute top-0 right-0 p-6 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity pointer-events-none select-none">
-                    <span className="text-[6rem] font-black italic leading-none font-['Montserrat']">{String(idx + 1).padStart(2, "0")}</span>
-                  </div>
-
-                  <div className="relative z-10 flex flex-col h-full">
-                    <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 uppercase mb-4 block">{String(idx + 1).padStart(2, "0")}</span>
-                    <h2 className="text-lg font-black tracking-tight mb-6 group-hover:text-white transition-colors">{item.name}</h2>
-
-                    {/* Price */}
-                    <div className="mb-8 pb-6 border-b border-white/[0.06]">
+                  
+                  <div className="relative z-10 w-full flex flex-col h-full">
+                    {/* Background number */}
+                    <span className="text-[10px] font-bold tracking-[0.3em] text-accent/60 uppercase mb-4 block text-left">{String(idx + 1).padStart(2, "0")}</span>
+                    <h3 className="lend-tier-name text-left">{item.name}</h3>
+                    
+                    <div className="lend-price-container flex justify-start">
                       {isCustom ? (
                         <p className="text-3xl font-black text-white/70">{item.price}</p>
                       ) : (
-                        <div className="flex items-end gap-1">
-                          <span className="text-2xl font-bold text-white/40 self-start mt-1">$</span>
-                          <span className="text-5xl font-black tracking-tighter text-white">{item.price}</span>
-                          <span className="text-sm text-white/30 mb-2">/mo</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="lend-price-symbol">$</span>
+                          <span className={`lend-price-amount inline-block ${isPopular ? "bg-gradient-to-r from-purple-400 via-violet-500 to-indigo-500 bg-clip-text text-transparent drop-shadow-[0_2px_15px_rgba(124,58,237,0.3)]" : ""}`}>{item.price}</span>
+                          <span className="lend-price-period">/mo</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Features */}
-                    <ul className="flex flex-col gap-3 flex-1 mb-8">
-                      {item.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3 text-sm text-white/55 group-hover:text-white/70 transition-colors">
-                          <CheckIcon />
+                    <div className="h-px w-full bg-white/5 my-8 group-hover:bg-accent/20 transition-colors" />
+
+                    <ul className="lend-features-list flex-1">
+                      {item.features.map((feature: string) => (
+                        <li key={feature} className="lend-feature-item">
+                          <svg className="lend-feature-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
                           <span>{feature}</span>
                         </li>
                       ))}
                     </ul>
 
-                    {/* CTA */}
-                    <Link
+                    <Link 
+                      className={`lend-pricing-button ${isPro ? 'is-pro' : ''} ${isPopular ? 'lend-primary bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 border-none hover:shadow-[0_0_35px_rgba(168,85,247,0.4)]' : ''} mt-auto`}
                       href={href}
-                      className={`mt-auto block text-center py-3.5 px-6 rounded-xl font-bold text-sm transition-all duration-300 ${
-                        isPopular
-                          ? "bg-accent text-white hover:bg-accent/90 shadow-[0_8px_24px_rgba(124,58,237,0.3)]"
-                          : "border border-white/15 text-white/70 hover:border-accent/50 hover:text-white bg-white/[0.02] hover:bg-accent/[0.06]"
-                      }`}
                     >
-                      {item.cta}
+                      <span>{item.cta}</span>
+                      <svg className="w-4 h-4 ml-2 group-hover:translate-x-1.5 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
                     </Link>
                   </div>
-                </article>
+                </div>
               );
             })}
           </div>
@@ -138,7 +135,7 @@ export function PricingClient({ locale }: { locale: string }) {
             {[
               { stat: "0%", label: isRu ? "Комиссии с оборота" : "Turnover fees" },
               { stat: "100%", label: isRu ? "Non-custodial" : "Non-custodial" },
-              { stat: "5", label: isRu ? "Платежных сетей MVP" : "MVP payment networks" },
+              { stat: "6", label: isRu ? "Платежных сетей" : "Payment networks" },
               { stat: "∞", label: isRu ? "Объём транзакций" : "Transaction volume" },
             ].map(({ stat, label }) => (
               <div key={label} className="text-center">

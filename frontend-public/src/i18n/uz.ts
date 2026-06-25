@@ -211,9 +211,7 @@ const uz = {
       features: [
         "Jami 15 ta faol hisob-faktura",
         "API-ga kirish imkoni yo'q (faqat qo'lda)",
-        "1 ta vebhuk yakuniy nuqtasi",
         "Telegram bot bildirishnomalari",
-        "1 ta ishchi joy / 1 ta a'zo",
         "Hamjamiyat yordami",
       ],
       cta: "Tekin sinab ko'rishni boshlash",
@@ -226,7 +224,7 @@ const uz = {
         "To'lov havolalari",
         "Telegram-oqim",
         "Qo'lda ko'rib chiqish",
-        "API limiti",
+        "Baza tahlili",
       ],
       cta: "Merchant-ni faollashtirish",
     },
