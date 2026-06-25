@@ -187,9 +187,19 @@ func TestNormalizeLanguage(t *testing.T) {
 		" RU-RU ": "ru",
 		"ru_ru":   "ru",
 		"russian": "ru",
+		"uk":      "uk",
+		"uk-UA":   "uk",
+		"ua":      "uk",
+		"uz":      "uz",
+		"uz_UZ":   "uz",
+		"de":      "de",
+		"de-DE":   "de",
+		"german":  "de",
 		"en":      "en",
+		"es":      "en",
+		"pt-br":   "en",
 		"":        "en",
-		"de":      "en",
+		"fr":      "en",
 	}
 	for input, want := range cases {
 		if got := NormalizeLanguage(input); got != want {
@@ -201,6 +211,15 @@ func TestNormalizeLanguage(t *testing.T) {
 func TestNotificationCopyFor(t *testing.T) {
 	if got := notificationCopyFor("ru").actionCountAsPaid; got != notificationCopyRU.actionCountAsPaid {
 		t.Fatal("expected russian notification copy")
+	}
+	if got := notificationCopyFor("uk").actionCountAsPaid; got != notificationCopyUK.actionCountAsPaid {
+		t.Fatal("expected ukrainian notification copy")
+	}
+	if got := notificationCopyFor("uz").actionCountAsPaid; got != notificationCopyUZ.actionCountAsPaid {
+		t.Fatal("expected uzbek notification copy")
+	}
+	if got := notificationCopyFor("de").actionCountAsPaid; got != notificationCopyDE.actionCountAsPaid {
+		t.Fatal("expected german notification copy")
 	}
 	if got := notificationCopyFor("unknown").actionCountAsPaid; got != notificationCopyEN.actionCountAsPaid {
 		t.Fatal("expected english notification copy fallback")

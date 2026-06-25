@@ -1,4 +1,4 @@
-import type { AuthIdentity, MeResponse, User, Workspace } from "../types";
+import type { AuthIdentity, InterfaceLanguage, MeResponse, User, Workspace } from "../types";
 import type { AttributionPayload } from "../attribution";
 import { getApiBase, request } from "./core";
 
@@ -71,8 +71,8 @@ export async function updateContactEmail(token: string, payload: { email: string
   }, token);
 }
 
-export async function updateLanguage(token: string, payload: { language: "en" | "ru" }) {
-  return request<{ workspace: Workspace; language: "en" | "ru" }>("/api/me/language", {
+export async function updateLanguage(token: string, payload: { language: InterfaceLanguage }) {
+  return request<{ workspace: Workspace; language: InterfaceLanguage }>("/api/me/language", {
     method: "POST",
     body: JSON.stringify(payload),
   }, token);

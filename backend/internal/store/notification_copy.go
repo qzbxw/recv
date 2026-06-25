@@ -75,10 +75,58 @@ var notificationCopyPT = notificationCopy{
 	actionKeepReview:  "🔍 Manter em revisão",
 }
 
+var notificationCopyUK = notificationCopy{
+	subscriptionActivated: "✅ %s активовано.\nОтримано %s %s · розблоковано на %d днів. Поїхали.",
+	paymentConfirmed:      "✅ Оплачено — %s.\n+%s %s вже у вашому гаманці.",
+	partialPayment:        "🟡 Майже все — %s.\nПрийшло %s %s, у рахунку було %s %s. Схоже на комісію біржі. Зарахувати як оплату чи чекаємо на доплату?",
+	underpaid:             "🟡 Недоплата — %s.\nПрийшло %s %s, очікувалось %s %s. Рішення за вами.",
+	overpaid:              "🔵 Переплата — %s.\nПрийшло %s %s, очікувалось %s %s. Підтвердіть — і готово.",
+	latePayment:           "🟠 Пізня оплата — %s.\n%s %s прийшли після закінчення терміну. Відкладено на перевірку.",
+	statusUpdated:         "🔔 %s тепер у статусі %s.",
+
+	actionCountAsPaid: "✅ Зарахувати оплату",
+	actionWaitTopUp:   "⏳ Чекати на доплату",
+	actionKeepReview:  "🔍 Залишити на перевірці",
+}
+
+var notificationCopyUZ = notificationCopy{
+	subscriptionActivated: "✅ %s faollashtirildi.\n%s %s qabul qilindi · %d kunga ochildi. Boshladik.",
+	paymentConfirmed:      "✅ To'landi — %s.\n+%s %s hamyoningizga tushdi.",
+	partialPayment:        "🟡 Deyarli tayyor — %s.\n%s %s keldi, hisob-kitobda %s %s edi. Birja/tarmoq komissiyasiga o'xshaydi. To'langan deb hisoblaymizmi yoki qo'shimcha to'lovni kutamizmi?",
+	underpaid:             "🟡 Kam to'lov — %s.\n%s %s keldi, kutilgan %s %s. Qaror sizdan.",
+	overpaid:              "🔵 Ortiqcha to'lov — %s.\n%s %s keldi, kutilgan %s %s. Tasdiqlang va tayyor.",
+	latePayment:           "🟠 Kech qolgan to'lov — %s.\n%s %s muddati tugagandan keyin keldi. Tasdiqlashingiz uchun tekshiruvga olib qo'yildi.",
+	statusUpdated:         "🔔 %s hozirda %s statusida.",
+
+	actionCountAsPaid: "✅ To'lov sifatida hisoblash",
+	actionWaitTopUp:   "⏳ Qo'shimcha to'lovni kutish",
+	actionKeepReview:  "🔍 Tekshiruvda qoldirish",
+}
+
+var notificationCopyDE = notificationCopy{
+	subscriptionActivated: "✅ %s ist aktiv.\n%s %s erhalten · %d Tage freigeschaltet. Los geht's.",
+	paymentConfirmed:      "✅ Bezahlt — %s.\n+%s %s ist jetzt in deiner Wallet.",
+	partialPayment:        "🟡 Fast geschafft — %s.\n%s %s erhalten, Rechnung verlangte %s %s. Sieht nach einer Netzwerk-/Börsengebühr aus. Als bezahlt markieren oder auf Zuzahlung warten?",
+	underpaid:             "🟡 Zu wenig gezahlt — %s.\n%s %s erhalten, erwartet %s %s. Deine Entscheidung.",
+	overpaid:              "🔵 Zu viel gezahlt — %s.\n%s %s erhalten, erwartet %s %s. Bestätigen zum Abschließen.",
+	latePayment:           "🟠 Verspätete Zahlung — %s.\n%s %s gingen nach Ablauf der Rechnung ein. Zur Überprüfung zurückgelegt.",
+	statusUpdated:         "🔔 %s ist jetzt %s.",
+
+	actionCountAsPaid: "✅ Als bezahlt werten",
+	actionWaitTopUp:   "⏳ Auf Zuzahlung warten",
+	actionKeepReview:  "🔍 In Überprüfung belassen",
+}
+
 func notificationCopyFor(language string) notificationCopy {
 	switch NormalizeLanguage(language) {
 	case "ru":
 		return notificationCopyRU
+	case "uk":
+		return notificationCopyUK
+	case "uz":
+		return notificationCopyUZ
+	case "de":
+		return notificationCopyDE
 	case "es":
 		return notificationCopyES
 	case "pt":

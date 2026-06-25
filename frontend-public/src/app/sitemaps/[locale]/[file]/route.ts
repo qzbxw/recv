@@ -10,6 +10,7 @@ import {
   xmlResponse,
 } from "@/lib/seo";
 import { FALLBACK_BLOG_POSTS } from "@/lib/blog-articles";
+import { LOCALES, type Locale } from "@/i18n";
 
 type SitemapLocale = "en" | "ru";
 
@@ -49,17 +50,22 @@ export async function GET(
   { params }: { params: Promise<{ locale: string; file: string }> },
 ) {
   const { locale: rawLocale, file } = await params;
-  if (rawLocale !== "en" && rawLocale !== "ru") {
+  if (!LOCALES.includes(rawLocale as Locale)) {
     return new Response("Not found", { status: 404 });
   }
-  const locale: SitemapLocale = rawLocale;
+  const locale = rawLocale as Locale;
 
   if (file === "pages.xml") {
     return xmlResponse(renderSitemap(publicPageEntries(locale)));
   }
 
+  if (locale !== "en" && locale !== "ru") {
+    return new Response("Not found", { status: 404 });
+  }
+  const contentLocale: SitemapLocale = locale;
+
   if (file === "docs.xml") {
-    return xmlResponse(renderSitemap(documentationEntries(locale)));
+    return xmlResponse(renderSitemap(documentationEntries(contentLocale)));
   }
 
   const blogMatch = /^blog-(\d+)\.xml$/.exec(file);
@@ -74,20 +80,20 @@ export async function GET(
 
   try {
     const response = await fetch(
-      `${backendApiUrl()}/api/public/blog/sitemap?locale=${locale}&page=${page}&page_size=${SITEMAP_PAGE_SIZE}`,
+      `${backendApiUrl()}/api/public/blog/sitemap?locale=${contentLocale}&page=${page}&page_size=${SITEMAP_PAGE_SIZE}`,
       {
         next: { revalidate: 3600 },
         signal: AbortSignal.timeout(2_000),
       },
     );
     if (!response.ok) {
-      return xmlResponse(renderSitemap(fallbackBlogEntries(locale, page)), 300);
+      return xmlResponse(renderSitemap(fallbackBlogEntries(contentLocale, page)), 300);
     }
 
     const data = (await response.json()) as BlogSitemapResponse;
     const baseUrl = publicSiteUrl();
     const entries: SitemapEntry[] = (data.items ?? [])
-      .filter((post) => post.locale === locale)
+      .filter((post) => post.locale === contentLocale)
       .filter(
         (post) =>
           !isNonSelfCanonical(
@@ -115,6 +121,6 @@ export async function GET(
 
     return xmlResponse(renderSitemap(entries));
   } catch {
-    return xmlResponse(renderSitemap(fallbackBlogEntries(locale, page)), 300);
+    return xmlResponse(renderSitemap(fallbackBlogEntries(contentLocale, page)), 300);
   }
 }

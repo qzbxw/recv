@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getCopy } from "@/lib/copy";
+import type { Locale } from "@/i18n";
 
-export function Footer({ language }: { language: "ru" | "en" }) {
+export function Footer({ language }: { language: Locale }) {
   const copy = getCopy(language);
   const nav = copy.nav;
   const f = copy.footer;

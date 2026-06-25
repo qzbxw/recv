@@ -4964,7 +4964,7 @@ func TestHandleUpdateLanguageWithDB(t *testing.T) {
 
 	t.Run("falls back to default for unknown language", func(t *testing.T) {
 		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(stdhttp.MethodPost, "/api/me/language", strings.NewReader(`{"language":"de"}`))
+		req := httptest.NewRequest(stdhttp.MethodPost, "/api/me/language", strings.NewReader(`{"language":"fr"}`))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(rec, req)
 		if rec.Code != stdhttp.StatusOK {

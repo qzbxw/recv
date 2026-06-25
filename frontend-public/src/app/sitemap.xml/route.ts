@@ -9,6 +9,7 @@ import {
   xmlResponse,
 } from "@/lib/seo";
 import { FALLBACK_BLOG_POSTS } from "@/lib/blog-articles";
+import { LOCALES } from "@/i18n";
 
 type BlogSitemapResponse = {
   total?: number;
@@ -22,8 +23,15 @@ export async function GET() {
   const baseUrl = publicSiteUrl();
   const sitemaps: Array<{ url: string; lastModified?: string }> = [];
 
-  for (const locale of ["en", "ru"] as const) {
+  for (const locale of LOCALES) {
     const pageEntries = publicPageEntries(locale);
+    sitemaps.push({
+      url: `${baseUrl}/sitemaps/${locale}/pages.xml`,
+      lastModified: newestSitemapLastModified(pageEntries),
+    });
+  }
+
+  for (const locale of ["en", "ru"] as const) {
     const docEntries = documentationEntries(locale);
     const fallbackBlogPages = Math.ceil(FALLBACK_BLOG_POSTS[locale].length / SITEMAP_PAGE_SIZE);
     let blogPages = 0;
@@ -53,10 +61,6 @@ export async function GET() {
     }
 
     sitemaps.push(
-      {
-        url: `${baseUrl}/sitemaps/${locale}/pages.xml`,
-        lastModified: newestSitemapLastModified(pageEntries),
-      },
       {
         url: `${baseUrl}/sitemaps/${locale}/docs.xml`,
         lastModified: newestSitemapLastModified(docEntries),

@@ -1,0 +1,1882 @@
+$29
+$79
+$9
+// Business Webhook Verification (HMAC-SHA256)
+const crypto = require('crypto');
+
+function verify(payload, signature, secret) {
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(payload);
+  return `v1=${hmac.digest('hex')}` === signature;
+}
+
+// Signed event verification for payment webhooks
+// Create Invoice via recv API
+const res = await fetch("https://api.recv.money/v1/invoices", {
+  method: "POST",
+  headers: { "X-API-Key": "live_..." },
+  body: JSON.stringify({
+    title: "Order #99",
+    base_amount_usd: "29.00",
+    payable_network: "TON"
+  })
+});
+const inv = await res.json();
+// Create Invoice via recv API v1 Beta
+const response = await fetch("https://api.recv.money/v1/invoices", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "live_...",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    title: "Order #9921",
+    base_amount_usd: "149.00",
+    payable_network: "TRON", // TON (GRAM), TON_USDT (USDT on TON), TRON, BASE, or BSC
+    expires_in_minutes: 60
+  })
+});
+
+const invoice = await response.json();
+console.log("Checkout URL:", invoice.checkout_url);
+// Manual Invoice Link
+// https://recv.money/app/checkout/demo
+// No code required for Merchant plan.
+// Just share the link and get paid.
+// Multi-Workspace Management
+// Manage up to 10 workspaces
+// Isolated API keys and team seats
+// Advanced Analytics enabled
+/app/auth
+/business
+/dev
+/docs
+/docs/webhooks
+/merchant
+/mo
+/networks/ton
+/products/api
+/products/checkout
+/use-cases/saas-billing
+/use-cases/telegram-shops
+0
+0%
+0% FEE
+0% Fee
+0% Turnover Fees
+0% commission
+0% commission on all plans.
+0% commission on transactions. Only a flat monthly subscription regardless of how much you process.
+0% commission. Only pay your fixed subscription and standard network gas fees.
+0% turnover fee. Flat monthly subscription only. Your gross margin stays intact regardless of payment volume.
+0% turnover fees. Keep 100% of what you earn.
+0.4–1% transaction fees depending on plan. Fees compound at high volume and are charged before funds reach you.
+01
+02
+03
+04
+05
+06
+1 Endpoint active
+1 Webhook endpoint
+1 Workspace / 1 Seat
+1% transaction fee plus spread on conversion. True cost can exceed 2% when conversion rates are included.
+1. PREAMBLE AND ACCEPTANCE OF TERMS
+1. PREAMBLE AND SCOPE
+1. ROLES AND COMPLIANCE
+1. TELEGRAM MESSENGER INC.
+1.1. Parties to the Agreement: This Terms of Service Agreement (the "Agreement") constitutes a legally binding contract between you (acting individually or on behalf of a corporate entity, hereinafter "Merchant", "you", or "your") and recv (hereinafter "Company", "we", "us", "our", or "Service Provider").
+1.1. Scope: When recv processes Customer Personal Data solely on behalf of the Merchant, the Merchant acts as Data Controller and recv acts as Data Processor.
+1.2. Capacity to Contract: By utilizing the Service via Telegram authentication or our API, you represent and warrant that you are at least eighteen (18) years of age, possess the legal capacity to enter into this Agreement, and, if acting on behalf of a legal entity, possess the requisite authority to bind said entity.
+1.2. Instructions: recv shall process such data only on the Merchant’s documented instructions, including as set forth in the Agreement, unless required to do so by applicable law.
+1.3. Modifications: We reserve the right to amend or modify this Agreement at any time. Continued use of the Service following the publication of any modifications constitutes your acceptance of the amended terms.
+10
+10. DISCLAIMERS OF WARRANTY
+10. MODIFICATIONS TO THIS POLICY
+100%
+100% Non-custodial. Funds flow directly to your wallet. We never touch or hold your money.
+10001
+11. LIMITATION OF LIABILITY
+12
+12. INDEMNIFICATION
+123456
+13. GOVERNING LAW AND DISPUTE RESOLUTION
+13.1. This Agreement is governed by the laws of Cyprus, without regard to its conflict-of-laws rules.
+13.2. Before commencing formal proceedings, a party must send written notice describing the dispute to legal@recv.money. The parties shall attempt in good faith to resolve the dispute within thirty (30) days.
+13.3. Any dispute not resolved under Section 13.2 shall be finally resolved by the competent courts of Nicosia, Cyprus, in the English language, under the rules in effect when the proceeding begins.
+13.4. Nothing in this Section prevents either party from seeking urgent injunctive relief or exercising rights that cannot lawfully be waived.
+14. SEVERABILITY AND ENTIRE AGREEMENT
+149 USDT
+149.00 USDT
+15 live invoices total
+15. LANGUAGE AND TRANSLATIONS
+15.1. This Agreement is executed in both English and Russian languages. In the event of any conflict, discrepancy, or inconsistency between the English version and the Russian translation, the English language version shall prevail and be legally binding.
+199.00 USDT
+2
+2. DEFINITION OF THE SERVICE
+2. PROCESSOR OBLIGATIONS
+2. REMOTE PROCEDURE CALL (RPC) NODE PROVIDERS
+2. THE FUNDAMENTAL REALITY OF BLOCKCHAIN DATA (CRITICAL NOTICE)
+2.1. Confidentiality: recv shall ensure that persons authorized to process the Customer Personal Data have committed themselves to confidentiality or are under an appropriate statutory obligation of confidentiality.
+2.1. Public Ledgers: You and your Customers expressly acknowledge that blockchain networks (including but not limited to TON, TRON, Solana, Base, Arbitrum, and BSC) are decentralized, public ledgers.
+2.1. Software as a Service (SaaS): The "Service" refers exclusively to the proprietary, non-custodial software middleware provided by the Company. This includes the dashboard, checkout page generators, smart-matching algorithms, API endpoints, webhook delivery systems, and blockchain monitoring logic (the "Watchers").
+2.2. No Expectation of Privacy On-Chain: Wallet addresses, transaction hashes (TXIDs), timestamps, transfer amounts, and on-chain memos/comments are permanently recorded and accessible to anyone globally. The Company does not control these networks and cannot erase, obfuscate, or alter on-chain data.
+2.2. Non-Custodial Data Layer: You acknowledge that the Service operates strictly as an informational data layer and visual interface. The Service parses public, decentralized blockchain ledgers (e.g., TON, TRON, Solana, Base, BSC-compatible chains) and visualizes this data.
+2.2. Security Measures: recv shall implement appropriate technical and organizational measures to ensure a level of security appropriate to the risk of processing Customer Personal Data.
+2.3. Data Erasure: Data recorded on a public blockchain cannot be altered or deleted by recv. This limitation applies only to the blockchain record itself. Requests to access, correct, restrict or erase personal data stored in recv-controlled systems remain applicable subject to lawful exceptions, including security, fraud prevention, accounting, dispute and legal-retention requirements.
+2.3. Subprocessors: recv shall impose equivalent data protection obligations on any subprocessors it engages, and remains liable to the Merchant for the performance of subprocessors' obligations.
+2.3. Zero Financial Intermediation: The Company is not a payment processor, payment gateway, money transmitter, clearinghouse, custodian, fiduciary, or financial institution. At no point in the technical architecture does the Company receive, hold, control, or possess any fiat currency, digital assets, or cryptographic private keys belonging to the Merchant or the Merchant’s end-users ("Customers").
+2.4. Data Subject Requests: recv shall assist the Merchant, taking into account the nature of the processing, by appropriate technical and organizational measures, for the fulfillment of the Merchant's obligation to respond to requests for exercising data subjects' rights.
+2.4. Direct-to-Wallet Execution: All transfers of Digital Assets occur exclusively and directly on the public blockchain from the Customer's unhosted or custodial wallet directly to the Merchant's designated destination address.
+2.5. Breach Notification: recv shall notify the Merchant of any confirmed personal data breach affecting Customer Personal Data without undue delay after becoming aware of the breach.
+2.6. Deletion or Return: recv shall, at the choice of the Merchant, delete or return all Customer Personal Data to the Merchant after the end of the provision of services, unless applicable law requires storage of the personal data.
+2.7. Audits: recv shall make available to the Merchant all information necessary to demonstrate compliance with these obligations and allow for and contribute to audits conducted by the Merchant or another auditor mandated by the Merchant.
+200k
+200k monthly requests
+24/7
+249.00 USDT
+29
+29.00 USDT
+3
+3. CATEGORIES OF DATA WE COLLECT
+3. CLOUD PLATFORMS AND EDGE NETWORKS
+3. DPA SCHEDULES
+3. REGULATORY COMPLIANCE AND SANCTIONS
+3.1. Merchant Account Data: When a Merchant authenticates via the Telegram Mini App or Bot, we automatically collect and store Telegram User ID, Telegram Username, and Email address (if voluntarily provided or required for specific billing tiers).
+3.1. Subject Matter and Duration: Processing of blockchain transaction routing, status confirmation, and associated notification metadata. The duration corresponds to the term of the Agreement.
+3.1. Total Merchant Liability: The Merchant assumes all liability for conducting any required identity verification, regulatory compliance, and tax reporting concerning their Customers, as mandated by the Merchant's operating jurisdiction.
+3.2. Categories of Data: Transaction hashes (TXIDs), destination wallet addresses, payable amounts, timestamps, IP addresses, browser User-Agent strings, and optional custom invoice metadata (if provided by the Merchant).
+3.2. Operational Infrastructure Data: To facilitate the Service, the Merchant must configure public blockchain destination wallet addresses, preferred default networks, webhook URL endpoints, and associated cryptographic secrets.
+3.2. Sanctions and OFAC Representations: The Merchant represents and warrants that they are not located in, under the control of, or a national or resident of any country or territory subject to comprehensive economic sanctions by the United Nations, European Union, or the U.S. Office of Foreign Assets Control (OFAC).
+3.3. Categories of Data Subjects: Customers (end-users) of the Merchant completing cryptocurrency payments via recv checkout links.
+3.3. Customer and Transactional Metadata: When a Customer accesses a publicly generated checkout URL, we process invoice metadata (Title, Base Amount, Expiration Time), ephemeral HTTP request data (IP addresses, User-Agent strings), and captured on-chain events via our watchers (TX Hash, Amount, Destination, Observed Timestamp).
+3.3. Tax Indemnification: The Company shall not calculate, collect, remit, or report any sales, value-added (VAT), income, or other taxes arising from the Merchant's transactions. The Merchant bears sole responsibility for all tax liabilities.
+3.4. Technical and Organizational Security Measures: Standard encryption of stored database credentials, cryptographic signatures for session tokens, one-way hashing for API keys, secure access controls, and rate-limiting for edge routing protection.
+3.5. Subprocessor List: The approved list of subprocessors is set forth in the Subprocessor List page.
+3.6. International Data Transfers: Where transfer of data outside the EU/EEA/UK is required, recv utilizes standard contractual clauses or equivalent transfer mechanisms approved by competent regulatory authorities.
+4. EXCHANGE RATE APIs AND ORACLES
+4. PROHIBITED CONDUCT AND ACCOUNT TERMINATION
+4. STRICT LIABILITY FOR INVOICE METADATA
+4.1. Merchant Data Input: The Service allows Merchants to assign custom "Titles" to invoices. The Merchant agrees NOT to input Personally Identifiable Information (PII) belonging to their Customers into the invoice title, payment comment, or webhook payloads.
+4.1. Strictly Prohibited Uses: The Merchant agrees NOT to utilize the Service, checkout links, or API infrastructure to facilitate the sale, distribution, or promotion of illegal narcotics, weapons, illicit adult content, unlicensed gambling, counterfeit goods, or fraudulent investment structures.
+4.2. Public Checkout Exposure: Merchant acknowledges that the checkout URL is accessible to anyone holding the link. The public invoice ID, invoice title, payable amount, and destination address are visible on this page. The Company is not liable for PII exposed due to the Merchant's failure to anonymize invoice metadata.
+4.2. Termination: The Company reserves the right to suspend, restrict, or permanently terminate any Merchant account, revoke API keys, and disable webhook functionality immediately, without prior notice or liability, if we suspect a violation of Section 4.1 or determine that the Merchant's activities expose the Company to legal, regulatory, or reputational peril.
+49.00 USDT
+5
+5. COOKIES, LOCAL STORAGE AND ANALYTICS
+5. TECHNICAL MECHANICS AND RECONCILIATION MATCHING
+5.1. Smart-Matching matching methods: For supported stablecoin payment options, recv may add a unique fractional suffix to the requested amount to associate an on-chain transfer with an invoice. For GRAM payments on TON, recv uses a unique payment comment. Supported matching methods may vary by network and asset and are displayed on the checkout page.
+5.1. Smart-Matching matching methods: For supported stablecoin payment options, recv may add a unique fractional suffix to the requested amount to associate an on-chain transfer with an invoice. For native GRAM payments on TON, recv uses a unique payment comment. Supported matching methods may vary by network and asset and are displayed on the checkout page.
+5.2. Waiver of Liability for User Error: The Company bears no liability for any financial loss, delayed access to digital goods, or unfulfilled invoices arising from the Customer's failure to remit the exact amount (including matching suffix) or correct memo/comment, or utilizing an incorrect or unsupported blockchain network.
+5.3. Irrevocability of Transactions: The Merchant acknowledges that blockchain transactions are mathematically immutable. The Company cannot reverse, refund, or alter any on-chain transfer.
+5.4. Third-Party RPC Reliance: The Service’s blockchain monitoring capabilities are wholly dependent on the stability, uptime, and accuracy of third-party Remote Procedure Call (RPC) node providers and external oracle APIs. The Company is not liable for Service degradation, delayed webhooks, or failed mempool tracking caused by external RPC outages.
+50k
+6. API, WEBHOOKS, AND INTEGRATION
+6. ROLES AND LEGAL BASES FOR PROCESSING
+6.1. API License: Subject to these Terms and active subscription status, the Company grants the Merchant a limited, non-exclusive, non-transferable, and revocable license to access the recv API (v1).
+6.2. Webhook Delivery and Idempotency: Webhook notifications are delivered on an 'at-least-once' basis. The Merchant is required to implement Idempotency Safety on their servers to prevent duplicate order fulfillment.
+6.3. Webhook Verification: Each webhook includes X-recv-Event, X-recv-Timestamp and X-recv-Signature headers. The signature is calculated as 'v1=' followed by HMAC-SHA256 over the exact string timestamp + '.' + raw request body. Merchant must verify the signature against the unmodified raw body, reject stale timestamps and process events idempotently.
+7+
+7. DATA RETENTION
+7. SUBSCRIPTIONS, FEES, AND LIMITS
+7.1. Paid Plans: Paid plans currently include Merchant, Developer and Business. Current prices, included features, quotas and billing periods are displayed at checkout and form part of this Agreement at the time of purchase.
+7.2. Subscription Period: A subscription payment purchases access for the fixed period displayed at checkout, currently 30 days. Subscriptions do not automatically renew unless recv expressly introduces and the Merchant separately authorizes automatic renewal.
+7.3. Limits: Plan limits may include invoice, API request, API key, webhook endpoint, retry, workspace and team-seat limits. Requests may be rejected or features restricted when an applicable limit is reached.
+79
+79.00 USDT
+8. REFUND POLICY
+8. SECURITY
+8.1. Irreversibility: Because blockchain transfers are irreversible, subscription payments cannot be automatically reversed. Except where required by applicable law, subscription fees are non-refundable after the paid plan has been activated.
+8.2. Approved Refunds: If recv fails to activate the purchased plan, duplicates a charge, or materially misdescribes the purchased service, the Merchant may contact support@recv.money within 14 days. Any approved refund will be sent to a verified wallet address selected through recv’s refund-verification procedure, less unavoidable blockchain network fees.
+9
+9. INTELLECTUAL PROPERTY
+9. YOUR PRIVACY RIGHTS
+99.00 USDT
+<1min
+@username
+A centralized hub to manage every invoice and client.
+A clean checkout UI that eliminates friction and builds trust.
+A clean, distraction-free payment page optimized for fast conversion.
+A clean, high-conversion payment interface optimized for every device and platform.
+A clean, mobile-optimized payment interface for membership passes and subscriptions.
+A complete list of your invoices and their real-time blockchain status.
+A detailed comparison of two popular crypto payment solutions. Choose the one that fits your scaling needs.
+A direct comparison of fees, control, and integration flexibility.
+A high-performance gateway for all liquid networks. One integration, infinite reach.
+A hybrid approach using our hosted UI for payments and our API for automated license delivery.
+A natural payment rail for Telegram buyers.
+A ready-to-use payment interface combined with backend events for delivery automation.
+A ready-to-use, high-converting payment UI that supports all major networks. Perfect for selling digital goods and services.
+A reliable stablecoin option for USD-denominated memberships.
+A signed webhook tells your product when to unlock access, deliver goods, or update status.
+A single interface for GRAM, USDT on TON, TRON, Base, and BSC.
+A single interface for supported networks including TON, TRON, SOL, Base, Base, BSC, and Base.
+A smaller amount was received. Top up the remaining amount before expiry or wait for merchant review.
+ACCESS
+ACCESS EVENT
+AI & MCP
+AI-NATIVE
+API
+API & Developer/Business Tiers
+API & Infrastructure for Scale
+API & MCP Access
+API & Webhooks
+API Beta
+API EVENT
+API Error Guide
+API Key Provisioning
+API Keys
+API Keys and Webhooks to automate your business workflow.
+API Protocol
+API Reference v1 Beta
+API Usage
+API access, signed webhooks, and programmatic invoice controls; merchants remain responsible for applicable compliance requirements.
+API and Webhooks are available on Developer plan and higher.
+API and webhooks for instant delivery right after payment.
+API and webhooks for production integrations.
+API and webhooks for subscription payment flows.
+API automation
+API integrations
+API key values are stored using one-way hashes after initial issuance. Access and refresh tokens are cryptographically signed or stored as token hashes, as applicable. Webhook signing secrets must remain available to the Service to sign deliveries and are therefore stored as confidential credentials protected by access controls. No method of storage or transmission is completely secure.
+API keys
+API limit
+API payments
+APPROVED SUBPROCESSORS
+ARBITRUM
+ARCHITECTURE
+AUTOMATED DETECTOR
+AUTOMATION
+Absolutely. Our Webhook system provides instantaneous notifications to your server upon payment confirmation, enabling full automation of access, subscriptions, or digital delivery.
+Accept
+Accept BNB and supported BEP-20 assets on BSC with recv payment links, API invoices, watcher detection, and direct-to-wallet settlement.
+Accept BSC Payments with Checkout and API
+Accept Base Payments with Unified API
+Accept Base Payments with recv API
+Accept Base payments through one integration.
+Accept Crypto Payments Direct to Your Wallets with 0% Fees.
+Accept Crypto Payments in Telegram Bots & Mini Apps
+Accept Crypto Payments | Non-Custodial Checkout for GRAM, TRC-20, USDT on TON
+Accept Crypto for Private Communities & Channels
+Accept Crypto. 0% Turnover Fees.
+Accept ETH and supported ERC-20 assets on Base One with Checkout, API invoices, watcher monitoring, webhooks, and direct settlement.
+Accept ETH and supported ERC-20 assets on Base with recv Checkout, API invoices, watcher monitoring, and business-ready webhooks.
+Accept Payment
+Accept Solana Payments with API and Checkout
+Accept TON Payments for Telegram Commerce
+Accept TRON USDT Payments for SaaS and Business
+Accept TRON USDT without manual reconciliation.
+Accept USDT TRC-20 through recv Checkout and API with stablecoin-friendly invoices, watcher matching, signed webhooks, and direct payouts.
+Accept USDT on TON Payments | Stablecoin Checkout on TON
+Accept USDT on TON with direct settlement.
+Accept USDT stablecoin on The Open Network (TON) with recv. Hosted Checkout, API invoices, automated comment matching, and direct-to-wallet payouts.
+Accept crypto payments like this with recv
+Accept stablecoins from customers who already use BSC wallets.
+Accepted Assets
+Access
+Access Extended
+Access Granted
+Access Status
+Access Triggered
+Account
+Account & Limits
+Account Setup
+Accuracy
+Actions
+Activate
+Activate Business
+Activate Developer
+Activate Merchant
+Activate recv Dev
+Active
+Active API keys
+Active workspace
+Add BSC payments without extra reconciliation.
+Add Base payments to your checkout stack.
+Add Base to backend-driven invoice and webhook flows.
+Add Base to business payments.
+Add Base without creating separate invoice and webhook logic.
+Add Endpoint
+Add Solana payments to your product.
+Add Wallet
+Add a fast payment option for users already active in the Solana ecosystem.
+Add a payout address to accept payments on this network.
+Add address
+Add one destination address for each supported network. Customer funds go directly to these addresses.
+Add this configuration to your local config file:
+Add up to 10 members to your team with granular role management.
+Add wallet first
+Additional TRC-20 assets can be handled where they are enabled for the workspace.
+Address
+Admin
+Advanced
+Advanced Analytics
+Agents can't sign up, buy plans, or get API keys without a human.
+Align checkout and payment links with your business presentation.
+All Liquid Chains
+All Systems Operational
+All networks
+All requests must include the Authorization: Bearer <API_KEY> header.
+All rights, title, and interest in and to the Service, the Software, the API, the design, the architecture, and the codebase remain the exclusive intellectual property of the Company. You may not decompile, reverse engineer, disassemble, or attempt to derive the source code of the Service.
+All supported networks operate on a direct-to-wallet basis. recv does not hold merchant funds; merchants remain responsible for wallet security and operations.
+All time
+Amount
+Amount (USD)
+Amount in USD (e.g., '25.00')
+An AI agent can fully onboard itself to recv without any human action. It calls bootstrap_agent_workspace, receives an access token, purchases a Developer or Business subscription via create_subscription_checkout, polls get_checkout_invoice until paid, then issues its own API key. The entire flow is expressible as a sequence of MCP tool calls.
+An automated webhook notifies your application when the payment is confirmed, instantly unlocking access or completing orders.
+An intelligent monitoring system automatically detects underpayments and overpayments, notifying you instantly.
+Analytics
+Anchor Merchant
+Any MCP-Compatible Runtime
+Any updates to this subprocessor list will be published on this page.
+Arbitrum
+Asset
+Asset and wallet selection must be precise.
+Assets
+Atomic on-chain payouts versus Cryptomus internal wallet management.
+Atomic on-chain settlement. Funds arrive in your wallet on the same block as the customer payment.
+Atomic payouts. Every transaction hits your wallet as soon as it is confirmed on-chain.
+Audit Logs
+Audit logs
+Authenticate with your secret key in the X-API-Key header.
+Authentication
+Authentication is required to manage API keys.
+Authorization
+Automate Telegram shop payments with GRAM-first checkout links on TON, direct-to-wallet settlement, and instant order signals.
+Automate digital delivery.
+Automate physical and digital goods sales inside Telegram with instant delivery.
+Automate shop payments and orders in Telegram.
+Automate the delivery of licenses, keys, and downloads. recv triggers fulfillment events immediately upon blockchain confirmation.
+Automate your revenue flow with our robust API and high-performance blockchain monitoring engine. From idempotent requests to HMAC-signed webhooks.
+Automated Access Signals
+Automated Access for Paid Communities
+Automated Checkout Links replace manual checks.
+Automated Processing
+Automated Renewal Cycle
+Automated Webhooks
+Automated access management for private channels and groups with recurring logic.
+Automated blockchain watchers & instant alerts.
+Automated crypto payments with direct-to-wallet payouts. Fair, fast, professional.
+Automated invoice tracking and webhooks reduce per-payment manual work.
+Automated matching reduces manual attribution errors while exception states remain reviewable.
+Automated payment processing. Our watchers track transactions and confirm payments 24/7 autonomously.
+Automatic calculation of exchange rates and network fees.
+Autonomous AI agent tools
+Available networks and assets follow the current Coinbase Commerce documentation.
+Avg. ticket
+Awaiting payment
+B2B
+B2B Scale
+B2B Workflow Automation
+BASE
+BASE NETWORK
+BENEFITS
+BEP-20 INVOICE
+BEP-20 USDT
+BEP-20 USDT checkout options.
+BEP-20 monitoring without separate business logic.
+BEP-20 only means BSC only.
+BILLING EVENT
+BNB & USDT/BEP-20. High-volume chain with broad exchange support for fast withdrawals.
+BNB Smart Chain
+BSC
+BSC NETWORK
+BSC gives customers a familiar low-fee payment network for token transfers.
+BSC is useful for businesses serving customers who already use BEP-20 stablecoins and expect inexpensive transfers.
+BSC network payment details
+BSC payments for broad retail stablecoin reach.
+BUSINESS GRADE
+Back Home
+Back to Home
+Backend integration access for production teams.
+Base
+Base (USD)
+Base / Base
+Base L2
+Base One
+Base One is separate from mainnet and other L2s.
+Base URL
+Base URL and a ready-to-run request.
+Base URL for all requests
+Base alignment without mainnet costs.
+Base assets must be sent on Base.
+Base fits businesses serving onchain users who want familiar EVM wallets, lower fees than mainnet, and stablecoin-friendly payment options.
+Base is a practical option for EVM-native customers who prefer Base tooling but need lower fees for routine payments.
+Base network payment details
+Base payments for Base-aligned buyers.
+Base payments for EVM buyers and low-cost checkout.
+Base works well for teams whose buyers already operate in Base L2 environments.
+Base works well when your customers already use EVM wallets or Coinbase-aligned onchain products.
+Base, Base, BSC, and other EVM transfers are separate networks. Wrong-chain deposits are not automatically interchangeable with Base payments.
+Base-native USDT payments.
+Basic
+Basic Telegram bot integrations. Not designed for Telegram Mini App payment flows or high-frequency bot-driven commerce.
+Best for EVM-native businesses.
+Best for EVM-oriented checkout.
+Best for Telegram-led revenue.
+Best for retail and business checkout.
+Best for stablecoin-heavy products.
+Best for web3-native products.
+Bill in USD or any supported stablecoin. recv handles the real-time conversion rates, ensuring that the amount of USDT, GRAM, or SOL requested matches your desired fiat value at the moment the invoice is generated.
+Bill recurring memberships, courses, or private group access in stable dollar values.
+Billing
+BitPay
+Blockchain Monitoring
+Blockchain RPC services
+Blockchain Watchers
+Blog
+Brand Setup
+Branded Links
+Branded hosted invoice pages with real-time status.
+Brittle billing flows lead to churn.
+Build around USDT demand.
+Build the GRAM payment flow.
+Build the USDT on TON flow.
+Build the future of payments
+Build without limits. Upgrade to Developer
+Build your Telegram stack.
+Build your next-gen payment flow today.
+Built by Developers, for Developers.
+Built for Telegram commerce and bots.
+Built for Telegram. GRAM and USDT on TON support, Mini App-compatible checkout, and Telegram alert notifications out of the box.
+Built for Us. Scaled for You.
+Built for the next billion transactions.
+Built for the way crypto businesses actually get paid.
+Built-in alerts for incorrect network selection.
+Built-in protection against duplicate transactions and double-spending at the API protocol level.
+Built-in protection against duplicate transactions at the API level.
+Business
+Business Payments. Team-Ready Control.
+Business Ready
+Business Tier
+Business billing
+Business checkout
+Business invoices
+Business payments
+Business-Grade Crypto Billing for SaaS
+Buy Your Time Back.
+Buyer Notified
+Buyers must send USDT on TRON, not ERC-20, BEP-20, or another network. Wallets also need enough TRX or energy to complete the transfer.
+Buyers must send the selected asset on BSC. USDT sent on another chain is outside automatic BSC matching.
+Buyers need to send the configured Solana asset on Solana. Token account behavior, wallet support, and temporary network congestion can affect the payment experience.
+By continuing, you confirm that you are at least 18 years old, are authorized to act on behalf of the Merchant, and agree to the Terms of Service and acknowledge the Privacy Policy.
+CHECKOUT AND API MECHANICS
+COMPARE
+COMPARISON
+CONVERSION ENGINE
+CSV Exports
+CUSTODY
+Can I automate the delivery of digital goods?
+Cancel
+Cancel Invoice
+Cards
+Centralized console with CSV/JSON export capabilities.
+Change role
+Channel
+Check real-time status and confirmations.
+Checking usernames against wallet transfers is time-consuming and prone to fraud. Handling renewals and expirations manually leads to revenue leakage.
+Checkout
+Checkout & API
+Checkout & API Integration
+Checkout & Merchant Dashboard
+Checkout Engine
+Checkout Link Generated!
+Checkout Opened
+Checkout UI
+Checkout displays network, asset, amount, address, and QR in a buyer-friendly screen.
+Checkout links
+Checkout or API creates a Gram payment request with the exact amount, asset, address, and required comment.
+Checkout or API creates a TRON invoice for the exact USDT amount and destination wallet.
+Checkout shows BSC network details, QR, address, amount, and payment state.
+Checkout shows TRC-20 network instructions, QR, address, and a live payment state.
+Checkout shows the destination TON address, QR code, and the required payment comment.
+Checkout-to-Delivery Automation
+Checkout: The Gold Standard of Crypto UX
+Choose BSC and the payable asset through hosted Checkout or the recv API.
+Choose a convenient authorization method to access your dashboard.
+Choose a plan that fits your business scale.
+Choose a plan that fits your scale.
+Claude Desktop Integration
+Client Directory
+Cluttered spreadsheets for monthly accounting.
+Code Implementation
+Code has been sent to your Telegram.
+CoinGate
+CoinGate converts crypto to fiat before settlement. recv delivers the exact crypto asset your customer paid — directly to your wallet, with zero conversion slippage.
+CoinGate defaults to fiat conversion, introducing FX risk and additional processing steps before you receive funds.
+Coinbase Commerce
+Coinbase's L2 for reliable EVM-compatible stablecoin payments.
+Collect USD-pegged stablecoin payments on The Open Network, leveraging Telegram's native ecosystem without exposing buyers to price volatility.
+Collect stablecoin invoices from Base-aligned customers.
+Collect subscription payments and renewals with predictable stablecoin amounts.
+Combine our high-conversion checkout with automated fulfillment logic. recv handles the payment monitoring; your server handles the delivery.
+Coming Soon
+Command Center
+Comment
+Commerce flows for physical/digital goods.
+Commission
+Communities
+Community support
+Company
+Compare
+Compare fixed subscriptions to BitPay's percentage-based fee structure.
+Compare plans
+Compare recv subscription pricing and direct settlement with BitPay using current official pricing and settlement documentation.
+Compare recv to manual verification and custodial gateways: direct-to-wallet settlement, zero turnover fees, signed webhooks, and supported payment networks.
+Compare recv's direct-to-wallet flow with Coinbase Commerce using the providers' current custody, settlement, network, and pricing documentation.
+Compare recv's direct-to-wallet infrastructure and subscription pricing with custodial payment processors.
+Comparing automated non-custodial processing with manual wallet tracking. Learn how recv eliminates human error and scales your crypto operations.
+Comparing wallet screenshots and checking explorer statuses by hand is prone to error. Partial payments and incorrect network transfers turn simple orders into complex support threads.
+Complete upgrade
+Completed Invoices
+Compliance & Privacy
+Concrete fixes for common response statuses.
+Configure Payouts
+Configure Webhooks
+Configure your non-custodial environments to run live commerce operations.
+Configured networks
+Configured tokens
+Confirm
+Confirm payment
+Confirmed
+Connect
+Connect AI agents to recv via Model Context Protocol. Autonomous workspace setup, plan purchase, invoice creation, and webhook management — all from your LLM.
+Connect BSC to operations.
+Connect Claude Desktop, Cursor, or custom LLM agents directly using the recv MCP server. Let agents check account details, create payment invoices, and verify webhook signatures autonomously.
+Connect GitHub
+Connect Google
+Connect Solana to your backend.
+Connect community payments.
+Connect membership payments to access decisions for private channels and groups.
+Connect on-chain payments to community access. recv provides the infrastructure to monitor memberships and trigger access events automatically.
+Connected
+Connected accounts
+Console
+Constantly expanding features for business businesses.
+Contact
+Contact Email
+Contact email updated.
+Continue with GitHub
+Continue with Google
+Continue with Telegram
+Contracting Party
+Control of Funds
+Controller: Merchant
+Conversion
+Copied
+Copied!
+Copy
+Copy ID
+Copy Link
+Copy exact amount
+Copy payment details
+Copy tx
+Core API
+Core Networks
+Core Services
+Cost Structure
+Coverage
+Create API Key
+Create Base invoices and process signed payment events.
+Create First Invoice
+Create Invoice
+Create Key
+Create a test invoice to experience our direct-to-wallet payment flow.
+Create a test invoice to verify checkout
+Create a test key and keep the secret visible for the simulator.
+Create a trial workspace and receive an access token — the agent's starting point.
+Create an API key to integrate recv into your backend.
+Create checkout links for orders and stop asking buyers for screenshots.
+Create invoice
+Create invoices and receive normalized payment events.
+Create invoices from your backend and use webhooks for automated access.
+Create invoices programmatically.
+Create invoices via a single REST interface. Use our HMAC-signed webhooks to trigger subscription updates only after cryptographic confirmation.
+Create payment pages with clear BSC instructions for every order.
+Create test invoice
+Create unlimited payment links for any amount with no extra fees.
+Create your first invoice
+Created
+Creates a new payment invoice. Returns an invoice object with a checkout_url for the user.
+Creating...
+Creation
+Cross-Chain Unified UI
+Crypto Billing Infrastructure for SaaS Platforms
+Crypto Checkout for Digital Products & Licenses
+Crypto Payments Infrastructure. Total Control.
+Crypto payment infrastructure for developers. One API for TON, TRC-20, Base and BSC with retryable webhook delivery and HMAC signatures.
+Cryptomus
+Cryptomus maintains an internal wallet. You must request withdrawals, which adds latency and counterparty dependency.
+Cryptomus routes payments through an internal balance before payout. recv is non-custodial by design — your wallet receives funds directly on-chain, no internal ledger involved.
+Current
+Current Plan
+Current plan
+Custodial Gateways
+Custodial risk & withdrawal delays.
+Custody and settlement behavior follows the current Coinbase Commerce product configuration and terms.
+Custom Branding
+Custom branding
+Custom titles and descriptions for every billing request.
+Customer UX
+Customers get stuck on 'waiting' screens for minutes.
+Customers scan or open this link to pay.
+Customization
+DATA PROCESSING ADDENDUM
+DEVELOPER FIRST
+DIGITAL COMMERCE
+Dashboard
+Dashboard and webhooks update your order, invoice, or account state after confirmation.
+Dashboard for community operators.
+Dashboard workflow for sellers and operators.
+Date
+Date Range
+Day-to-day operations: read & create.
+Dealing with wrong amounts and network errors.
+Deep Link Ready
+Default to USDT (TRC-20) for business stability or add Base and Base for lower-cost EVM transactions.
+Delete
+Delivery Logs
+Delivery Queue
+Demo Checkout
+Depending on applicable law, you may request access to, correction of, deletion of, restriction of, objection to, or portability of personal data processed by recv. You may also withdraw consent where processing is based on consent and lodge a complaint with a competent supervisory authority.
+Detailed history of every request and webhook attempt.
+Details
+Detect transfer
+Detected
+Dev sign-in without Telegram
+Developer
+Developer / Business
+Developer Active
+Developer Experience
+Developer Integration Hub
+Developer Platform
+Developer Tools
+Developer tools
+Developer-first protocol vs CoinGate's merchant-focused platform.
+Developer-first protocol. Optimized for high-throughput SaaS, Telegram Mini Apps, and custom builds.
+Developers
+Digital Goods
+Digital Subscriptions
+Digital goods
+Digital goods crypto payment automation details
+Digital products
+Digital products require instant gratification. Waiting for manual transaction verification leads to poor UX and increased support overhead.
+Direct
+Direct Access Architecture
+Direct Payouts
+Direct-to-Wallet
+Direct-to-Wallet Payouts
+Direct-to-Wallet Security
+Direct-to-wallet settlement, signed webhooks, and zero turnover fees across GRAM, USDT on TON, TRON, Base, and BSC.
+Discover available chains and assets.
+Discover how automation eliminates human error and scales your operations.
+Discuss Terms
+Dispute flow: arbitration in Cyprus
+Distribution of invoices in this environment.
+Do I need to pass KYC to start using recv?
+Docs
+Documentation
+Don't forget this comment, otherwise we won't be able to match your payment.
+Dual Locale
+Duplicate processing of the same transaction.
+Duration (days)
+E-Commerce
+EN
+ERC-20 USDT
+EVM compatibility with lower checkout friction.
+EVOLUTION
+Each webhook contains an X-recv-Signature header. Use HMAC SHA-256 to verify the payload.
+Edit
+Effective Date
+Effective Date: June 14, 2026
+Efficiency by default.
+Eliminate percentage-based fees. recv provides the API primitives for idempotent invoice creation and guaranteed webhook delivery.
+Emit webhook
+Enable one-click USDT stablecoin checkouts directly within your app or bot.
+End your current session on this device.
+Endpoint URL
+Engineered for Telegram Shops, SaaS Billing, and Digital Commerce.
+Engineered for teams that need full programmatic control and high request throughput.
+Engineering Excellence
+Enter address...
+Enter an amount greater than zero.
+Enterprise-focused API with strict compliance requirements, KYB processes, and limited API-only access tiers.
+Environment
+Error
+Escrow Risk
+Essential insights on asset security, payment mechanics, and platform integration.
+Estimated price
+Event Verified
+Every webhook is signed with SHA-256 for maximum security.
+Everything included at each tier.
+Exact invoice matching for TRC-20 transfers.
+Experience firsthand how seamless payments are for your customers. No delays, no friction, just results.
+Experience raw efficiency with our optimized blockchain monitoring protocol.
+Expiration time (default 30, max 1440)
+Expired
+Explore API
+Explore Checkout
+Explore Solutions
+Explore TG Commerce
+Explore how different industries use recv to automate their crypto operations and eliminate manual overhead.
+Explorer
+Export CSV
+Extended API limits, team access, and priority support for businesses with high payment volume.
+Extended Limits
+FAQ
+FEES
+FULFILLMENT
+Fast payment feedback for web3 users.
+Fast, confirmation-aware monitoring for high-speed digital sales.
+Fee
+Fee Model
+Fee Structure
+Fee Transparency
+Finality
+First invoice issued and tested
+Fixed monthly subscription. Zero percentage fees. Costs are completely decoupled from your transaction volume.
+Fixed subscription. Zero turnover fees. Predictable costs regardless of your volume.
+Flat Fee Model
+Flat subscription. Unlimited volume.
+Flexibility to approve transactions manually if needed.
+Flow
+Focus on UI
+For California Residents (CCPA/CPRA): In the preceding 12 months, we have collected the categories of personal data described in Section 3 of this Policy. We do not 'sell' or 'share' (for cross-context behavioral advertising) personal data. Residents of California have the right to know, delete, correct, opt out of sale/sharing, limit the use of sensitive personal data, and be free from discrimination for exercising these rights. To submit a request, contact privacy@recv.money.
+For invoice and checkout data submitted by a Merchant concerning its Customers, the Merchant generally determines the purpose of processing and acts as Controller. recv acts as Processor to the extent it processes that data on the Merchant’s instructions. recv acts as an independent Controller for security, abuse prevention, service billing and compliance records.
+Forget about turnover commissions. You only pay for platform usage, keeping 100% of your profit at any volume.
+From Chat to Fulfillment
+From Payment to Community Entry
+From Payment to Download
+From simple payment links to business-grade infrastructure. Choose the product that fits your current growth stage.
+Full
+Full API
+Full API access, hosted checkout with your branding, or raw webhook-driven flows — your choice at every step.
+Full Automation
+Full Control, Zero Fees
+Full support for GRAM and USDT on TON, TRON (USDT), and popular L2 solutions (Base, Arbitrum, BSC) in a single interface.
+Full-featured infrastructure for developers. Automate payments, track transactions in real-time, and scale with confidence.
+Fully localized payment interface in English and Russian.
+Fund Custody
+Funds go directly from client to your address. We never touch your money.
+Funds go directly from the client to your address. We are non-custodial and never hold your money for a single second.
+GET STARTED
+GRAM
+GRAM & Jetton Native
+GRAM & Jetton Support
+GRAM & USDT. The native choice for Telegram-based commerce and the growing TON ecosystem.
+GRAM / USDT on TON
+GRAM on TON
+GRAM on TON is the native choice for Telegram members, while TRON USDT provides a stable fallback for global subscribers.
+GRAM payments built for Telegram-native commerce.
+GRAM-First for Telegram Communities
+Gateway fees (1-5%) eating your profit.
+Gateway fees eating into your profit margin.
+Generate Payment Link
+Generate a USDT on TON invoice specifying the exact USDT amount and required payment comment.
+Generate a hosted payment invoice on any supported network.
+Generate a payment link for your product or service.
+Generate live_ keys. Manage scopes for secure backend integration.
+Generate payment links in a few clicks via our intuitive dashboard.
+Generate secure payment links for every order. recv watchers monitor the blockchain 24/7, moving orders to 'paid' state automatically as soon as the transfer is confirmed.
+Get Started
+Get Started Now
+Get code
+Get full invoice information by its system ID.
+Get notified the second a payment is detected.
+Get started
+Give your agent the power to earn.
+Global Connectivity.
+Global Multi-Currency Support
+Go Developer
+Go Unlimited
+Go live without limits. Activate a plan for unlimited payments, API & webhooks.
+Guaranteed delivery (at-least-once) with automatic retries and HMAC-SHA256 signature verification.
+Guide buyer
+Guide payment
+HMAC
+HMAC Signatures
+HMAC-SHA256 Webhooks
+HTTP
+Handling recurring payments and renewals requires 100% uptime and duplicate-safe logic. Managing disparate blockchain nodes adds unnecessary engineering overhead.
+Hardened Infrastructure
+Hardened Logic
+Have a promo code? Enter it below to activate your plan or extend your subscription.
+Have a unique use case?
+Hide
+High risk of human error. Typos in wallet addresses, missed payments, or wrong network transfers.
+High-Performance Watchers
+High-converting payment UI
+High-performance L1/L2 alternatives for web3-native audiences.
+High-performance network with one of the largest ecosystems of active users.
+High-performance options for web3-native user bases.
+Higher API quotas and increased active webhook limits.
+Higher limits and team operations for scale.
+Higher limits and team workflow for payment operations.
+Home
+Hosted BSC payment pages for orders and invoices.
+Hosted payment pages with multi-network support, QR codes, and live status updates for a seamless buyer experience.
+Hosted payment pages with multi-network support.
+Hosted payment screens for GRAM orders on TON.
+Hosted screens for every commerce flow.
+How are underpayments or incorrect amounts handled?
+How does recv ensure the security of my funds?
+How recv optimizes your operations and saves your time.
+How to handle signed payment callbacks.
+Human Steps
+ID
+IMPLEMENTATION
+IN NO EVENT SHALL THE COMPANY, ITS FOUNDERS, CORE DEVELOPERS, DIRECTORS, OR AFFILIATES BE LIABLE FOR ANY PUNITIVE, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, LOSS OF REVENUE, LOSS OF DIGITAL ASSETS, OR CORRUPTION OF DATA.
+INFRASTRUCTURE
+INTEGRATION
+INTEGRATION FLOW
+INTELLIGENCE
+Ideal for shop owners who need a professional payment surface and manual oversight with automation capabilities.
+Ideal for web3-native groups and decentralized organizations.
+Idempotency
+Idempotency Safety
+Idempotency controls help prevent duplicate processing.
+Idempotent
+Idempotent API Requests
+Idempotent invoice creation and a retry queue for billing-system events.
+If any provision of this Agreement is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary so that this Agreement shall otherwise remain in full force and effect. This Agreement constitutes the entire agreement between the parties.
+If you are using the Telegram Mini App, you will be signed in automatically.
+Implementation
+Impossible to scale. Every transaction requires manual verification and manual accounting.
+In-depth insights into payments, conversion, and retention across workspaces.
+Included
+Includes full API access, HMAC signatures, and higher rate limits for scaling software platforms.
+Includes manual invoice tracking, real-time Telegram alerts, and 0% turnover fees for creators.
+Infrastructure
+Infrastructure That Saves You Money.
+Infrastructure for developers
+Infrastructure hosting
+Inside Telegram
+Instant Alerts
+Instant Fulfillment for Digital Goods
+Instant Payment Detection
+Instant Telegram and Email alerts when settled.
+Instant blockchain confirmation and automated alerts.
+Instant fulfillment for keys and accounts immediately after blockchain confirmation.
+Instant live_ key generation. Granular scope management for secure backend integration.
+Instantly opens payment screens in Tonkeeper, Phantom, and other wallets.
+Integrate crypto billing for SaaS subscriptions with TON, TRON, and EVM payment options, retryable webhooks, and HMAC signatures.
+Integrate our high-performance API into your existing stack with ease.
+Integrate recv directly into your custom backend application.
+Integrate the billing engine.
+Integrating TON, TRON, and EVM usually requires three different libraries and logic flows. recv provides a single schema for all networks. Create an invoice for TRC-20 USDT the same way you create one for GRAM or USDT on TON.
+Integration
+Integration Health
+Integrations
+Intelligent Underpayment Resolution
+Intelligent resolution prompts for the exact remaining balance.
+Interface Language
+Internal balance system. You need to manually withdraw or wait for automated payout cycles.
+Invalid address format for {network}
+Invitation sent. They join automatically on their next sign-in.
+Invite Member
+Invite by Telegram username — they join the moment they log in.
+Invite operators and developers who need access to payment workflows.
+Invite team members and assign roles to manage your projects.
+Invite teammates and manage payment operations with clear ownership.
+Invite teammates, manage roles, and collaborate in your workspace. Upgrade to Business plan to unlock team features.
+Invite your colleagues to collaborate.
+Invoice
+Invoice Created
+Invoice Creation
+Invoice Details
+Invoice Issued
+Invoice created successfully!
+Invoice title (visible to client)
+Invoices
+Invoicing
+Invoicing: Professional Billing for Modern Commerce
+Is there a limit on how many invoices I can create?
+Issue Test Invoice
+Issue invoices, track notifications, and manage projects through the official bot without switching to a browser.
+Issue payment requests on any supported network.
+Issue scoped API keys after a plan is activated.
+Issue, track, and manage professional crypto invoices. Support for USDT and native Gram. Non-custodial, automated tracking, and CSV reports for accounting.
+Items per page (default 20, max 100)
+Jetton transfer monitoring with custom comments.
+Jettons
+Join hundreds of merchants who have already optimized their revenue flow with recv.
+Join industry leaders who have already automated their crypto processing and eliminated manual overhead.
+Just like GRAM payments, USDT on TON matching relies on the required comment. Buyers must not modify this comment. Additionally, buyers or wallets must have GRAM to cover blockchain transaction fees (gas).
+Keep 100% of Your Profit. Zero Turnover Fees.
+Key Label
+Keys
+Keys to authenticate your requests. Keep them secure.
+L2 INVOICE
+L2 PAYMENT
+LIMITATIONS AND NOTES
+LIVE ORDER
+LLMs have no way to generate or verify payment invoices natively.
+Label
+Last 30 Days
+Last 7 Days
+Last Updated
+Last Updated: June 14, 2026
+Launch Console
+Launch Gram checkout with direct settlement.
+Learn more
+Leave this workspace? You will lose access immediately.
+Leave workspace
+Legal Notices: legal@recv.money
+Let AI agents accept crypto for you.
+Let AI agents accept payments autonomously. Native Model Context Protocol integration — your AI sets up workspaces, buys plans, and creates invoices without human input.
+Leverage GRAM on the TON network for Telegram-native buyers or support USDT (TRC-20) for global stablecoin users.
+Lifetime (min)
+Limit
+Links you create will appear here.
+List Invoices
+Listening for transaction...
+Live
+Live blockchain monitoring. We confirm transactions automatically.
+Live consumption against your plan limits.
+Live invoice status provides feedback as supported networks are observed.
+Loading...
+Local browser auth for editing the UI and flows without a Telegram Mini App.
+Locales
+Log Retention
+Login
+Login in dev mode
+Logout
+Low fees and wide retail familiarity.
+Low-Fee Networks
+Low-fee stablecoin transfers preferred by software and gaming buyers.
+Low-latency blockchain monitoring with intelligent underpayment detection.
+MANAGEMENT
+MCP Agent
+MCP Agent Integration | AI-Native Crypto Payments via Model Context Protocol
+MCP Server
+MCP Tools
+MCP tools
+MEMBERSHIP ECONOMY
+Manage Members
+Manage membership access for Telegram channels and private groups with automated crypto payments. Support for TON and USDT on TON.
+Manage payments, developers and members.
+Manage projects, invoices, and analytics in one interface.
+Manage up to 10 independent projects under a single subscription.
+Manage who can access this workspace.
+Manage your contact information and account parameters.
+Manage your revenue flow and infrastructure via our official Telegram bot.
+Management
+Managing multiple RPC nodes and brittle explorers.
+Manual Override
+Manual Overrides
+Manual Payments
+Manual delivery is impossible at scale.
+Manual member management does not scale.
+Manual payment verification limits scale.
+Manual review
+Manual verification and chasing screenshots.
+Manual verification and screenshot chasing.
+Manual wallet address copying leads to errors and lost funds.
+Manually checking explorers for client payments.
+Manually confirm payments in case of underpayments or client errors.
+Many global customers already hold USDT on TRON. Supporting it lets businesses collect predictable payments without pushing buyers into a new rail.
+Matching
+Maximum Conversion. Minimum Friction.
+Member
+Member since
+Members
+Membership Renewal Tracking
+Memo-based matching and transaction fees.
+Merchant
+Merchant / Developer
+Merchant Console
+Merchant Console & Checkout
+Merchant Dashboard
+Merchant Tier
+Merchant for low volume; Developer for teams needing full webhook-driven fulfillment.
+Micro-Features, Macro Impact
+Minimum 14 days
+Missing payout address
+Model Context Protocol (MCP) Server
+Model: non-custodial, direct-to-wallet
+Modern OpenAPI specs and libraries for rapid integration.
+Monitor chain
+Monitor transfer
+Monitoring
+Monthly requests
+More than the expected amount was received. The merchant will review the payment before final handling.
+Move beyond manual wallet screenshots and spreadsheet tracking. Issue, track, and manage invoices with a UI that commands respect from your clients.
+Multi-Chain Abstraction
+Multi-Workspace
+NATIVE
+NETWORK INVOICE
+NETWORKS
+NOTE: We do NOT collect Customer names, Customer emails, Customer physical addresses, or any traditional KYC/AML documentation.
+Name
+Native Gram payments for Telegram-based commerce and the growing TON ecosystem.
+Native Gram transfers for simple Telegram and wallet-native payments.
+Native TRON asset used by wallets for transaction costs and operational balances.
+Native Telegram Integration
+Native crypto settlement. You receive exactly what was paid — USDT stays USDT, GRAM stays GRAM, in your wallet.
+Native payment rails for Telegram Mini Apps.
+Native rails for Telegram memberships.
+Native support for the most liquid protocols. Low fees, instant confirmation, maximum reach.
+Need teams, audit logs, and custom branding? Move to Business.
+Network
+Network Connectivity
+Network Flexibility
+Network Safety
+Network only
+Networks
+Never
+Next-generation crypto payments infrastructure
+No API access (manual only)
+No API keys yet.
+No Chargeback Risk
+No Percentage Fees
+No active API keys
+No chargeback
+No deliveries yet.
+No endpoints configured yet.
+No hidden fees. Just a simple flat subscription.
+No internal wallet. Every payment confirms directly on-chain to your address. recv is invisible in the money flow.
+No invoices found.
+No paid invoices to chart yet.
+No payout addresses added yet.
+No pending invitations.
+No transaction hash yet.
+No transactions yet.
+No webhook deliveries yet.
+No webhooks configured
+No. Since we operate strictly as non-custodial middleware and do not hold or process fiat currency, we do not require KYC verification from merchants. You can start accepting crypto immediately.
+Non-Custodial
+Non-Custodial API
+Non-custodial
+Non-custodial architecture. All transactions go directly to your wallets.
+Non-custodial crypto payment gateway for USDT, Gram, and TRON. Integrate our high-performance processing API or smart checkout into Telegram bots, SaaS platforms, and global e-commerce with zero turnover fees.
+Non-custodial direct payouts vs Coinbase's hosted balance model.
+Non-custodial infrastructure. Your money never touches our accounts.
+Non-custodial payment gateway. Customer funds settle directly in your self-custody wallets.
+Non-custodial. Direct-to-wallet. Instant liquidity.
+Normalized events for Base transfers.
+Not configured yet
+Not connected
+Not included
+Notifications & pricing
+NowPayments
+Offer a familiar stablecoin option for keys, files, and account access.
+Offer a lower-cost EVM option for high-volume payment flows.
+One flow: test key, test invoice, simulation, webhook, live.
+One invoice flow for SOL and SPL assets.
+One unified API for supported networks with standardized JSON.
+One-click reporting for tax and accounting purposes.
+Only owners and admins can invite or remove members.
+Only the owner can manage roles.
+Open
+Open billing
+Open bot
+Open checkout
+Open in Telegram
+Open value
+Operational
+Operations
+Optimize Margins
+Optimized L2 networks for low-fee Base ecosystem payments.
+Optimized for GRAM & Stablecoins
+Optimized through internal transaction history to handle common blockchain edge cases with clearer review states.
+Order Confirmed
+Order Created
+Our API is flexible enough to power any payment flow. Let's discuss how recv can help your specific business.
+Our checkout UI is designed for mobile browsers and Telegram Mini Apps. Wallet deep links can guide buyers to a compatible wallet while confirmation timing remains dependent on the selected network.
+Our watchers are distributed across multiple global RPC providers. If a network halts, recv queues the monitoring tasks. Once the blockchain resumes block production, all pending transactions will be automatically verified and webhooks fired.
+Our watchers confirm the transfer on the blockchain in real-time.
+Our watchers track transactions 24/7, confirming payments autonomously.
+Our webhook engine uses a persistent queue and plan-specific retry budgets. Every payload is signed with HMAC; your backend must verify the signature and timestamp, acknowledge quickly, and process events idempotently.
+Owner
+PLEASE READ THIS COMPREHENSIVE AGREEMENT CAREFULLY. IT CONTAINS A MANDATORY BINDING ARBITRATION CLAUSE, A CLASS ACTION WAIVER, AND EXTENSIVE DISCLAIMERS OF LIABILITY THAT MATERIALLY AFFECT YOUR LEGAL RIGHTS. BY ACCESSING, INTEGRATING, OR UTILIZING THE RECV SOFTWARE, API, OR WEBHOOKS, YOU AGREE TO BE BOUND BY THESE TERMS.
+PRICING
+PRIVACY POLICY
+PROBLEM
+PRODUCT AND PLAN
+PRODUCTS
+Page number (default 1)
+Paid
+Paid Communities
+Paid communities
+Paid community crypto payment details
+Paid subscription plans have absolutely no limits on manual invoice creation. However, the free Trial plan has a lifetime limit of 15 live invoices. You can upgrade to any paid plan to unlock unlimited invoices.
+Paid volume per chain, computed from your invoices.
+Parameters
+Pass Selected
+Pay Now
+Pay in Wallet
+Pay the subscription invoice with crypto.
+Payable
+Payment
+Payment Confirmed
+Payment Network
+Payment States as Access Signals
+Payment Verified
+Payment comments make TON matching reliable.
+Payment link QR code
+Payment link preview
+Payment links
+Payment received successfully.
+Payments Infrastructure. Control in Your Hands.
+Payments for the Agentic Era
+Payments must be sent on Base One. Base, Base, BSC, or other EVM transfers are different rails and will not be treated as the same payment automatically.
+Payout
+Payout Addresses
+Payout Architecture
+Payout Destination
+Payout Model
+Payouts
+Pending Invoices
+Pending invites
+Perfect for creators who need a professional payment link and a central dashboard to monitor their community's health.
+Performance First
+Permissions
+Plan
+Please request a new payment link from the seller if needed.
+Poll status and paginate your invoice history programmatically.
+Popular
+Power up your AI agents with recv tools.
+Powered by
+Present Details
+Present checkout and payment operations with your business identity.
+Present payment
+Preview Sandbox Data
+Pricing
+Pricing and network charges follow the provider's current published terms.
+Pricing may include percentage-based, settlement, or conversion charges; current terms must be checked with the provider.
+Primary stablecoin rail for checkout, SaaS billing, and B2B invoice payments.
+Priority
+Priority support
+Privacy
+Privacy Requests: privacy@recv.money
+Privacy-first infrastructure. You maintain your own relationships with your users.
+Private
+Processor: recv
+Product
+Production API access for backend integrations.
+Production Backend
+Production Load
+Production-ready in minutes
+Products
+Professional API and Webhooks for full business automation. Direct payouts and zero turnover commissions.
+Professional API v1 Beta and Webhook notifications for high-load projects. Direct-to-wallet payouts and zero turnover fees in a pure non-custodial environment.
+Professional Billing for the Crypto Native.
+Professional Crypto Invoicing | B2B Billing Solution with 0% Fees
+Professional billing tools
+Professional billing tools for B2B and freelancers. Issue invoices, track status, and manage your clients in one place.
+Professional crypto processing with instant payouts directly to your wallets. We automate payment acceptance while you scale your business.
+Professional dashboard for manual and semi-automated payment acceptance. Direct payouts to your wallets and full control.
+Professional tools for integrating crypto payments. API v1 Beta to automate your business.
+Professionalize your B2B billing now.
+Professionalize your paid community today.
+Profile Settings
+Promo Code
+Promo code redeemed successfully!
+Proprietary API and standard plugins. Focus on generic e-commerce platforms.
+Protect your database from double-writes with native keys.
+Protocol
+Protocol Details.
+Public API 2.0 Beta
+Pure non-custodial. Every confirmed payment goes straight to your wallet address. recv never touches your funds.
+QR-native flow and wallet deep links reduce address-copying errors.
+QR...
+Queued delivery with automated retries and HMAC signatures.
+Queued retries with plan-specific limits and HMAC signatures.
+Quick Setup
+Quick Start via Stdio
+Quick Telegram registration and adding your TON, TRON, or EVM payout details.
+Quick amounts
+Quick start
+Quickstart
+READ THIS DOCUMENT CAREFULLY. BY ACCESSING THE RECV SOFTWARE, DASHBOARD, API, OR PUBLIC CHECKOUT PAGES, YOU EXPLICITLY CONSENT TO THE DATA PRACTICES DESCRIBED HEREIN. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY CEASE ALL USE OF THE SERVICE.
+RECV FLOW
+RECV-DEMO-149
+RECV-INFRA-99
+RELATED
+RELEVANT USE CASES
+REST
+REST API access
+RESTful primitives for payment automation.
+RU
+Rail
+Rate Limiting
+Read API Docs
+Read Documentation
+Read the MCP guide
+Read the developer documentation for payment automation.
+Ready for production in minutes.
+Ready to Scale?
+Ready to automate your Telegram commerce?
+Ready to automate your digital storefront?
+Ready to optimize your checkout conversion?
+Ready-to-use payment screens.
+Real-Time Deltas
+Real-time Access
+Real-time Monitoring
+Real-time Order Status
+Real-time Telegram notifications for every single transaction.
+Real-time Tracking
+Real-time Watchers
+Real-time events. We'll send a POST request to your URL.
+Real-time monitoring of recv infrastructure and network connectivity.
+Real-time transaction monitoring. Detect incoming payments using network confirmations and finality policy.
+Received
+Recent Activity
+Recent delivery attempts with status and errors.
+Recent webhook attempts, statuses, and errors.
+Recently created links
+Redeem Code
+Redirecting to provider...
+Referral code (optional)
+Referral code applied — partner:
+Register HTTPS endpoints to receive signed event callbacks.
+Reliability is the only metric that matters. recv API provides the high-performance primitives you need to build production-grade payment flows.
+Reliable infrastructure for software platforms. Flat fees mean higher margins for your business.
+Remaining
+Remove
+Remove the 15-invoice cap. Automate your payments with high-performance REST APIs, secure webhooks, and native MCP tools for AI agents — directly to your wallets with zero platform fees.
+Remove this member from the workspace?
+Request (cURL)
+Requests / min
+Requests this minute
+Requests/mo
+Required Comment
+Requires Activation
+Resend
+Resending…
+Resources
+Response Example
+Retry
+Retryable Webhook Delivery
+Returns a list of invoices with pagination. Sorted by creation date (newest first).
+Returns information about the current API key, plan, and monthly quota.
+Revenue
+Revenue by network
+Revenue flows directly to your wallets. We never touch, hold, or middle-man your funds.
+Review recent payment activity.
+Revoke
+Risk
+Roadmap
+Role
+Rotate secret
+Route BEP-20 payment events into your backend workflow.
+Run higher request volume with larger API and webhook limits.
+SAAS INFRASTRUCTURE
+SDKs & Docs
+SETTLEMENT
+SKIN IN THE GAME
+SOL
+SOL, USDT & USDC. Sub-second finality with token-account-level monitoring.
+SOLANA
+SOLANA NETWORK
+SOVEREIGNTY
+SPL USDT
+STABILITY
+STABLECOIN CHECKOUT
+STABLECOIN INVOICE
+STATUS
+SUBPROCESSOR LIST
+SUPPORTED ASSETS
+SUPPORTED STABLECOINS
+SaaS Billing
+SaaS billing
+SaaS crypto billing infrastructure details
+Same recv flow, Base-specific watcher.
+Sample invoice simulator
+Save
+Save Changes
+Saved {amount} in processing fees so far
+Scalability
+Scalable Processing. For Growing Teams.
+Scale Automation
+Scale EVM payment operations with team features.
+Scale Usage
+Scale Your Business with recv.
+Scale with Priority
+Scale your SaaS with reliable crypto billing.
+Scale your business with the highest-converting crypto checkout. Support USDT (TRC-20, TON, Base, BSC) with 0% turnover fees. Non-custodial, secure, and Telegram-ready.
+Scan the QR code or copy the details below.
+Scan to pay
+Scope of processing
+Scope: software, API, webhooks, blockchain monitoring
+Seamless Flow
+Seamless Integration Flow
+Seamlessly accept Tether (USDT) on TON. recv handles payment detection and comment-based matching, sending funds directly to your non-custodial wallet.
+Seamlessly integrate our protocol into your existing workflow using our high-performance API Beta.
+Seamlessly integrate our protocol into your existing workflow.
+Seamlessly runs inside Telegram Web Apps and mobile in-app browsers.
+Seats
+Secure HMAC-SHA256 signed callbacks. Receive real-time transaction updates with automated retry logic.
+Secure by Design
+Select
+Select asset
+Select network
+Sell files, keys, and access from Telegram-native storefronts.
+Sell keys, downloads, or licenses to Solana wallet users.
+Sell license keys, files, and digital access with automated crypto checkout. Instant fulfillment via webhooks and 0% commission.
+Sell physical or digital goods to global customers using Telegram and TON-compatible wallets.
+Send event
+Send invite
+Send payment requests where clients already prefer TRC-20 USDT.
+Send the EXACT amount. If you transfer from an exchange (Binance/Bybit), add the exchange withdrawal fee, otherwise the payment will go to manual review.
+Sending 'trust me' wallet addresses in Telegram DMs.
+Sending...
+Sending…
+Serve web3 buyers who prefer Base wallets and stablecoins.
+Service
+Service Name
+Service Provider and Data Controller
+Session
+Session Expired
+Set up HMAC-SHA256 signed callbacks for instant notifications.
+Set up independent environments for different business lines.
+Set up stablecoin checkouts on TON, automate invoice matching via comments, and receive payments directly to your own wallet.
+Set up your payout wallets. Customer funds will land directly in your custody.
+Sets invoice status to 'expired'. Only unpaid invoices can be canceled.
+Settings
+Settlement
+Settlement Asset
+Settlement Speed
+Settlement methods and timing follow the merchant's BitPay configuration and current terms.
+Show Demo Data
+Show instructions
+Show payment
+Show wallet data
+Sign In
+Sign in required
+Sign in to Dashboard
+Signature Verification
+Signed
+Signed Webhooks
+Signed webhooks and dashboard events move your order, invoice, or subscription to paid.
+Signed webhooks update your order or billing system with the same event shape as other networks.
+Signing Secret
+Signing in...
+Simulate
+Simulate payment
+Simulated dashboard preview
+Slow and frustrating. Customers wait hours for manual confirmation and product delivery.
+Smart Checkout
+Smart Tracking
+Smart UI with QR codes and automatic edge-case handling.
+Social
+Solana
+Solana / Base
+Solana Blockchain
+Solana is a strong fit when your buyers already use Solana wallets and expect quick confirmation in developer tools, apps, or digital goods flows.
+Solana is useful when payments are part of a product that already speaks to developers, creators, or crypto-native buyers.
+Solana network payment details
+Solana payments for fast developer-owned checkout.
+Solana support fits teams that need fast stablecoin payments on the Solana network.
+Solutions
+Solutions for Every Business Scale
+Stablecoin
+Stablecoin checkout for buyers who hold USDT on BNB Smart Chain.
+Stablecoin familiarity matters for conversion.
+Stablecoin stability with Telegram-native speed.
+Standard
+Standard hosted checkout pages. Limited control over payment UI, branding, and customer flow.
+Standardized HTTP responses for predictable error handling.
+Standards: GDPR, global data protection laws
+Start Accepting Payments
+Start Free Trial
+Start Integration
+Start Selling Now
+Start accepting BSC
+Start accepting Gram
+Start accepting USDT on TON today.
+Start integration
+Start with USDT
+Status
+Status Codes
+Status breakdown
+Stop chasing manual verifications and waiting for screenshots. recv handles blockchain monitoring 24/7, confirming payments in seconds.
+Stop checking screenshots. Let recv handle the blockchain monitoring while you focus on scaling your business.
+Stop paying 5% to custodial gateways. Switch to a flat-fee infrastructure engineered for performance and security.
+Stop using spreadsheets. recv Invoicing provides a professional way to issue, track, and manage crypto payments with zero turnover fees.
+Store and manage frequent payer addresses and details.
+Streamline corporate financial operations with recv Invoicing, a specialized billing solution tailored for B2B crypto transactions and freelance accounting. The platform enables businesses to generate branded, multi-currency invoices with automated fiat-to-crypto pegging at the time of creation. Administrative features include real-time payment tracking via dedicated Telegram and email notifications, centralized client management, and comprehensive CSV export capabilities to simplify tax reporting and reconciliation. Operating on a zero-fee, direct-transfer model, it modernizes accounts receivable without introducing third-party holding risks.
+Strict KYC/KYB requirements and data sharing. Dependency on third-party policy changes.
+Submit requests to privacy@recv.money. We may verify your identity and authority before acting on a request. We will respond within the period required by applicable law.
+Subscription Management
+Subscription Plans
+Subscription duration must be at least 14 days
+Subscription state is updated in your DB without manual intervention.
+Support
+Support Global Stablecoin Demand
+Support buyers who prefer L2 settlement for recurring or one-time services.
+Support the assets your buyers already hold. TRON USDT is the standard for software, while TON is perfect for Telegram distributions.
+Support: support@recv.money
+Supported TON Jettons can be exposed as checkout options for compatible wallets.
+Switch to an automated payment flow and stop asking for screenshots in DMs. Direct-to-wallet, 0% fees.
+Switch to recv for 0% turnover fees and instant on-chain fulfillment signals.
+Sync backend
+System Status
+System invoice ID
+TECHNOLOGY
+TELEGRAM COMMERCE
+TERMS OF SERVICE
+TG Shops
+THE SERVICE, API, AND ALL RELATED INFRASTRUCTURE ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. THE COMPANY EXPRESSLY DISCLAIMS ALL WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+TON
+TON NETWORK
+TON is strongest when the buyer journey starts in chat or a Telegram Mini App.
+TON matching depends on the required comment. Missing or edited comments, wrong assets, or wrong network payments may need manual review instead of automatic confirmation.
+TON network payment details
+TON reduces friction when your customers already live in Telegram, use TON wallets, or buy access and digital goods from mobile chats.
+TON, TRON direct addresses configured
+TON-native assets for buyer-facing checkout.
+TRC-20 is not interchangeable with other USDT rails.
+TRON
+TRON NETWORK
+TRON Network
+TRON USDT
+TRON USDT payment details
+TRON USDT payments for global stablecoin buyers.
+TRON is usually selected for predictable USD-denominated payments and customers who already use TRC-20 transfers.
+TRUST
+TRX
+Table
+Team
+Team Access
+Team Collaboration
+Team Controls
+Team Management
+Team Management is available on Business plan.
+Team Onboarding
+Team Seats
+Team Setup
+Team access and higher request limits.
+Team and limit structure for growing payment volume.
+Team seats
+Teams
+Teams, audit logs, custom branding, and higher API limits for growing payment operations.
+Technical Docs
+Telegram Alerts
+Telegram ID
+Telegram Integration
+Telegram Mini App
+Telegram Mini App Optimized
+Telegram Mini Apps
+Telegram Native
+Telegram Ready
+Telegram Shops
+Telegram bot notifications
+Telegram commerce flows with checkout links and live payment states.
+Telegram order #4821
+Telegram shop crypto payments documentation
+Telegram shops
+Telegram username (without @)
+Telegram-flow
+Terms
+Test
+Test invoice
+Test key
+Test the Experience
+Test the full flow in Sandbox before going live.
+Tether USDT on TON
+The Agentic Difference
+The Merchant hereby authorizes the engagement of the third-party infrastructure and service providers listed below. All listed subprocessors have entered into data processing agreements with equivalent security standards.
+The Open Network
+The Service is operated by the operators of the website recv.money (“recv”, “Company”, “we”, “us”). Notices and requests may be submitted to the following contact channels:
+The Smarter Way to Process Crypto
+The buyer opens a hosted link showing exact amount, address, and QR.
+The buyer sees Base network instructions, amount, address, and QR.
+The buyer sees Base-specific address, amount, asset, and QR instructions.
+The buyer sees a hosted page with QR, copyable address, amount, and clear comment instructions.
+The customer pays through your custom UI or our hosted checkout.
+The dashboard for manual payment ops.
+The dashboard signals a paid state, enabling immediate order fulfillment.
+The first crypto payment infrastructure built for AI agents. recv MCP lets any Claude, GPT, or custom LLM agent bootstrap a workspace, buy a plan, and start accepting payments — zero human intervention required.
+The following is an active list of third-party subprocessors authorized to process data on behalf of recv to deliver our Service infrastructure.
+The global standard for USDT settlement with high throughput and low costs.
+The industry standard for USD-denominated stablecoin billing.
+The license key or download link is automatically released to the customer.
+The most friction-less experience for Telegram-native communities.
+The native TON network asset used for transaction fees (gas) when sending Jettons.
+The native choice for digital assets sold within the Telegram ecosystem.
+The native currency for Telegram-based commerce and the growing TON ecosystem.
+The official USD₮ Jetton on the TON blockchain, widely used in Telegram Wallet and Tonkeeper.
+The payment arrived late or could not be matched automatically. The merchant will review it manually.
+The payment comment must stay intact.
+The payment window has closed. Do not send funds to these details. If you already paid, the merchant may review it manually.
+The recv Advantage.
+The recv Evolution
+The recv MCP server runs over stdio and works with Claude Desktop, Claude Code, Cursor, Cline, Continue, and any other host that implements the Model Context Protocol spec. Add it to your mcp.json with RECV_API_KEY and RECV_ACCESS_TOKEN and your agent gains payment superpowers immediately.
+The recv Unified API provides infrastructure for integrating blockchain payments into B2B software, gaming platforms, and business applications. Development teams use one REST interface for supported networks, idempotency controls for duplicate processing, and retryable webhook delivery with HMAC-SHA256 signatures.
+The secret key is shown only once!
+The seller or bot generates a payment request for a specific Telegram order.
+The standard stablecoin on Solana for high-speed, low-fee USD-denominated payments.
+The starting point for business owners. Includes manual link generation, transaction history, and real-time alerts.
+The terms above form the entire agreement governing your service use.
+The transaction was completed successfully.
+The user chooses a membership tier or renewal period.
+Third-party custody. Risk of frozen accounts, withdrawal delays, and platform insolvency.
+This Agreement is entered into by and between the Merchant and the operators of the website recv.money (“recv”, “Company”, “we”, “us”).
+This DPA applies when and to the extent recv processes Customer Personal Data solely on behalf of the Merchant. In this context, Merchant acts as Controller and recv acts as Processor.
+This DPA is incorporated by reference into the Terms of Service.
+This Data Processing Addendum (“DPA”) governs the processing of Customer Personal Data by recv on behalf of the Merchant in connection with the Service.
+This Policy is designed to comply with global data protection principles while explicitly acknowledging the inherently public, immutable, and decentralized nature of cryptographic blockchain technology.
+This Privacy Policy (the "Policy") governs how recv ("Company", "we", "us", "our") collects, processes, utilizes, and safeguards information when you ("Merchant", "User", "you") or your end-users ("Customers") interact with our software-as-a-service infrastructure, Telegram bots, API endpoints, and public checkout interfaces (collectively, the "Service").
+This Privacy Policy was drafted to ensure alignment with global standards.
+This checkout session has expired.
+This referral code was not found, you can still continue.
+Tiered access designed for high-throughput applications.
+Time is running out
+Time left
+To operate the "Direct-to-Wallet" routing and notification architecture, we strictly minimize data collection to the following categories:
+Today
+Toggle menu
+Tools Your Agent Gets Out of the Box
+Tools for teamwork, flexible API key management, and expanded limits for large-scale tasks.
+Total Volume
+Total in
+Track important operational actions for review and accountability.
+Track transfer
+Transaction History
+Transaction and settlement pricing follows BitPay's current published terms.
+Transaction hash
+Transaction monitoring updates invoice state as supported networks are observed.
+Transaction pricing follows Coinbase Commerce's current published terms.
+Transactions
+Transfer Detected
+Transport
+Trial
+Trial Period
+Trial Plan Active
+Trial: 15 live invoices free
+Trigger Backend
+Trigger backend
+Trigger delivery on payment events.
+Trust by Default
+Try Demo
+Try Live Demo
+Turnover Fee
+UNDER NO CIRCUMSTANCES SHALL THE COMPANY'S TOTAL CUMULATIVE LIABILITY TO YOU FOR ANY AND ALL CLAIMS EXCEED THE TOTAL AMOUNT OF SUBSCRIPTION FEES PAID BY YOU TO THE COMPANY IN THE THREE (3) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM. IF YOU ARE ON A FREE PLAN, THE AGGREGATE LIABILITY SHALL BE STRICTLY LIMITED TO ZERO DOLLARS ($0.00).
+URL
+USDT & USDC. Coinbase-backed L2 — ERC-20 log monitoring at confirmation depth.
+USDT & USDC. Leading Ethereum L2 with deep liquidity and EVM-native tooling.
+USDT (Jetton)
+USDT Checkout
+USDT ON TON
+USDT SPL payments on Solana.
+USDT TRC-20
+USDT as a native TON Jetton.
+USDT goes directly to your non-custodial TON wallet without holding periods or intermediaries.
+USDT on Base
+USDT on Base.
+USDT on TON
+USDT on TON for stablecoin payments in the TON ecosystem.
+USDT on TON is ideal for businesses that want stable, dollar-pegged pricing but sell products inside the Telegram ecosystem.
+USDT on TON is the perfect solution for Telegram commerce. It eliminates the price volatility of GRAM while retaining the fast transaction speeds, low fees, and deep integration with Telegram chats.
+USDT on TON payment gateway details
+USDT stablecoin transfer on Base One layer 2 for highly scalable USD-denominated payments.
+USDT stablecoin transfer on Coinbase's L2 network for fast and cheap transactions.
+USDT-first stablecoin acceptance.
+USDT/TRC-20. The global standard for stablecoin settlement — high throughput, minimal fees.
+USE CASES
+UX
+Ubiquitous Connectivity.
+Underpayments cause support nightmares and order loss.
+Unified
+Unified API
+Unified API & Signed Webhooks
+Unified API v1
+Unified API v1 Beta
+Unified Blockchain API | Webhooks & Monitoring for TON, TRON, EVM
+Unified Chain Abstraction
+Unified invoice creation and webhook events.
+Unified invoices and webhooks for BSC payments.
+Universal Blockchain Connectivity
+Universal Network Support
+Unlike custodial competitors, recv never touches the funds in your invoices. Your clients pay you directly on-chain. Our service acts as a professional monitoring layer, ensuring you get notified without having to watch the ledger yourself.
+Unlimited
+Unlimited Invoices
+Unlimited sales
+Unlimited volume. Flat monthly fee.
+Unlock Pro & API
+Until
+Update system
+Updating...
+Upgrade
+Upgrade Plan
+Upgrade Your Workflow
+Upgrade to Business
+Usage & Limits
+Use 300 RPM, 200,000 monthly requests, 10 active API keys, and 10 webhook endpoints.
+Use BSC when your buyer base already holds BEP-20 assets or wants a low-cost EVM-compatible option.
+Use Base for buyers who already operate on Coinbase-aligned or EVM-compatible L2 rails.
+Use Base for customers who want Base-compatible assets with lower transaction costs than mainnet.
+Use Base in production flows.
+Use Case
+Use Cases
+Use Checkout or API with Base as the payable network and the configured asset.
+Use TON for Telegram-native payment flows and supported Jettons when your workspace enables them.
+Use TRON when pricing is USD-denominated and buyers expect to pay with USDT.
+Use any connected provider to access the same recv account.
+Use hosted payment pages for USDT-denominated orders.
+Use recv API and Checkout to accept Solana assets and let signed events drive your payment state.
+Use recv Checkout or API with Base One as the payable network.
+Use recv to accept BNB Smart Chain transfers through Checkout, API invoices, and real-time payment events.
+Use recv to accept Base One payments, monitor transfers, and keep settlement direct to your wallet.
+Use recv to accept Gram payments, detect transfers automatically, and keep customer payments flowing directly to your wallet.
+Use recv to accept SOL and supported SPL assets with fast checkout flows, API invoices, watcher detection, and signed webhooks.
+Use recv to accept TON and supported Jetton payments with hosted Checkout, API invoices, payment comments, and direct-to-wallet settlement.
+Use recv to add Base checkout, monitor transfers, and keep your backend payment logic consistent across networks.
+Use recv to issue TRC-20 invoices, track transfers in real time, and connect stablecoin payments to your business systems.
+Use recv to verify membership payments instantly. Our events can drive your bot or management tool to invite or remove members based on real on-chain data.
+Use stablecoin checkout on TON where the asset is enabled for your merchant setup.
+Use these keys to authenticate your requests to our API.
+Used for emergency contact or if we need to reach you regarding your account.
+Username
+Users may withdraw optional analytics consent at any time through our Cookie Settings. Withdrawal does not affect strictly necessary storage.
+Uses the test_ secret shown when you create a key. The server does not reveal it again.
+Validate HMAC-SHA256 signatures locally without a network round-trip.
+Validate incoming notifications securely.
+Verification code
+Verified by
+Verified invoice status can trigger automated fulfillment according to merchant policy.
+View
+View API Docs
+View Business
+View Docs
+View MCP Docs
+View Merchant
+View Plans
+WHY BASE
+WHY BSC
+WHY Solana
+WHY TON
+WHY TRON
+WHY USDT ON TON
+WORKFLOW
+Wallet Address
+Wallet ready
+Watch Blockchain
+Watch transfer
+We also use a first-party attribution cookie named “recv_attr”. It may contain an attribution identifier, campaign parameters, referral code, landing page and referring website. Its maximum lifetime is 90 days.
+We bridge the gap between businesses and decentralized liquidity. recv supports all major protocols with a single integration.
+We collect aggregated website performance measurements, including page path, locale, navigation type, LCP, INP and CLS values.
+We currently support TON (GRAM and USDT), TRON, Base, Arbitrum, and BSC. We are continuously adding new liquid protocols based on business-tier demands.
+We currently support TON (Gram and USDT), TRON, Solana, Base, Arbitrum, and BSC. We are continuously adding new liquid protocols based on business-tier demands.
+We may retain specific records longer where necessary to establish, exercise or defend legal claims or comply with law.
+We process account, authentication, workspace, invoice, wallet, API, webhook and subscription data to perform our contract with the Merchant.
+We process billing and transaction records to perform the contract and comply with applicable accounting, tax, sanctions and legal obligations.
+We process optional analytics and advertising attribution data based on consent where consent is required by law, and otherwise as permitted by applicable law.
+We process security logs, session information, IP addresses, user-agent data, audit events, fraud indicators and service diagnostics based on our legitimate interests in securing, maintaining and improving the Service.
+We reserve the right to unilaterally update this Privacy Policy at any time. Your continued use of the Service following the posting of an updated Policy constitutes your acceptance of the changes.
+We retain personal data in accordance with the following retention schedule:
+We use a proprietary non-custodial architecture. All transactions go through your nodes or our high-performance clusters directly to the blockchain.
+We use standard X-RateLimit headers to control traffic load.
+We use strictly necessary storage to maintain authentication, security, language and interface preferences. This includes access tokens stored in localStorage and refresh tokens stored in Secure, HttpOnly cookies.
+We use the product ourselves before exposing new payment features to merchants.
+We utilize a non-custodial architecture. This means your private keys never leave your device, and funds are sent directly from the client to your address. recv only monitors the blockchain and provides transaction notifications.
+We'll send POST notifications to your URL when invoice status changes.
+We've removed the noise, leaving only speed, security, and transparency.
+Web3 apps
+Web3 services
+Webhook
+Webhook Config
+Webhook Configuration
+Webhook Deliveries
+Webhook Delivery
+Webhook Endpoints
+Webhook Received
+Webhook Signing
+Webhook automation
+Webhook endpoints
+Webhook retries
+Webhook signature verification requires manual backend code and secrets.
+Webhook verification happens inside the MCP process — your raw body and secret never leave the local runtime. API keys are scoped to invoices:read and invoices:write. The agent only sees what it needs, and every payment event is cryptographically signed before delivery.
+Webhooks
+Webhooks Automation
+Webhooks Guide
+Webhooks that fail without retry logic or signatures.
+Welcome back,
+What happens if a network (e.g., TRON) goes down?
+Where enabled, Google Tag Manager and Yandex Metrica may receive device, browser, page-view, interaction, network and approximate location information under their respective privacy terms. These technologies are not activated for users who require prior consent until the user has provided that consent.
+Whether it's jetton transfers for USDT on TON or the unique memo requirements of GRAM, recv abstracts the complexity. Your customers get a consistent, polished experience regardless of the underlying blockchain technology, reducing cognitive load and increasing trust.
+Which networks and assets are currently supported?
+Why choose
+Why non-custodial infrastructure is safer and more cost-effective for your business.
+Why settle for generic payment links? Offer a premium, non-custodial checkout experience engineered to eliminate 'copy-paste' fatigue and reduce underpayment errors.
+Work with dedicated monitoring queues and 24/7 priority support.
+Works only when the backend runs with ALLOW_INSECURE_DEV_AUTH=true.
+Workspace ID
+Workspace Isolation
+Workspaces
+Yesterday
+You
+You agree to defend, indemnify, and hold harmless the Company and its affiliates from and against any claims, actions, demands, liabilities, damages, and expenses arising from your breach of this Agreement, violation of law, or any dispute between you and your Customers.
+You are the only member of this workspace.
+You can start our Telegram bot to quickly sign in with a one-time code.
+You have {limit} free live invoices on Trial. Payments land directly in your wallet with 0% fees.
+You're all set. Everything below is live.
+Your @username
+Your AI Agent, Now a Crypto Merchant.
+Your backend creates a Solana invoice through recv API or uses hosted Checkout.
+Your backend receives the same normalized payment state used across other supported networks.
+Your backend verifies the HMAC signature and processes the 'paid' event.
+Your billing service creates a recv invoice with an idempotency key.
+Your current plan
+Your current plan capacity.
+Your dashboard or webhook receives the paid state for fulfillment, access, or order updates.
+Your fulfillment service receives a signed event confirming the payment.
+Your management bot invites the user once the 'paid' event is emitted.
+Your payment has been successfully confirmed.
+Your store generates a unique recv checkout link for the digital item.
+Zero transaction fees. Flat subscription. You see exactly what the customer sends, minus only the network gas fee.
+Zero turnover fees. Flat subscription. 100% yours.
+Zero-Touch Agent Onboarding
+accept crypto payments, crypto checkout gateway, GRAM payments, TON payments, TRON USDT gateway, USDT on TON checkout, non-custodial crypto payment, telegram payment bot api, usdt trc20 checkout
+active
+api
+arbitrum
+attempts
+average paid invoice
+awaiting payment
+base
+bitpay
+bootstrap_agent_workspace
+bootstrap_agent_workspace creates a workspace and returns an access token in one call.
+bsc
+checkout
+checkout.network.ton
+checkout.network.ton_usdt
+coinbase-commerce
+coingate
+communities
+create_api_key
+create_invoice
+create_invoice and get_invoice are first-class MCP tools your agent can call directly.
+create_webhook_endpoint
+crypto invoicing for business, b2b crypto billing, freelance crypto invoices, professional usdt billing, crypto payment tracking, 0 fee crypto invoicing
+crypto payment api, blockchain monitoring api, webhooks for crypto, TON developer api, TRON trc20 api, automated crypto payments, unified blockchain api
+cryptomus
+designer
+digital
+direct
+done
+from paid invoices
+get_invoice
+get_invoice / list_invoices
+invited as
+invoice.network.tron
+invoices
+large
+license.delivery.ready
+list_invoices
+list_supported_networks
+live demo
+mcp crypto payments, model context protocol payments, ai agent payments, llm invoice creation, autonomous crypto billing, claude mcp recv
+medium
+member.access.granted
+monitoring
+next
+no status
+nowpayments
+of supported networks ready
+or sign in with Telegram
+paid of total invoices
+partner-code
+payment.network.arbitrum
+payment.network.base
+payment.network.bsc
+payment.network.solana
+per minute
+per month
+recv
+recv Business
+recv Checkout is a non-custodial payment gateway engineered for high-conversion cryptocurrency processing. Designed to eliminate friction in digital commerce, the UI supports direct-to-wallet transactions across TON, TRON (TRC-20), Base, and BSC-compatible networks. Core functionality includes dynamic exchange rate calculation, deep linking to major mobile wallets, and intelligent underpayment resolution to recover partial transactions. By bypassing intermediary custodians, merchants retain full control of their liquidity while providing customers with a seamless, multi-chain payment experience without turnover fees.
+recv Checkout is the ultimate non-custodial interface designed to turn abandoned carts into confirmed transactions. Seamlessly integrated, multi-chain by default, and optimized for every device.
+recv Developer
+recv Invoicing is designed for businesses that need more than just a payment link. Manage the entire lifecycle from draft to settlement. Track 'Overdue' or 'Underpaid' states and communicate professionally with your partners at every step.
+recv MCP (Model Context Protocol) integration enables AI agents and LLM-powered applications to autonomously manage the full lifecycle of crypto payments. Agents running in Claude Desktop, Claude Code, Cursor, or any MCP-compatible host can call bootstrap_agent_workspace to self-register, purchase a subscription plan, generate API keys, create and monitor payment invoices across TON, TRON, Solana, Base, Arbitrum, and BSC networks, and register webhook endpoints for event-driven payment flows. The verify_webhook tool performs local HMAC-SHA256 signature validation without exposing secrets to the network. This makes recv the first payment infrastructure platform natively designed for the agentic era of autonomous software.
+recv Merchant
+recv adds Base One to your payment stack with the same checkout, invoice, and webhook model used across supported networks.
+recv brings SOL and supported SPL assets into one payment API, so web3 products can create invoices and react to confirmed transfers without custom watcher logic.
+recv classifies underpayments and can show the remaining balance so the customer can complete payment without creating a new order. Merchant policy still determines fulfillment and refunds.
+recv documents its supported network and asset combinations and provides checkout suitable for Telegram Mini Apps.
+recv enables TRON USDT payments through Checkout, API invoices, TRC-20 watcher detection, signed webhooks, direct-to-wallet settlement, and stablecoin payment flows for SaaS and business use cases.
+recv enables Telegram shops to accept crypto payments with hosted checkout links, TON support, stablecoin networks, direct-to-wallet settlement, and real-time payment detection for order fulfillment.
+recv enables paid communities to accept crypto for Telegram channels and private groups, featuring TON support, automated access signals via webhooks, and 0% turnover fees.
+recv generates a unique payment request with exact network/asset data.
+recv helps businesses accept BNB Smart Chain payments through a clean checkout and unified API flow built for direct settlement.
+recv intelligently detects any deviations from the expected amount. If an underpayment occurs, the transaction is flagged as 'Underpaid,' allowing you to either request the balance or manually approve the order.
+recv is the first payment platform with a native Model Context Protocol server. Any MCP-compatible agent can onboard, subscribe, create invoices, and verify webhooks without touching a dashboard.
+recv lets teams add Base to the same checkout and API flow they use for other networks, with direct settlement and normalized payment events.
+recv makes TRC-20 USDT practical for SaaS, invoices, and business checkout flows without percentage fees or custodial settlement accounts.
+recv monitors TON blockchain transactions to detect matching USDT Jetton transfers with the correct comment.
+recv observes supported networks and updates invoice status after detection and required confirmations. Timing depends on the selected network and the availability of its RPC infrastructure.
+recv operates as a transparent middleware. Transactions flow directly from client to merchant, bypassing intermediary accounts.
+recv operates as a transparent software layer (middleware). Transactions flow directly from client to merchant, bypassing intermediary accounts. We automate monitoring via high-performance nodes, eliminating any third-party risks.
+recv processes its own payments through the same engine exposed to merchants.
+recv provides SaaS platforms with robust crypto billing infrastructure, featuring idempotent API calls, HMAC-signed webhooks, and universal support for TON, TRON, and EVM networks with 0% turnover fees.
+recv provides a high-performance checkout flow, real-time blockchain monitoring, and direct-to-wallet settlement for Telegram-native commerce.
+recv provides automated crypto checkout for digital products, supporting instant fulfillment via signed webhooks, multi-chain monitoring, and direct-to-wallet payouts with 0% fees.
+recv ships a Model Context Protocol server, so agents like Claude and Cursor can create invoices, check payment status, and verify webhooks autonomously — no glue code required.
+recv supports BSC payments with BNB and configured BEP-20 assets, hosted Checkout, API invoice creation, blockchain watchers, webhooks, and direct-to-wallet settlement for business payment flows.
+recv supports Base One payments with ETH and configured ERC-20 assets, hosted Checkout, API invoices, blockchain watchers, signed webhooks, and direct-to-wallet settlement for EVM business workflows.
+recv supports Base payments with ETH and configured ERC-20 assets, hosted Checkout, API invoices, Base watchers, normalized webhooks, direct-to-wallet settlement, and business payment workflows.
+recv supports Gram payments for Telegram commerce with hosted Checkout, API invoice creation, required payment comments, blockchain watchers, direct-to-wallet settlement, and webhooks for order or access automation.
+recv supports Solana payments with SOL and configured SPL assets, hosted Checkout, API invoice creation, blockchain watchers, signed webhooks, and developer-focused payment automation.
+recv supports USDT on TON payments with hosted Checkout, API invoice creation, required comment matching, blockchain watchers, and direct-to-wallet settlement for Telegram bots and Mini Apps.
+recv tracks native or SPL transfers and matches the payment to the invoice.
+recv turns GRAM transfers on TON into clean checkout states for Telegram shops, paid communities, and mobile-first buyers while keeping funds direct to your wallet.
+recv vs BitPay
+recv vs BitPay: Fixed Subscription vs Percentage Fees
+recv vs CoinGate
+recv vs CoinGate: Direct Payouts vs Conversion-First Model
+recv vs Coinbase Commerce
+recv vs Coinbase Commerce: Non-Custodial vs Hosted Balance
+recv vs Cryptomus
+recv vs Cryptomus: On-Chain Payouts vs Internal Wallet
+recv vs Custodial Gateways
+recv vs Custodial Gateways: Non-Custodial Advantage
+recv vs Manual Verification
+recv vs Manual Wallet Payments: Why Automate?
+recv vs NowPayments
+recv vs NowPayments: Control vs Convenience
+recv watchers detect native and ERC-20 transfers on Base One.
+recv watchers detect the incoming TRC-20 transfer and match it to the invoice.
+recv watchers detect the on-chain transfer and verify the amount instantly.
+recv watchers detect the transaction and verify it against the order.
+recv watchers match the incoming transfer by amount and required payment comment.
+recv watchers track native BNB and BEP-20 transfers for the invoice.
+recv watches native and ERC-20 transfers on Base and matches them to invoices.
+recv | Checkout
+recv-vs-custodial
+recv-vs-manual
+remaining
+saas
+simulate_payment
+small
+solana
+stdio
+subscription.renewal.paid
+tg
+tg-shops
+ton
+ton_usdt
+tron
+verify_webhook
+verify_webhook runs locally in the MCP server — no network call, no leaking secrets.
+you@company.com
+{count} Active API key
+{count} Active API keys
+—
+• Account and workspace data: while the account is active and for up to 24 months after closure.
+• Active refresh sessions: until expiration or revocation; session security records may be retained for up to 12 months.
+• Authentication codes: until used or expired, followed by deletion within 30 days.
+• Backups: until overwritten under the backup rotation schedule, ordinarily within 30 days.
+• Invoice, subscription and blockchain reconciliation records: for up to 7 years where required for accounting, tax, dispute or fraud-prevention purposes.
+• Location: European Union / United States.
+• Location: Global.
+• Location: Globally distributed.
+• Product analytics, UTM attribution and Web Vitals: up to 24 months.
+• Purpose: Facilitating user authentication, bot commands, Telegram Mini App hosting, and merchant event notifications.
+• Purpose: Fetching public real-time cryptocurrency exchange rates (e.g. CoinGecko API) to compute USD-equivalent invoice values.
+• Purpose: Querying blockchain block headers, monitoring destination wallets, and reading mempools (e.g. TonCenter, TronGrid, and default public nodes).
+• Purpose: Serving server compute environments, secure database hosting, and global edge request routing.
+• Webhook delivery and API request logs: up to 12 months.
+∞

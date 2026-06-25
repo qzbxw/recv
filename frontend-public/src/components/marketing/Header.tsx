@@ -6,26 +6,35 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X, Zap, CreditCard, Code, Bot } from "lucide-react";
 import type { PublicCopy } from "@/lib/copy";
+import { LOCALES, type Locale } from "@/i18n";
 import { NetworkLogo } from "@/components/NetworkLogo";
 import { useLocaleAlternates } from "./localeAlternates";
 
-/** Swap the leading /en or /ru segment of the current path to the target locale. */
-function swapLocaleInPath(pathname: string | null, target: "en" | "ru") {
+const LANGUAGE_LABELS: Record<Locale, string> = {
+  en: "EN",
+  ru: "RU",
+  uk: "UK",
+  uz: "UZ",
+  de: "DE",
+};
+
+/** Swap the leading locale segment of the current path to the target locale. */
+function swapLocaleInPath(pathname: string | null, target: Locale) {
   if (!pathname) return `/${target}`;
   const segments = pathname.split("/");
-  if (segments[1] === "en" || segments[1] === "ru") {
+  if (LOCALES.includes(segments[1] as Locale)) {
     segments[1] = target;
     return segments.join("/") || `/${target}`;
   }
   return `/${target}`;
 }
 
-export function Header({ language, nav }: { language: "ru" | "en"; nav: PublicCopy["nav"] }) {
+export function Header({ language, nav }: { language: Locale; nav: PublicCopy["nav"] }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const localeAlternates = useLocaleAlternates();
-  const localeHref = (target: "en" | "ru") =>
+  const localeHref = (target: Locale) =>
     localeAlternates?.[target] ?? swapLocaleInPath(pathname, target);
 
   useEffect(() => {
@@ -179,8 +188,11 @@ export function Header({ language, nav }: { language: "ru" | "en"; nav: PublicCo
 
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
-              <Link href={localeHref("ru")} className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "ru" ? "lang-btn-active" : "lang-btn-inactive"}`}>RU</Link>
-              <Link href={localeHref("en")} className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === "en" ? "lang-btn-active" : "lang-btn-inactive"}`}>EN</Link>
+              {LOCALES.map((locale) => (
+                <Link key={locale} href={localeHref(locale)} className={`px-2 py-1 text-[9px] font-bold rounded-full transition-all ${language === locale ? "lang-btn-active" : "lang-btn-inactive"}`}>
+                  {LANGUAGE_LABELS[locale]}
+                </Link>
+              ))}
             </div>
             
             <Link href="/app/auth" className="hidden sm:flex header-console-btn transition-all">

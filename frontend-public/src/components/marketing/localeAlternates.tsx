@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import type { Locale } from "@/i18n";
 
-export type LocaleAlternates = Partial<Record<"en" | "ru", string>>;
+export type LocaleAlternates = Partial<Record<Locale, string>>;
 
 type LocaleAlternatesContextValue = {
   alternates: LocaleAlternates | null;
@@ -43,7 +44,7 @@ export function useLocaleAlternates(): LocaleAlternates | null {
 export function useRegisterLocaleAlternates(alternates: LocaleAlternates | null) {
   const ctx = useContext(LocaleAlternatesContext);
   const set = ctx?.setAlternates;
-  const key = alternates ? `${alternates.en ?? ""}|${alternates.ru ?? ""}` : "";
+  const key = alternates ? `${alternates.en ?? ""}|${alternates.ru ?? ""}|${alternates.uk ?? ""}|${alternates.uz ?? ""}|${alternates.de ?? ""}` : "";
   const stableSet = useCallback(
     (next: LocaleAlternates | null) => set?.(next),
     [set],

@@ -156,13 +156,13 @@ export function organizationJsonLd(locale?: Locale) {
         "@type": "ContactPoint",
         email: "support@recv.money",
         contactType: "customer support",
-        availableLanguage: ["en", "ru"],
+        availableLanguage: [...LOCALES],
       },
       {
         "@type": "ContactPoint",
         email: "legal@recv.money",
         contactType: "legal",
-        availableLanguage: ["en", "ru"],
+        availableLanguage: [...LOCALES],
       },
     ],
     ...(sameAs.length ? { sameAs } : {}),
@@ -186,7 +186,7 @@ export function websiteJsonLd(locale: Locale) {
 // for both openGraph.images and twitter.images; metadataBase makes the
 // relative URL absolute in the emitted tags.
 export function socialImages(locale: string, title: string, kicker?: string) {
-  const params = new URLSearchParams({ locale: locale === "ru" ? "ru" : "en", title: title.replace(/\s+/g, " ").trim().slice(0, 90) });
+  const params = new URLSearchParams({ locale: normalizeSeoLocale(locale), title: title.replace(/\s+/g, " ").trim().slice(0, 90) });
   const trimmedKicker = kicker?.replace(/\s+/g, " ").trim().slice(0, 48);
   if (trimmedKicker) params.set("kicker", trimmedKicker);
   return [
@@ -200,11 +200,14 @@ export function socialImages(locale: string, title: string, kicker?: string) {
 }
 
 export function languageAlternates(route = "") {
-  return {
-    en: `/en${route}`,
-    ru: `/ru${route}`,
-    "x-default": `/en${route}`,
-  };
+  return Object.fromEntries([
+    ...LOCALES.map((locale) => [locale, `/${locale}${route}`]),
+    ["x-default", `/en${route}`],
+  ]);
+}
+
+function normalizeSeoLocale(locale: string) {
+  return LOCALES.includes(locale as Locale) ? locale : "en";
 }
 
 export function metadataDescription(
@@ -316,11 +319,10 @@ export function publicPageEntries(locale?: Locale): SitemapEntry[] {
     PUBLIC_ROUTES.map((route) => ({
       url: `${baseUrl}/${entryLocale}${route}`,
       lastModified: newestMtimeIso(publicRouteSourcePaths(entryLocale, route)),
-      alternates: {
-        en: `${baseUrl}/en${route}`,
-        ru: `${baseUrl}/ru${route}`,
-        "x-default": `${baseUrl}/en${route}`,
-      },
+      alternates: Object.fromEntries([
+        ...LOCALES.map((candidate) => [candidate, `${baseUrl}/${candidate}${route}`]),
+        ["x-default", `${baseUrl}/en${route}`],
+      ]) as SitemapEntry["alternates"],
     })),
   );
 }

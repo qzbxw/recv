@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import type { Locale } from "@/i18n";
 
-export function CookieConsent({ language }: { language: "ru" | "en" }) {
+export function CookieConsent({ language }: { language: Locale }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -40,13 +41,38 @@ export function CookieConsent({ language }: { language: "ru" | "en" }) {
       decline: "Отклонить необязательные",
       privacy: "Политика конфиденциальности",
     },
+    uk: {
+      text: "Ми використовуємо необхідні cookie для авторизації та необов'язкову аналітику для вимірювання продуктивності сайту. Ми не продаємо ваші дані.",
+      accept: "Прийняти все",
+      decline: "Відхилити необов'язкові",
+      privacy: "Політика конфіденційності",
+    },
+    uz: {
+      text: "Avtorizatsiya uchun zarur cookie fayllardan va sayt samaradorligini o'lchash uchun ixtiyoriy analitikadan foydalanamiz. Ma'lumotlaringizni sotmaymiz.",
+      accept: "Hammasini qabul qilish",
+      decline: "Ixtiyoriyni rad etish",
+      privacy: "Maxfiylik siyosati",
+    },
+    de: {
+      text: "Wir verwenden notwendige Cookies für die Anmeldung und optionale Analysen zur Messung von Performance und Nutzung. Wir verkaufen Ihre Daten nicht.",
+      accept: "Alle akzeptieren",
+      decline: "Optionale ablehnen",
+      privacy: "Datenschutzerklärung",
+    },
+  }[language];
+  const title = {
+    en: "Cookie Settings",
+    ru: "Использование Cookie",
+    uk: "Налаштування Cookie",
+    uz: "Cookie sozlamalari",
+    de: "Cookie-Einstellungen",
   }[language];
 
   return (
     <div className="fixed bottom-3 left-3 right-3 md:bottom-6 md:left-auto md:right-6 md:max-w-md z-[100] p-4 md:p-6 rounded-xl md:rounded-2xl border border-white/10 bg-black/85 backdrop-blur-xl shadow-2xl flex flex-col gap-3 md:gap-4 max-h-[36vh] overflow-auto">
       <div className="flex flex-col gap-2">
         <h3 className="text-sm font-semibold text-white font-['Montserrat'] uppercase tracking-wider">
-          {language === "ru" ? "Использование Cookie" : "Cookie Settings"}
+          {title}
         </h3>
         <p className="hidden md:block text-xs text-white/70 leading-relaxed">
           {content.text}{" "}

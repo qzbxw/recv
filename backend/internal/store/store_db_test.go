@@ -100,7 +100,7 @@ func TestUpdateWorkspaceLanguage(t *testing.T) {
 		t.Fatalf("expected normalized ru language, got %q", updated.Language)
 	}
 
-	fallback, err := st.UpdateWorkspaceLanguage(ctx, workspace.ID, "de")
+	fallback, err := st.UpdateWorkspaceLanguage(ctx, workspace.ID, "fr")
 	if err != nil {
 		t.Fatalf("UpdateWorkspaceLanguage fallback: %v", err)
 	}

@@ -90,7 +90,7 @@ export function AuthPortalPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const languageFlags: Partial<Record<Language, string>> = { ru: "🇷🇺", en: "🇺🇸" };
+  const languageFlags: Partial<Record<Language, string>> = { ru: "🇷🇺", en: "🇺🇸", uk: "🇺🇦", uz: "🇺🇿", de: "🇩🇪" };
   const languagesList = SUPPORTED_LANGUAGES.map((lang) => ({
     code: lang.value,
     label: lang.label,

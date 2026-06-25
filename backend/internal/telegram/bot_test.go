@@ -216,7 +216,10 @@ func TestBotWorkerRenderLanguageUsesStableCallbacks(t *testing.T) {
 	}{
 		{name: "english", language: "en", wantSelected: "lang:set:en"},
 		{name: "russian", language: "ru", wantSelected: "lang:set:ru"},
-		{name: "unknown defaults english", language: "de", wantSelected: "lang:set:en"},
+		{name: "ukrainian", language: "uk", wantSelected: "lang:set:uk"},
+		{name: "uzbek", language: "uz", wantSelected: "lang:set:uz"},
+		{name: "german", language: "de", wantSelected: "lang:set:de"},
+		{name: "unknown defaults english", language: "fr", wantSelected: "lang:set:en"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var markup tgInlineKeyboardMarkup
@@ -244,7 +247,7 @@ func TestBotWorkerRenderLanguageUsesStableCallbacks(t *testing.T) {
 			if err := worker.renderLanguage(context.Background(), store.Workspace{Language: tc.language}, 900, 0); err != nil {
 				t.Fatalf("renderLanguage: %v", err)
 			}
-			if len(markup.InlineKeyboard) < 2 || len(markup.InlineKeyboard[0]) != 2 {
+			if len(markup.InlineKeyboard) < 4 || len(markup.InlineKeyboard[0]) != 2 || len(markup.InlineKeyboard[1]) != 2 || len(markup.InlineKeyboard[2]) != 1 {
 				t.Fatalf("expected language row and navigation row, got %#v", markup.InlineKeyboard)
 			}
 
@@ -254,7 +257,7 @@ func TestBotWorkerRenderLanguageUsesStableCallbacks(t *testing.T) {
 					callbacks[button.CallbackData] = button
 				}
 			}
-			for _, callback := range []string{"lang:set:en", "lang:set:ru", "nav:home"} {
+			for _, callback := range []string{"lang:set:en", "lang:set:ru", "lang:set:uk", "lang:set:uz", "lang:set:de", "nav:home"} {
 				if _, ok := callbacks[callback]; !ok {
 					t.Fatalf("expected callback %q in markup %#v", callback, markup.InlineKeyboard)
 				}
@@ -978,8 +981,8 @@ func TestRenderInvoiceWalletPickerWithWallet(t *testing.T) {
 		t.Fatalf("screen:invoice callback with wallet: %v", err)
 	}
 
-	if !requests.sawText("New invoice") {
-		t.Fatalf("expected wallet picker to display 'New invoice' text, got %#v", requests.texts)
+	if !requests.sawText("New Invoice") {
+		t.Fatalf("expected wallet picker to display 'New Invoice' text, got %#v", requests.texts)
 	}
 }
 

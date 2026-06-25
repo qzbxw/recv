@@ -1,0 +1,1325 @@
+const de = {
+  landing: {
+    hero: {
+      title: "Behalten Sie 100% Ihres Gewinns. Null Umsatzgebühren.",
+      body: "Professionelles Krypto-Processing mit sofortigen Auszahlungen direkt auf Ihre Wallets. Wir automatisieren den Zahlungsempfang, während Sie Ihr Geschäft skalieren.",
+      subcopy: "Non-Custodial-Infrastruktur. Ihr Geld berührt niemals unsere Konten.",
+      primary: "Zahlungsempfang starten",
+      secondary: "In Telegram öffnen",
+      badges: [
+        "Direct-to-Wallet",
+        "Telegram-Nativ",
+        "0% Gebühr",
+        "API Beta",
+        "B2B-Skalierung"
+      ]
+    },
+    heroPanel: {
+      eyebrow: "Live-Demo",
+      title: "Testen Sie das Erlebnis",
+      body: "Erleben Sie selbst, wie nahtlos Zahlungen für Ihre Kunden sind. Keine Verzögerungen, keine Reibung, nur Ergebnisse.",
+      amount: "149 USDT",
+      invoice: "RECV-DEMO-149",
+      status: "Warte auf Zahlung",
+      primary: "Live-Demo testen",
+      secondary: "Händler-Dashboard",
+      helper: "Keine versteckten Gebühren. Nur ein einfaches Flatrate-Abo.",
+      chips: [
+        "TON",
+        "TRON",
+        "Base",
+        "0% GEBÜHR"
+      ]
+    },
+    overview: {
+      kicker: "AUTOMATISIERUNG",
+      title: "Kaufen Sie sich Ihre Zeit zurück.",
+      body: "Schluss mit manuellen Prüfungen und dem Warten auf Screenshots. recv übernimmt das Blockchain-Monitoring rund um die Uhr und bestätigt Zahlungen in Sekundenschnelle.",
+      cards: [
+        {
+          title: "Kommandozentrale",
+          body: "Verwalten Sie Projekte, Rechnungen und Analysen in einer einzigen Benutzeroberfläche."
+        },
+        {
+          title: "Vertrauen als Standard",
+          body: "Eine saubere Checkout-UI, die Reibungsverluste minimiert und Vertrauen schafft."
+        },
+        {
+          title: "Vollständige Automatisierung",
+          body: "API und Webhooks für sofortige Auslieferung direkt nach der Zahlung."
+        }
+      ]
+    },
+    capabilities: {
+      kicker: "TECHNOLOGIE",
+      title: "Infrastruktur, die Ihnen Geld spart.",
+      body: "Wir haben alles Überflüssige entfernt — es bleiben nur Geschwindigkeit, Sicherheit und Transparenz.",
+      items: [
+        {
+          kicker: "01",
+          title: "Direct-to-Wallet",
+          body: "Zahlungen fließen direkt vom Kunden an Ihre Adresse. Wir sind non-custodial und halten Ihr Geld nicht eine einzige Sekunde."
+        },
+        {
+          kicker: "02",
+          title: "Alle liquiden Chains",
+          body: "Vollständige Unterstützung für GRAM und USDT auf TON, TRON (USDT) und beliebte L2-Lösungen (Base, Arbitrum, BSC) in einer einzigen Oberfläche."
+        },
+        {
+          kicker: "03",
+          title: "Intelligentes Tracking",
+          body: "Ein intelligentes Monitoring-System erkennt Über- und Unterzahlungen automatisch und benachrichtigt Sie sofort."
+        },
+        {
+          kicker: "04",
+          title: "Direkt in Telegram",
+          body: "Erstellen Sie Rechnungen, verfolgen Sie Benachrichtigungen und verwalten Sie Projekte über den offiziellen Bot, ohne in den Browser zu wechseln."
+        },
+        {
+          kicker: "05",
+          title: "Flatrate-Modell",
+          body: "Vergessen Sie Umsatzprovisionen. Sie zahlen nur für die Plattformnutzung und behalten 100 % Ihres Gewinns bei jedem Volumen."
+        },
+        {
+          kicker: "06",
+          title: "Business-Ready",
+          body: "Tools für Teamarbeit, flexible API-Key-Verwaltung und erweiterte Limits für anspruchsvolle Aufgaben."
+        }
+      ]
+    },
+    compare: {
+      kicker: "EVOLUTION",
+      title: "Effizienz als Standard.",
+      body: "Wie recv Ihre Abläufe optimiert und Zeit spart.",
+      rows: [
+        {
+          legacy: "Manuelle Prüfung und das Sammeln von Screenshots.",
+          recv: "Sofortige Blockchain-Bestätigung und automatisierte Benachrichtigungen."
+        },
+        {
+          legacy: "Umgang mit falschen Beträgen und Netzwerkfehlern.",
+          recv: "Intelligente UI mit QR-Codes und automatischer Behandlung von Sonderfällen."
+        },
+        {
+          legacy: "Gateway-Gebühren, die Ihre Gewinnmarge schmälern.",
+          recv: "Null Umsatzgebühren. Flatrate-Abo. 100% Ihres."
+        }
+      ]
+    },
+    networks: {
+      kicker: "NETZWERKE",
+      title: "Universelle Konnektivität.",
+      body: "Native Unterstützung für die liquidesten Protokolle. Niedrige Gebühren, sofortige Bestätigung, maximale Reichweite.",
+      rails: [
+        {
+          logo: "TON",
+          name: "TON",
+          title: "The Open Network",
+          body: "GRAM & USDT. Die native Wahl für Telegram-basierten Handel und das wachsende TON-Ökosystem."
+        },
+        {
+          logo: "TRON",
+          name: "TRON",
+          title: "TRON Network",
+          body: "USDT/TRC-20. Der globale Standard für Stablecoin-Settlement — hoher Durchsatz, minimale Gebühren."
+        },
+        {
+          logo: "SOLANA",
+          name: "SOLANA",
+          title: "Solana",
+          body: "SOL, USDT & USDC. Sub-Sekunden-Finalität mit Monitoring auf Token-Konto-Ebene."
+        },
+        {
+          logo: "BASE",
+          name: "BASE",
+          title: "Base",
+          body: "USDT & USDC. Coinbase-gestützte L2 — ERC-20-Log-Monitoring bei Bestätigungstiefe."
+        },
+        {
+          logo: "ARBITRUM",
+          name: "ARBITRUM",
+          title: "Arbitrum",
+          body: "USDT & USDC. Führende Ethereum-L2 mit tiefer Liquidität und EVM-nativen Tools."
+        },
+        {
+          logo: "BSC",
+          name: "BSC",
+          title: "BNB Smart Chain",
+          body: "BNB & USDT/BEP-20. High-Volume-Chain mit breitem Exchange-Support für schnelle Auszahlungen."
+        }
+      ],
+      soon: {
+        title: "Demnächst",
+        api: "Öffentliche API 2.0 Beta",
+        b2b: "Teamzugang",
+        body: "Kontinuierliche Erweiterung der Funktionen für wachsende Unternehmen."
+      }
+    },
+    dogfooding: {
+      kicker: "PRAXISBEWÄHRT",
+      title: "Für uns gebaut. Für Sie skaliert.",
+      cards: [
+        {
+          title: "Produktionsbelastung",
+          body: "recv verarbeitet eigene Zahlungen über dieselbe Engine, die auch den Händlern zur Verfügung steht."
+        },
+        {
+          title: "Hauptnutzer",
+          body: "Wir nutzen das Produkt selbst intensiv, bevor wir neue Zahlungsfunktionen für Händler freigeben."
+        },
+        {
+          title: "Gehärtete Logik",
+          body: "Optimiert durch interne Transaktionshistorie, um gängige Blockchain-Sonderfälle mit klareren Prüfstatus zu behandeln."
+        }
+      ]
+    },
+    pricing: {
+      kicker: "PREISE",
+      title: "0% Provision auf alle Tarife.",
+      pro: {
+        name: "Merchant",
+        price: "9",
+        trial: "Testphase: 15 aktive Rechnungen kostenlos",
+        features: [
+          "Zahlungslinks",
+          "Telegram-Flow",
+          "Manuelle Prüfung",
+          "API-Limit"
+        ],
+        cta: "Jetzt starten"
+      },
+      api: {
+        name: "Developer",
+        price: "29",
+        features: [
+          "Vollständige API",
+          "Webhooks",
+          "Idempotenz",
+          "MCP-Tools"
+        ],
+        cta: "API erkunden"
+      },
+      business: {
+        name: "Business",
+        price: "79",
+        features: [
+          "Teams",
+          "Audit-Logs",
+          "Eigenes Branding",
+          "0% Provision"
+        ],
+        cta: "Upgrade"
+      }
+    },
+    faq: {
+      kicker: "FAQ",
+      title: "Protokolldetails.",
+      body: "Wichtige Einblicke in Assetsicherheit, Zahlungsmechanik und Plattformintegration.",
+      items: [
+        {
+          question: "Wie sorgt recv für die Sicherheit meiner Gelder?",
+          answer: "Wir nutzen eine Non-Custodial-Architektur. Das bedeutet, dass Ihre privaten Keys Ihr Gerät niemals verlassen und die Gelder direkt vom Kunden an Ihre Adresse gesendet werden. recv überwacht lediglich die Blockchain und stellt Transaktionsbenachrichtigungen bereit."
+        },
+        {
+          question: "Welche Netzwerke und Assets werden derzeit unterstützt?",
+          answer: "Wir unterstützen derzeit TON (GRAM und USDT), TRON, Base, Arbitrum und BSC. Wir fügen kontinuierlich neue liquide Protokolle hinzu, basierend auf den Anforderungen im B2B-Bereich."
+        },
+        {
+          question: "Kann ich die Auslieferung digitaler Güter automatisieren?",
+          answer: "Absolut. Unser Webhook-System sendet bei Zahlungsbestätigung sofortige Benachrichtigungen an Ihren Server, was eine vollständige Automatisierung von Zugängen, Abonnements oder digitaler Auslieferung ermöglicht."
+        },
+        {
+          question: "Wie werden Unterzahlungen oder falsche Beträge behandelt?",
+          answer: "recv erkennt Abweichungen vom erwarteten Betrag intelligent. Bei einer Unterzahlung wird die Transaktion als „Unterbezahlt“ markiert, sodass Sie entweder den Restbetrag anfordern oder die Bestellung manuell genehmigen können."
+        }
+      ]
+    },
+    final: {
+      kicker: "JETZT STARTEN",
+      title: "Skalieren Sie Ihr Geschäft mit recv.",
+      body: "Schließen Sie sich führenden Unternehmen an, die ihr Krypto-Processing bereits automatisiert und manuellen Aufwand eliminiert haben.",
+      primary: "Jetzt starten",
+      secondary: "Dokumentation"
+    },
+    footer: {
+      title: "recv",
+      body: "Automatisierte Krypto-Zahlungen mit Direct-to-Wallet-Auszahlungen. Fair, schnell, professionell.",
+      product: "Produkt",
+      privacy: "Datenschutz",
+      terms: "Nutzungsbedingungen",
+      console: "Konsole",
+      status: "Roadmap",
+      api: "API",
+      b2b: "B2B"
+    }
+  },
+  plan: {
+    back: "Zurück zur Startseite",
+    auth: "Konsole",
+    billing: "Kontakt",
+    discuss: "Konditionen besprechen",
+    activate: "Aktivieren",
+    activateDev: "recv Dev aktivieren",
+    integrationFlow: "Nahtloser Integrations-Flow",
+    footerPrivacy: "Datenschutz",
+    footerTerms: "Nutzungsbedingungen",
+    footerDocs: "Doku",
+    footerApi: "API",
+    footerB2B: "B2B",
+    compareTitle: "Protokoll",
+    flowTitle: "Integration",
+    priceTitle: "Zugang",
+    priceSubtitle: "Unbegrenztes Volumen. Feste monatliche Gebühr.",
+    codeTitle: "Code-Implementierung",
+    codeSubtitle: "In wenigen Minuten bereit für die Produktion.",
+    codeBody: "Integrieren Sie unser Protokoll nahtlos in Ihren bestehenden Workflow über unsere leistungsstarke API Beta.",
+    processingNote: "Wir nutzen eine proprietäre Non-Custodial-Architektur. Alle Transaktionen laufen über Ihre Nodes oder unsere Hochleistungs-Cluster direkt auf die Blockchain.",
+    compareSectionTitle: "Direktzugriffs-Architektur",
+    compareSectionBody: "recv fungiert als transparente Softwareschicht (Middleware). Transaktionen fließen direkt vom Kunden zum Händler und umgehen Zwischenkonten. Wir automatisieren das Monitoring über Hochleistungs-Nodes, wodurch jegliche Drittanbieterrisiken eliminiert werden.",
+    dev: {
+      badge: "recv Developer",
+      title: "Krypto-Zahlungsinfrastruktur. Volle Kontrolle.",
+      body: "Professionelle API v1 Beta- und Webhook-Benachrichtigungen für Hochlastprojekte. Direct-to-Wallet-Auszahlungen und null Umsatzgebühren in einer reinen Non-Custodial-Umgebung.",
+      priceLabel: "$29",
+      period: "pro Monat",
+      stats: [
+        {
+          value: "Bestätigt",
+          label: "Finalität"
+        },
+        {
+          value: "100%",
+          label: "Direct-to-Wallet"
+        },
+        {
+          value: "Vollständig",
+          label: "Echtzeitzugriff"
+        },
+        {
+          value: "∞",
+          label: "Webhook-Endpunkte"
+        }
+      ],
+      features: [
+        {
+          title: "Webhook-Zustellung",
+          body: "Garantierte Zustellung (At-Least-Once) mit automatischen Wiederholungsversuchen und HMAC-SHA256-Signaturverifizierung."
+        },
+        {
+          title: "Echtzeit-Monitoring",
+          body: "Echtzeit-Transaktionsüberwachung. Eingehende Zahlungen anhand von Netzwerkbestätigungen und Finalitätsrichtlinien erkennen."
+        },
+        {
+          title: "Einheitliche API v1 Beta",
+          body: "Eine einzige Schnittstelle für alle unterstützten Netzwerke, einschließlich TON, TRON, SOL, Base, BSC und Arbitrum."
+        },
+        {
+          title: "Idempotenz-Sicherheit",
+          body: "Integrierter Schutz vor doppelten Transaktionen und Double-Spending auf API-Protokollebene."
+        }
+      ],
+      flow: [
+        {
+          title: "API-Key-Bereitstellung",
+          body: "Sofortige Generierung von live_-Keys. Granulare Berechtigungsverwaltung für eine sichere Backend-Integration."
+        },
+        {
+          title: "Webhook-Konfiguration",
+          body: "Sichere, mit HMAC-SHA256 signierte Callbacks. Erhalten Sie Echtzeit-Transaktions-Updates mit automatischer Retry-Logik."
+        },
+        {
+          title: "Blockchain-Monitoring",
+          body: "Automatisierte Zahlungsverarbeitung. Unsere Watcher verfolgen Transaktionen und bestätigen Zahlungen rund um die Uhr autonom."
+        }
+      ],
+      code: "// Rechnung über die recv API v1 Beta erstellen\nconst response = await fetch(\"https://api.recv.money/v1/invoices\", {\n  method: \"POST\",\n  headers: {\n    \"X-API-Key\": \"live_...\",\n    \"Content-Type\": \"application/json\"\n  },\n  body: JSON.stringify({\n    title: \"Bestellung #9921\",\n    base_amount_usd: \"149.00\",\n    payable_network: \"TRON\", // TON (GRAM), TON_USDT (USDT auf TON), TRON, BASE oder BSC\n    expires_in_minutes: 60\n  })\n});\n\nconst invoice = await response.json();\nconsole.log(\"Checkout-URL:\", invoice.checkout_url);"
+    },
+    business: {
+      badge: "recv Business",
+      title: "Business-Zahlungen. Teamfähige Kontrolle.",
+      body: "Teams, Audit-Logs, eigenes Branding und höhere API-Limits für wachsende Zahlungsabläufe.",
+      priceLabel: "$79",
+      period: "pro Monat",
+      stats: [
+        {
+          value: "200k",
+          label: "Anfragen/Monat"
+        },
+        {
+          value: "10",
+          label: "API-Keys"
+        },
+        {
+          value: "10",
+          label: "Webhook-Endpunkte"
+        },
+        {
+          value: "10",
+          label: "Team-Plätze"
+        }
+      ],
+      features: [
+        {
+          title: "Team-Kontrollen",
+          body: "Laden Sie Teammitglieder ein und verwalten Sie Zahlungsabläufe mit klaren Zuständigkeiten."
+        },
+        {
+          title: "Audit-Logs",
+          body: "Verfolgen Sie wichtige administrative Aktionen zur Überprüfung und Rechenschaftspflicht."
+        },
+        {
+          title: "Eigenes Branding",
+          body: "Präsentieren Sie Checkout- und Zahlungslinks im Corporate Design Ihres Unternehmens."
+        },
+        {
+          title: "Erweiterte Limits",
+          body: "Nutzen Sie 300 RPM, 200.000 monatliche Anfragen, 10 aktive API-Keys und 10 Webhook-Endpunkte."
+        }
+      ],
+      flow: [
+        {
+          title: "Team-Setup",
+          body: "Laden Sie Administratoren und Entwickler ein, die Zugriff auf die Zahlungs-Workflows benötigen."
+        },
+        {
+          title: "Brand-Setup",
+          body: "Passen Sie den Checkout und die Zahlungslinks an Ihren Geschäftsauftritt an."
+        },
+        {
+          title: "Nutzung skalieren",
+          body: "Verarbeiten Sie ein höheres Anfragevolumen mit größeren API- und Webhook-Limits."
+        }
+      ],
+      code: "// Verifizierung von Business-Webhooks (HMAC-SHA256)\nconst crypto = require('crypto');\n\nfunction verify(payload, signature, secret) {\n  const hmac = crypto.createHmac('sha256', secret);\n  hmac.update(payload);\n  return `v1=${hmac.digest('hex')}` === signature;\n}\n\n// Signierte Event-Verifizierung für Zahlungs-Webhooks"
+    }
+  },
+  auth: {
+    browserTitle: "Im Dashboard anmelden",
+    browserBody: "Wählen Sie eine bequeme Autorisierungsmethode, um auf Ihr Dashboard zuzugreifen.",
+    continueGoogle: "Weiter mit Google",
+    continueGithub: "Weiter mit GitHub",
+    telegramFallback: "oder mit Telegram anmelden",
+    username: "Ihr @username",
+    usernamePlaceholder: "@username",
+    code: "Verifizierungscode",
+    codePlaceholder: "123456",
+    sendCode: "Code anfordern",
+    sendingCode: "Wird gesendet...",
+    loginAction: "Anmelden",
+    signingIn: "Anmeldung läuft...",
+    codeSent: "Der Code wurde an Ihr Telegram gesendet.",
+    browserHint: "Sie können unseren Telegram-Bot starten, um sich schnell mit einem Einmalcode anzumelden.",
+    termsDisclaimer: "Indem Sie fortfahren, bestätigen Sie, dass Sie mindestens 18 Jahre alt sind, autorisiert sind, im Namen des Händlers zu handeln, und den Nutzungsbedingungen zustimmen sowie die Datenschutzerklärung zur Kenntnis nehmen.",
+    refCode: "Empfehlungscode (optional)",
+    refCodePlaceholder: "partner-code",
+    refCodeApplied: "Empfehlungscode angewendet — Partner:",
+    refCodeInvalid: "Dieser Empfehlungscode wurde nicht gefunden, Sie können trotzdem fortfahren.",
+    telegramTitle: "Telegram Mini-App",
+    telegramBody: "Wenn Sie die Telegram Mini-App nutzen, werden Sie automatisch angemeldet.",
+    openBot: "Bot öffnen",
+    continueTelegram: "Weiter mit Telegram",
+    landing: "Startseite",
+    devTitle: "Entwickler-Anmeldung ohne Telegram",
+    devBody: "Lokale Browser-Authentifizierung zum Bearbeiten der UI und Abläufe ohne Telegram Mini-App.",
+    devUsername: "Benutzername",
+    devUsernamePlaceholder: "designer",
+    devTelegramId: "Telegram-ID",
+    devTelegramIdPlaceholder: "10001",
+    devAction: "Im Entwicklermodus anmelden",
+    devHint: "Funktioniert nur, wenn das Backend mit ALLOW_INSECURE_DEV_AUTH=true ausgeführt wird."
+  },
+  checkout: {
+    pageTitle: "recv | Checkout",
+    loading: "Wird geladen...",
+    waitingPayment: "Warte auf Transaktion...",
+    expiresSoon: "Die Zeit läuft ab",
+    expired: "Abgelaufen",
+    wallet: "Adresse",
+    amount: "Betrag",
+    network: "Netzwerk",
+    selectNetwork: "Netzwerk auswählen",
+    selectAsset: "Asset auswählen",
+    comment: "Kommentar",
+    expires: "Verbleibende Zeit",
+    invoiceId: "Rechnung",
+    expiresAt: "Bis",
+    copyAddress: "Kopieren",
+    copyComment: "Kopieren",
+    copyAmount: "Genauen Betrag kopieren",
+    copied: "Kopiert",
+    retry: "Retry",
+    warning: "Senden Sie den EXAKTEN Betrag. Wenn Sie von einer Exchange (Binance/Bybit) überweisen, addieren Sie die Auszahlungsgebühr der Exchange, da die Zahlung sonst manuell geprüft werden muss.",
+    exactAmountWarning: "Senden Sie den EXAKTEN Betrag. Wenn Sie von einer Exchange (Binance/Bybit) überweisen, addieren Sie die Auszahlungsgebühr der Exchange, da die Zahlung sonst manuell geprüft werden muss.",
+    payloadTitle: "Erforderlicher Kommentar",
+    payloadHint: "Vergessen Sie diesen Kommentar nicht, da wir Ihre Zahlung sonst nicht zuordnen können.",
+    qrLoading: "QR...",
+    paymentRequest: "Zahlung",
+    ru: "RU",
+    en: "EN",
+    receiptLabel: "recv",
+    service: "Dienst",
+    status: "Status",
+    receiptOutroPaid: "Zahlung erfolgreich empfangen.",
+    receiptOutroExpired: "Diese Checkout-Sitzung ist abgelaufen.",
+    footerLink: "recv",
+    networkOnly: "Nur Netzwerk",
+    paidTitle: "Bezahlt",
+    paidBody: "Ihre Zahlung wurde erfolgreich bestätigt.",
+    underpaidBody: "Ein geringerer Betrag wurde empfangen. Zahlen Sie den verbleibenden Betrag vor Ablauf nach oder warten Sie auf die Prüfung durch den Händler.",
+    underpaidReceived: "Empfangen",
+    underpaidRemaining: "Verbleibend",
+    manualReviewBody: "Die Zahlung ging verspätet ein oder konnte nicht automatisch zugeordnet werden. Der Händler wird sie manuell prüfen.",
+    overpaidBody: "Es wurde mehr als der erwartete Betrag empfangen. Der Händler wird die Zahlung manuell prüfen.",
+    expiredTitle: "Sitzung abgelaufen",
+    expiredBody: "Das Zahlungszeitfenster wurde geschlossen. Senden Sie keine Gelder mehr an diese Adresse. Wenn Sie bereits gezahlt haben, wird der Händler die Zahlung manuell prüfen.",
+    paymentDetails: "Details",
+    scanHint: "Scannen Sie den QR-Code oder kopieren Sie die Details unten.",
+    receiptNo: "Rechnung",
+    finalState: "Status",
+    docHintPaid: "Die Transaktion wurde erfolgreich abgeschlossen.",
+    docHintExpired: "Bitte fordern Sie bei Bedarf einen neuen Zahlungslink vom Verkäufer an.",
+    footerPoweredBy: "Präsentiert von",
+    footerVerifiedBy: "Verifiziert von",
+    footerCTA: "Akzeptieren Sie Krypto-Zahlungen wie diese mit recv",
+    payInWallet: "In Wallet bezahlen",
+    copyPaymentDetails: "Zahlungsdetails kopieren"
+  },
+  sellerConsole: {
+    nav: {
+      overview: "Dashboard",
+      wallets: "Auszahlungen",
+      invoices: "Transaktionen",
+      create: "Zahlung empfangen",
+      developer: "Entwickler",
+      team: "Team",
+      billing: "Abrechnung",
+      settings: "Einstellungen",
+      logout: "Abmelden",
+      operations: "Betrieb",
+      integrations: "Integrationen",
+      upgrade: "Upgrade",
+      activePlan: "Developer Aktiv"
+    },
+    promo: {
+      title: "Bauen ohne Limits. Upgrade auf Developer",
+      subtitle: "Heben Sie das Limit von 15 Rechnungen auf. Automatisieren Sie Ihre Zahlungen mit hochperformanten REST-APIs, sicheren Webhooks und nativen MCP-Tools für KI-Agenten — direkt auf Ihre Wallets mit null Plattformgebühren.",
+      action: "Developer werden"
+    },
+    overview: {
+      welcome: "Willkommen zurück,",
+      subtitle: "Non-Custodial-Payment-Gateway. Kundengelder fließen direkt in Ihre Self-Custody-Wallets.",
+      badge: "Dashboard",
+      currentWorkspace: "Aktiver Workspace",
+      stats: {
+        account: "Konto",
+        plan: "Tarif",
+        networks: "Netzwerke",
+        invoices: "Rechnungen"
+      },
+      activity: "Letzte Aktivitäten",
+      noActivity: "Noch keine Transaktionen.",
+      setupTitle: "Schnelleinrichtung",
+      setupWallet: "Richten Sie Ihre Auszahlungs-Wallets ein. Kundengelder landen direkt in Ihrer Verwahrung.",
+      setupWalletAction: "Auszahlungen konfigurieren",
+      setupKey: "Erstellen Sie einen API-Key, um recv in Ihr Backend zu integrieren.",
+      setupKeyAction: "Key erstellen",
+      setupInvoice: "Erstellen Sie eine Testrechnung, um unseren Direct-to-Wallet-Zahlungsfluss zu erleben.",
+      setupInvoiceAction: "Testrechnung erstellen",
+      setupPlan: "Gehen Sie ohne Limits live. Aktivieren Sie einen Tarif für unbegrenzte Zahlungen, API & Webhooks.",
+      setupPlanAction: "Pro & API freischalten",
+      setupComplete: "Alles bereit. Alle folgenden Funktionen sind live.",
+      active: "aktiv",
+      totalIn: "Gesamt in",
+      revenue: "Umsatz",
+      revenuePaid: "aus bezahlten Rechnungen",
+      paidCount: "Bezahlt",
+      statusTitle: "Status-Verteilung",
+      statusSubtitle: "Verteilung der Rechnungen in diesem Workspace.",
+      conversion: "Konvertierung",
+      conversionMeta: "bezahlt von allen Rechnungen",
+      networksTitle: "Umsatz nach Netzwerk",
+      networksSubtitle: "Bezahltes Volumen pro Chain, berechnet aus Ihren Rechnungen.",
+      noNetworkData: "Noch keine bezahlten Rechnungen für das Diagramm vorhanden.",
+      avgTicket: "Durchschnittsbetrag",
+      avgTicketMeta: "durchschnittliche bezahlte Rechnung",
+      openValue: "Offener Wert",
+      openValueMeta: "wartet auf Zahlung",
+      invoicesLabel: "Rechnungen",
+      trialHudTitle: "Testtarif aktiv",
+      trialHudSubtitle: "Sie haben {limit} kostenlose Live-Rechnungen in der Testphase. Zahlungen landen direkt in Ihrer Wallet bei 0% Gebühren.",
+      trialHudAction: "Unbegrenzt freischalten",
+      trialHudSaved: "Bisher {amount} an Bearbeitungsgebühren gespart",
+      integrationHealthTitle: "Integrationsstatus",
+      integrationHealthPayouts: "Auszahlungsziel",
+      integrationHealthPayoutsConfigured: "TON, TRON Direktadressen konfiguriert",
+      integrationHealthPayoutsMissing: "Fehlende Auszahlungsadresse",
+      integrationHealthPayoutsAction: "Auszahlungen konfigurieren",
+      integrationHealthWebhooks: "Webhook-Automatisierung",
+      integrationHealthWebhooksActive: "1 Endpunkt aktiv",
+      integrationHealthWebhooksInactive: "Keine Webhooks konfiguriert",
+      integrationHealthWebhooksAction: "Webhooks konfigurieren",
+      integrationHealthApi: "API- & MCP-Zugriff",
+      integrationHealthApiActive: "{count} aktiver API-Key",
+      integrationHealthApiActivePlural: "{count} aktive API-Keys",
+      integrationHealthApiInactive: "Keine aktiven API-Keys",
+      integrationHealthApiAction: "API-Key erstellen",
+      demoMode: "Demodaten anzeigen",
+      demoModeSubtitle: "Simulierte Dashboard-Vorschau",
+      integrationHubTitle: "Entwickler-Integrationszentrum",
+      integrationHubSubtitle: "Konfigurieren Sie Ihre Non-Custodial-Umgebungen, um Live-Handelsaktivitäten auszuführen.",
+      sandboxToggle: "Sandbox-Daten anzeigen",
+      invoiceTested: "Erste Rechnung ausgestellt und getestet",
+      invoiceMissing: "Erstellen Sie eine Testrechnung, um den Checkout zu überprüfen",
+      invoiceAction: "Rechnung erstellen"
+    },
+    wallets: {
+      title: "Auszahlungsadressen",
+      subtitle: "Fügen Sie eine Zieladresse für jedes unterstützte Netzwerk hinzu. Kundengelder fließen direkt an diese Adressen.",
+      add: "Wallet hinzufügen",
+      network: "Netzwerk",
+      address: "Wallet-Adresse",
+      placeholder: "Adresse eingeben...",
+      empty: "Noch keine Auszahlungsadressen hinzugefügt.",
+      configured: "Konfigurierte Netzwerke",
+      missing: "Noch nicht konfiguriert",
+      active: "Aktiv",
+      coverage: "Abdeckung",
+      coverageMeta: "der unterstützten Netzwerke bereit",
+      addFor: "Adresse hinzufügen",
+      missingHint: "Fügen Sie eine Auszahlungsadresse hinzu, um Zahlungen in diesem Netzwerk zu akzeptieren.",
+      edit: "Bearbeiten",
+      save: "Speichern",
+      explorer: "Explorer",
+      updating: "Wird aktualisiert...",
+      assets: "Akzeptierte Assets",
+      invalidFormat: "Ungültiges Adressformat für {network}"
+    },
+    invoices: {
+      title: "Transaktionshistorie",
+      subtitle: "Eine vollständige Liste Ihrer Rechnungen und deren Echtzeit-Status auf der Blockchain.",
+      empty: "Keine Rechnungen gefunden.",
+      id: "ID",
+      amount: "Betrag",
+      status: "Status",
+      date: "Datum",
+      actions: "Aktionen",
+      copyLink: "Link kopieren",
+      view: "Ansehen",
+      confirm: "Bestätigen",
+      cancel: "Abbrechen",
+      baseUsd: "Basis (USD)",
+      payable: "Zahlbar",
+      txHash: "Transaktions-Hash",
+      copyTx: "Tx kopieren",
+      copyId: "ID kopieren",
+      details: "Details",
+      hide: "Ausblenden",
+      noTx: "Noch kein Transaktions-Hash vorhanden.",
+      created: "Erstellt",
+      received: "Empfangen",
+      metricsVolume: "Gesamtvolumen",
+      metricsCompleted: "Abgeschlossene Rechnungen",
+      metricsPending: "Ausstehende Rechnungen",
+      filterNetwork: "Netzwerk",
+      filterAllNetworks: "Alle Netzwerke",
+      filterDateRange: "Zeitraum",
+      filterAllDates: "Gesamter Zeitraum",
+      filterToday: "Heute",
+      filterYesterday: "Gestern",
+      filterLast7Days: "Letzte 7 Tage",
+      filterLast30Days: "Letzte 30 Tage",
+      exportCsv: "CSV exportieren",
+      viewTable: "Tabelle",
+      viewCard: "Karten",
+      createFirst: "Erstellen Sie Ihre erste Rechnung",
+      copiedShort: "Kopiert!"
+    },
+    create: {
+      title: "Rechnung erstellen",
+      subtitle: "Generieren Sie einen Zahlungslink für Ihr Produkt oder Ihren Service.",
+      service: "Dienstname",
+      amount: "Betrag (USD)",
+      lifetime: "Gültigkeitsdauer (Min.)",
+      network: "Zahlungsnetzwerk",
+      generate: "Zahlungslink generieren",
+      success: "Rechnung erfolgreich erstellt!",
+      presets: "Schnellauswahl Betrag",
+      preview: "Vorschau des Zahlungslinks",
+      previewHint: "Kunden scannen oder öffnen diesen Link, um zu bezahlen.",
+      qrAlt: "QR-Code des Zahlungslinks",
+      recent: "Kürzlich erstellte Links",
+      noRecent: "Hier werden Ihre erstellten Links angezeigt.",
+      openLink: "Öffnen",
+      scanToPay: "Scannen zum Bezahlen",
+      amountInvalid: "Geben Sie einen Betrag größer als null ein."
+    },
+    developer: {
+      title: "Entwickler-Tools",
+      subtitle: "API-Keys und Webhooks zur Automatisierung Ihres Geschäfts-Workflows.",
+      keysTitle: "API-Keys",
+      keysSubtitle: "Verwenden Sie diese Keys, um Ihre Anfragen an unsere API zu authentifizieren.",
+      addKey: "Key erstellen",
+      keyLabel: "Key-Label",
+      hooksTitle: "Webhooks",
+      hooksSubtitle: "Wir senden POST-Benachrichtigungen an Ihre URL, wenn sich der Rechnungsstatus ändert.",
+      addHook: "Endpunkt hinzufügen",
+      hookUrl: "Endpunkt-URL",
+      hookSecret: "Signier-Secret",
+      warning: "Der geheime Key wird nur einmal angezeigt!",
+      locked: "API und Webhooks sind ab dem Developer-Tarif verfügbar.",
+      rotate: "Secret rotieren",
+      usageTitle: "API-Nutzung",
+      usageSubtitle: "Echtzeit-Verbrauch im Vergleich zu Ihren Tarif-Limits.",
+      monthlyUsage: "Monatliche Anfragen",
+      minuteUsage: "Anfragen in dieser Minute",
+      keysUsage: "Aktive API-Keys",
+      hooksUsage: "Webhook-Endpunkte",
+      quickstartTitle: "Schnellstart",
+      quickstartSubtitle: "Basis-URL und eine direkt ausführbare Anfrage.",
+      baseUrl: "Basis-URL",
+      snippetHint: "Authentifizieren Sie sich mit Ihrem geheimen Key im X-API-Key-Header.",
+      deliveriesTitle: "Webhook-Zustellungen",
+      deliveriesSubtitle: "Letzte Zustellungsversuche mit Status und Fehlern.",
+      noDeliveries: "Noch keine Webhook-Zustellungen vorhanden.",
+      resend: "Erneut senden",
+      resending: "Wird erneut gesendet...",
+      attempts: "Versuche",
+      lastStatus: "HTTP",
+      noEndpoints: "Noch keine Endpunkte konfiguriert.",
+      noKeys: "Noch keine API-Keys vorhanden."
+    },
+    team: {
+      title: "Teamverwaltung",
+      subtitle: "Verwalten Sie, wer Zugriff auf diesen Workspace hat.",
+      empty: "Sie sind das einzige Mitglied in diesem Workspace.",
+      add: "Mitglied einladen",
+      role: "Rolle",
+      name: "Name",
+      you: "Sie",
+      owner: "Inhaber",
+      inviteBody: "Laden Sie Ihre Kollegen zur Zusammenarbeit ein.",
+      comingSoon: "Demnächst",
+      membersTitle: "Mitglieder",
+      invitesTitle: "Ausstehende Einladungen",
+      invitePlaceholder: "Telegram-Benutzername (ohne @)",
+      inviteAction: "Einladung senden",
+      inviting: "Wird gesendet...",
+      inviteSent: "Einladung gesendet. Beitritt erfolgt automatisch bei der nächsten Anmeldung.",
+      inviteHint: "Laden Sie Personen über ihren Telegram-Benutzernamen ein — der Beitritt erfolgt beim Login.",
+      noInvites: "Keine ausstehenden Einladungen.",
+      invitedAs: "eingeladen als",
+      revoke: "Widerrufen",
+      remove: "Entfernen",
+      leave: "Workspace verlassen",
+      confirmRemove: "Dieses Mitglied aus dem Workspace entfernen?",
+      confirmLeave: "Diesen Workspace verlassen? Sie verlieren sofort den Zugriff.",
+      roleOwner: "Inhaber",
+      roleAdmin: "Admin",
+      roleMember: "Mitglied",
+      roleAdminHint: "Zahlungen, Entwickler und Mitglieder verwalten.",
+      roleMemberHint: "Täglicher Betrieb: Lesen & Erstellen.",
+      changeRole: "Rolle ändern",
+      ownerOnly: "Nur der Inhaber kann Rollen verwalten.",
+      manageHint: "Nur Inhaber und Admins können Mitglieder einladen oder entfernen.",
+      locked: "Die Teamverwaltung ist im Business-Tarif verfügbar.",
+      lockedSub: "Laden Sie Teammitglieder ein, verwalten Sie Rollen und arbeiten Sie gemeinsam in Ihrem Workspace. Upgrade auf den Business-Tarif, um Team-Features freizuschalten.",
+      lockedAction: "Upgrade auf Business"
+    },
+    billing: {
+      title: "Abonnements",
+      subtitle: "Wählen Sie einen Tarif, der zu Ihrer Unternehmensgröße passt.",
+      current: "Ihr aktueller Tarif",
+      upgrade: "Tarif upgraden",
+      trial: "Testphase",
+      remaining: "verbleibend",
+      active: "Aktiv",
+      comparisonTitle: "Tarife vergleichen",
+      comparisonSubtitle: "Alle enthaltenen Leistungen pro Tarifstufe.",
+      currentBadge: "Aktuell",
+      perMonth: "/Monat",
+      selectPlan: "Auswählen",
+      featApi: "REST-API-Zugriff",
+      featWebhooks: "Webhook-Automatisierung",
+      featUnlimited: "Unbegrenzte Verkäufe",
+      featKeys: "API-Keys",
+      featRpm: "Anfragen / Min.",
+      featMonthly: "Monatliche Anfragen",
+      featRetries: "Webhook-Retries",
+      featSeats: "Team-Plätze",
+      featPriority: "Priority-Support",
+      checkoutTitle: "Upgrade abschließen",
+      checkoutSubtitle: "Bezahlen Sie die Abonnementrechnung mit Krypto.",
+      included: "Inbegriffen",
+      notIncluded: "Nicht inbegriffen",
+      promoTitle: "Aktionscode",
+      promoSubtitle: "Haben Sie einen Aktionscode? Geben Sie ihn unten ein, um Ihren Tarif zu aktivieren oder Ihr Abonnement zu verlängern.",
+      promoCodeLabel: "Aktionscode",
+      redeemBtn: "Code einlösen",
+      promoSuccess: "Aktionscode erfolgreich eingelöst!",
+      durationDays: "Dauer (Tage)",
+      durationDaysHint: "Mindestens 14 Tage",
+      durationInvalid: "Die Abonnementdauer muss mindestens 14 Tage betragen.",
+      estimatedPrice: "Geschätzter Preis"
+    },
+    settings: {
+      title: "Profileinstellungen",
+      subtitle: "Verwalten Sie Ihre Kontaktdaten und Kontoparameter.",
+      email: "Kontakt-E-Mail",
+      emailHint: "Wird für Notfallkontakte verwendet oder falls wir Sie bezüglich Ihres Kontos kontaktieren müssen.",
+      emailPlaceholder: "ihrname@unternehmen.com",
+      emailSaved: "Kontakt-E-Mail aktualisiert.",
+      save: "Änderungen speichern",
+      language: "Sprachauswahl",
+      session: "Sitzung",
+      logoutHint: "Beenden Sie Ihre aktuelle Sitzung auf diesem Gerät.",
+      account: "Konto",
+      workspaceId: "Workspace-ID",
+      planLabel: "Aktueller Tarif",
+      memberSince: "Mitglied seit",
+      connectedAccounts: "Verbundene Konten",
+      connectedAccountsHint: "Nutzen Sie jeden verbundenen Provider, um auf dasselbe recv-Konto zuzugreifen.",
+      connectGoogle: "Google verbinden",
+      connectGithub: "GitHub verbinden",
+      connect: "Verbinden",
+      connected: "Verbunden",
+      notConnected: "Nicht verbunden",
+      linkStarted: "Weiterleitung zum Provider..."
+    },
+    usage: {
+      title: "Nutzung & Limits",
+      subtitle: "Ihre aktuelle Tarifkapazität.",
+      rpm: "Anfragen / Min.",
+      monthly: "Monatliche Anfragen",
+      keys: "API-Keys",
+      webhooks: "Webhook-Endpunkte"
+    },
+    common: {
+      copy: "Kopieren",
+      copied: "Kopiert",
+      delete: "Löschen",
+      loading: "Wird geladen...",
+      error: "Fehler",
+      cancel: "Abbrechen",
+      testMode: "Test",
+      liveMode: "Live",
+      walletReady: "Wallet bereit",
+      addWalletFirst: "Zuerst Wallet hinzufügen",
+      management: "Verwaltung",
+      advanced: "Erweitert",
+      toggleMenu: "Menü umschalten",
+      url: "URL",
+      viewInvoice: "Ansehen",
+      creating: "Wird erstellt...",
+      label: "Label",
+      plan: "Tarif",
+      network: "Netzwerk",
+      checkoutGenerated: "Checkout-Link generiert!",
+      payNow: "Jetzt bezahlen",
+      none: "—",
+      unlimited: "Unbegrenzt",
+      open: "Öffnen"
+    }
+  },
+  developerPortal: {
+    hero: {
+      kicker: "Entwickler-Plattform",
+      title: "Bauen Sie die Zukunft des Zahlungsverkehrs",
+      subtitle: "Professionelle Tools zur Integration von Krypto-Zahlungen. API v1 Beta zur Automatisierung Ihres Geschäfts."
+    },
+    nav: {
+      docs: "Dokumentation",
+      dashboard: "Dashboard",
+      keys: "API-Keys",
+      webhooks: "Webhooks",
+      mcp: "MCP-Server",
+      billing: "Abrechnung"
+    },
+    dashboard: {
+      title: "Systemstatus",
+      usage: "API-Nutzung",
+      limit: "Limit",
+      perMinute: "pro Minute",
+      plan: "Aktueller Tarif",
+      status: "Zugangsstatus",
+      active: "Aktiv",
+      inactive: "Aktivierung erforderlich"
+    },
+    keys: {
+      title: "API-Keys",
+      subtitle: "Keys zur Authentifizierung Ihrer Anfragen. Halten Sie sie sicher unter Verschluss.",
+      create: "Key erstellen",
+      label: "Key-Label",
+      placeholder: "Produktions-Backend",
+      scopes: "Berechtigungen",
+      warning: "Der geheime Key wird nur einmal angezeigt!"
+    },
+    webhooks: {
+      title: "Webhooks",
+      subtitle: "Echtzeit-Events. Wir senden eine POST-Anfrage an Ihre URL.",
+      add: "Endpunkt hinzufügen",
+      url: "Endpunkt-URL",
+      secret: "Signier-Secret",
+      rotate: "Secret rotieren",
+      verification: "Signaturverifizierung",
+      verificationDesc: "Jeder Webhook enthält einen X-recv-Signature-Header. Verwenden Sie HMAC SHA-256, um das Payload zu verifizieren."
+    },
+    billing: {
+      title: "Abonnements",
+      subtitle: "Wählen Sie einen Tarif, der zu Ihrer Größe passt.",
+      upgrade: "Tarif upgraden",
+      current: "Ihr aktueller Tarif",
+      businessNote: "Benötigen Sie Teams, Audit-Logs und ein eigenes Branding? Wechseln Sie zu Business.",
+      contactSupport: "Abrechnung öffnen",
+      durationDays: "Dauer (Tage)",
+      durationDaysHint: "Mindestens 14 Tage",
+      durationInvalid: "Die Abonnementdauer muss mindestens 14 Tage betragen.",
+      estimatedPrice: "Geschätzter Preis"
+    },
+    mcp: {
+      title: "Model Context Protocol (MCP) Server",
+      subtitle: "Statten Sie Ihre KI-Agenten mit recv-Tools aus.",
+      desc: "Verbinden Sie Claude Desktop, Cursor oder benutzerdefinierte LLM-Agenten direkt über den recv MCP-Server. Lassen Sie Agenten autonom Kontodetails prüfen, Invoices erstellen und Webhook-Signaturen verifizieren.",
+      runTitle: "Schnellstart über Stdio",
+      configTitle: "Claude Desktop-Integration",
+      configDesc: "Fügen Sie diese Konfiguration zu Ihrer lokalen Konfigurationsdatei hinzu:"
+    },
+    api: {
+      title: "API-Referenz v1 Beta",
+      subtitle: "Basis-URL für alle Anfragen",
+      authTitle: "Authentifizierung",
+      authDesc: "Alle Anfragen müssen den Header „Authorization: Bearer <API_KEY>“ enthalten.",
+      rateLimitTitle: "Rate-Limiting",
+      rateLimitDesc: "Wir verwenden Standard-X-RateLimit-Header zur Traffic-Steuerung.",
+      params: "Parameter",
+      response: "Antwort-Beispiel",
+      requestCurl: "Anfrage (cURL)",
+      errorsTitle: "API-Fehlerleitfaden",
+      errorsSubtitle: "Konkrete Lösungen für häufige Statuscodes.",
+      endpoints: [
+        {
+          title: "Konto & Limits",
+          desc: "Gibt Informationen über den aktuellen API-Key, den Tarif und das monatliche Kontingent zurück.",
+          params: [
+            
+          ]
+        },
+        {
+          title: "Invoices auflisten",
+          desc: "Gibt eine Liste von Invoices mit Seitennummerierung zurück. Sortiert nach Erstellungsdatum (neueste zuerst).",
+          params: [
+            "Seitennummer (Standard 1)",
+            "Einträge pro Seite (Standard 20, max. 100)"
+          ]
+        },
+        {
+          title: "Rechnung erstellen",
+          desc: "Erstellt eine neue Zahlungsrechnung. Gibt ein Invoice-Objekt mit einer checkout_url für den Nutzer zurück.",
+          params: [
+            "Rechnungstitel (sichtbar für den Kunden)",
+            "Betrag in USD (z. B. '25.00')",
+            "Ablaufzeit (Standard 30, max. 1440)"
+          ]
+        },
+        {
+          title: "Rechnungsdetails",
+          desc: "Rufen Sie vollständige Rechnungsinformationen über die System-ID ab.",
+          params: [
+            "System-Rechnungs-ID"
+          ]
+        },
+        {
+          title: "Rechnung stornieren",
+          desc: "Setzt den Rechnungsstatus auf „Abgelaufen“. Nur unbezahlte Rechnungen können storniert werden.",
+          params: [
+            "System-Rechnungs-ID"
+          ]
+        }
+      ]
+    },
+    quickstart: {
+      title: "Schnellstart",
+      subtitle: "Ein Ablauf: Test-Key, Test-Rechnung, Simulation, Webhook, Live.",
+      testKey: "Test-Key",
+      testInvoice: "Test-Rechnung",
+      simulate: "Simulieren",
+      webhook: "Webhook",
+      done: "erledigt",
+      next: "weiter",
+      simulatorTitle: "Beispiel-Rechnungssimulator",
+      simulatorDesc: "Nutzt das test_-Secret, das beim Erstellen eines Keys angezeigt wird. Der Server zeigt es nicht noch einmal an.",
+      createInvoice: "Testrechnung erstellen",
+      simulatePayment: "Zahlung simulieren",
+      openCheckout: "Checkout öffnen"
+    },
+    common: {
+      copy: "Kopieren",
+      copied: "Kopiert",
+      delete: "Löschen",
+      loading: "Wird geladen...",
+      error: "Fehler",
+      save: "Speichern",
+      testMode: "Test",
+      liveMode: "Live",
+      console: "Konsole",
+      never: "Nie",
+      signInRequired: "Anmeldung erforderlich",
+      signInRequiredBody: "Die Authentifizierung ist erforderlich, um API-Keys zu verwalten.",
+      signIn: "Anmelden",
+      label: "Label",
+      environment: "Umgebung",
+      deliveriesTitle: "Zustellungs-Logs",
+      deliveriesSubtitle: "Letzte Webhook-Versuche, Statuscodes und Fehler.",
+      noDeliveries: "Noch keine Zustellungen vorhanden.",
+      attempts: "Versuche",
+      noStatus: "kein Status",
+      resend: "Erneut senden",
+      plan: "Tarif",
+      network: "Netzwerk",
+      checkoutGenerated: "Checkout-Link generiert!",
+      payNow: "Jetzt bezahlen",
+      createTestKeyFirst: "Erstellen Sie einen Test-Key und halten Sie das Secret für den Simulator sichtbar."
+    }
+  },
+  legal: {
+    privacy: {
+      kicker: "DATENSCHUTZERKLÄRUNG",
+      title: "DATENSCHUTZERKLÄRUNG",
+      summary: "LESEN SIE DIESES DOKUMENT SORGFÄLTIG DURCH. DURCH DEN ZUGRIFF AUF DIE RECV-SOFTWARE, DAS DASHBOARD, DIE API ODER DIE ÖFFENTLICHEN CHECKOUT-SEITEN STIMMEN SIE DEN HIERIN BESCHRIEBENEN DATENPRAKTIKEN AUSDRÜCKLICH ZU. WENN SIE NICHT ZUSTIMMEN, MÜSSEN SIE DIE NUTZUNG DES DIENSTES SOFORT EINSTELLEN.",
+      updatedLabel: "Zuletzt aktualisiert",
+      operatorLabel: "Inkrafttreten",
+      metaItems: [
+        "Zuletzt aktualisiert: 14. Juni 2026",
+        "Inkrafttreten: 14. Juni 2026"
+      ],
+      draftTitle: "Dienstanbieter und Datenverantwortlicher",
+      draftBody: "Der Dienst wird von den Betreibern der Website recv.money („recv“, „Unternehmen“, „wir“, „uns“) betrieben. Mitteilungen und Anfragen können über die folgenden Kontaktkanäle eingereicht werden:",
+      draftItems: [
+        "Rechtliche Hinweise: legal@recv.money",
+        "Datenschutzanfragen: privacy@recv.money",
+        "Support: support@recv.money"
+      ],
+      sections: [
+        {
+          title: "1. PRÄAMBEL UND GELTUNGSBEREICH",
+          paragraphs: [
+            "Diese Datenschutzerklärung (die „Richtlinie“) regelt, wie recv („Unternehmen“, „wir“, „uns“, „unser“) Informationen erhebt, verarbeitet, nutzt und schützt, wenn Sie („Händler“, „Nutzer“, „Sie“) oder Ihre Endnutzer („Kunden“) mit unserer Software-as-a-Service-Infrastruktur, Telegram-Bots, API-Endpunkten und öffentlichen Checkout-Schnittstellen (zusammen der „Dienst“) interagieren.",
+            "Diese Richtlinie soll den weltweiten Datenschutzprinzipien entsprechen und trägt gleichzeitig der von Natur aus öffentlichen, unveränderlichen und dezentralen Natur der kryptografischen Blockchain-Technologie Rechnung."
+          ]
+        },
+        {
+          title: "2. DIE GRUNDSÄTZLICHE REALITÄT VON BLOCKCHAIN-DATEN (WICHTIGER HINWEIS)",
+          paragraphs: [
+            "2.1. Öffentliche Register: Sie und Ihre Kunden erkennen ausdrücklich an, dass Blockchain-Netzwerke (einschließlich, aber nicht beschränkt auf TON, TRON, Solana, Base, Arbitrum und BSC) dezentrale, öffentliche Register sind.",
+            "2.2. Keine Erwartung von Datenschutz on-chain: Wallet-Adressen, Transaktions-Hashes (TXIDs), Zeitstempel, Transferbeträge und On-Chain-Memos/Kommentare werden dauerhaft aufgezeichnet und sind für jedermann weltweit zugänglich. Das Unternehmen kontrolliert diese Netzwerke nicht und kann On-Chain-Daten weder löschen, verschleiern noch ändern.",
+            "2.3. Datenlöschung: Auf einer öffentlichen Blockchain aufgezeichnete Daten können von recv nicht geändert oder gelöscht werden. Diese Einschränkung gilt nur für den Blockchain-Eintrag selbst. Anträge auf Auskunft, Berichtigung, Einschränkung oder Löschung personenbezogener Daten, die in von recv kontrollierten Systemen gespeichert sind, bleiben vorbehaltlich gesetzlicher Ausnahmen, einschließlich Sicherheit, Missbrauchsprävention, Buchhaltung, Streitigkeiten und gesetzlicher Aufbewahrungspflichten, anwendbar."
+          ]
+        },
+        {
+          title: "3. KATEGORIEN DER VON UNS ERHOBENEN DATEN",
+          paragraphs: [
+            "Um die „Direct-to-Wallet“-Routing- und Benachrichtigungsarchitektur zu betreiben, beschränken wir die Datenerhebung streng auf die folgenden Kategorien:",
+            "3.1. Händlerkontodaten: Wenn sich ein Händler über die Telegram Mini-App oder den Bot authentifiziert, erheben und speichern wir automatisch die Telegram-Benutzer-ID, den Telegram-Benutzernamen und die E-Mail-Adresse (falls freiwillig angegeben oder für bestimmte Abrechnungsstufen erforderlich).",
+            "3.2. Betriebs- und Infrastrukturdaten: Um den Dienst zu ermöglichen, muss der Händler die Ziel-Wallet-Adressen der öffentlichen Blockchain, die bevorzugten Standardnetzwerke, die Webhook-URL-Endpunkte und die zugehörigen kryptografischen Secrets konfigurieren.",
+            "3.3. Kunden- und Transaktions-Metadaten: Wenn ein Kunde auf eine öffentlich generierte Checkout-URL zugreift, verarbeiten wir Rechnungs-Metadaten (Titel, Basisbetrag, Ablaufzeit), flüchtige HTTP-Anfragedaten (IP-Adressen, User-Agent-Strings) und erfasste On-Chain-Ereignisse über unsere Watcher (TX-Hash, Betrag, Ziel, beobachteter Zeitstempel).",
+            "HINWEIS: Wir erheben KEINE Kundennamen, Kunden-E-Mails, physische Kundenadressen oder traditionelle KYC/AML-Dokumente."
+          ]
+        },
+        {
+          title: "4. STRIKTE HAFTUNG FÜR RECHNUNGS-METADATEN",
+          paragraphs: [
+            "4.1. Dateneingabe durch den Händler: Der Dienst ermöglicht es Händlern, Rechnungen individuelle „Titel“ zuzuweisen. Der Händler verpflichtet sich, KEINE personenbezogenen Daten (PII) seiner Kunden in den Rechnungstitel, den Zahlungskommentar oder die Webhook-Payloads einzugeben.",
+            "4.2. Öffentliche Checkout-Exposition: Der Händler nimmt zur Kenntnis, dass die Checkout-URL für jeden zugänglich ist, der den Link besitzt. Die öffentliche Rechnungs-ID, der Rechnungstitel, der zu zahlende Betrag und die Zieladresse sind auf dieser Seite sichtbar. Das Unternehmen haftet nicht für personenbezogene Daten, die offengelegt werden, weil der Händler die Rechnungs-Metadaten nicht anonymisiert hat."
+          ]
+        },
+        {
+          title: "5. COOKIES, LOKALER SPEICHER UND ANALYSEN",
+          paragraphs: [
+            "Wir verwenden unbedingt erforderlichen Speicher, um die Authentifizierung, Sicherheit, Sprach- und Oberflächenpräferenzen aufrechtzuerhalten. Dies umfasst in localStorage gespeicherte Access-Tokens und in sicheren HttpOnly-Cookies gespeicherte Refresh-Tokens.",
+            "Wir verwenden auch ein First-Party-Attributions-Cookie namens „recv_attr“. Es kann eine Attributionskennung, Kampagnenparameter, einen Empfehlungscode, die Landingpage und die verweisende Website enthalten. Seine maximale Lebensdauer beträgt 90 Tage.",
+            "Sofern aktiviert, können Google Tag Manager und Yandex Metrica Geräte-, Browser-, Seitenaufruf-, Interaktions-, Netzwerk- und ungefähre Standortinformationen gemäß ihren jeweiligen Datenschutzbedingungen erhalten. Diese Technologien werden für Nutzer, die eine vorherige Einwilligung benötigen, erst aktiviert, wenn diese erteilt wurde.",
+            "Wir erfassen aggregierte Website-Leistungsmesswerte, einschließlich Seitenpfad, Sprache, Navigationstyp, LCP-, INP- und CLS-Werte.",
+            "Nutzer können ihre Einwilligung zu optionalen Analysen jederzeit über unsere Cookie-Einstellungen widerrufen. Der Widerruf hat keinen Einfluss auf den unbedingt erforderlichen Speicher."
+          ]
+        },
+        {
+          title: "6. ROLLEN UND RECHTSGRUNDLAGEN FÜR DIE VERARBEITUNG",
+          paragraphs: [
+            "Wir verarbeiten Konto-, Authentifizierungs-, Workspace-, Rechnungs-, Wallet-, API-, Webhook- und Abonnementsdaten zur Erfüllung unseres Vertrages mit dem Händler.",
+            "Wir verarbeiten Sicherheits-Logs, Sitzungsinformationen, IP-Adressen, User-Agent-Daten, Audit-Events, Missbrauchsindikatoren und Dienstdiagnosen auf Grundlage unserer berechtigten Interessen an der Sicherung, Aufrechterhaltung und Verbesserung des Dienstes.",
+            "Wir verarbeiten Abrechnungs- und Transaktionsdaten zur Vertragserfüllung und zur Einhaltung geltender Rechnungslegungs-, Steuer-, Sanktions- und gesetzlicher Verpflichtungen.",
+            "Wir verarbeiten optionale Analyse- und Werbeattributionsdaten auf Grundlage einer Einwilligung, sofern dies gesetzlich vorgeschrieben ist, und andernfalls, wie es das anwendbare Recht erlaubt.",
+            "Für Rechnungs- und Checkout-Daten, die ein Händler bezüglich seiner Kunden übermittelt, bestimmt in der Regel der Händler den Zweck der Verarbeitung und agiert als Verantwortlicher. recv handelt als Auftragsverarbeiter, soweit es diese Daten im Auftrag des Händlers verarbeitet. recv agiert als unabhängiger Verantwortlicher für die Sicherheit, Missbrauchsprävention, Abrechnung und Compliance-Aufzeichnungen."
+          ]
+        },
+        {
+          title: "7. DATENSPEICHERUNG",
+          paragraphs: [
+            "Wir speichern personenbezogene Daten gemäß dem folgenden Zeitplan:",
+            "• Konto- und Workspace-Daten: solange das Konto aktiv ist und für bis zu 24 Monate nach Schließung.",
+            "• Authentifizierungscodes: bis sie verwendet werden oder ablaufen, gefolgt von einer Löschung innerhalb von 30 Tagen.",
+            "• Aktive Refresh-Sitzungen: bis zum Ablauf oder Widerruf; Sicherheitsaufzeichnungen von Sitzungen können für bis zu 12 Monate aufbewahrt werden.",
+            "• Rechnungs-, Abonnements- und Blockchain-Abgleichsaufzeichnungen: für bis zu 7 Jahre, sofern dies für Buchhaltungs-, Steuer-, Streitbeilegungs- oder Betrugspräventionszwecke erforderlich ist.",
+            "• Webhook-Zustellungs- und API-Anfrage-Logs: bis zu 12 Monate.",
+            "• Produktanalysen, UTM-Attribution und Web Vitals: bis zu 24 Monate.",
+            "• Backups: bis sie im Rahmen des Backup-Rotationsplans überschrieben werden, in der Regel innerhalb von 30 Tagen.",
+            "Wir können bestimmte Aufzeichnungen länger aufbewahren, wenn dies zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen oder zur Einhaltung von Gesetzen erforderlich ist."
+          ]
+        },
+        {
+          title: "8. SICHERHEIT",
+          paragraphs: [
+            "API-Key-Werte werden nach der ersten Ausstellung als Einweg-Hashes gespeichert. Access- und Refresh-Tokens werden kryptografisch signiert oder als Token-Hashes gespeichert. Webhook-Signaturgeheimnisse müssen für den Dienst verfügbar bleiben, um Lieferungen zu signieren, und werden daher als vertrauliche Anmeldedaten gespeichert, die durch Zugriffskontrollen geschützt sind. Keine Speicher- oder Übertragungsmethode ist absolut sicher."
+          ]
+        },
+        {
+          title: "9. IHRE DATENSCHUTZRECHTE",
+          paragraphs: [
+            "Je nach anwendbarem Recht können Sie Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch oder Übertragbarkeit der von recv verarbeiteten personenbezogenen Daten verlangen. Sie können auch eine erteilte Einwilligung widerrufen und eine Beschwerde bei einer zuständigen Aufsichtsbehörde einreichen.",
+            "Senden Sie Anfragen an privacy@recv.money. Wir können Ihre Identität und Berechtigung überprüfen, bevor wir auf eine Anfrage reagieren. Wir werden innerhalb der gesetzlich vorgeschriebenen Frist antworten.",
+            "Für Einwohner von Kalifornien (CCPA/CPRA): In den vergangenen 12 Monaten haben wir die in Abschnitt 3 dieser Richtlinie beschriebenen Kategorien personenbezogener Daten erhoben. Wir verkaufen („sell“) oder teilen („share“ für verhaltensbasierte Werbung) keine personenbezogenen Daten. Einwohner von Kalifornien haben das Recht auf Auskunft, Löschung, Berichtigung, Opt-out bezüglich des Verkaufs/Teilens, Einschränkung der Nutzung sensibler personenbezogener Daten und das Recht, bei der Ausübung dieser Rechte nicht diskriminiert zu werden. Um eine Anfrage einzureichen, kontaktieren Sie privacy@recv.money."
+          ]
+        },
+        {
+          title: "10. ÄNDERUNGEN DIESER RICHTLINIE",
+          paragraphs: [
+            "Wir behalten uns das Recht vor, diese Datenschutzerklärung jederzeit einseitig zu aktualisieren. Ihre fortgesetzte Nutzung des Dienstes nach der Veröffentlichung einer aktualisierten Richtlinie gilt als Annahme der Änderungen."
+          ]
+        }
+      ],
+      footerNote: "Diese Datenschutzerklärung wurde verfasst, um die Ausrichtung an weltweiten Standards zu gewährleisten."
+    },
+    terms: {
+      kicker: "NUTZUNGSBEDINGUNGEN",
+      title: "NUTZUNGSBEDINGUNGEN",
+      summary: "BITTE LESEN SIE DIESE UMFASSENDE VEREINBARUNG SORGFÄLTIG DURCH. SIE ENTHÄLT EINE OBLIGATORISCHE SCHIEDSKLAUSEL, EINEN VERZICHT AUF SAMMELKLAGEN UND UMFANGREICHE HAFTUNGSAUSSCHLÜSSE, DIE IHRE RECHTE ERHEBLICH BEEINFLUSSEN. DURCH DEN ZUGRIFF, DIE INTEGRATION ODER DIE NUTZUNG DER RECV-SOFTWARE, DER API ODER DER WEBHOOKS ERKLÄREN SIE SICH MIT DIESEN BEDINGUNGEN EINVERSTANDEN.",
+      updatedLabel: "Zuletzt aktualisiert",
+      operatorLabel: "Inkrafttreten",
+      metaItems: [
+        "Zuletzt aktualisiert: 14. Juni 2026",
+        "Inkrafttreten: 14. Juni 2026"
+      ],
+      draftTitle: "Vertragspartner",
+      draftBody: "Diese Vereinbarung wird zwischen dem Händler und den Betreibern der Website recv.money („recv“, „Unternehmen“, „wir“, „uns“) geschlossen.",
+      draftItems: [
+        "Gegenstand: Software, API, Webhooks, Blockchain-Monitoring",
+        "Modell: Non-Custodial, Direct-to-Wallet",
+        "Streitbeilegung: Schiedsverfahren in Zypern"
+      ],
+      sections: [
+        {
+          title: "1. PRÄAMBEL UND ANNAHME DER BEDINGUNGEN",
+          paragraphs: [
+            "1.1. Vertragsparteien: Diese Nutzungsbedingungen (die „Vereinbarung“) stellen einen rechtsverbindlichen Vertrag zwischen Ihnen (einzeln oder im Namen eines Unternehmens handelnd, im Folgenden „Händler“, „Sie“ oder „Ihr“) und recv (im Folgenden „Unternehmen“, „wir“, „uns“, „unser“ oder „Dienstleister“) dar.",
+            "1.2. Geschäftsfähigkeit: Durch die Nutzung des Dienstes per Telegram-Authentifizierung oder über unsere API erklären und garantieren Sie, dass Sie mindestens achtzehn (18) Jahre alt sind, die Rechtsfähigkeit besitzen, diese Vereinbarung einzugehen, und, falls Sie im Namen einer juristischen Person handeln, die erforderliche Befugnis besitzen, diese zu verpflichten.",
+            "1.3. Änderungen: Wir behalten uns das Recht vor, diese Vereinbarung jederzeit zu ändern oder anzupassen. Die fortgesetzte Nutzung des Dienstes nach der Veröffentlichung von Änderungen gilt als Annahme der geänderten Bedingungen."
+          ]
+        },
+        {
+          title: "2. DEFINITION DES DIENSTES",
+          paragraphs: [
+            "2.1. Software as a Service (SaaS): Der „Dienst“ bezieht sich ausschließlich auf die proprietäre, non-custodiale Software-Middleware, die vom Unternehmen bereitgestellt wird. Dies umfasst das Dashboard, die Checkout-Seitengeneratoren, die intelligenten Zuordnungsalgorithmen, die API-Endpunkte, die Webhook-Zustellungs-Systeme und die Blockchain-Überwachungslogik (die „Watcher“).",
+            "2.2. Non-Custodialer Daten-Layer: Sie erkennen an, dass der Dienst ausschließlich als informativer Daten-Layer und visuelle Schnittstelle fungiert. Der Dienst liest öffentliche, dezentrale Blockchain-Register (z. B. TON, TRON, Solana, Base, BSC-kompatible Chains) aus und visualisiert diese Daten.",
+            "2.3. Keine Finanzintermediation: Das Unternehmen ist kein Zahlungsabwickler, kein Payment-Gateway, kein Geldübermittler, keine Clearingstelle, kein Verwahrer, kein Treuhänder und kein Finanzinstitut. Zu keinem Zeitpunkt der technischen Architektur empfängt, hält, kontrolliert oder besitzt das Unternehmen Fiat-Währungen, digitale Vermögenswerte oder kryptografische private Keys des Händlers oder seiner Endnutzer („Kunden“).",
+            "2.4. Direct-to-Wallet-Ausführung: Alle Übertragungen digitaler Vermögenswerte erfolgen ausschließlich und direkt auf der öffentlichen Blockchain von der unhosted oder gehosteten Wallet des Kunden direkt an die vom Händler angegebene Zieladresse."
+          ]
+        },
+        {
+          title: "3. EINHALTUNG GESETZLICHER VORSCHRIFTEN UND SANKTIONEN",
+          paragraphs: [
+            "3.1. Volle Haftung des Händlers: Der Händler übernimmt die gesamte Haftung für die Durchführung aller erforderlichen Identitätsprüfungen, die Einhaltung gesetzlicher Vorschriften und die Steuerberichterstattung in Bezug auf seine Kunden, wie es die für den Händler geltende Rechtsordnung vorschreibt.",
+            "3.2. Sanktionen und OFAC-Erklärungen: Der Händler erklärt und garantiert, dass er sich nicht in einem Land oder Territorium befindet, der Kontrolle eines solchen unterliegt oder Staatsbürger oder Einwohner eines solchen ist, das umfassenden Wirtschaftssanktionen der Vereinten Nationen, der Europäischen Union oder des U.S. Office of Foreign Assets Control (OFAC) unterliegt.",
+            "3.3. Steuerliche Freistellung: Das Unternehmen berechnet, erhebt, übermittelt oder meldet keine Umsatz-, Mehrwert- (MwSt.), Einkommen- oder sonstigen Steuern, die sich aus den Transaktionen des Händlers ergeben. Der Händler trägt die alleinige Verantwortung für alle Steuerschulden."
+          ]
+        },
+        {
+          title: "4. VERBOTENES VERHALTEN UND KONTOSPERRUNG",
+          paragraphs: [
+            "4.1. Strengstens verbotene Nutzungen: Der Händler verpflichtet sich, den Dienst, die Checkout-Links oder die API-Infrastruktur NICHT zu nutzen, um den Verkauf, den Vertrieb oder die Bewerbung von illegalen Betäubungsmitteln, Waffen, rechtswidrigen Inhalten für Erwachsene, nicht lizenziertem Glücksspiel, gefälschten Waren oder betrügerischen Investitionsstrukturen zu erleichtern.",
+            "4.2. Sperrung/Kündigung: Das Unternehmen behält sich das Recht vor, jedes Händlerkonto zu suspendieren, einzuschränken oder dauerhaft zu kündigen, API-Keys zu widerrufen und die Webhook-Funktionalität unverzüglich und ohne vorherige Ankündigung oder Haftung zu deaktivieren, wenn wir einen Verstoß gegen Abschnitt 4.1 vermuten oder feststellen, dass die Aktivitäten des Händlers das Unternehmen rechtlichen, regulatorischen oder reputationsbezogenen Risiken aussetzen."
+          ]
+        },
+        {
+          title: "5. TECHNISCHE MECHANIK UND ZUORDNUNGS-ABGLEICH",
+          paragraphs: [
+            "5.1. Intelligente Zuordnungsmethoden: Für unterstützte Stablecoin-Zahlungsoptionen kann recv dem angeforderten Betrag ein eindeutiges Suffix hinzufügen, um einen On-Chain-Transfer einer Invoice zuzuordnen. Für native GRAM-Zahlungen auf TON verwendet recv einen eindeutigen Zahlungskommentar. Die unterstützten Zuordnungsmethoden können je nach Netzwerk und Asset variieren und werden auf der Checkout-Seite angezeigt.",
+            "5.2. Haftungsausschluss bei Nutzerfehlern: Das Unternehmen haftet nicht für finanzielle Verluste, verspäteten Zugang zu digitalen Gütern oder unerfüllte Rechnungen, die daraus resultieren, dass der Kunde nicht den genauen Betrag (einschließlich des Zuordnungs-Suffixes) oder das korrekte Memo/den korrekten Kommentar übermittelt hat oder ein falsches oder nicht unterstütztes Blockchain-Netzwerk verwendet hat.",
+            "5.3. Unwiderruflichkeit von Transaktionen: Der Händler erkennt an, dass Blockchain-Transaktionen mathematisch unveränderlich sind. Das Unternehmen kann On-Chain-Transfers weder rückgängig machen, erstatten noch ändern.",
+            "5.4. Abhängigkeit von RPC-Drittanbietern: Die Blockchain-Überwachungsfunktionen des Dienstes hängen vollständig von der Stabilität, Verfügbarkeit und Genauigkeit von RPC-Node-Drittanbietern und externen Orakel-APIs ab. Das Unternehmen haftet nicht für Dienstbeeinträchtigungen, verzögerte Webhooks oder fehlgeschlagenes Mempool-Tracking, die durch Ausfälle externer RPC-Anbieter verursacht werden."
+          ]
+        },
+        {
+          title: "6. API, WEBHOOKS UND INTEGRATION",
+          paragraphs: [
+            "6.1. API-Lizenz: Vorbehaltlich dieser Bedingungen und eines aktiven Abonnementstatus gewährt das Unternehmen dem Händler eine begrenzte, nicht exklusive, nicht übertragbare und widerrufliche Lizenz für den Zugriff auf die recv-API (v1).",
+            "6.2. Webhook-Zustellung und Idempotenz: Webhook-Benachrichtigungen werden auf „At-Least-Once“-Basis zugestellt. Der Händler ist verpflichtet, eine Idempotenz-Sicherung auf seinen Servern zu implementieren, um eine doppelte Auftragsabwicklung zu verhindern.",
+            "6.3. Webhook-Verifizierung: Jeder Webhook enthält die Header X-recv-Event, X-recv-Timestamp und X-recv-Signature. Die Signatur wird als „v1=“ gefolgt von HMAC-SHA256 über die genaue Zeichenfolge Zeitstempel + „.“ + Raw-Request-Body berechnet. Der Händler muss die Signatur mit dem unveränderten Raw-Body verifizieren, veraltete Zeitstempel ablehnen und Ereignisse idempotent verarbeiten."
+          ]
+        },
+        {
+          title: "7. ABONNEMENTS, GEBÜHREN UND LIMITS",
+          paragraphs: [
+            "7.1. Kostenpflichtige Tarife: Zu den kostenpflichtigen Tarifen gehören derzeit Merchant, Developer und Business. Die aktuellen Preise, enthaltenen Features, Kontingente und Abrechnungszeiträume werden beim Checkout angezeigt und werden zum Zeitpunkt des Kaufs Bestandteil dieser Vereinbarung.",
+            "7.2. Abonnementszeitraum: Eine Abonnementszahlung erwirbt den Zugang für den beim Checkout angezeigten festen Zeitraum, derzeit 30 Tage. Abonnements verlängern sich nicht automatisch, es sei denn, recv führt ausdrücklich eine automatische Verlängerung ein und der Händler autorisiert diese separat.",
+            "7.3. Limits: Tarif-Limits können Rechnungs-, API-Anfrage-, API-Key-, Webhook-Endpunkt-, Retry-, Workspace- und Team-Plätze-Limits umfassen. Anfragen können abgelehnt oder Funktionen eingeschränkt werden, wenn ein geltendes Limit erreicht wird."
+          ]
+        },
+        {
+          title: "8. ERSTATTUNGSRICHTLINIE",
+          paragraphs: [
+            "8.1. Unumkehrbarkeit: Da Blockchain-Transfers unumkehrbar sind, können Abonnementszahlungen nicht automatisch zurückgebucht werden. Außer in den durch das anwendbare Recht vorgeschriebenen Fällen sind Abonnementsgebühren nach Aktivierung des Tarifs nicht erstattungsfähig.",
+            "8.2. Genehmigte Erstattungen: Falls recv den erworbenen Tarif nicht aktiviert, eine Abbuchung dupliziert oder die erworbene Dienstleistung wesentlich falsch beschreibt, kann sich der Händler innerhalb von 14 Tagen an support@recv.money wenden. Jede genehmigte Erstattung wird an eine verifizierte Wallet-Adresse gesendet, die über das Erstattungs-Verifizierungsverfahren von recv ausgewählt wurde, abzüglich unvermeidbarer Blockchain-Netzwerkgebühren."
+          ]
+        },
+        {
+          title: "9. GEISTIGES EIGENTUM",
+          paragraphs: [
+            "Alle Rechte, Titel und Ansprüche an dem Dienst, der Software, der API, dem Design, der Architektur und der Codebasis bleiben das ausschließliche geistige Eigentum des Unternehmens. Sie dürfen den Dienst nicht dekompilieren, zurückentwickeln, disassemblieren oder versuchen, den Quellcode abzuleiten."
+          ]
+        },
+        {
+          title: "10. GEWÄHRLEISTUNGSAUSSCHLUSS",
+          paragraphs: [
+            "DER DIENST, DIE API UND DIE GESAMTE ZUGEHÖRIGE INFRASTRUKTUR WERDEN „WIE BESEHEN“ UND „WIE VERFÜGBAR“ BEREITGESTELLT. DAS UNTERNEHMEN SCHLIESST AUSDRÜCKLICH JEDE GEWÄHRLEISTUNG AUS, OB AUSDRÜCKLICH ODER STILLSCHWEIGEND, EINSCHLIESSLICH, ABER NICHT BESCHRÄNKT AUF DIE STILLSCHWEIGENDE GEWÄHRLEISTUNG DER MARKTGÄNGIGKEIT, DER EIGNUNG FÜR EINEN BESTIMMTEN ZWECK UND DER NICHTVERLETZUNG VON RECHTEN DRITTER."
+          ]
+        },
+        {
+          title: "11. HAFTUNGSBESCHRÄNKUNG",
+          paragraphs: [
+            "IN KEINEM FALL HAFTET DAS UNTERNEHMEN, SEINE GRÜNDER, KERNENTWICKLER, GESCHÄFTSFÜHRER ODER VERBUNDENEN UNTERNEHMEN FÜR INDIREKTE, ZUFÄLLIGE, BESONDERE, FOLGESCHÄDEN ODER STRAFSCHADENERSATZ, EINSCHLIESSLICH, ABER NICHT BESCHRÄNKT AUF ENTGANGENEN GEWINN, UMSATZVERLUSTE, VERLUST DIGITALER ASSETS ODER DATENBESCHÄDIGUNG.",
+            "UNTER KEINEN UMSTÄNDEN ÜBERSTEIGT DIE GESAMTE KUMULATIVE HAFTUNG DES UNTERNEHMENS IHNEN GEGENÜBER FÜR SÄMTLICHE ANSPRÜCHE DEN GESAMTBETRAG DER ABONNEMENTSGEBÜHREN, DIE SIE IN DEN DREI (3) MONATEN UNMITTELBAR VOR DEM EREIGNIS, DAS DEN ANSPRUCH BEGRÜNDET HAT, AN DAS UNTERNEHMEN GEZAHLT HABEN. WENN SIE EINEN KOSTENLOSEN TARIF NUTZEN, IST DIE GESAMTHAFTUNG STRENG AUF NULL DOLLAR ($0,00) BEGRENZT."
+          ]
+        },
+        {
+          title: "12. FREISTELLUNG",
+          paragraphs: [
+            "Sie erklären sich damit einverstanden, das Unternehmen und seine verbundenen Unternehmen zu verteidigen, freizustellen und schadlos zu halten von und gegen alle Ansprüche, Klagen, Forderungen, Haftungen, Schäden und Kosten, die sich aus Ihrem Verstoß gegen diese Vereinbarung, einer Gesetzesverletzung oder Streitigkeiten zwischen Ihnen und Ihren Kunden ergeben."
+          ]
+        },
+        {
+          title: "13. ANWENDBARES RECHT UND STREITBEILEGUNG",
+          paragraphs: [
+            "13.1. Diese Vereinbarung unterliegt dem Recht von Zypern, unter Ausschluss der Kollisionsnormen.",
+            "13.2. Vor Beginn eines formellen Verfahrens muss eine Partei eine schriftliche Mitteilung mit der Beschreibung der Streitigkeit an legal@recv.money senden. Die Parteien versuchen in gutem Glauben, die Streitigkeit innerhalb von dreißig (30) Tagen beizulegen.",
+            "13.3. Streitigkeiten, die nicht gemäß Abschnitt 13.2 beigelegt werden können, werden endgültig durch die zuständigen Gerichte in Nicosia, Zypern, in englischer Sprache nach den zu Beginn des Verfahrens geltenden Regeln entschieden.",
+            "13.4. Nichts in diesem Abschnitt hindert eine Partei daran, dringenden einstweiligen Rechtsschutz zu suchen oder Rechte auszuüben, auf die gesetzlich nicht verzichtet werden kann."
+          ]
+        },
+        {
+          title: "14. SALVATORISCHE KLAUSEL UND GESAMTVEREINBARUNG",
+          paragraphs: [
+            "Sollte eine Bestimmung dieser Vereinbarung für undurchsetzbar oder ungültig befunden werden, wird diese Bestimmung auf das Mindestmaß beschränkt oder eliminiert, das erforderlich ist, damit diese Vereinbarung ansonsten in vollem Umfang in Kraft bleibt. Diese Vereinbarung stellt die gesamte Vereinbarung zwischen den Parteien dar."
+          ]
+        },
+        {
+          title: "15. SPRACHE UND ÜBERSETZUNGEN",
+          paragraphs: [
+            "15.1. Diese Vereinbarung ist in englischer und russischer Sprache abgefasst. Im Falle von Konflikten, Abweichungen oder Widersprüchen zwischen der englischen Version und der russischen Übersetzung ist die englische Version maßgebend und rechtsverbindlich."
+          ]
+        }
+      ],
+      footerNote: "Die oben genannten Bedingungen bilden die gesamte Vereinbarung zur Regelung Ihrer Dienstnutzung."
+    },
+    dpa: {
+      kicker: "AUFTRAGSVERARBEITUNGSVERTRAG",
+      title: "AUFTRAGSVERARBEITUNGSVERTRAG",
+      summary: "Dieser Auftragsverarbeitungsvertrag („AVV“) regelt die Verarbeitung personenbezogener Kundendaten durch recv im Auftrag des Händlers im Zusammenhang mit dem Dienst.",
+      updatedLabel: "Zuletzt aktualisiert",
+      operatorLabel: "Inkrafttreten",
+      metaItems: [
+        "Zuletzt aktualisiert: 14. Juni 2026",
+        "Inkrafttreten: 14. Juni 2026"
+      ],
+      draftTitle: "Umfang der Verarbeitung",
+      draftBody: "Dieser AVV gilt, wenn und soweit recv personenbezogene Kundendaten ausschließlich im Auftrag des Händlers verarbeitet. In diesem Kontext agiert der Händler als Verantwortlicher und recv als Auftragsverarbeiter.",
+      draftItems: [
+        "Verantwortlicher: Händler",
+        "Auftragsverarbeiter: recv",
+        "Standards: DSGVO, globale Datenschutzgesetze"
+      ],
+      sections: [
+        {
+          title: "1. ROLLEN UND COMPLIANCE",
+          paragraphs: [
+            "1.1. Geltungsbereich: Wenn recv personenbezogene Kundendaten ausschließlich im Auftrag des Händlers verarbeitet, agiert der Händler als Verantwortlicher und recv als Auftragsverarbeiter.",
+            "1.2. Weisungen: recv verarbeitet diese Daten nur gemäß den dokumentierten Weisungen des Händlers, einschließlich der in der Vereinbarung dargelegten, es sei denn, dies ist nach anwendbarem Recht erforderlich."
+          ]
+        },
+        {
+          title: "2. PFLICHTEN DES AUFTRAGSVERARBEITERS",
+          paragraphs: [
+            "2.1. Vertraulichkeit: recv stellt sicher, dass sich die zur Verarbeitung der personenbezogenen Kundendaten befugten Personen zur Vertraulichkeit verpflichtet haben oder einer angemessenen gesetzlichen Verschwiegenheitspflicht unterliegen.",
+            "2.2. Sicherheitsmaßnahmen: recv implementiert geeignete technische und organisatorische Maßnahmen, um ein dem Risiko der Verarbeitung der personenbezogenen Kundendaten angemessenes Sicherheitsniveau zu gewährleisten.",
+            "2.3. Unterauftragsverarbeiter: recv erlegt allen von ihm beauftragten Unterauftragsverarbeitern gleichwertige Datenschutzpflichten auf und bleibt dem Händler gegenüber für die Erfüllung der Pflichten der Unterauftragsverarbeiter haftbar.",
+            "2.4. Betroffenenrechte: recv unterstützt den Händler unter Berücksichtigung der Natur der Verarbeitung durch geeignete technische und organisatorische Maßnahmen bei der Erfüllung der Pflicht des Händlers, auf Anträge zur Ausübung der Rechte betroffener Personen zu antworten.",
+            "2.5. Meldung von Verletzungen: recv benachrichtigt den Händler unverzüglich, nachdem es von einer bestätigten Verletzung des Schutzes personenbezogener Kundendaten erfahren hat.",
+            "2.6. Löschung oder Rückgabe: recv löscht oder sendet nach Wahl des Händlers alle personenbezogenen Kundendaten nach dem Ende der Leistungserbringung an den Händler zurück, es sei denn, das anwendbare Recht schreibt die Speicherung der personenbezogenen Daten vor.",
+            "2.7. Audits: recv stellt dem Händler alle Informationen zur Verfügung, die zum Nachweis der Einhaltung dieser Pflichten erforderlich sind, und ermöglicht Audits, die vom Händler oder einem anderen vom Händler beauftragten Auditor durchgeführt werden, und trägt dazu bei."
+          ]
+        },
+        {
+          title: "3. AVV-ANHÄNGE",
+          paragraphs: [
+            "3.1. Gegenstand und Dauer: Verarbeitung von Blockchain-Transaktionsrouting, Statusbestätigungen und zugehörigen Benachrichtigungs-Metadaten. Die Dauer entspricht der Laufzeit der Vereinbarung.",
+            "3.2. Datenkategorien: Transaktions-Hashes (TXIDs), Ziel-Wallet-Adressen, zu zahlende Beträge, Zeitstempel, IP-Adressen, Browser-User-Agent-Strings und optionale benutzerdefinierte Rechnungs-Metadaten (falls vom Händler bereitgestellt).",
+            "3.3. Kategorien betroffener Personen: Kunden (Endnutzer) des Händlers, die Krypto-Zahlungen über recv-Checkout-Links durchführen.",
+            "3.4. Technische und organisatorische Sicherheitsmaßnahmen: Standardverschlüsselung gespeicherter Datenbank-Zugangsdaten, kryptografische Signaturen für Sitzungs-Tokens, Einweg-Hashing für API-Keys, sichere Zugriffskontrollen und Ratenbegrenzung zum Schutz des Edge-Routings.",
+            "3.5. Unterauftragsverarbeiter-Liste: Die genehmigte Liste der Unterauftragsverarbeiter ist auf der Unterauftragsverarbeiter-Seite aufgeführt.",
+            "3.6. Internationale Datentransfers: Sofern eine Übermittlung von Daten außerhalb der EU/des EWR/des Vereinigten Königreichs erforderlich ist, nutzt recv Standardvertragsklauseln oder gleichwertige, von den zuständigen Aufsichtsbehörden genehmigte Übertragungsmechanismen."
+          ]
+        }
+      ],
+      footerNote: "Dieser AVV wird durch Verweis in die Nutzungsbedingungen aufgenommen."
+    },
+    subprocessors: {
+      kicker: "UNTERAUFTRAGSVERARBEITER-LISTE",
+      title: "ZUGELASSENE UNTERAUFTRAGSVERARBEITER",
+      summary: "Die folgende Liste ist eine aktive Übersicht der Drittanbieter-Unterauftragsverarbeiter, die berechtigt sind, Daten im Auftrag von recv zu verarbeiten, um die Infrastruktur unseres Dienstes bereitzustellen.",
+      updatedLabel: "Zuletzt aktualisiert",
+      operatorLabel: "Inkrafttreten",
+      metaItems: [
+        "Zuletzt aktualisiert: 14. Juni 2026",
+        "Inkrafttreten: 14. Juni 2026"
+      ],
+      draftTitle: "Autorisierung",
+      draftBody: "Der Händler autorisiert hiermit die Beauftragung der unten aufgeführten Drittanbieter von Infrastruktur und Dienstleistungen. Alle aufgeführten Unterauftragsverarbeiter haben Auftragsverarbeitungsverträge mit gleichwertigen Sicherheitsstandards abgeschlossen.",
+      draftItems: [
+        "Infrastruktur-Hosting",
+        "Blockchain-RPC-Dienste",
+        "Benachrichtigungen & Preisgestaltung"
+      ],
+      sections: [
+        {
+          title: "1. TELEGRAM MESSENGER INC.",
+          paragraphs: [
+            "• Zweck: Bereitstellung von Nutzerauthentifizierung, Bot-Befehlen, Telegram Mini-App-Hosting und Händler-Ereignisbenachrichtigungen.",
+            "• Ort: Global verteilt."
+          ]
+        },
+        {
+          title: "2. REMOTE PROCEDURE CALL (RPC) NODE PROVIDERS",
+          paragraphs: [
+            "• Zweck: Abfrage von Blockchain-Block-Headern, Überwachung von Ziel-Wallets und Auslesen von Mempools (z. B. TonCenter, TronGrid und standardmäßige öffentliche Nodes).",
+            "• Ort: Global verteilt."
+          ]
+        },
+        {
+          title: "3. CLOUD PLATFORMS AND EDGE NETWORKS",
+          paragraphs: [
+            "• Zweck: Bereitstellung von Serverumgebungen, sicherem Datenbank-Hosting und globalem Edge-Anfrage-Routing.",
+            "• Ort: Europäische Union / Vereinigte Staaten."
+          ]
+        },
+        {
+          title: "4. EXCHANGE RATE APIs AND ORACLES",
+          paragraphs: [
+            "• Zweck: Abrufen öffentlicher Echtzeit-Wechselkurse für Kryptowährungen (z. B. CoinGecko-API) zur Berechnung von USD-äquivalenten Rechnungswerten.",
+            "• Ort: Global."
+          ]
+        }
+      ],
+      footerNote: "Alle Aktualisierungen dieser Unterauftragsverarbeiter-Liste werden auf dieser Seite veröffentlicht."
+    }
+  }
+} as const;
+
+export default de;

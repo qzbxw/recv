@@ -751,8 +751,11 @@ func (b *BotWorker) renderLanguage(ctx context.Context, workspace store.Workspac
 			{Text: "🇷🇺 Русский" + check("ru"), CallbackData: "lang:set:ru"},
 		},
 		{
-			{Text: "🇪🇸 Español" + check("es"), CallbackData: "lang:set:es"},
-			{Text: "🇧🇷 Português" + check("pt"), CallbackData: "lang:set:pt"},
+			{Text: "🇺🇦 Українська" + check("uk"), CallbackData: "lang:set:uk"},
+			{Text: "🇺🇿 O'zbekcha" + check("uz"), CallbackData: "lang:set:uz"},
+		},
+		{
+			{Text: "🇩🇪 Deutsch" + check("de"), CallbackData: "lang:set:de"},
 		},
 		{{Text: c.btnHome, CallbackData: "nav:home"}},
 	}))

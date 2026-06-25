@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import type { Locale } from "@/i18n";
 
 type Theme = "dark";
-type Language = "ru" | "en";
+type Language = Locale;
 
 type UIContextValue = {
   theme: Theme;

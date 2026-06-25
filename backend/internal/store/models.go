@@ -309,17 +309,19 @@ type Workspace struct {
 }
 
 // SupportedLanguages lists the interface languages shared by the web app and bot.
-var SupportedLanguages = []string{"en", "ru", "es", "pt"}
+var SupportedLanguages = []string{"en", "ru", "uk", "uz", "de"}
 
 // NormalizeLanguage maps arbitrary input to a supported language code, defaulting to English.
 func NormalizeLanguage(value string) string {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "ru", "ru-ru", "ru_ru", "russian":
 		return "ru"
-	case "es", "es-es", "es_es", "spanish":
-		return "es"
-	case "pt", "pt-br", "pt-pt", "pt_br", "pt_pt", "portuguese":
-		return "pt"
+	case "uk", "uk-ua", "uk_ua", "ua", "ukrainian":
+		return "uk"
+	case "uz", "uz-uz", "uz_uz", "uzbek":
+		return "uz"
+	case "de", "de-de", "de_de", "de-at", "de_at", "de-ch", "de_ch", "german":
+		return "de"
 	default:
 		return "en"
 	}
@@ -532,5 +534,3 @@ type ScheduledBroadcast struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 	SentAt      *time.Time `json:"sent_at,omitempty"`
 }
-
-

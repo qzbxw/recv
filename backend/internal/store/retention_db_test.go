@@ -73,8 +73,8 @@ func TestRetentionAndBroadcastFlow(t *testing.T) {
 		t.Fatalf("failed to get retention candidates: %v", err)
 	}
 
-	// Modify w1 created_at to 5 hours ago and set language to Spanish, plan_code to developer
-	_, err = st.pool.Exec(ctx, `UPDATE workspaces SET created_at = NOW() - INTERVAL '5 hours', language = 'es', plan_code = 'developer', free_invoices_used = 3 WHERE id = $1`, w1.ID)
+	// Modify w1 created_at to 5 hours ago and set language to Russian, plan_code to developer
+	_, err = st.pool.Exec(ctx, `UPDATE workspaces SET created_at = NOW() - INTERVAL '5 hours', language = 'ru', plan_code = 'developer', free_invoices_used = 3 WHERE id = $1`, w1.ID)
 	if err != nil {
 		t.Fatalf("failed to update workspace for user 1: %v", err)
 	}
@@ -97,8 +97,8 @@ func TestRetentionAndBroadcastFlow(t *testing.T) {
 			if c.FreeInvoicesUsed != 3 {
 				t.Fatalf("expected free_invoices_used 3, got %d", c.FreeInvoicesUsed)
 			}
-			if c.Language != "es" {
-				t.Fatalf("expected normalized language es, got %s", c.Language)
+			if c.Language != "ru" {
+				t.Fatalf("expected normalized language ru, got %s", c.Language)
 			}
 		}
 	}

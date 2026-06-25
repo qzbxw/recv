@@ -1,6 +1,6 @@
 import type { Invoice, InvoiceStatus, Network, PaymentAsset } from "./types";
 
-export type Language = "ru" | "en";
+export type Language = "ru" | "en" | "uk" | "uz" | "de";
 
 export type StatusTone = "neutral" | "info" | "success" | "warning" | "danger" | "review";
 
@@ -16,8 +16,8 @@ export type InvoiceStatusMeta = {
 
 export const INVOICE_STATUS_META: Record<InvoiceStatus, InvoiceStatusMeta> = {
   draft: {
-    label: { ru: "Черновик", en: "Draft" },
-    shortLabel: { ru: "Черновик", en: "Draft" },
+    label: { ru: "Черновик", en: "Draft", uk: "Чернетка", uz: "Qoralama", de: "Entwurf" },
+    shortLabel: { ru: "Черновик", en: "Draft", uk: "Чернетка", uz: "Qoralama", de: "Entwurf" },
     tone: "neutral",
     isFinal: false,
     canCopyPaymentDetails: false,
@@ -25,8 +25,8 @@ export const INVOICE_STATUS_META: Record<InvoiceStatus, InvoiceStatusMeta> = {
     canSellerMarkPaid: false,
   },
   awaiting_payment: {
-    label: { ru: "Ждет оплату", en: "Awaiting payment" },
-    shortLabel: { ru: "Ожидание", en: "Awaiting" },
+    label: { ru: "Ждет оплату", en: "Awaiting payment", uk: "Очікує оплату", uz: "To'lov kutilmoqda", de: "Wartet auf Zahlung" },
+    shortLabel: { ru: "Ожидание", en: "Awaiting", uk: "Очікує", uz: "Kutilmoqda", de: "Ausstehend" },
     tone: "info",
     isFinal: false,
     canCopyPaymentDetails: true,
@@ -34,8 +34,8 @@ export const INVOICE_STATUS_META: Record<InvoiceStatus, InvoiceStatusMeta> = {
     canSellerMarkPaid: true,
   },
   paid: {
-    label: { ru: "Оплачен", en: "Paid" },
-    shortLabel: { ru: "Оплачен", en: "Paid" },
+    label: { ru: "Оплачен", en: "Paid", uk: "Оплачено", uz: "To'langan", de: "Bezahlt" },
+    shortLabel: { ru: "Оплачен", en: "Paid", uk: "Оплачено", uz: "To'langan", de: "Bezahlt" },
     tone: "success",
     isFinal: true,
     canCopyPaymentDetails: false,
@@ -43,8 +43,8 @@ export const INVOICE_STATUS_META: Record<InvoiceStatus, InvoiceStatusMeta> = {
     canSellerMarkPaid: false,
   },
   expired: {
-    label: { ru: "Срок истек", en: "Expired" },
-    shortLabel: { ru: "Истек", en: "Expired" },
+    label: { ru: "Срок истек", en: "Expired", uk: "Строк минув", uz: "Muddati o'tgan", de: "Abgelaufen" },
+    shortLabel: { ru: "Истек", en: "Expired", uk: "Минув", uz: "Muddati o'tgan", de: "Abgelaufen" },
     tone: "danger",
     isFinal: true,
     canCopyPaymentDetails: false,
@@ -52,8 +52,8 @@ export const INVOICE_STATUS_META: Record<InvoiceStatus, InvoiceStatusMeta> = {
     canSellerMarkPaid: false,
   },
   underpaid: {
-    label: { ru: "Недоплата", en: "Underpaid" },
-    shortLabel: { ru: "Недоплата", en: "Underpaid" },
+    label: { ru: "Недоплата", en: "Underpaid", uk: "Недоплата", uz: "Kam to'langan", de: "Unterbezahlt" },
+    shortLabel: { ru: "Недоплата", en: "Underpaid", uk: "Недоплата", uz: "Kam to'langan", de: "Unterbezahlt" },
     tone: "warning",
     isFinal: false,
     canCopyPaymentDetails: true,
@@ -61,8 +61,8 @@ export const INVOICE_STATUS_META: Record<InvoiceStatus, InvoiceStatusMeta> = {
     canSellerMarkPaid: true,
   },
   overpaid: {
-    label: { ru: "Переплата", en: "Overpaid" },
-    shortLabel: { ru: "Переплата", en: "Overpaid" },
+    label: { ru: "Переплата", en: "Overpaid", uk: "Переплата", uz: "Ortiqcha to'langan", de: "Überbezahlt" },
+    shortLabel: { ru: "Переплата", en: "Overpaid", uk: "Переплата", uz: "Ortiqcha", de: "Überbezahlt" },
     tone: "review",
     isFinal: true,
     canCopyPaymentDetails: false,
@@ -70,8 +70,8 @@ export const INVOICE_STATUS_META: Record<InvoiceStatus, InvoiceStatusMeta> = {
     canSellerMarkPaid: true,
   },
   manual_review: {
-    label: { ru: "Ручная проверка", en: "Manual review" },
-    shortLabel: { ru: "Проверка", en: "Review" },
+    label: { ru: "Ручная проверка", en: "Manual review", uk: "Ручна перевірка", uz: "Qo'lda tekshirish", de: "Manuelle Prüfung" },
+    shortLabel: { ru: "Проверка", en: "Review", uk: "Перевірка", uz: "Tekshiruv", de: "Prüfung" },
     tone: "review",
     isFinal: true,
     canCopyPaymentDetails: false,
@@ -94,14 +94,23 @@ export function getInvoiceStatusTooltip(status: Invoice["status"], language: Lan
     underpaid: {
       ru: "Клиент прислал меньше (возможно, биржа съела комиссию). Можно принять вручную",
       en: "Customer sent less (possibly exchange withdrawal fee was deducted). You can accept it manually.",
+      uk: "Клієнт надіслав менше (можливо, біржа утримала комісію). Можна прийняти вручну.",
+      uz: "Mijoz kamroq yubordi (ehtimol, birja yechib olish komissiyasini ushlab qolgan). Qo'lda qabul qilishingiz mumkin.",
+      de: "Der Kunde hat weniger gesendet (möglicherweise wurde eine Börsen-Auszahlungsgebühr abgezogen). Sie können die Zahlung manuell akzeptieren.",
     },
     expired: {
       ru: "Оплата пришла после истечения таймера",
       en: "Payment arrived after the timer expired.",
+      uk: "Оплата надійшла після завершення таймера.",
+      uz: "To'lov taymer muddati tugagandan keyin keldi.",
+      de: "Die Zahlung ist nach Ablauf des Timers eingegangen.",
     },
     manual_review: {
       ru: "Сумма не сошлась точно, требуется ваше решение",
       en: "The amount did not match exactly and needs your decision.",
+      uk: "Сума не збіглася точно, потрібне ваше рішення.",
+      uz: "Summa aniq mos kelmadi, qaroringiz kerak.",
+      de: "Der Betrag stimmt nicht exakt überein und benötigt Ihre Entscheidung.",
     },
   };
   return tooltips[status]?.[language] ?? "";

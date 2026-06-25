@@ -31,7 +31,8 @@ const redirectCache = new Map<
 >();
 
 function requestLocale(pathname: string) {
-  return pathname === "/ru" || pathname.startsWith("/ru/") ? "ru" : "en";
+  const locale = pathname.split("/")[1];
+  return ["en", "ru", "uk", "uz", "de"].includes(locale) ? locale : "en";
 }
 
 function isPassthrough(pathname: string) {
@@ -112,7 +113,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  if (!isPassthrough(pathname) && !/^\/(en|ru)(?:\/|$)/.test(pathname)) {
+  if (!isPassthrough(pathname) && !/^\/(en|ru|uk|uz|de)(?:\/|$)/.test(pathname)) {
     url.pathname = `/en${pathname}`;
     return NextResponse.redirect(url, 308);
   }

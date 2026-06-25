@@ -7,7 +7,7 @@ import { OptionalAnalytics } from "@/components/OptionalAnalytics";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { UTMEventTracker } from "@/components/UTMEventTracker";
 import { JsonLd } from "@/components/JsonLd";
-import { LOCALES } from "@/i18n";
+import { LOCALES, normalizeLocale } from "@/i18n";
 import {
   BRAND_ICON_PATH,
   BRAND_LOGO_PATH,
@@ -42,6 +42,7 @@ export async function generateMetadata(props: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await props.params;
+  const normalizedLocale = normalizeLocale(locale);
 
   return {
     metadataBase: new URL(publicSiteUrl()),
@@ -52,15 +53,14 @@ export async function generateMetadata(props: {
     description: "Professional crypto processing with instant payouts directly to your wallets. Non-custodial, fixed fees, and support for major networks like TON, TRON, Solana, and Base.",
     alternates: {
       canonical: `/${locale}`,
-      languages: {
-        "en": "/en",
-        "ru": "/ru",
-        "x-default": "/en",
-      },
+      languages: Object.fromEntries([
+        ...LOCALES.map((candidate) => [candidate, `/${candidate}`]),
+        ["x-default", "/en"],
+      ]),
       types: {
         "application/rss+xml": [
           { url: "/rss.xml", title: "recv RSS" },
-          { url: `/${locale}/rss.xml`, title: `recv ${locale === "ru" ? "RU" : "EN"} RSS` },
+          { url: `/${locale}/rss.xml`, title: `recv ${normalizedLocale.toUpperCase()} RSS` },
         ],
       },
     },
@@ -115,11 +115,11 @@ export default async function LocaleLayout(props: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await props.params;
-  const normalizedLocale = locale as "ru" | "en";
+  const normalizedLocale = normalizeLocale(locale);
 
   return (
     <html
-      lang={locale}
+      lang={normalizedLocale}
       suppressHydrationWarning
       className={`${manrope.variable} ${montserrat.variable}`}
     >

@@ -53,7 +53,12 @@ export function UIProvider({ children }: { children: ReactNode }) {
     } catch (_) {}
 
     // 4. Browser language
-    return navigator.language.toLowerCase().startsWith("ru") ? "ru" : "en";
+    const browserLanguage = navigator.language.toLowerCase();
+    const browserBase = browserLanguage.split("-")[0];
+    if (isSupportedLanguage(browserBase)) {
+      return browserBase;
+    }
+    return browserLanguage.startsWith("ru") ? "ru" : "en";
   });
 
   useEffect(() => {

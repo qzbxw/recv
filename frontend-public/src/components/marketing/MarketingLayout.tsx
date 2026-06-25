@@ -7,10 +7,11 @@ import { JsonLd } from "../JsonLd";
 import { LocaleAlternatesProvider, type LocaleAlternates } from "./localeAlternates";
 import { MarketingInteractions } from "./MarketingInteractions";
 import { webPageJsonLd } from "@/lib/geo";
+import type { Locale } from "@/i18n";
 
 type PageType = "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage" | "ProfilePage" | "ItemPage";
 
-function localizedPath(language: "ru" | "en", path?: string) {
+function localizedPath(language: Locale, path?: string) {
   if (!path || path === "/") return `/${language}`;
   if (path === `/${language}` || path.startsWith(`/${language}/`)) return path;
   return `/${language}${path.startsWith("/") ? path : `/${path}`}`;
@@ -34,7 +35,7 @@ export function MarketingLayout({
   mainEntityId,
 }: {
   children: React.ReactNode;
-  language: "ru" | "en";
+  language: Locale;
   path?: string;
   alternates?: LocaleAlternates | null;
   pageType?: PageType;

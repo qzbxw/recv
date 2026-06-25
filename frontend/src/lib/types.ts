@@ -5,6 +5,7 @@ export type APIKeyMode = "live" | "test";
 export type WebhookDeliveryStatus = "pending" | "delivered" | "failed" | "retrying" | "exhausted" | string;
 
 export type Environment = "test" | "live";
+export type InterfaceLanguage = "en" | "ru" | "uk" | "uz" | "de";
 
 export type User = {
   id: number;
@@ -37,7 +38,7 @@ export type Workspace = {
   email?: string;
   name: string;
   slug: string;
-  language?: "en" | "ru";
+  language?: InterfaceLanguage;
   default_network: Network;
   plan_code: "trial" | "merchant" | "developer" | "business";
   subscription_ends_at: string | null;
@@ -743,4 +744,3 @@ export type AdminWalletListResponse = {
   page: number;
   page_size: number;
 };
-

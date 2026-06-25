@@ -46,6 +46,9 @@ describe("SEO generation", () => {
     expect(englishHome?.alternates).toEqual({
       en: "https://example.com/en",
       ru: "https://example.com/ru",
+      uk: "https://example.com/uk",
+      uz: "https://example.com/uz",
+      de: "https://example.com/de",
       "x-default": "https://example.com/en",
     });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { normalizeLocale, type Locale } from "@/i18n";
 
 type VitalName = "LCP" | "INP" | "CLS";
 
@@ -8,7 +9,7 @@ type VitalPayload = {
   name: VitalName;
   value: number;
   path: string;
-  locale: "en" | "ru";
+  locale: Locale;
   navigation_type: string;
 };
 
@@ -19,7 +20,7 @@ function navigationType() {
 
 function sendVital(name: VitalName, value: number) {
   if (!Number.isFinite(value) || value < 0) return;
-  const locale = document.documentElement.lang === "ru" ? "ru" : "en";
+  const locale = normalizeLocale(document.documentElement.lang);
   const payload: VitalPayload = {
     name,
     value,
