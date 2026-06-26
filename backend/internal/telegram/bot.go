@@ -40,6 +40,7 @@ type BotWorker struct {
 	logger         *slog.Logger
 	offset         int64
 	sessions       map[int64]*botSession
+	botUsername    string
 }
 
 type botSession struct {
@@ -123,6 +124,7 @@ func NewBotWorker(st *store.Store, invoiceService *service.InvoiceService, token
 		publicAppURL:   publicAppURL,
 		logger:         logger,
 		sessions:       map[int64]*botSession{},
+		botUsername:    "recvmoney_bot",
 		httpClient: &http.Client{
 			Timeout: 35 * time.Second,
 		},
@@ -168,6 +170,13 @@ func (b *BotWorker) Run(ctx context.Context) error {
 		b.logger.Info("telegram bot token is empty, running webhook delivery worker without Telegram polling")
 		<-ctx.Done()
 		return ctx.Err()
+	}
+
+	if username, err := b.fetchBotUsername(ctx); err == nil {
+		b.botUsername = username
+		b.logger.Info("fetched telegram bot username", "username", b.botUsername)
+	} else {
+		b.logger.Info("failed to fetch telegram bot username, fallback to default", "error", err.Error())
 	}
 
 	for {
@@ -1178,7 +1187,29 @@ func (b *BotWorker) callTelegram(ctx context.Context, method string, payload any
 	return nil
 }
 
+func (b *BotWorker) getBotUsername() string {
+	if b.botUsername != "" {
+		return b.botUsername
+	}
+	return "recvmoney_bot"
+}
+
+func (b *BotWorker) fetchBotUsername(ctx context.Context) (string, error) {
+	var user struct {
+		Username string `json:"username"`
+	}
+	err := b.callTelegram(ctx, "getMe", nil, &user)
+	if err != nil {
+		return "", err
+	}
+	return user.Username, nil
+}
+
 func (b *BotWorker) appURL(path string) string {
+	cleanPath := "/" + strings.TrimLeft(path, "/")
+	if cleanPath == "/console" {
+		return fmt.Sprintf("https://t.me/%s/app", b.getBotUsername())
+	}
 	base := strings.TrimRight(strings.TrimSpace(b.publicAppURL), "/")
 	if base == "" {
 		base = "http://localhost:3000"
@@ -1186,7 +1217,6 @@ func (b *BotWorker) appURL(path string) string {
 	if path == "" {
 		return base
 	}
-	cleanPath := "/" + strings.TrimLeft(path, "/")
 	baseHasAppPrefix := strings.HasSuffix(base, "/app")
 	if !baseHasAppPrefix && !strings.HasPrefix(cleanPath, "/app/") && cleanPath != "/app" {
 		cleanPath = "/app" + cleanPath

@@ -126,7 +126,7 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if len(keyboard.InlineKeyboard) != 2 {
 		t.Fatalf("expected recv row to be appended, got %#v", keyboard.InlineKeyboard)
 	}
-	if keyboard.InlineKeyboard[1][0].URL != "https://recv.test/app/console" {
+	if keyboard.InlineKeyboard[1][0].URL != "https://t.me/recvmoney_bot/app" {
 		t.Fatalf("unexpected recv button URL: %q", keyboard.InlineKeyboard[1][0].URL)
 	}
 

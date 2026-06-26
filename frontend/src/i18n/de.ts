@@ -478,6 +478,7 @@ const de = {
     footerCTA: "Akzeptieren Sie Krypto-Zahlungen wie diese mit recv",
     payInWallet: "In Wallet bezahlen",
     copyPaymentDetails: "Zahlungsdetails kopieren",
+    needHelp: "Brauchen Sie Hilfe bei der Zahlung?",
   },
   sellerConsole: {
     nav: {

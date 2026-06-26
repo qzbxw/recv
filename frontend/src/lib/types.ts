@@ -442,6 +442,7 @@ export type UTMReport = {
     source: string;
     medium: string;
     campaign: string;
+    content: string;
     visits: number;
     unique_visitors: number;
     events: number;

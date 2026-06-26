@@ -720,8 +720,16 @@ export function CheckoutPage() {
         )}
       </section>
 
+      {invoice?.kind === "subscription" && (
+        <div className="co-help">
+          <a href="https://t.me/recvmoneysupport" target="_blank" rel="noopener noreferrer" className="co-help__link">
+            {text.needHelp}
+          </a>
+        </div>
+      )}
+
       {invoice ? (
-        <footer className="co-foot">
+        <footer className={`co-foot ${invoice.kind === "subscription" ? "co-foot--with-help" : ""}`}>
           <a href="/">
             <span>{text.footerVerifiedBy}</span>
             <strong>recv</strong>

@@ -478,6 +478,7 @@ const uz = {
     footerCTA: "recv bilan shunday kripto to'lovlarni qabul qiling",
     payInWallet: "Walletda to'lash",
     copyPaymentDetails: "To'lov ma'lumotlarini nusxalash",
+    needHelp: "To'lov bo'yicha yordam kerakmi?",
   },
   sellerConsole: {
     nav: {

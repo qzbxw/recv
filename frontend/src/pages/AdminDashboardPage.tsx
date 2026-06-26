@@ -1162,7 +1162,7 @@ function slugifyUTMValue(value: string) {
 }
 
 function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
-  const [target, setTarget] = useState<"web" | "bot">("web");
+  const [target, setTarget] = useState<"web" | "bot" | "tgc">("web");
   const [platform, setPlatform] = useState<"tg" | "other">("tg");
   const [channel, setChannel] = useState("");
   const [campaign, setCampaign] = useState("");
@@ -1185,6 +1185,13 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
       if (content.trim()) params.set("utm_content", slugifyUTMValue(content));
       const path = landingPath.trim().startsWith("/") ? landingPath.trim() : `/${landingPath.trim()}`;
       link = `${window.location.origin}${path}?${params.toString()}`;
+    } else if (target === "tgc") {
+      const params = new URLSearchParams();
+      params.set("utm_source", finalSource);
+      if (medium.trim()) params.set("utm_medium", slugifyUTMValue(medium));
+      if (campaignSlug) params.set("utm_campaign", campaignSlug);
+      if (content.trim()) params.set("utm_content", slugifyUTMValue(content));
+      link = `${window.location.origin}/tgc?${params.toString()}`;
     } else {
       // Telegram Bot start parameter
       // Format: utm__[source]__[medium]__[campaign]__[content]
@@ -1239,6 +1246,13 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
                 onClick={() => setTarget("web")}
               >
                 Web Landing Page
+              </button>
+              <button
+                type="button"
+                className={`dev-btn dev-btn--compact ${target === "tgc" ? "dev-btn--primary" : "dev-btn--secondary"}`}
+                onClick={() => setTarget("tgc")}
+              >
+                Telegram Channel
               </button>
               <button
                 type="button"
@@ -1334,8 +1348,8 @@ function UTMBuilderPanel({ utmReport, setToast }: { utmReport: UTMReport | null;
     .slice(0, 5);
   const exportCampaigns = () => downloadCSV(
     "utm-campaigns.csv",
-    ["source", "medium", "campaign", "visits", "unique_visitors", "events", "docs_opened", "app_opens", "bot_opens", "signup_starts", "signups", "paying_workspaces", "paid_usd"],
-    campaigns.map((row) => [row.source, row.medium, row.campaign, row.visits, row.unique_visitors, row.events, row.docs_opened, row.app_opens, row.bot_opens, row.signup_starts, row.signups, row.paying_workspaces, row.paid_usd]),
+    ["source", "medium", "campaign", "content", "visits", "unique_visitors", "events", "docs_opened", "app_opens", "bot_opens", "signup_starts", "signups", "paying_workspaces", "paid_usd"],
+    campaigns.map((row) => [row.source, row.medium, row.campaign, row.content, row.visits, row.unique_visitors, row.events, row.docs_opened, row.app_opens, row.bot_opens, row.signup_starts, row.signups, row.paying_workspaces, row.paid_usd]),
   );
   const exportLeads = () => downloadCSV(
     "utm-leads.csv",
@@ -1365,19 +1379,20 @@ function UTMBuilderPanel({ utmReport, setToast }: { utmReport: UTMReport | null;
         </div>
         <div className="admin-table-wrap">
           <table className="admin-sales-table admin-sales-table--compact">
-            <thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Unique</th><th>Signups</th><th>Revenue</th></tr></thead>
+            <thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Creative</th><th>Unique</th><th>Signups</th><th>Revenue</th></tr></thead>
             <tbody>
               {topSources.map((row) => (
-                <tr key={`${row.source}|${row.medium}|${row.campaign}`}>
+                <tr key={`${row.source}|${row.medium}|${row.campaign}|${row.content}`}>
                   <td><span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{row.source || "Direct"}</span></td>
                   <td>{row.medium || "-"}</td>
                   <td>{row.campaign || "-"}</td>
+                  <td>{row.content || "-"}</td>
                   <td>{row.unique_visitors}</td>
                   <td>{row.signups}</td>
                   <td>{formatMoney(row.paid_usd)}</td>
                 </tr>
               ))}
-              {topSources.length === 0 && <tr><td colSpan={6} className="admin-table-empty">No UTM traffic yet.</td></tr>}
+              {topSources.length === 0 && <tr><td colSpan={7} className="admin-table-empty">No UTM traffic yet.</td></tr>}
             </tbody>
           </table>
         </div>

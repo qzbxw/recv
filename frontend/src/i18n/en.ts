@@ -444,6 +444,7 @@ function verify(payload, signature, secret) {
     footerCTA: "Accept crypto payments like this with recv",
     payInWallet: "Pay in Wallet",
     copyPaymentDetails: "Copy payment details",
+    needHelp: "Need help with payment?",
   },
   sellerConsole: {
     nav: {

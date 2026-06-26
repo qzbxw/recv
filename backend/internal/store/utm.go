@@ -65,6 +65,7 @@ type UTMCampaignStats struct {
 	Source           string          `json:"source"`
 	Medium           string          `json:"medium"`
 	Campaign         string          `json:"campaign"`
+	Content          string          `json:"content"`
 	Visits           int64           `json:"visits"`
 	UniqueVisitors   int64           `json:"unique_visitors"`
 	Events           int64           `json:"events"`
@@ -165,15 +166,15 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 
 	rows, err := s.pool.Query(ctx, `
 		WITH visits AS (
-			SELECT COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign,
+			SELECT COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign, COALESCE(content, '') AS content,
 			       COUNT(*) AS visits,
 			       COUNT(DISTINCT NULLIF(attribution_id, '')) AS unique_visitors,
 			       COUNT(*) FILTER (WHERE landing_path = '/tg-bot') AS bot_visits
 			FROM utm_visits
 			WHERE created_at >= $1 AND created_at < $2
-			GROUP BY COALESCE(source, ''), COALESCE(medium, ''), COALESCE(campaign, '')
+			GROUP BY COALESCE(source, ''), COALESCE(medium, ''), COALESCE(campaign, ''), COALESCE(content, '')
 		), events AS (
-			SELECT COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign,
+			SELECT COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign, COALESCE(content, '') AS content,
 			       COUNT(*) AS events,
 			       COUNT(*) FILTER (WHERE event_name IN ('docs_open', 'docs_page_view')) AS docs_opened,
 			       COUNT(*) FILTER (WHERE event_name = 'app_open') AS app_opens,
@@ -181,15 +182,15 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 			       COUNT(*) FILTER (WHERE event_name = 'signup_start') AS signup_starts
 			FROM utm_events
 			WHERE created_at >= $1 AND created_at < $2
-			GROUP BY COALESCE(source, ''), COALESCE(medium, ''), COALESCE(campaign, '')
+			GROUP BY COALESCE(source, ''), COALESCE(medium, ''), COALESCE(campaign, ''), COALESCE(content, '')
 		), attributed AS (
 			SELECT DISTINCT ON (workspace_id) workspace_id,
-			       COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign
+			       COALESCE(source, '') AS source, COALESCE(medium, '') AS medium, COALESCE(campaign, '') AS campaign, COALESCE(content, '') AS content
 			FROM utm_attributions
 			WHERE workspace_id IS NOT NULL AND created_at >= $1 AND created_at < $2
 			ORDER BY workspace_id, created_at ASC
 		), signups AS (
-			SELECT a.source, a.medium, a.campaign,
+			SELECT a.source, a.medium, a.campaign, a.content,
 			       COUNT(*) AS signups,
 			       COUNT(p.workspace_id) AS paying_workspaces,
 			       COALESCE(SUM(p.paid_usd), 0) AS paid_usd
@@ -200,15 +201,15 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 				WHERE kind = 'subscription' AND status IN ('paid', 'overpaid')
 				GROUP BY workspace_id
 			) p ON p.workspace_id = a.workspace_id
-			GROUP BY a.source, a.medium, a.campaign
+			GROUP BY a.source, a.medium, a.campaign, a.content
 		), campaign_keys AS (
-			SELECT source, medium, campaign FROM visits
+			SELECT source, medium, campaign, content FROM visits
 			UNION
-			SELECT source, medium, campaign FROM events
+			SELECT source, medium, campaign, content FROM events
 			UNION
-			SELECT source, medium, campaign FROM signups
+			SELECT source, medium, campaign, content FROM signups
 		)
-		SELECT COALESCE(k.source, ''), COALESCE(k.medium, ''), COALESCE(k.campaign, ''),
+		SELECT COALESCE(k.source, ''), COALESCE(k.medium, ''), COALESCE(k.campaign, ''), COALESCE(k.content, ''),
 		       COALESCE(v.visits, 0),
 		       COALESCE(v.unique_visitors, 0),
 		       COALESCE(e.events, 0),
@@ -220,9 +221,9 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 		       COALESCE(s.paying_workspaces, 0),
 		       COALESCE(s.paid_usd, 0)
 		FROM campaign_keys k
-		LEFT JOIN visits v USING (source, medium, campaign)
-		LEFT JOIN events e USING (source, medium, campaign)
-		LEFT JOIN signups s USING (source, medium, campaign)
+		LEFT JOIN visits v USING (source, medium, campaign, content)
+		LEFT JOIN events e USING (source, medium, campaign, content)
+		LEFT JOIN signups s USING (source, medium, campaign, content)
 		ORDER BY COALESCE(s.paid_usd, 0) DESC, COALESCE(s.signups, 0) DESC, COALESCE(v.visits, 0) DESC
 	`, from, to)
 	if err != nil {
@@ -233,7 +234,7 @@ func (s *Store) GetUTMReport(ctx context.Context, from, to time.Time) (UTMReport
 	report := UTMReport{From: from, To: to, Campaigns: []UTMCampaignStats{}}
 	for rows.Next() {
 		var item UTMCampaignStats
-		if err := rows.Scan(&item.Source, &item.Medium, &item.Campaign, &item.Visits, &item.UniqueVisitors, &item.Events, &item.DocsOpened, &item.AppOpens, &item.BotOpens, &item.SignupStarts, &item.Signups, &item.PayingWorkspaces, &item.PaidUSD); err != nil {
+		if err := rows.Scan(&item.Source, &item.Medium, &item.Campaign, &item.Content, &item.Visits, &item.UniqueVisitors, &item.Events, &item.DocsOpened, &item.AppOpens, &item.BotOpens, &item.SignupStarts, &item.Signups, &item.PayingWorkspaces, &item.PaidUSD); err != nil {
 			return UTMReport{}, fmt.Errorf("scan utm campaign stats: %w", err)
 		}
 		report.Campaigns = append(report.Campaigns, item)

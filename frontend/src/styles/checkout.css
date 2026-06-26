@@ -824,6 +824,31 @@
   .co-alert-bar { border-radius: var(--co-radius-sm); flex-direction: column; gap: 0.4rem; padding: 0.85rem; }
 }
 
+/* Support help link for subscription payments */
+.co-help {
+  position: relative;
+  z-index: 1;
+  width: min(880px, 100%);
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.co-help__link {
+  color: var(--co-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+.co-help__link:hover {
+  color: var(--co-accent-2);
+}
+.co-foot.co-foot--with-help {
+  margin-top: 0.75rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .co-card, .co-final__icon, .co-alert-bar__timer { animation: none !important; }
 }

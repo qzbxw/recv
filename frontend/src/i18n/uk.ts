@@ -478,6 +478,7 @@ const uk = {
     footerCTA: "Приймайте криптоплатежі так само з recv",
     payInWallet: "Оплатити в гаманці",
     copyPaymentDetails: "Копіювати реквізити оплати",
+    needHelp: "Потрібна допомога з оплатою?",
   },
   sellerConsole: {
     nav: {

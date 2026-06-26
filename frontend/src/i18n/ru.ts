@@ -443,6 +443,7 @@ function verify(payload, signature, secret) {
     footerCTA: "Принимайте платежи так же с recv",
     payInWallet: "Открыть кошелек",
     copyPaymentDetails: "Скопировать реквизиты",
+    needHelp: "Нужна помощь с оплатой?",
   },
   sellerConsole: {
     nav: {
