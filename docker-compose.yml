@@ -43,9 +43,6 @@ services:
 
   blockchain_watcher:
     image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/api:${GHCR_IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
@@ -64,9 +61,6 @@ services:
 
   telegram_bot_worker:
     image: ${GHCR_IMAGE_PREFIX:-ghcr.io/your-org/recv}/api:${GHCR_IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:

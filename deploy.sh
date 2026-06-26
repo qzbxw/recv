@@ -69,7 +69,7 @@ rollback() {
   update_env_var GHCR_IMAGE_TAG "$previous_sha"
   
   echo "Пересборка предыдущей версии..."
-  docker compose build api blockchain_watcher telegram_bot_worker frontend_public frontend
+  docker compose build api frontend_public frontend
   
   echo "Перезапуск контейнеров предыдущей версии..."
   docker compose up -d --remove-orphans api blockchain_watcher telegram_bot_worker frontend_public frontend caddy
@@ -108,7 +108,7 @@ update_env_var GHCR_IMAGE_TAG "$DEPLOY_SHA"
 
 # 4. Собираем образы локально на сервере (экономит лимиты GitHub Actions)
 echo "--> Сборка Docker-образов на сервере..."
-docker compose build api blockchain_watcher telegram_bot_worker frontend_public frontend
+docker compose build api frontend_public frontend
 
 # 5. Запуск PostgreSQL (если не запущен)
 docker compose up -d postgres
