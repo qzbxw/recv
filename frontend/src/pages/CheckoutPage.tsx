@@ -175,7 +175,23 @@ export function CheckoutPage() {
   const { language, setLanguage } = useUI();
   const text = COPY[language];
   const demoInvoice = useMemo(() => createDemoInvoice(), []);
+  
+  const DUMMY_WALLETS_LIST = useMemo(() => [
+    "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn",
+    "0x0000000000000000000000000000000000000000",
+    "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb",
+    "HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1"
+  ], []);
+
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  
+  const isDemoInvoice = useMemo(() => {
+    if (!invoice) return false;
+    return invoice.public_id === "RECV-DEMO-149" || 
+      DUMMY_WALLETS_LIST.includes(invoice.destination_address) ||
+      (invoice.payment_options && invoice.payment_options.some(opt => DUMMY_WALLETS_LIST.includes(opt.destination_address)));
+  }, [invoice, DUMMY_WALLETS_LIST]);
   const [error, setError] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [now, setNow] = useState(Date.now());
@@ -504,6 +520,28 @@ export function CheckoutPage() {
       </header>
 
       <section className={`co-card co-card--${checkoutVariant}`} onMouseMove={handleMouseMove}>
+        {isDemoInvoice && (
+          <div style={{
+            background: 'rgba(245, 158, 11, 0.12)',
+            border: '1px solid rgba(245, 158, 11, 0.25)',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            color: '#f59e0b',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span>💡</span>
+            <div>
+              {language === 'ru' 
+                ? 'Это демонстрационный счет для тестирования. Средства не будут зачислены продавцу.' 
+                : 'This is a demo/preview invoice for testing. Funds will not be credited to the merchant.'}
+            </div>
+          </div>
+        )}
         {error ? (
           <div className="co-alert" role="status">
             <span>{error}</span>

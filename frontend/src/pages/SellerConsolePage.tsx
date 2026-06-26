@@ -969,6 +969,31 @@ export function SellerConsolePage() {
     setIsCreatingInvoice(true);
     setCreatedInvoice(null);
     try {
+      if (activeWalletsCount === 0) {
+        // Auto-create dummy wallets for selected network options
+        const selectedOptions = invoiceForm.optionKeys
+          .map(key => PAYABLE_PAYMENT_OPTIONS.find(option => option.key === key))
+          .filter(Boolean);
+        const bucketsToCreate = new Set(selectedOptions.map(opt => walletBucket(opt!.network)));
+        
+        for (const bucket of Array.from(bucketsToCreate)) {
+          let address = "";
+          if (bucket === "TON") {
+            address = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn";
+          } else if (bucket === "EVM") {
+            address = "0x0000000000000000000000000000000000000000";
+          } else if (bucket === "TRON") {
+            address = "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb";
+          } else if (bucket === "SOLANA") {
+            address = "HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1";
+          }
+          if (address) {
+            await createWallet(session.token, { network: bucket, address, environment });
+          }
+        }
+        await loadSession(session.token, { silent: true });
+      }
+
       const invoice = await createInvoice(session.token, {
         title: invoiceForm.title,
         base_amount_usd: invoiceForm.amount,
@@ -1297,8 +1322,20 @@ export function SellerConsolePage() {
     );
   }
 
+  const DUMMY_WALLETS_LIST = [
+    "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn",
+    "0x0000000000000000000000000000000000000000",
+    "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb",
+    "HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1"
+  ];
+
   const workspaceName = session.me.workspace.username || `#${session.me.workspace.id}`;
-  const activeWalletsCount = filteredWallets.filter(w => w.is_active).length;
+  const activeWallets = filteredWallets.filter(w => w.is_active);
+  const activeWalletsCount = activeWallets.length;
+  const hasRealWalletsCount = activeWallets.filter(w => !DUMMY_WALLETS_LIST.includes(w.address)).length;
+  const isPayoutConfigured = activeWalletsCount > 0 && hasRealWalletsCount > 0;
+  const isPayoutDemo = activeWalletsCount > 0 && hasRealWalletsCount === 0;
+
   const walletNetworks = new Set(filteredWallets.filter(w => w.is_active).map(w => w.network));
   const configuredBuckets = new Set(filteredWallets.map(w => walletBucket(w.network)));
   const missingWalletNetworks = WALLET_NETWORK_OPTIONS.filter(opt => !configuredBuckets.has(walletBucket(opt.value)));
@@ -1383,7 +1420,7 @@ export function SellerConsolePage() {
   -H "Content-Type: application/json" \\
   -d '{"title":"Order #1","base_amount_usd":"49.00","payable_network":"${invoiceForm.network}","expires_in_minutes":30}'`;
   const onboardingSteps = [
-    { done: activeWalletsCount > 0, body: t.overview.setupWallet, action: t.overview.setupWalletAction, target: "wallets" as PanelKey },
+    { done: isPayoutConfigured, body: t.overview.setupWallet, action: t.overview.setupWalletAction, target: "wallets" as PanelKey },
     ...(hasApi ? [{ done: filteredKeys.length > 0, body: t.overview.setupKey, action: t.overview.setupKeyAction, target: "developer" as PanelKey }] : []),
     { done: filteredInvoices.length > 0, body: t.overview.setupInvoice, action: t.overview.setupInvoiceAction, target: "create" as PanelKey },
     { done: hasActivePaidPlan, body: t.overview.setupPlan, action: t.overview.setupPlanAction, target: "billing" as PanelKey },
@@ -1394,8 +1431,10 @@ export function SellerConsolePage() {
     value: option.key,
     label: option.label,
     leadingIcon: <PaymentOptionLogos network={option.network} asset={option.asset} />,
-    disabled: !walletNetworks.has(walletBucket(option.network)),
-    hint: walletNetworks.has(walletBucket(option.network)) ? t.common.walletReady : t.common.addWalletFirst,
+    disabled: activeWalletsCount > 0 && !walletNetworks.has(walletBucket(option.network)),
+    hint: activeWalletsCount === 0 
+      ? (language === 'ru' ? "Демо-режим" : "Demo mode")
+      : (walletNetworks.has(walletBucket(option.network)) ? t.common.walletReady : t.common.addWalletFirst),
   }));
   const billingNetworkOptions = PAYABLE_PAYMENT_OPTIONS.map(option => ({
     value: option.key,
@@ -1599,17 +1638,13 @@ export function SellerConsolePage() {
                       </div>
                     </div>
                     <button
-                      className="dev-btn dev-btn--primary dev-btn--compact"
+                      className="dev-btn dev-btn--trial-ghost dev-btn--compact"
                       onClick={() => setActivePanel("billing")}
                       style={{
                         padding: '0 12px',
                         fontSize: '11px',
                         height: '28px',
                         borderRadius: '6px',
-                        background: 'linear-gradient(to right, #8b5cf6, #6366f1)',
-                        border: 'none',
-                        color: '#ffffff',
-                        fontWeight: 600,
                         cursor: 'pointer',
                         margin: 0,
                         display: 'inline-flex',
@@ -1648,18 +1683,24 @@ export function SellerConsolePage() {
                       gap: '16px'
                     }}>
                       <div className="console-quick-setup__copy" style={{ display: 'grid', gridTemplateColumns: '24px 170px 1fr', alignItems: 'center', gap: '8px', flex: 1 }}>
-                        <span className={`dev-status-dot dev-status-dot--${activeWalletsCount > 0 ? 'success' : 'warning'}`} style={{ justifySelf: 'center' }} />
+                        <span className={`dev-status-dot dev-status-dot--${isPayoutConfigured ? 'success' : 'warning'}`} style={{ justifySelf: 'center' }} />
                         <span style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
                           {t.overview.integrationHealthPayouts}
                         </span>
-                        <span style={{ fontSize: '13px', color: activeWalletsCount > 0 ? '#94a3b8' : '#f59e0b' }}>
-                          {activeWalletsCount > 0 ? t.overview.integrationHealthPayoutsConfigured : t.overview.integrationHealthPayoutsMissing}
+                        <span style={{ fontSize: '13px', color: isPayoutConfigured ? '#94a3b8' : '#f59e0b' }}>
+                          {isPayoutConfigured 
+                            ? t.overview.integrationHealthPayoutsConfigured 
+                            : (isPayoutDemo 
+                                ? (language === 'ru' ? 'Привязан демо-кошелек (замените на реальный)' : 'Demo wallet configured (replace with real)') 
+                                : t.overview.integrationHealthPayoutsMissing
+                              )
+                          }
                         </span>
                       </div>
                       <button 
-                        className="dev-btn dev-btn--secondary dev-btn--compact" 
+                        className={`dev-btn dev-btn--compact ${isPayoutConfigured ? 'dev-btn--secondary' : 'dev-btn--primary-accent'}`} 
                         onClick={() => setActivePanel("wallets")} 
-                        style={{ width: '100px', borderRadius: '6px', fontSize: '12px', height: '32px', padding: 0, margin: 0, display: 'inline-flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0, fontWeight: 600 }}
+                        style={{ width: '100px', borderRadius: '6px', fontSize: '12px', height: '32px', padding: 0, margin: 0, display: 'inline-flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0, fontWeight: 600, textTransform: 'none' }}
                       >
                         {language === 'ru' ? 'Настроить' : 'Configure'}
                       </button>
@@ -1684,9 +1725,9 @@ export function SellerConsolePage() {
                         </span>
                       </div>
                       <button 
-                        className="dev-btn dev-btn--secondary dev-btn--compact" 
+                        className={`dev-btn dev-btn--compact ${(activeWalletsCount > 0 && filteredInvoices.length === 0) ? 'dev-btn--primary-accent' : 'dev-btn--secondary'}`} 
                         onClick={() => setActivePanel("create")} 
-                        style={{ width: '100px', borderRadius: '6px', fontSize: '12px', height: '32px', padding: 0, margin: 0, display: 'inline-flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0, fontWeight: 600 }}
+                        style={{ width: '100px', borderRadius: '6px', fontSize: '12px', height: '32px', padding: 0, margin: 0, display: 'inline-flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0, fontWeight: 600, textTransform: 'none' }}
                       >
                         {language === 'ru' ? 'Создать' : 'Create'}
                       </button>
@@ -2089,6 +2130,22 @@ export function SellerConsolePage() {
                                 <code className="payout-address payout-address--desktop">{currentWallet.address}</code>
                                 <code className="payout-address payout-address--mobile">{formatAddress(currentWallet.address)}</code>
                               </div>
+                              {DUMMY_WALLETS_LIST.includes(currentWallet.address) && (
+                                <div style={{
+                                  fontSize: '11px',
+                                  color: '#f59e0b',
+                                  marginTop: '6px',
+                                  fontWeight: 500,
+                                  background: 'rgba(245, 158, 11, 0.08)',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(245, 158, 11, 0.15)'
+                                }}>
+                                  {language === 'ru' 
+                                    ? '⚠️ Демо-адрес. Нажмите кнопку «Редактировать» ниже, чтобы привязать ваш собственный кошелек для реальных выплат.' 
+                                    : '⚠️ Demo address. Click the "Edit" button below to link your own wallet for real payouts.'}
+                                </div>
+                              )}
                               
                               <div className="payout-card__toolbar">
                                 <button 
@@ -2755,8 +2812,28 @@ export function SellerConsolePage() {
                         />
                       </div>
                       {Number(invoiceForm.amount) <= 0 && <p className="dev-resource-card__error">{t.create.amountInvalid}</p>}
-                      <button type="submit" className="dev-btn dev-btn--primary dev-btn--large" disabled={isCreatingInvoice || activeWalletsCount === 0 || Number(invoiceForm.amount) <= 0}>
-                        {isCreatingInvoice ? t.common.creating : t.create.generate}
+                      {activeWalletsCount === 0 && (
+                        <div style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 16px 0', display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'rgba(139, 92, 246, 0.08)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                          <span style={{ color: '#8b5cf6' }}>💡</span>
+                          <span>
+                            {language === 'ru' 
+                              ? 'Кошелек не настроен. Будет автоматически привязан демо-адрес и создан демонстрационный счет.' 
+                              : 'No wallet configured. A demo address will be auto-linked to generate a preview invoice.'}
+                          </span>
+                        </div>
+                      )}
+                      <button 
+                        type="submit" 
+                        className={`dev-btn dev-btn--large ${activeWalletsCount === 0 ? 'dev-btn--primary-accent' : 'dev-btn--primary'}`} 
+                        disabled={isCreatingInvoice || Number(invoiceForm.amount) <= 0}
+                      >
+                        {isCreatingInvoice 
+                          ? t.common.creating 
+                          : (activeWalletsCount === 0 
+                              ? (language === 'ru' ? 'Создать демо-инвойс' : 'Create Demo Invoice') 
+                              : t.create.generate
+                            )
+                        }
                       </button>
                     </form>
                   </div>

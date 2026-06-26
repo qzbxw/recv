@@ -731,19 +731,26 @@ func (b *BotWorker) renderHome(ctx context.Context, workspace store.Workspace, c
 		planButton = tgInlineKeyboardButton{Text: c.btnExtendPlan, CallbackData: "screen:upgrade"}
 	}
 
-	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard([][]tgInlineKeyboardButton{
-		{
-			{Text: c.btnNewInvoice, CallbackData: "screen:invoice"},
-			{Text: c.btnRecentInvoices, CallbackData: "screen:invoices"},
-		},
-		{
-			{Text: c.btnWallets, CallbackData: "screen:wallets"},
-			planButton,
-		},
-		{
-			{Text: c.btnLanguage, CallbackData: "screen:language"},
-		},
-	}))
+	var keyboard [][]tgInlineKeyboardButton
+	keyboard = append(keyboard, []tgInlineKeyboardButton{
+		{Text: c.btnNewInvoice, CallbackData: "screen:invoice"},
+		{Text: c.btnRecentInvoices, CallbackData: "screen:invoices"},
+	})
+
+	row2 := []tgInlineKeyboardButton{
+		{Text: c.btnWallets, CallbackData: "screen:wallets"},
+	}
+	if workspace.FreeInvoicesUsed > 0 || workspace.HasActiveSubscription(now) {
+		row2 = append(row2, planButton)
+	}
+	keyboard = append(keyboard, row2)
+
+	keyboard = append(keyboard, []tgInlineKeyboardButton{
+		{Text: c.btnOpenConsole, URL: b.appURL("/console")},
+		{Text: c.btnLanguage, CallbackData: "screen:language"},
+	})
+
+	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard(keyboard))
 }
 
 func (b *BotWorker) renderAcquisitionStart(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
@@ -767,9 +774,9 @@ func (b *BotWorker) renderAcquisitionStart(ctx context.Context, workspace store.
 		},
 		{
 			{Text: c.btnNewInvoice, CallbackData: "screen:invoice"},
-			{Text: c.btnPlans, CallbackData: "screen:upgrade"},
 		},
 		{
+			{Text: c.btnOpenConsole, URL: b.appURL("/console")},
 			{Text: c.btnLanguage, CallbackData: "screen:language"},
 		},
 	}))
