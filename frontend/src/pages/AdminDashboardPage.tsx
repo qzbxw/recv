@@ -1162,7 +1162,7 @@ function slugifyUTMValue(value: string) {
 }
 
 function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
-  const [target, setTarget] = useState<"web" | "bot" | "tgc">("web");
+  const [target, setTarget] = useState<"web" | "bot" | "tgc" | "tgc_bot">("web");
   const [platform, setPlatform] = useState<"tg" | "other">("tg");
   const [channel, setChannel] = useState("");
   const [campaign, setCampaign] = useState("");
@@ -1174,6 +1174,7 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
   const campaignSlug = slugifyUTMValue(campaign);
 
   let link = "";
+  let startParam = "";
   if (channelSlug) {
     const finalSource = platform === "tg" ? `tg_${channelSlug}` : channelSlug;
 
@@ -1195,12 +1196,14 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
     } else {
       // Telegram Bot start parameter
       // Format: utm__[source]__[medium]__[campaign]__[content]
+      // Or Format for channel: tgc__[source]__[medium]__[campaign]__[content]
       const cleanSource = finalSource.replace(/__/g, "_");
       const cleanMedium = slugifyUTMValue(medium).replace(/__/g, "_");
       const cleanCampaign = campaignSlug.replace(/__/g, "_");
       const cleanContent = slugifyUTMValue(content).replace(/__/g, "_");
 
-      const parts = ["utm", cleanSource];
+      const prefix = target === "tgc_bot" ? "tgc" : "utm";
+      const parts = [prefix, cleanSource];
       if (cleanMedium || cleanCampaign || cleanContent) {
         parts.push(cleanMedium);
       }
@@ -1211,7 +1214,7 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
         parts.push(cleanContent);
       }
 
-      const startParam = parts.join("__");
+      startParam = parts.join("__");
       link = `https://t.me/recvmoney_bot?start=${startParam}`;
     }
   }
@@ -1252,7 +1255,14 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
                 className={`dev-btn dev-btn--compact ${target === "tgc" ? "dev-btn--primary" : "dev-btn--secondary"}`}
                 onClick={() => setTarget("tgc")}
               >
-                Telegram Channel
+                TG Channel (Web)
+              </button>
+              <button
+                type="button"
+                className={`dev-btn dev-btn--compact ${target === "tgc_bot" ? "dev-btn--primary" : "dev-btn--secondary"}`}
+                onClick={() => setTarget("tgc_bot")}
+              >
+                TG Channel (Bot)
               </button>
               <button
                 type="button"
@@ -1332,6 +1342,15 @@ function UTMLinkBuilder({ setToast }: { setToast: (message: string) => void }) {
               Copy
             </button>
           </div>
+          {startParam.length > 64 && (
+            <div style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.55rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+              <span>⚠️</span>
+              <span>
+                Telegram deep link start parameter is too long: <strong>{startParam.length}</strong>/64 characters.
+                Please shorten the Source, Campaign, or Creative to keep it within the Telegram limit.
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

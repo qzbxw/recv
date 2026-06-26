@@ -24,6 +24,11 @@ type botCopy struct {
 	startBody  string
 	startProof string
 
+	// Telegram Channel Redirection
+	tgcRedirTitle string
+	tgcRedirBody  string
+	btnTgcRedir   string
+
 	// Buttons
 	btnNewInvoice      string
 	btnRecentInvoices  string
@@ -155,6 +160,10 @@ var enCopy = botCopy{
 	startBody:  "Accept USDT and other cryptocurrencies directly via Telegram. Zero intermediaries, zero holds, and no hidden fees — funds are routed instantly to your personal wallet.",
 	startProof: "Set up your payment infrastructure in 1 minute.",
 
+	tgcRedirTitle: "📢 <b>Join Telegram Channel</b>",
+	tgcRedirBody:  "Click the button below to join our official channel, where we share analytics, updates, and crypto insights.",
+	btnTgcRedir:   "📢 Open @recvmoney",
+
 	btnNewInvoice:      "＋ Create invoice",
 	btnRecentInvoices:  "🧾 History",
 	btnWallets:         "👛 Payout wallets",
@@ -274,6 +283,10 @@ var ruCopy = botCopy{
 	startTitle: "<b>Добро пожаловать в recv</b> — Некастодиальный эквайринг для Вашего бизнеса",
 	startBody:  "Принимайте платежи в USDT и других криптовалютах через Telegram. Без посредников, заморозок и скрытых комиссий — средства поступают мгновенно на Ваш кошелек.",
 	startProof: "Настройте Вашу платежную инфраструктуру за 1 минуту.",
+
+	tgcRedirTitle: "📢 <b>Вступить в Telegram-канал</b>",
+	tgcRedirBody:  "Нажмите кнопку ниже, чтобы перейти в наш официальный Telegram-канал, где мы публикуем аналитику, обновления и новости.",
+	btnTgcRedir:   "📢 Перейти в @recvmoney",
 
 	btnNewInvoice:      "＋ Выставить счет",
 	btnRecentInvoices:  "🧾 История счетов",
@@ -395,6 +408,10 @@ var esCopy = botCopy{
 	startBody:  "Genera un enlace de pago en 10 segundos y recibe cripto directo a tu billetera. Sin comisiones de tus ventas.",
 	startProof: "Las primeras facturas corren por nuestra cuenta. Pasa a un plan de pago cuando empiece a entrar el dinero real.",
 
+	tgcRedirTitle: "📢 <b>Unirse al canal de Telegram</b>",
+	tgcRedirBody:  "Haga clic en el botón de abajo para unirse a nuestro canal oficial, donde compartimos análisis, actualizaciones y novedades.",
+	btnTgcRedir:   "📢 Abrir @recvmoney",
+
 	btnNewInvoice:      "＋ Nueva factura",
 	btnRecentInvoices:  "🧾 Recientes",
 	btnWallets:         "👛 Billeteras",
@@ -514,6 +531,10 @@ var ptCopy = botCopy{
 	startTitle: "<b>recv</b> — esqueça intermediários complexos. Aceite USDT no Telegram",
 	startBody:  "Gere um link de pagamento em 10 segundos e receba cripto direto na sua carteira. Sem taxas sobre suas vendas.",
 	startProof: "As primeiras faturas são por nossa conta. Mude para um plano pago apenas quando o faturamento real começar.",
+
+	tgcRedirTitle: "📢 <b>Juntar-se ao canal do Telegram</b>",
+	tgcRedirBody:  "Clique no botão abaixo para se juntar ao nosso canal oficial, onde compartilhamos análises, atualizações e novidades.",
+	btnTgcRedir:   "📢 Abrir @recvmoney",
 
 	btnNewInvoice:      "＋ Nova fatura",
 	btnRecentInvoices:  "🧾 Recentes",
@@ -635,6 +656,10 @@ var deCopy = botCopy{
 	startBody:  "Akzeptieren Sie USDT und andere Krypto-Zahlungen direkt in Telegram. Keine Zwischenhändler, Holds oder versteckten Gebühren — Zahlungen gehen direkt auf Ihre eigene Wallet.",
 	startProof: "Zahlungsempfang in 1 Minute einrichten.",
 
+	tgcRedirTitle: "📢 <b>Telegram-Kanal beitreten</b>",
+	tgcRedirBody:  "Klicken Sie auf die Schaltfläche unten, um unserem offiziellen Kanal beizutreten, auf dem wir Analysen, Updates und Krypto-Einblicke teilen.",
+	btnTgcRedir:   "📢 Öffnen @recvmoney",
+
 	btnNewInvoice:      "＋ Neue Rechnung",
 	btnRecentInvoices:  "🧾 Letzte",
 	btnWallets:         "👛 Wallets",
@@ -754,6 +779,10 @@ var uzCopy = botCopy{
 	startTitle: "<b>recv-ga xush kelibsiz</b> — biznesingiz uchun nokastodial kripto-ekvayring",
 	startBody:  "Telegram-da USDT va boshqa kriptovalyutalarda to'lovlarni to'g'ridan-to'g'ri qabul qiling. Vositachilar, xoldlar (ushlab turishlar) va yashirin komissiyalar yo'q — mablag'lar to'g'ridan-to'g'ri shaxsiy hamyoningizga tushadi.",
 	startProof: "To'lovlarni qabul qilishni 1 daqiqada sozlang.",
+
+	tgcRedirTitle: "📢 <b>Telegram kanalga a'zo bo'lish</b>",
+	tgcRedirBody:  "Rasmiy kanalimizga qo'shilish uchun quyidagi tugmani bosing, u yerda biz tahlillar, yangiliklar va yangilanishlarni ulashamiz.",
+	btnTgcRedir:   "📢 @recvmoney-ga o'tish",
 
 	btnNewInvoice:      "＋ Yangi hisob",
 	btnRecentInvoices:  "🧾 Oxirgilari",
@@ -875,6 +904,10 @@ var ukCopy = botCopy{
 	startTitle: "<b>Ласкаво просимо до recv</b> — некастодіальний криптоеквайринг для вашого бізнесу",
 	startBody: "Приймайте платежі в USDT та інших криптовалютах напряму в Telegram. Жодних посередників, холдів чи прихованих комісій — кошти надходять прямо на ваш особистий гаманець.",
 	startProof: "Налаштуйте прийом платежів за 1 хвилину.",
+
+	tgcRedirTitle: "📢 <b>Приєднатися до Telegram-каналу</b>",
+	tgcRedirBody:  "Натисніть кнопку нижче, щоб перейти до нашого офіційного Telegram-каналу, де ми ділимося аналітикою, оновленнями та новинами.",
+	btnTgcRedir:   "📢 Перейти до @recvmoney",
 
 	btnNewInvoice: "＋ Новий рахунок",
 	btnRecentInvoices: "🧾 Останні",

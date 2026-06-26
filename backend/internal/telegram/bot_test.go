@@ -1497,6 +1497,11 @@ func TestBotWorkerStartParameters(t *testing.T) {
 		if utm != nil || ref != "mycode" {
 			t.Errorf("expected referral code mycode, got utm=%+v, ref=%q", utm, ref)
 		}
+
+		utm, ref = parseStartParam("tgc__tg_channel__cpc__campaign__content")
+		if utm == nil || utm.Source != "tg_channel" || utm.Medium != "cpc" || utm.Campaign != "campaign" || utm.Content != "content" {
+			t.Errorf("expected TGC UTM params, got %+v", utm)
+		}
 	})
 
 	t.Run("handleMessage with UTM", func(t *testing.T) {
@@ -1530,6 +1535,40 @@ func TestBotWorkerStartParameters(t *testing.T) {
 		}
 		if !found {
 			t.Errorf("expected campaign tg_vcru/vcru in report, got: %+v", rep.Campaigns)
+		}
+	})
+
+	t.Run("handleMessage with TGC UTM", func(t *testing.T) {
+		user := tgUser{ID: 1002, Username: "tgc_user"}
+		msg := botMessage(200, 1002, user, "/start tgc__tg_channel__cpc__campaign")
+		err := worker.handleMessage(ctx, msg)
+		if err != nil {
+			t.Fatalf("handleMessage error: %v", err)
+		}
+
+		// Retrieve workspace
+		_, err = st.GetWorkspaceByTelegramID(ctx, 1002)
+		if err != nil {
+			t.Fatalf("failed to find workspace: %v", err)
+		}
+
+		// Check UTM report
+		rep, err := st.GetUTMReport(ctx, time.Now().Add(-time.Hour), time.Now().Add(time.Hour))
+		if err != nil {
+			t.Fatalf("failed to get UTM report: %v", err)
+		}
+
+		found := false
+		for _, r := range rep.Campaigns {
+			if r.Source == "tg_channel" && r.Campaign == "campaign" {
+				found = true
+				if r.Visits != 1 {
+					t.Errorf("expected 1 visit, got %+v", r)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("expected campaign tg_channel/campaign in report, got: %+v", rep.Campaigns)
 		}
 	})
 }

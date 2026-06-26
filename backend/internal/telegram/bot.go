@@ -272,14 +272,20 @@ func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error
 		if len(fields) > 0 {
 			cmd := fields[0]
 			isAcquisitionStart := false
+			isTGC := false
 			if strings.ToLower(cmd) == "/start" && len(fields) > 1 {
 				param := fields[1]
+				isTGC = strings.HasPrefix(param, "tgc__")
 				utm, refCode := parseStartParam(param)
 				if utm != nil {
 					isAcquisitionStart = true
 					attrID := fmt.Sprintf("tg-bot-%d-%d", workspace.ID, time.Now().UTC().UnixNano())
 					utm.AttributionID = attrID
-					utm.LandingPath = "/tg-bot"
+					if isTGC {
+						utm.LandingPath = "/tgc"
+					} else {
+						utm.LandingPath = "/tg-bot"
+					}
 					_ = b.store.RecordUTMVisit(ctx, *utm)
 					_ = b.store.RecordUTMAttribution(ctx, workspace.ID, *utm)
 				}
@@ -290,6 +296,9 @@ func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error
 			}
 			if isAcquisitionStart {
 				b.resetSession(message.Chat.ID)
+				if isTGC {
+					return b.renderTGCRedirection(ctx, workspace, message.Chat.ID, 0)
+				}
 				return b.renderAcquisitionStart(ctx, workspace, message.Chat.ID, 0)
 			}
 			return b.handleCommand(ctx, workspace, message, cmd)
@@ -762,6 +771,21 @@ func (b *BotWorker) renderAcquisitionStart(ctx context.Context, workspace store.
 		},
 		{
 			{Text: c.btnLanguage, CallbackData: "screen:language"},
+		},
+	}))
+}
+
+func (b *BotWorker) renderTGCRedirection(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
+	lines := []string{
+		c.tgcRedirTitle,
+		"",
+		c.tgcRedirBody,
+	}
+
+	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard([][]tgInlineKeyboardButton{
+		{
+			{Text: c.btnTgcRedir, URL: "https://t.me/recvmoney"},
 		},
 	}))
 }
@@ -1345,7 +1369,7 @@ func parseStartParam(param string) (*store.AttributionInput, string) {
 	if param == "" {
 		return nil, ""
 	}
-	if strings.HasPrefix(param, "utm__") {
+	if strings.HasPrefix(param, "utm__") || strings.HasPrefix(param, "tgc__") {
 		parts := strings.Split(param, "__")
 		attr := &store.AttributionInput{
 			TouchType: "last",
