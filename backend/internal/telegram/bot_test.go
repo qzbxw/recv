@@ -150,7 +150,7 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if got := worker.walletAddressPrompt(c, store.NetworkEVM); !strings.Contains(got, "EVM wallet") {
 		t.Fatalf("unexpected EVM prompt: %q", got)
 	}
-	if got := worker.invoiceAmountPrompt(c, botInvoiceDraft{WalletLabel: "Main", Title: "Pro Plan"}); !strings.Contains(got, "step 2 of 3") {
+	if got := worker.invoiceAmountPrompt(c, botInvoiceDraft{WalletLabel: "Main", Title: "Pro Plan"}); !strings.Contains(got, "Step 2 of 3") {
 		t.Fatalf("unexpected amount prompt: %q", got)
 	}
 	if got := worker.invoiceLifetimePrompt(c, botInvoiceDraft{WalletLabel: "Main", Title: "Pro Plan", Amount: "39"}); !strings.Contains(got, "39 USD") {
@@ -786,9 +786,6 @@ func TestHandleCallbackScreenUpgrade(t *testing.T) {
 	if err := worker.handleCallback(ctx, botCallback("plan:select:developer", messageID, chatID, user)); err != nil {
 		t.Fatalf("plan select callback returned error: %v", err)
 	}
-	if err := worker.handleCallback(ctx, botCallback("plan:network:developer:TON", messageID, chatID, user)); err != nil {
-		t.Fatalf("developer checkout callback returned error: %v", err)
-	}
 	workspace, err := st.GetWorkspaceByTelegramID(ctx, user.ID)
 	if err != nil {
 		t.Fatalf("GetWorkspaceByTelegramID: %v", err)
@@ -802,6 +799,9 @@ func TestHandleCallbackScreenUpgrade(t *testing.T) {
 	}
 	if invoices[0].Kind != store.InvoiceKindSubscription || invoices[0].PlanCode != store.PlanCodeDeveloper {
 		t.Fatalf("expected developer subscription invoice, got %+v", invoices[0])
+	}
+	if len(invoices[0].PaymentOptions) <= 1 {
+		t.Fatalf("expected multiple payment options for subscription checkout, got %d options", len(invoices[0].PaymentOptions))
 	}
 }
 
@@ -1093,7 +1093,7 @@ func TestBotWorkerConversationCreatesInvoiceAndKeepsBoundaries(t *testing.T) {
 		t.Fatalf("expected invoice creation to reset session, got %+v", worker.session(chatID))
 	}
 
-	if !requests.sawText("A title can't be empty") || !requests.sawText("That's not a valid amount") || !requests.sawText("Invoice created successfully") || !requests.sawText("/checkout/"+invoices[0].PublicID) {
+	if !requests.sawText("Description cannot be empty") || !requests.sawText("Invalid amount format") || !requests.sawText("Invoice generated successfully") || !requests.sawText("/checkout/"+invoices[0].PublicID) {
 		t.Fatalf("expected validation and success messages to be sent, got %#v", requests.texts)
 	}
 	merchantInvoiceID := invoices[0].ID
@@ -1263,7 +1263,10 @@ func newTelegramBotTestStore(t *testing.T, ctx context.Context) *store.Store {
 	}
 	t.Cleanup(st.Close)
 	if err := st.UpsertSystemConfig(ctx, "billing_wallets", map[string]string{
-		"TON": "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"TON":    "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"TRON":   "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb",
+		"EVM":    "0x0000000000000000000000000000000000000000",
+		"SOLANA": "11111111111111111111111111111111",
 	}, false, "telegram-bot-test"); err != nil {
 		t.Fatalf("seed billing wallets config: %v", err)
 	}

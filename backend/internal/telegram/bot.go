@@ -461,7 +461,27 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = fmt.Errorf("trial plan does not require checkout")
 			break
 		}
-		err = b.renderPlanNetworkPicker(ctx, workspace, planCode, query.Message.Chat.ID, query.Message.MessageID)
+		var options []service.PaymentOptionInput
+		for _, support := range store.SupportedPaymentOptions() {
+			for _, asset := range support.Assets {
+				options = append(options, service.PaymentOptionInput{
+					Network: support.Network,
+					Asset:   asset,
+				})
+			}
+		}
+		invoice, createErr := b.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, options, nil, 0)
+		if createErr != nil {
+			err = createErr
+			break
+		}
+		plan := store.ResolvePlan(planCode)
+		callbackText = c.toastPlanCheckoutCreated
+		checkoutText := fmt.Sprintf(c.checkoutCreated, esc(plan.Name), esc(invoice.PublicID), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)))
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, checkoutText, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnOpenCheckout, URL: b.appURL("/checkout/" + invoice.PublicID)}},
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
 	case strings.HasPrefix(data, "plan:network:"):
 		parts := strings.Split(data, ":")
 		if len(parts) != 4 {

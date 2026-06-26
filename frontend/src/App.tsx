@@ -46,6 +46,48 @@ const PAGE_TITLES = {
     subprocessors: "recv | Subprocessors List",
     fallback: "recv",
   },
+  uk: {
+    auth: "recv | Вхід",
+    admin: "recv | Адмін",
+    blog: "recv | Керування блогом",
+    console: "recv | Консоль",
+    developers: "recv | Портал розробника",
+    docs: "recv | Документація API",
+    checkout: "recv | Оплата",
+    privacy: "recv | Політика конфіденційності",
+    terms: "recv | Умови використання",
+    dpa: "recv | Угода DPA",
+    subprocessors: "recv | Список субпідрядників",
+    fallback: "recv",
+  },
+  uz: {
+    auth: "recv | Kirish",
+    admin: "recv | Admin",
+    blog: "recv | Blog boshqaruvi",
+    console: "recv | Konsol",
+    developers: "recv | Dasturchilar portali",
+    docs: "recv | API hujjatlari",
+    checkout: "recv | To'lov",
+    privacy: "recv | Maxfiylik siyosati",
+    terms: "recv | Foydalanish shartlari",
+    dpa: "recv | DPA shartnomasi",
+    subprocessors: "recv | Subprotsessorlar ro'yxati",
+    fallback: "recv",
+  },
+  de: {
+    auth: "recv | Anmelden",
+    admin: "recv | Admin",
+    blog: "recv | Blog-Verwaltung",
+    console: "recv | Konsole",
+    developers: "recv | Entwicklerportal",
+    docs: "recv | API-Dokumentation",
+    checkout: "recv | Checkout",
+    privacy: "recv | Datenschutzerklärung",
+    terms: "recv | Nutzungsbedingungen",
+    dpa: "recv | DPA-Vereinbarung",
+    subprocessors: "recv | Liste der Unterauftragsverarbeiter",
+    fallback: "recv",
+  },
 } as const;
 
 function RouteTitleManager() {
@@ -53,7 +95,7 @@ function RouteTitleManager() {
   const { language } = useUI();
 
   useEffect(() => {
-    const titles = PAGE_TITLES[language as "ru" | "en"];
+    const titles = PAGE_TITLES[language as keyof typeof PAGE_TITLES] || PAGE_TITLES.en;
     const path = location.pathname;
     let title: string = titles.fallback;
 

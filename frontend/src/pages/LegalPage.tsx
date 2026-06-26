@@ -39,11 +39,14 @@ const LEGAL_PROFILE = {
   effectiveDate: {
     ru: "13 марта 2026",
     en: "March 13, 2026",
+    uk: "13 березня 2026",
+    uz: "13-mart, 2026",
+    de: "13. März 2026",
   },
 } as const;
 
 function profileDateForLanguage(language: Language) {
-  return LEGAL_PROFILE.effectiveDate[language === "ru" ? "ru" : "en"];
+  return LEGAL_PROFILE.effectiveDate[language as keyof typeof LEGAL_PROFILE.effectiveDate] || LEGAL_PROFILE.effectiveDate.en;
 }
 
 export function LegalPage({ variant }: { variant: LegalVariant }) {
