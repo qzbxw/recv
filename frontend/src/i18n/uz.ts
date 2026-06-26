@@ -433,7 +433,7 @@ const uz = {
     amount: "Summa",
     network: "Tarmoq",
     selectNetwork: "Tarmoqni tanlang",
-    selectAsset: "Assetni tanlang",
+    selectAsset: "Asset",
     comment: "Izoh",
     expires: "Qolgan vaqt",
     invoiceId: "Invoys",

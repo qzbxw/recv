@@ -433,7 +433,7 @@ const uk = {
     amount: "Сума",
     network: "Мережа",
     selectNetwork: "Оберіть мережу",
-    selectAsset: "Оберіть актив",
+    selectAsset: "Актив",
     comment: "Коментар",
     expires: "Залишилось часу",
     invoiceId: "Інвойс",

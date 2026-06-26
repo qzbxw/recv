@@ -399,7 +399,7 @@ function verify(payload, signature, secret) {
     amount: "Amount",
     network: "Network",
     selectNetwork: "Select network",
-    selectAsset: "Select asset",
+    selectAsset: "Asset",
     comment: "Comment",
     expires: "Time left",
     invoiceId: "Invoice",

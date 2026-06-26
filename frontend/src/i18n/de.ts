@@ -433,7 +433,7 @@ const de = {
     amount: "Betrag",
     network: "Netzwerk",
     selectNetwork: "Netzwerk auswählen",
-    selectAsset: "Asset auswählen",
+    selectAsset: "Asset",
     comment: "Kommentar",
     expires: "Verbleibende Zeit",
     invoiceId: "Rechnung",

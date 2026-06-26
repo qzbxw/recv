@@ -48,6 +48,7 @@ import {
 } from "../lib/api";
 import { ApiError } from "../lib/errors";
 import { CustomSelect } from "../components/CustomSelect";
+import { AssetLabel, CryptoLogo, NetworkLabel } from "../components/CryptoLogo";
 import { MultiSelect } from "../components/MultiSelect";
 import { buildCheckoutUrl, buildCheckoutPath } from "../lib/routing";
 import { formatNetworkLabel, formatPaymentAssetLabel } from "../lib/status";
@@ -145,6 +146,33 @@ function adminWorkspaceMeta(inv: AdminInvoice) {
 
 function adminNetworkLabel(network: string) {
   return formatNetworkLabel(network as import("../lib/types").Network);
+}
+
+function AdminNetworkPill({ network }: { network: string }) {
+  return (
+    <span className="dev-api-badge dev-api-badge--secondary">
+      <NetworkLabel network={network}>{adminNetworkLabel(network)}</NetworkLabel>
+    </span>
+  );
+}
+
+function AdminAssetAmount({ amount, asset, network }: { amount: string; asset?: string; network: string }) {
+  const label = formatPaymentAssetLabel(asset as import("../lib/types").PaymentAsset | undefined, network as import("../lib/types").Network);
+  return (
+    <span className="crypto-amount">
+      <span>{amount}</span>
+      <AssetLabel asset={label}>{label}</AssetLabel>
+    </span>
+  );
+}
+
+function AdminPaymentOptionLogos({ network, asset }: { network: string; asset: string }) {
+  return (
+    <span className="crypto-pair-logos" aria-hidden="true">
+      <CryptoLogo type="network" value={network} />
+      <CryptoLogo type="asset" value={asset} />
+    </span>
+  );
 }
 
 type CSVValue = string | number | boolean | null | undefined;
@@ -686,7 +714,9 @@ function OverviewPanel({ overview, busyKey, runAction, onGoto }: {
             {(overview.network_breakdown || []).map((item) => (
               <div key={item.network} className="dev-breakdown__row">
                 <div className="dev-breakdown__head">
-                  <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{adminNetworkLabel(item.network)}</span>
+                  <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">
+                    <NetworkLabel network={item.network}>{adminNetworkLabel(item.network)}</NetworkLabel>
+                  </span>
                   <span className="dev-breakdown__label">{item.paid_count} paid</span>
                   <span className="dev-breakdown__value">{formatMoney(item.paid_usd)}</span>
                 </div>
@@ -746,7 +776,7 @@ function OverviewPanel({ overview, busyKey, runAction, onGoto }: {
                 <div key={network} className="dev-resource-card">
                   <div className="dev-resource-card__info">
                     <div className="dev-resource-card__title">
-                      <span className={`dev-status-dot dev-status-dot--${stale ? "danger" : "success"}`} /> {adminNetworkLabel(network)}
+                      <span className={`dev-status-dot dev-status-dot--${stale ? "danger" : "success"}`} /> <NetworkLabel network={network}>{adminNetworkLabel(network)}</NetworkLabel>
                     </div>
                     <div className="dev-resource-card__meta">
                       {watcher ? `block ${watcher.last_block} · ${Math.round(watcher.freshness_seconds / 60)}m ago` : "not reporting yet"}
@@ -786,7 +816,7 @@ function InvoiceCard({ inv, workspaces, busyKey, runAction }: {
         <div>
           <div className="dev-card__status-row">
             <ToneBadge status={inv.status} />
-            <span className="dev-api-badge dev-api-badge--secondary">{adminNetworkLabel(inv.payable_network)}</span>
+            <AdminNetworkPill network={inv.payable_network} />
             <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{inv.kind}</span>
           </div>
           <h3 className="dev-card__title">{inv.title}</h3>
@@ -797,7 +827,7 @@ function InvoiceCard({ inv, workspaces, busyKey, runAction }: {
         </div>
         <div className="dev-card__amount-col">
           <div className="dev-card__amount">{formatMoney(inv.base_amount_usd)}</div>
-          <div className="dev-card__base">{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</div>
+          <div className="dev-card__base"><AdminAssetAmount amount={inv.payable_amount} asset={inv.payable_asset} network={inv.payable_network} /></div>
           <div className="dev-card__date">{formatDateTime(inv.created_at)}</div>
         </div>
       </div>
@@ -883,7 +913,11 @@ function BillingCheckout({ workspaceId, busy, runAction }: { workspaceId: number
         <CustomSelect value={plan} options={PLAN_OPTIONS.filter((p) => p.value !== "trial")} ariaLabel="Plan" onChange={setPlan} />
         <MultiSelect
           values={optionKeys}
-          options={PAYABLE_PAYMENT_OPTIONS.map((option) => ({ value: option.key, label: option.label }))}
+          options={PAYABLE_PAYMENT_OPTIONS.map((option) => ({
+            value: option.key,
+            label: option.label,
+            leadingIcon: <AdminPaymentOptionLogos network={option.network} asset={option.asset} />,
+          }))}
           ariaLabel="Payment methods"
           placeholder="Payment methods"
           onChange={setOptionKeys}
@@ -1000,7 +1034,7 @@ function ReviewPanel({ queue, busyKey, runAction }: { queue: AdminInvoice[]; bus
                   <div>
                     <div className="dev-card__status-row">
                       <ToneBadge status={inv.status} />
-                      <span className="dev-api-badge dev-api-badge--secondary">{adminNetworkLabel(inv.payable_network)}</span>
+                      <AdminNetworkPill network={inv.payable_network} />
                       {inv.classification && <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{inv.classification}</span>}
                     </div>
                     <h3 className="dev-card__title">{inv.title}</h3>
@@ -1009,7 +1043,7 @@ function ReviewPanel({ queue, busyKey, runAction }: { queue: AdminInvoice[]; bus
                   </div>
                   <div className="dev-card__amount-col">
                     <div className="dev-card__amount">{formatMoney(inv.base_amount_usd)}</div>
-                    <div className="dev-card__base">recv {inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</div>
+                    <div className="dev-card__base">recv <AdminAssetAmount amount={inv.payable_amount} asset={inv.payable_asset} network={inv.payable_network} /></div>
                     <div className="dev-card__date">{formatDateTime(inv.created_at)}</div>
                   </div>
                 </div>

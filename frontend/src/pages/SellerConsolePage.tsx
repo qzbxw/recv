@@ -2,6 +2,7 @@ import React, { FormEvent, Fragment, useEffect, useMemo, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import { CustomSelect } from "../components/CustomSelect";
+import { AssetLabel, CryptoLogo, NetworkLabel } from "../components/CryptoLogo";
 import { LanguageSelect } from "../components/LanguageSelect";
 import { MultiSelect } from "../components/MultiSelect";
 import {
@@ -46,7 +47,7 @@ import { ApiError, formatApiError } from "../lib/errors";
 import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus, getInvoiceStatusMeta, getInvoiceStatusTooltip, formatNetworkLabel, formatPaymentAssetLabel } from "../lib/status";
 import { PAYABLE_PAYMENT_OPTIONS, walletBucket } from "../lib/paymentOptions";
-import type { APIKey, AuthIdentity, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
+import type { APIKey, AuthIdentity, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, PaymentAsset, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { SELLER_CONSOLE_COPY as COPY, type Language } from "../i18n";
 
@@ -568,7 +569,35 @@ function validateWalletAddress(network: Network, address: string): boolean {
 function renderAssetPill(coin: string) {
   return (
     <span key={coin} className="payout-asset-pill">
+      <CryptoLogo type="asset" value={coin} />
       {coin}
+    </span>
+  );
+}
+
+function NetworkPill({ network, className = "" }: { network: Network | string; className?: string }) {
+  return (
+    <span className={`dev-api-badge dev-api-badge--secondary ${className}`.trim()}>
+      <NetworkLabel network={network}>{formatNetworkLabel(network as Network)}</NetworkLabel>
+    </span>
+  );
+}
+
+function AssetAmount({ amount, asset, network, className = "" }: { amount: string; asset?: string; network: Network; className?: string }) {
+  const label = formatPaymentAssetLabel(asset as PaymentAsset | undefined, network);
+  return (
+    <span className={`crypto-amount ${className}`.trim()}>
+      <span>{amount}</span>
+      <AssetLabel asset={label}>{label}</AssetLabel>
+    </span>
+  );
+}
+
+function PaymentOptionLogos({ network, asset }: { network: Network | string; asset: PaymentAsset | string }) {
+  return (
+    <span className="crypto-pair-logos" aria-hidden="true">
+      <CryptoLogo type="network" value={network} />
+      <CryptoLogo type="asset" value={asset} />
     </span>
   );
 }
@@ -1364,12 +1393,14 @@ export function SellerConsolePage() {
   const payableNetworkOptions = PAYABLE_PAYMENT_OPTIONS.map(option => ({
     value: option.key,
     label: option.label,
+    leadingIcon: <PaymentOptionLogos network={option.network} asset={option.asset} />,
     disabled: !walletNetworks.has(walletBucket(option.network)),
     hint: walletNetworks.has(walletBucket(option.network)) ? t.common.walletReady : t.common.addWalletFirst,
   }));
   const billingNetworkOptions = PAYABLE_PAYMENT_OPTIONS.map(option => ({
     value: option.key,
     label: option.label,
+    leadingIcon: <PaymentOptionLogos network={option.network} asset={option.asset} />,
   }));
 
   const handleNavClick = (key: PanelKey) => {
@@ -1830,7 +1861,7 @@ export function SellerConsolePage() {
                           {networkBreakdown.map(({ network, usd, count }) => (
                             <div key={network} className="dev-breakdown__row">
                               <div className="dev-breakdown__head">
-                                <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{formatNetworkLabel(network)}</span>
+                                <NetworkPill network={network} className="dev-api-badge--micro" />
                                 <span className="dev-breakdown__label">{count} {t.overview.invoicesLabel}</span>
                                 <span className="dev-breakdown__value">${usd.toFixed(2)}</span>
                               </div>
@@ -1878,7 +1909,7 @@ export function SellerConsolePage() {
                               <span className={`dev-api-badge dev-api-badge--${getInvoiceStatusMeta(inv.status).tone === 'success' ? 'get' : 'post'} dev-api-badge--micro`} title={getInvoiceStatusTooltip(inv.status, language) || undefined}>
                                 {formatInvoiceStatus(inv.status, language, true)}
                               </span>
-                              <span className="dev-resource-card__amount">{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
+                              <span className="dev-resource-card__amount"><AssetAmount amount={inv.payable_amount} asset={inv.payable_asset} network={inv.payable_network} /></span>
                             </div>
                           </div>
                           <div className="dev-resource-card__actions" onClick={e => e.stopPropagation()}>
@@ -1942,55 +1973,20 @@ export function SellerConsolePage() {
                       const showValidationError = !isAddressEmpty && !isValidAddress;
 
                       // Define helper for network icons
-                      let networkIcon = null;
                       let networkCoins: string[] = [];
 
                       switch (opt.value) {
                         case "TON":
                           networkCoins = ["GRAM", "USDT"];
-                          networkIcon = (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="payout-network-icon" style={{ flexShrink: 0 }}>
-                              <circle cx="12" cy="12" r="11" fill="#0098EA" />
-                              <path d="M12 5.5l5.5 3.5L12 18.5 6.5 9 12 5.5z" stroke="#ffffff" strokeWidth="1.5" strokeLinejoin="round" />
-                              <path d="M6.5 9h11M12 5.5v13" stroke="#ffffff" strokeWidth="1.2" />
-                            </svg>
-                          );
                           break;
                         case "SOLANA":
                           networkCoins = ["SOL", "USDT", "USDC"];
-                          networkIcon = (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="payout-network-icon" style={{ flexShrink: 0 }}>
-                              <defs>
-                                <linearGradient id="solana-gradient-network" x1="0%" y1="0%" x2="100%" y2="100%">
-                                  <stop offset="0%" stopColor="#9945FF" />
-                                  <stop offset="100%" stopColor="#14F195" />
-                                </linearGradient>
-                              </defs>
-                              <path d="M3.7 5.7h16.6l-3.2 3.2H.5l3.2-3.2z" fill="url(#solana-gradient-network)" />
-                              <path d="M20.3 10.4H3.7l3.2 3.2h16.6l-3.2-3.2z" fill="url(#solana-gradient-network)" />
-                              <path d="M3.7 15.1h16.6l-3.2 3.2H.5l3.2-3.2z" fill="url(#solana-gradient-network)" />
-                            </svg>
-                          );
                           break;
                         case "TRON":
                           networkCoins = ["USDT"];
-                          networkIcon = (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="payout-network-icon" style={{ flexShrink: 0 }}>
-                              <path d="M12 3L3 17.5h18L12 3z" stroke="#EF3026" strokeWidth="2.2" strokeLinejoin="round" />
-                              <path d="M12 3v14.5M3 17.5l9-7 9 7" stroke="#EF3026" strokeWidth="1.5" />
-                            </svg>
-                          );
                           break;
                         case "EVM":
                           networkCoins = ["BNB", "USDT", "USDC"];
-                          networkIcon = (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="payout-network-icon" style={{ flexShrink: 0 }}>
-                              <path d="M12 2L4.5 12 12 16.5 19.5 12 12 2z" fill="#3B82F6" fillOpacity="0.25" stroke="#60A5FA" strokeWidth="1.5" strokeLinejoin="round" />
-                              <path d="M12 2L4.5 12 12 16.5" fill="#2563EB" fillOpacity="0.3" />
-                              <path d="M12 16.5L4.5 12 12 22 19.5 12 12 16.5z" fill="#3B82F6" fillOpacity="0.15" stroke="#60A5FA" strokeWidth="1.5" strokeLinejoin="round" />
-                              <path d="M12 22L4.5 12 12 16.5" fill="#2563EB" fillOpacity="0.2" />
-                            </svg>
-                          );
                           break;
                       }
 
@@ -2022,7 +2018,7 @@ export function SellerConsolePage() {
                           <div className="payout-card__head">
                             <div className="payout-card__network-info">
                               <div className="payout-card__icon-wrapper">
-                                {networkIcon}
+                                <CryptoLogo type="network" value={opt.value} className="payout-network-icon" />
                               </div>
                               <div className="payout-card__label-group">
                                 <span className="payout-card__name">{opt.label}</span>
@@ -2384,13 +2380,13 @@ export function SellerConsolePage() {
                                 <span className={`dev-api-badge dev-status-badge dev-status-badge--${statusToneClass(inv.status)}`} title={getInvoiceStatusTooltip(inv.status, language) || undefined}>
                                   {formatInvoiceStatus(inv.status, language, true)}
                                 </span>
-                                <span className="dev-api-badge dev-api-badge--secondary">{formatNetworkLabel(inv.payable_network)}</span>
+                                <NetworkPill network={inv.payable_network} />
                               </div>
                               <h3 className="dev-card__title">{inv.title}</h3>
                               <code className="dev-card__id">{inv.public_id}</code>
                             </div>
                             <div className="dev-card__amount-col">
-                              <div className="dev-card__amount">{inv.payable_amount} <small className="dev-card__currency">{formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</small></div>
+                              <div className="dev-card__amount"><AssetAmount amount={inv.payable_amount} asset={inv.payable_asset} network={inv.payable_network} className="crypto-amount--large" /></div>
                               <div className="dev-card__base">${Number(inv.base_amount_usd).toFixed(2)} {t.invoices.baseUsd}</div>
                               <div className="dev-card__date">{new Date(inv.created_at).toLocaleString()}</div>
                             </div>
@@ -2405,12 +2401,12 @@ export function SellerConsolePage() {
                                 </div>
                                 <div className="dev-settings-row">
                                   <span className="dev-settings-row__label">{t.invoices.payable}</span>
-                                  <span className="dev-settings-row__value">{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
+                                  <span className="dev-settings-row__value"><AssetAmount amount={inv.payable_amount} asset={inv.payable_asset} network={inv.payable_network} /></span>
                                 </div>
                                 {Number(inv.received_amount) > 0 && (
                                   <div className="dev-settings-row">
                                     <span className="dev-settings-row__label">{t.invoices.received}</span>
-                                    <span className="dev-settings-row__value">{inv.received_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
+                                    <span className="dev-settings-row__value"><AssetAmount amount={inv.received_amount} asset={inv.payable_asset} network={inv.payable_network} /></span>
                                   </div>
                                 )}
                                 <div className="dev-settings-row">
@@ -2488,9 +2484,7 @@ export function SellerConsolePage() {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                       <span style={{ fontWeight: 500, color: '#ffffff' }}>{inv.title}</span>
                                       <span style={{ fontSize: '11px', color: '#8f9cae' }}>
-                                        <span className="dev-api-badge dev-api-badge--secondary" style={{ padding: '1px 4px', fontSize: '10px' }}>
-                                          {formatNetworkLabel(inv.payable_network)}
-                                        </span>
+                                        <NetworkPill network={inv.payable_network} className="dev-api-badge--micro" />
                                       </span>
                                     </div>
                                   </td>
@@ -2527,7 +2521,7 @@ export function SellerConsolePage() {
                                   <td className="console-transactions-table__amount" data-label={t.invoices.amount} style={{ padding: '14px 16px', textAlign: 'right' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                       <span style={{ fontWeight: 600, color: '#ffffff' }}>
-                                        {inv.payable_amount} <span style={{ fontSize: '11px', color: '#8f9cae', fontWeight: 400 }}>{formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
+                                        <AssetAmount amount={inv.payable_amount} asset={inv.payable_asset} network={inv.payable_network} />
                                       </span>
                                       <span style={{ fontSize: '11px', color: '#8f9cae' }}>
                                         ${Number(inv.base_amount_usd).toFixed(2)}
@@ -2637,12 +2631,12 @@ export function SellerConsolePage() {
                                         </div>
                                         <div>
                                           <div style={{ color: '#8f9cae', marginBottom: '4px' }}>{t.invoices.payable}</div>
-                                          <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}>{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</div>
+                                          <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}><AssetAmount amount={inv.payable_amount} asset={inv.payable_asset} network={inv.payable_network} /></div>
                                         </div>
                                         {Number(inv.received_amount) > 0 && (
                                           <div>
                                             <div style={{ color: '#8f9cae', marginBottom: '4px' }}>{t.invoices.received}</div>
-                                            <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}>{inv.received_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</div>
+                                            <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}><AssetAmount amount={inv.received_amount} asset={inv.payable_asset} network={inv.payable_network} /></div>
                                           </div>
                                         )}
                                         <div>
@@ -2652,8 +2646,8 @@ export function SellerConsolePage() {
                                         <div style={{ gridColumn: 'span 2' }}>
                                           <div style={{ color: '#8f9cae', marginBottom: '4px' }}>{t.invoices.txHash}</div>
                                           {inv.tx_hash ? (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                                              <code style={{ background: 'rgba(255,255,255,0.04)', padding: '4px 8px', borderRadius: '4px', color: '#cbd5e0', wordBreak: 'break-all', fontSize: '11px' }}>
+                                            <div className="console-transactions-table__tx-value">
+                                              <code className="console-transactions-table__tx-code" style={{ background: 'rgba(255,255,255,0.04)', padding: '4px 8px', borderRadius: '4px', color: '#cbd5e0', wordBreak: 'break-all', fontSize: '11px' }}>
                                                 {inv.tx_hash}
                                               </code>
                                               <button 
@@ -2777,7 +2771,7 @@ export function SellerConsolePage() {
                     {createdInvoice ? (
                       <div className="dev-create-preview__body">
                         <QrImage value={createdInvoice.payment_uri || buildCheckoutUrl(createdInvoice.public_id)} alt={t.create.qrAlt} />
-                        <div className="dev-create-preview__amount">{createdInvoice.payable_amount} {formatPaymentAssetLabel(createdInvoice.payable_asset, createdInvoice.payable_network)}</div>
+                        <div className="dev-create-preview__amount"><AssetAmount amount={createdInvoice.payable_amount} asset={createdInvoice.payable_asset} network={createdInvoice.payable_network} className="crypto-amount--large" /></div>
                         <div className="dev-card__note-text">{t.create.scanToPay}</div>
                         <code className="dev-input dev-input--readonly-box">{buildCheckoutUrl(createdInvoice.public_id)}</code>
                         <div className="dev-form__actions-row">
@@ -2806,8 +2800,8 @@ export function SellerConsolePage() {
                           <div className="dev-resource-card__info">
                             <div className="dev-resource-card__title">{inv.title}</div>
                             <div className="dev-resource-card__meta dev-resource-card__meta--row">
-                              <span className="dev-api-badge dev-api-badge--secondary dev-api-badge--micro">{formatNetworkLabel(inv.payable_network)}</span>
-                              <span className="dev-resource-card__amount">{inv.payable_amount} {formatPaymentAssetLabel(inv.payable_asset, inv.payable_network)}</span>
+                              <NetworkPill network={inv.payable_network} className="dev-api-badge--micro" />
+                              <span className="dev-resource-card__amount"><AssetAmount amount={inv.payable_amount} asset={inv.payable_asset} network={inv.payable_network} /></span>
                             </div>
                           </div>
                           <div className="dev-resource-card__actions">

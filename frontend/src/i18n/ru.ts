@@ -398,7 +398,7 @@ function verify(payload, signature, secret) {
     amount: "Сумма",
     network: "Сеть",
     selectNetwork: "Выберите сеть",
-    selectAsset: "Выберите ассет",
+    selectAsset: "Ассет",
     comment: "Комментарий",
     expires: "Осталось",
     invoiceId: "Инвойс",

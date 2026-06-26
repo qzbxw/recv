@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 export type MultiSelectOption<T extends string> = {
   value: T;
   label: string;
+  leadingIcon?: ReactNode;
   hint?: string;
   disabled?: boolean;
 };
@@ -155,6 +157,7 @@ export function MultiSelect<T extends string>({
                   gap: "6px"
                 }}
               >
+                {opt.leadingIcon}
                 {opt.label}
                 {values.length > 1 && (
                   <span
@@ -201,9 +204,12 @@ export function MultiSelect<T extends string>({
                     }}
                     style={{ opacity: option.disabled ? 0.5 : 1, cursor: option.disabled ? "not-allowed" : "pointer" }}
                   >
-                    <span style={{ display: "flex", flexDirection: "column" }}>
-                      <strong>{option.label}</strong>
-                      {option.hint ? <small style={{ opacity: 0.7, fontSize: "0.75em" }}>{option.hint}</small> : null}
+                    <span style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                      {option.leadingIcon}
+                      <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                        <strong>{option.label}</strong>
+                        {option.hint ? <small style={{ opacity: 0.7, fontSize: "0.75em" }}>{option.hint}</small> : null}
+                      </span>
                     </span>
                     <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       {active ? (

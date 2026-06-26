@@ -3,10 +3,11 @@ import { useParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { fetchPublicInvoice, trackPublicEvent } from "../lib/api";
 import { calculateRemainingAmount, canCopyInvoicePaymentDetails, formatInvoiceStatus, formatNetworkLabel, formatPaymentAssetLabel, getInvoiceStatusMeta } from "../lib/status";
-import type { Invoice, Network } from "../lib/types";
+import type { Invoice, Network, PaymentAsset } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { CHECKOUT_COPY as COPY } from "../i18n";
 import { LanguageSelect } from "../components/LanguageSelect";
+import { AssetLabel, CryptoLogo, NetworkLabel, type DisplayNetwork } from "../components/CryptoLogo";
 import "../styles/checkout.css";
 
 const BOT_URL = "https://t.me/recvmoney_bot";
@@ -57,6 +58,27 @@ function formatAddressTruncatedMobile(address: string) {
 
 function formatDateTime(value: string, language: keyof typeof COPY) {
   return new Date(value).toLocaleString(language === "ru" ? "ru-RU" : "en-US");
+}
+
+function CheckoutAssetAmount({ amount, asset, network }: { amount: string; asset?: PaymentAsset; network: Network }) {
+  const label = formatPaymentAssetLabel(asset, network);
+  return (
+    <span className="crypto-amount">
+      <span>{amount}</span>
+      <AssetLabel asset={label}>{label}</AssetLabel>
+    </span>
+  );
+}
+
+function CheckoutNetworkAsset({ asset, network, suffix = "" }: { asset?: PaymentAsset; network: Network; suffix?: string }) {
+  const assetLabel = formatPaymentAssetLabel(asset, network);
+  return (
+    <span className="co-network-asset">
+      <AssetLabel asset={assetLabel}>{assetLabel}</AssetLabel>
+      <NetworkLabel network={network}>{formatNetworkLabel(network)}</NetworkLabel>
+      {suffix ? <span>{suffix}</span> : null}
+    </span>
+  );
 }
 
 function createDemoInvoice(): Invoice {
@@ -349,7 +371,7 @@ export function CheckoutPage() {
   }, [paymentOptions]);
 
   const selectedOption = invoice?.payment_options?.[selectedOptionIndex] ?? invoice?.payment_options?.[0] ?? null;
-  const selectedDisplayNetwork = selectedOption ? getDisplayNetwork(selectedOption.network) : null;
+  const selectedDisplayNetwork = selectedOption ? getDisplayNetwork(selectedOption.network) as DisplayNetwork : null;
   const selectedAsset = selectedOption?.asset ?? null;
 
   // All assets available under the currently selected display-network
@@ -366,7 +388,7 @@ export function CheckoutPage() {
     return result;
   }, [paymentOptions, selectedDisplayNetwork]);
 
-  function selectNetwork(displayNetwork: string) {
+  function selectNetwork(displayNetwork: DisplayNetwork) {
     // Pick first option that matches the display network
     const idx = paymentOptions.findIndex(o => getDisplayNetwork(o.network) === displayNetwork);
     if (idx >= 0) setSelectedOptionIndex(idx);
@@ -374,7 +396,7 @@ export function CheckoutPage() {
     setAssetDropOpen(false);
   }
 
-  function selectAsset(asset: string) {
+  function selectAsset(asset: PaymentAsset) {
     // Match by display-network + asset (handles TON/TON_USDT transparently)
     const idx = paymentOptions.findIndex(
       o => getDisplayNetwork(o.network) === selectedDisplayNetwork && o.asset === asset
@@ -456,9 +478,6 @@ export function CheckoutPage() {
   }
 
   const statusTone = invoice ? getInvoiceStatusMeta(invoice.status).tone : "neutral";
-  const netLabel = invoice
-    ? `${activePayment?.payable_asset || invoice.payable_asset || ""} ${formatNetworkLabel(activePayment?.payable_network || invoice.payable_network)}`.trim()
-    : "";
   const bigAmount = activePayment?.payable_amount || invoice?.payable_amount || "";
   const addressValue = activePayment?.destination_address || invoice?.destination_address || "";
   const commentValue = activePayment?.payment_comment || invoice?.payment_comment || "";
@@ -502,7 +521,7 @@ export function CheckoutPage() {
             <p className="co-final__body">{finalBody}</p>
             {isOverpaid || isManualReview ? (
               <div className="co-final__note">
-                <strong>{text.underpaidReceived}: {invoice.received_amount || "0"} {formatPaymentAssetLabel(invoice.payable_asset, invoice.payable_network)}</strong>
+                <strong>{text.underpaidReceived}: <CheckoutAssetAmount amount={invoice.received_amount || "0"} asset={invoice.payable_asset} network={invoice.payable_network} /></strong>
                 {invoice.review_reason ? <small>{invoice.review_reason.replaceAll("_", " ")}</small> : null}
               </div>
             ) : null}
@@ -547,7 +566,12 @@ export function CheckoutPage() {
                   >
                     <span className="co-drop-btn__label">{text.network}</span>
                     <span className="co-drop-btn__value">
-                      {selectedDisplayNetwork ? formatNetworkLabel(selectedDisplayNetwork as Network) : text.selectNetwork}
+                      {selectedDisplayNetwork ? (
+                        <span className="co-drop-btn__choice">
+                          <CryptoLogo type="network" value={selectedDisplayNetwork} />
+                          {formatNetworkLabel(selectedDisplayNetwork)}
+                        </span>
+                      ) : text.selectNetwork}
                     </span>
                     <Icons.ChevronDown className={networkDropOpen ? "is-flipped" : ""} />
                   </button>
@@ -559,9 +583,12 @@ export function CheckoutPage() {
                           role="option"
                           aria-selected={net === selectedDisplayNetwork}
                           className={`co-drop-item ${net === selectedDisplayNetwork ? "is-selected" : ""}`}
-                          onClick={() => selectNetwork(net)}
+                          onClick={() => selectNetwork(net as DisplayNetwork)}
                         >
-                          {formatNetworkLabel(net as Network)}
+                          <span className="co-drop-item__main">
+                            <CryptoLogo type="network" value={net as DisplayNetwork} />
+                            {formatNetworkLabel(net as Network)}
+                          </span>
                           {net === selectedDisplayNetwork && <Icons.Check />}
                         </li>
                       ))}
@@ -582,7 +609,12 @@ export function CheckoutPage() {
                     >
                       <span className="co-drop-btn__label">{text.selectAsset}</span>
                       <span className="co-drop-btn__value">
-                        {selectedAsset ?? text.selectAsset}
+                        {selectedAsset ? (
+                          <span className="co-drop-btn__choice">
+                            <CryptoLogo type="asset" value={selectedAsset} />
+                            {selectedAsset}
+                          </span>
+                        ) : text.selectAsset}
                       </span>
                       <Icons.ChevronDown className={assetDropOpen ? "is-flipped" : ""} />
                     </button>
@@ -594,9 +626,12 @@ export function CheckoutPage() {
                             role="option"
                             aria-selected={asset === selectedAsset}
                             className={`co-drop-item ${asset === selectedAsset ? "is-selected" : ""}`}
-                            onClick={() => selectAsset(asset)}
+                            onClick={() => selectAsset(asset as PaymentAsset)}
                           >
-                            {asset}
+                            <span className="co-drop-item__main">
+                              <CryptoLogo type="asset" value={asset as PaymentAsset} />
+                              {asset}
+                            </span>
                             {asset === selectedAsset && <Icons.Check />}
                           </li>
                         ))}
@@ -624,7 +659,9 @@ export function CheckoutPage() {
                       {copiedField === "amount" ? <Icons.Check /> : <Icons.Copy />}
                     </button>
                   </div>
-                  <span className="co-copy-line__sub">{netLabel} {text.networkOnly}</span>
+                  <span className="co-copy-line__sub">
+                    <CheckoutNetworkAsset asset={activePayment?.payable_asset || invoice.payable_asset} network={activePayment?.payable_network || invoice.payable_network} suffix={text.networkOnly} />
+                  </span>
                 </div>
               </div>
 
@@ -673,8 +710,8 @@ export function CheckoutPage() {
 
             {isUnderpaid ? (
               <div className="co-amount__note" style={{ borderTop: "none", marginTop: 0, paddingLeft: 0, paddingRight: 0 }}>
-                <span>{text.underpaidReceived}: <b>{invoice.received_amount || "0"} {formatPaymentAssetLabel(invoice.payable_asset, invoice.payable_network)}</b></span>
-                {remainingAmount ? <span>{text.underpaidRemaining}: <b>{remainingAmount} {formatPaymentAssetLabel(invoice.payable_asset, invoice.payable_network)}</b></span> : null}
+                <span>{text.underpaidReceived}: <b><CheckoutAssetAmount amount={invoice.received_amount || "0"} asset={invoice.payable_asset} network={invoice.payable_network} /></b></span>
+                {remainingAmount ? <span>{text.underpaidRemaining}: <b><CheckoutAssetAmount amount={remainingAmount} asset={invoice.payable_asset} network={invoice.payable_network} /></b></span> : null}
               </div>
             ) : null}
 
