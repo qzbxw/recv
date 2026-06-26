@@ -444,6 +444,12 @@ function verify(payload, signature, secret) {
     footerCTA: "Accept crypto payments like this with recv",
     payInWallet: "Pay in Wallet",
     copyPaymentDetails: "Copy payment details",
+    walletActionLabel: "Wallet payment actions",
+    walletPrecopyHint: "We will copy the payment details before opening your wallet.",
+    walletOpening: "Payment details copied. Opening your wallet...",
+    walletFallbackTitle: "Details copied",
+    walletFallbackBody: "If the wallet did not open, paste the copied details into your wallet manually.",
+    walletCopyFailed: "Wallet opening was attempted, but copying failed. Copy the details manually below.",
     needHelp: "Need help with payment?",
   },
   sellerConsole: {

@@ -443,6 +443,12 @@ function verify(payload, signature, secret) {
     footerCTA: "Принимайте платежи так же с recv",
     payInWallet: "Открыть кошелек",
     copyPaymentDetails: "Скопировать реквизиты",
+    walletActionLabel: "Действия оплаты через кошелек",
+    walletPrecopyHint: "Перед открытием кошелька мы скопируем реквизиты оплаты.",
+    walletOpening: "Реквизиты скопированы. Открываем кошелек...",
+    walletFallbackTitle: "Реквизиты скопированы",
+    walletFallbackBody: "Если кошелек не открылся, вставьте скопированные реквизиты в кошелек вручную.",
+    walletCopyFailed: "Переход в кошелек выполнен, но скопировать не удалось. Скопируйте реквизиты вручную ниже.",
     needHelp: "Нужна помощь с оплатой?",
   },
   sellerConsole: {

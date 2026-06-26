@@ -478,6 +478,12 @@ const de = {
     footerCTA: "Akzeptieren Sie Krypto-Zahlungen wie diese mit recv",
     payInWallet: "In Wallet bezahlen",
     copyPaymentDetails: "Zahlungsdetails kopieren",
+    walletActionLabel: "Wallet-Zahlungsaktionen",
+    walletPrecopyHint: "Wir kopieren die Zahlungsdetails, bevor Ihre Wallet geöffnet wird.",
+    walletOpening: "Zahlungsdetails kopiert. Wallet wird geöffnet...",
+    walletFallbackTitle: "Details kopiert",
+    walletFallbackBody: "Wenn die Wallet nicht geöffnet wurde, fügen Sie die kopierten Details manuell in Ihrer Wallet ein.",
+    walletCopyFailed: "Das Öffnen der Wallet wurde versucht, aber das Kopieren ist fehlgeschlagen. Kopieren Sie die Details unten manuell.",
     needHelp: "Brauchen Sie Hilfe bei der Zahlung?",
   },
   sellerConsole: {

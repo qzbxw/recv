@@ -196,11 +196,14 @@ export function CheckoutPage() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [now, setNow] = useState(Date.now());
   const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "details" | "">("");
+  const [walletActionState, setWalletActionState] = useState<"idle" | "opening" | "fallback" | "copy_failed">("idle");
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
   const [networkDropOpen, setNetworkDropOpen] = useState(false);
   const [assetDropOpen, setAssetDropOpen] = useState(false);
   const networkDropRef = useRef<HTMLDivElement>(null);
   const assetDropRef = useRef<HTMLDivElement>(null);
+  const walletFallbackTimerRef = useRef<number | null>(null);
+  const walletFallbackElapsedRef = useRef(false);
   const [retryNonce, setRetryNonce] = useState(0);
   const statusRef = useRef("");
   const trackedCheckoutRef = useRef("");
@@ -330,6 +333,23 @@ export function CheckoutPage() {
     const timeout = window.setTimeout(() => setCopiedField(""), 1400);
     return () => window.clearTimeout(timeout);
   }, [copiedField]);
+
+  useEffect(() => {
+    setWalletActionState("idle");
+    walletFallbackElapsedRef.current = false;
+    if (walletFallbackTimerRef.current) {
+      window.clearTimeout(walletFallbackTimerRef.current);
+      walletFallbackTimerRef.current = null;
+    }
+  }, [selectedOptionIndex, invoice?.public_id]);
+
+  useEffect(() => {
+    return () => {
+      if (walletFallbackTimerRef.current) {
+        window.clearTimeout(walletFallbackTimerRef.current);
+      }
+    };
+  }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -484,13 +504,49 @@ export function CheckoutPage() {
     }
   }
 
-  async function copyPaymentDetails(payment: CheckoutPaymentDetails) {
+  async function writePaymentDetailsToClipboard(payment: CheckoutPaymentDetails) {
     try {
       await navigator.clipboard.writeText(paymentDetailsText(payment, text));
       setCopiedField("details");
+      return true;
     } catch {
+      return false;
+    }
+  }
+
+  async function copyPaymentDetails(payment: CheckoutPaymentDetails) {
+    const copied = await writePaymentDetailsToClipboard(payment);
+    if (!copied) {
       setError(language === "ru" ? "Не удалось скопировать реквизиты. Скопируйте значения вручную." : "Could not copy payment details. Copy the values manually.");
     }
+    return copied;
+  }
+
+  function openWallet(payment: CheckoutPaymentDetails, uri: string) {
+    if (walletFallbackTimerRef.current) {
+      window.clearTimeout(walletFallbackTimerRef.current);
+    }
+
+    let detailsCopied = false;
+    walletFallbackElapsedRef.current = false;
+    setWalletActionState("opening");
+    void writePaymentDetailsToClipboard(payment).then((copied) => {
+      detailsCopied = copied;
+      if (copied && walletFallbackElapsedRef.current && document.visibilityState === "visible") {
+        setWalletActionState("fallback");
+      } else if (!copied && document.visibilityState === "visible") {
+        setWalletActionState("copy_failed");
+      }
+    });
+
+    walletFallbackTimerRef.current = window.setTimeout(() => {
+      walletFallbackElapsedRef.current = true;
+      if (document.visibilityState === "visible") {
+        setWalletActionState(detailsCopied ? "fallback" : "copy_failed");
+      }
+    }, 1400);
+
+    window.location.assign(uri);
   }
 
   const statusTone = invoice ? getInvoiceStatusMeta(invoice.status).tone : "neutral";
@@ -755,22 +811,42 @@ export function CheckoutPage() {
 
             <div className="co-actions">
               {walletURI ? (
-                <a
-                  id="co-btn-pay"
-                  href={walletURI}
-                  className="co-btn co-btn--primary"
-                >
-                  <Icons.Wallet />
-                  {text.payInWallet}
-                </a>
+                <div className="co-wallet-assist" role="group" aria-label={text.walletActionLabel}>
+                  <button
+                    id="co-btn-pay"
+                    type="button"
+                    className={`co-btn co-btn--primary ${walletActionState === "opening" ? "is-loading" : ""}`}
+                    onClick={() => activePayment && void openWallet(activePayment, walletURI)}
+                  >
+                    {walletActionState === "fallback" ? <Icons.Check /> : <Icons.Wallet />}
+                    {walletActionState === "fallback" ? text.walletFallbackTitle : text.payInWallet}
+                  </button>
+                  <p className={`co-wallet-assist__status co-wallet-assist__status--${walletActionState}`} aria-live="polite">
+                    {walletActionState === "opening"
+                      ? text.walletOpening
+                      : walletActionState === "fallback"
+                        ? text.walletFallbackBody
+                        : walletActionState === "copy_failed"
+                          ? text.walletCopyFailed
+                          : text.walletPrecopyHint}
+                  </p>
+                  <button
+                    type="button"
+                    className={`co-btn co-btn--ghost co-btn--compact ${copiedField === "details" ? "is-copied" : ""}`}
+                    onClick={() => activePayment && void copyPaymentDetails(activePayment)}
+                  >
+                    {copiedField === "details" ? <Icons.Check /> : <Icons.Copy />}
+                    {copiedField === "details" ? text.copied : text.copyPaymentDetails}
+                  </button>
+                </div>
               ) : (
                 <button
                   id="co-btn-pay"
                   type="button"
-                  className={`co-btn co-btn--primary ${copiedField === "details" ? "is-copied" : ""}`}
+                  className="co-btn co-btn--primary"
                   onClick={() => activePayment && void copyPaymentDetails(activePayment)}
                 >
-                  {copiedField === "details" ? <Icons.Check /> : <Icons.Wallet />}
+                  {copiedField === "details" ? <Icons.Check /> : <Icons.Copy />}
                   {copiedField === "details" ? text.copied : text.copyPaymentDetails}
                 </button>
               )}

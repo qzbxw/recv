@@ -616,6 +616,30 @@
 
 /* actions */
 .co-actions { display: grid; align-content: start; justify-items: center; width: 100%; }
+.co-wallet-assist {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+}
+.co-wallet-assist__status {
+  margin: 0;
+  max-width: 18rem;
+  min-height: 2.4em;
+  text-align: center;
+  color: var(--co-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.co-wallet-assist__status--opening {
+  color: var(--co-accent-2);
+}
+.co-wallet-assist__status--fallback {
+  color: var(--co-ok);
+}
+.co-wallet-assist__status--copy_failed {
+  color: var(--co-warn);
+}
 .co-btn {
   appearance: none;
   cursor: pointer;
@@ -635,6 +659,11 @@
   max-width: 240px;
 }
 .co-btn svg { width: 18px; height: 18px; }
+.co-btn--compact {
+  max-width: 240px;
+  padding: 0.62rem 1rem;
+  font-size: 0.82rem;
+}
 .co-btn--primary {
   color: #000000;
   background: #ffffff;
@@ -647,6 +676,10 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 24px rgba(255, 255, 255, 0.2);
 }
+.co-btn--primary.is-loading {
+  transform: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08), 0 4px 20px rgba(255, 255, 255, 0.1);
+}
 .co-btn--ghost {
   color: var(--co-ink);
   background: transparent;
@@ -655,6 +688,11 @@
 .co-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.15);
+}
+.co-btn.is-copied {
+  color: var(--co-ok);
+  border-color: rgba(99, 215, 157, 0.22);
+  background: rgba(99, 215, 157, 0.08);
 }
 
 /* alert bar (Timer & Warning unified) */

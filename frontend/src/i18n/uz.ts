@@ -478,6 +478,12 @@ const uz = {
     footerCTA: "recv bilan shunday kripto to'lovlarni qabul qiling",
     payInWallet: "Walletda to'lash",
     copyPaymentDetails: "To'lov ma'lumotlarini nusxalash",
+    walletActionLabel: "Wallet orqali to'lov amallari",
+    walletPrecopyHint: "Walletni ochishdan oldin to'lov ma'lumotlarini nusxalaymiz.",
+    walletOpening: "To'lov ma'lumotlari nusxalandi. Wallet ochilmoqda...",
+    walletFallbackTitle: "Ma'lumotlar nusxalandi",
+    walletFallbackBody: "Wallet ochilmasa, nusxalangan ma'lumotlarni walletga qo'lda kiriting.",
+    walletCopyFailed: "Walletni ochish urinildi, lekin nusxalash amalga oshmadi. Quyidagi ma'lumotlarni qo'lda nusxalang.",
     needHelp: "To'lov bo'yicha yordam kerakmi?",
   },
   sellerConsole: {
