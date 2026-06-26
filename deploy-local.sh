@@ -76,9 +76,9 @@ echo "--> Отправка изменений в origin ($BRANCH_NAME)..."
 git push origin "$BRANCH_NAME"
 
 # Опция для SSH-ключа
-SSH_OPTS=""
+SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 if [ -n "$DEPLOY_KEY" ]; then
-  SSH_OPTS="-i $DEPLOY_KEY"
+  SSH_OPTS="$SSH_OPTS -i $DEPLOY_KEY"
 fi
 
 echo "--> Подключение по SSH и запуск сборки/деплоя на сервере..."
