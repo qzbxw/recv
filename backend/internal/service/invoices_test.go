@@ -108,6 +108,18 @@ func TestNormalizePaymentOptionInputsAllowsMoreThanTwoOptions(t *testing.T) {
 	}
 }
 
+func TestNormalizePaymentOptionInputsConvertsLegacyTONUSDT(t *testing.T) {
+	service := NewInvoiceService(nil, "")
+
+	options, err := service.normalizePaymentOptionInputs(store.NetworkTON, store.NetworkTON_USDT, "", nil)
+	if err != nil {
+		t.Fatalf("normalizePaymentOptionInputs returned error: %v", err)
+	}
+	if len(options) != 1 || options[0].Network != store.NetworkTON || options[0].Asset != store.AssetUSDT {
+		t.Fatalf("expected legacy TON_USDT to normalize to TON/USDT, got %#v", options)
+	}
+}
+
 func TestNormalizePaymentOptionInputsRejectsMoreThanSupportedOptions(t *testing.T) {
 	service := NewInvoiceService(nil, "")
 	requested := make([]PaymentOptionInput, maxSupportedPaymentOptions()+1)

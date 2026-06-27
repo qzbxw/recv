@@ -127,12 +127,12 @@ export function canCopyInvoicePaymentDetails(invoice: Invoice, now = Date.now())
   return getInvoiceStatusMeta(invoice.status).canCopyPaymentDetails;
 }
 
-export function formatNetworkLabel(network: Network) {
+export function formatNetworkLabel(network: Network | "TON_USDT") {
   switch (network) {
     case "EVM":
       return "ETHEREUM";
     case "TON_USDT":
-      return "USDT on TON";
+      return "TON";
     case "SOLANA":
       return "Solana";
     case "ARBITRUM":

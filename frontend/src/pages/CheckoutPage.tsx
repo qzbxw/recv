@@ -108,7 +108,7 @@ function createDemoInvoice(): Invoice {
     checkout_url: "/app/checkout/demo",
     payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=149000000000&text=RECV-DEMO-149",
     payment_options: [
-      { network: "TON_USDT", asset: "USDT", payable_amount: "149.000000", destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: "RECV-DEMO-149", payment_uri: "", is_default: true },
+      { network: "TON", asset: "USDT", payable_amount: "149.000000", destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: "RECV-DEMO-149", payment_uri: "", is_default: true },
       { network: "TON", asset: "GRAM", payable_amount: "1234.500000", destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: "RECV-DEMO-149", payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=1234500000000&text=RECV-DEMO-149", is_default: false },
       { network: "TRON", asset: "USDT", payable_amount: "149.000000", destination_address: "TXDemoTRON4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1", payment_comment: null, payment_uri: "", is_default: false },
       { network: "SOLANA", asset: "USDT", payable_amount: "149.000000", destination_address: "DemoSoLana7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: null, payment_uri: "", is_default: false },
@@ -385,8 +385,7 @@ export function CheckoutPage() {
       : text.pageTitle;
   }, [invoice?.title, text.pageTitle]);
 
-  // Cascade dropdown derived state
-  // TON_USDT is a backend implementation detail — in the UI it's just TON + USDT asset.
+  // Cascade dropdown derived state. Legacy TON_USDT responses are displayed as TON + USDT.
   const paymentOptions = invoice?.payment_options ?? [];
 
   function getDisplayNetwork(network: string): string {
@@ -433,7 +432,7 @@ export function CheckoutPage() {
   }
 
   function selectAsset(asset: PaymentAsset) {
-    // Match by display-network + asset (handles TON/TON_USDT transparently)
+    // Match by display-network + asset, including legacy TON_USDT responses.
     const idx = paymentOptions.findIndex(
       o => getDisplayNetwork(o.network) === selectedDisplayNetwork && o.asset === asset
     );

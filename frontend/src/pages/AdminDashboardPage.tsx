@@ -108,7 +108,7 @@ const GROUP_BY_OPTIONS = [
   { value: "mode", label: "By mode" },
 ];
 
-const SUPPORTED_PAYABLE_NETWORKS = ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] as const;
+const SUPPORTED_PAYABLE_NETWORKS = ["TON", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] as const;
 
 function formatMoney(value: string | number | null | undefined) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));

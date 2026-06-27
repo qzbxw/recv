@@ -22,8 +22,8 @@ func TestNetworkHelpers(t *testing.T) {
 	if !NetworkBASE.IsSupportedPayableNetwork() {
 		t.Fatal("expected BASE to be a supported payable network")
 	}
-	if !NetworkTON_USDT.IsSupportedPayableNetwork() {
-		t.Fatal("expected TON_USDT to be a supported payable network")
+	if got, asset := NormalizePaymentOption(NetworkTON_USDT, ""); got != NetworkTON || asset != AssetUSDT {
+		t.Fatalf("expected legacy TON_USDT to normalize to TON/USDT, got %s/%s", got, asset)
 	}
 	if NetworkEVM.IsSupportedPayableNetwork() {
 		t.Fatal("expected generic EVM bucket not to be directly payable")
@@ -53,7 +53,7 @@ func TestPaymentAssetHelpers(t *testing.T) {
 		asset   PaymentAsset
 	}{
 		{NetworkTON, AssetGRAM},
-		{NetworkTON_USDT, AssetUSDT},
+		{NetworkTON, AssetUSDT},
 		{NetworkTRON, AssetUSDT},
 		{NetworkSOLANA, AssetSOL},
 		{NetworkSOLANA, AssetUSDT},
@@ -75,7 +75,6 @@ func TestPaymentAssetHelpers(t *testing.T) {
 		network Network
 		asset   PaymentAsset
 	}{
-		{NetworkTON, AssetUSDT},
 		{NetworkTRON, AssetUSDC},
 		{NetworkBASE, AssetGRAM},
 		{NetworkBSC, AssetUSDC},

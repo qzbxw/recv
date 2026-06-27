@@ -299,7 +299,7 @@ const response = await fetch("https://api.recv.money/v1/invoices", {
   body: JSON.stringify({
     title: "Order #9921",
     base_amount_usd: "149.00",
-    payable_network: "TRON", // TON (GRAM), TON_USDT (USDT on TON), TRON, BASE, or BSC
+    payable_network: "TRON", // TON with payable_asset GRAM/USDT, TRON, BASE, or BSC
     expires_in_minutes: 60
   })
 });

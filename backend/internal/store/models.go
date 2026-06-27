@@ -13,6 +13,8 @@ type Network string
 
 const (
 	NetworkTON      Network = "TON"
+	// NetworkTON_USDT is accepted as a legacy API/database value. New payment
+	// options should use NetworkTON with AssetUSDT.
 	NetworkTON_USDT Network = "TON_USDT"
 	NetworkTRON     Network = "TRON"
 	NetworkSOLANA   Network = "SOLANA"
@@ -77,6 +79,25 @@ func (n Network) IsSupportedPayableNetwork() bool {
 	}
 }
 
+func NormalizePaymentNetwork(value string) Network {
+	return Network(strings.ToUpper(strings.TrimSpace(value)))
+}
+
+func NormalizePaymentOption(network Network, asset PaymentAsset) (Network, PaymentAsset) {
+	network = NormalizePaymentNetwork(string(network))
+	asset = NormalizePaymentAsset(string(asset))
+	if network == NetworkTON_USDT {
+		network = NetworkTON
+		if asset == "" {
+			asset = AssetUSDT
+		}
+	}
+	if asset == "" {
+		asset = DefaultAssetForNetwork(network)
+	}
+	return network, asset
+}
+
 func NormalizePaymentAsset(value string) PaymentAsset {
 	return PaymentAsset(strings.ToUpper(strings.TrimSpace(value)))
 }
@@ -95,10 +116,11 @@ func DefaultAssetForNetwork(network Network) PaymentAsset {
 }
 
 func IsSupportedPaymentOption(network Network, asset PaymentAsset) bool {
+	network, asset = NormalizePaymentOption(network, asset)
 	switch network {
 	case NetworkTON:
-		return asset == AssetGRAM
-	case NetworkTON_USDT, NetworkTRON:
+		return asset == AssetGRAM || asset == AssetUSDT
+	case NetworkTRON:
 		return asset == AssetUSDT
 	case NetworkSOLANA:
 		return asset == AssetSOL || asset == AssetUSDT || asset == AssetUSDC
@@ -125,7 +147,7 @@ type PaymentOptionSupport struct {
 // stable order. It is derived from IsSupportedPaymentOption so public
 // consumers (MCP server, docs) cannot drift from the actual support checks.
 func SupportedPaymentOptions() []PaymentOptionSupport {
-	networks := []Network{NetworkTON, NetworkTON_USDT, NetworkTRON, NetworkSOLANA, NetworkBASE, NetworkARBITRUM, NetworkBSC}
+	networks := []Network{NetworkTON, NetworkTRON, NetworkSOLANA, NetworkBASE, NetworkARBITRUM, NetworkBSC}
 	assets := []PaymentAsset{AssetGRAM, AssetUSDT, AssetUSDC, AssetSOL, AssetBNB}
 	options := make([]PaymentOptionSupport, 0, len(networks))
 	for _, network := range networks {

@@ -565,11 +565,18 @@ func adminDailySalesResponse(items []store.AdminDailySalesPoint) []gin.H {
 func adminNetworkBreakdownResponse(items []store.AdminNetworkBreakdown) []gin.H {
 	byNetwork := make(map[store.Network]store.AdminNetworkBreakdown, len(items))
 	for _, item := range items {
-		byNetwork[item.Network] = item
+		if item.Network == store.NetworkTON_USDT {
+			item.Network = store.NetworkTON
+		}
+		existing := byNetwork[item.Network]
+		existing.Network = item.Network
+		existing.PaidUSD = existing.PaidUSD.Add(item.PaidUSD)
+		existing.PaidCount += item.PaidCount
+		existing.TotalCount += item.TotalCount
+		byNetwork[item.Network] = existing
 	}
 	networks := []store.Network{
 		store.NetworkTON,
-		store.NetworkTON_USDT,
 		store.NetworkTRON,
 		store.NetworkSOLANA,
 		store.NetworkBASE,
@@ -993,5 +1000,3 @@ func (s *Server) handleAdminDeleteScheduledBroadcast(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
-
-

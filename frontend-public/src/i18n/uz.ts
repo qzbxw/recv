@@ -136,10 +136,6 @@ const uz = {
         label: "TON",
       },
       {
-        slug: "ton_usdt",
-        label: "TON tarmog'idagi USDT",
-      },
-      {
         slug: "tron",
         label: "TRON",
       },

@@ -9,7 +9,7 @@ export type PayablePaymentOption = {
 
 export const PAYABLE_PAYMENT_OPTIONS: PayablePaymentOption[] = [
   { key: "TON:GRAM", network: "TON", asset: "GRAM", label: "GRAM" },
-  { key: "TON_USDT:USDT", network: "TON_USDT", asset: "USDT", label: "USDT on TON" },
+  { key: "TON:USDT", network: "TON", asset: "USDT", label: "TON USDT" },
   { key: "TRON:USDT", network: "TRON", asset: "USDT", label: "TRON USDT" },
   { key: "SOLANA:SOL", network: "SOLANA", asset: "SOL", label: "SOL" },
   { key: "SOLANA:USDT", network: "SOLANA", asset: "USDT", label: "Solana USDT" },
@@ -23,5 +23,5 @@ export const PAYABLE_PAYMENT_OPTIONS: PayablePaymentOption[] = [
 ];
 
 export function walletBucket(network: Network) {
-  return network === "BASE" || network === "BSC" || network === "ARBITRUM" ? "EVM" : network === "TON_USDT" ? "TON" : network;
+  return network === "BASE" || network === "BSC" || network === "ARBITRUM" ? "EVM" : network;
 }

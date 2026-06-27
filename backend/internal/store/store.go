@@ -1264,7 +1264,7 @@ func (s *Store) GetWatchedWallets(ctx context.Context, graceWindow time.Duration
 			CASE
 				WHEN ipo.network IN ('BASE', 'BSC', 'ARBITRUM') AND ipo.asset = 'BNB' THEN 'BSC'
 				WHEN ipo.network IN ('BASE', 'BSC', 'ARBITRUM') THEN 'EVM'
-				WHEN ipo.network::text = 'TON_USDT' THEN 'TON_USDT'
+				WHEN ipo.network::text = 'TON_USDT' OR (ipo.network = 'TON' AND ipo.asset = 'USDT') THEN 'TON_USDT'
 				ELSE ipo.network::text
 			END AS poll_network,
 			ipo.network,
@@ -1565,8 +1565,10 @@ func applyPaymentOptions(invoice *Invoice, options []PaymentOption) {
 }
 
 func selectInvoicePaymentOption(invoice *Invoice, network Network, asset PaymentAsset) {
+	network, asset = NormalizePaymentOption(network, asset)
 	for _, option := range invoice.PaymentOptions {
-		if option.Network == network && option.Asset == asset {
+		optionNetwork, optionAsset := NormalizePaymentOption(option.Network, option.Asset)
+		if optionNetwork == network && optionAsset == asset {
 			invoice.PayableNetwork = option.Network
 			invoice.PayableAsset = option.Asset
 			invoice.PayableAmount = option.PayableAmount
@@ -1986,4 +1988,3 @@ func (s *Store) QueueRetentionReminder(ctx context.Context, workspaceID int64, r
 	}
 	return nil
 }
-

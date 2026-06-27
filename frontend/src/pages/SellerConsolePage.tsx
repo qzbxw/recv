@@ -1147,7 +1147,8 @@ export function SellerConsolePage() {
   const displayInvoices = useMemo(() => {
     return filteredInvoices.filter(inv => {
       // 1. Network Filter
-      if (selectedNetwork !== "all" && inv.payable_network !== selectedNetwork) {
+      const invoiceNetwork = String(inv.payable_network) === "TON_USDT" ? "TON" : inv.payable_network;
+      if (selectedNetwork !== "all" && invoiceNetwork !== selectedNetwork) {
         return false;
       }
       
@@ -2345,7 +2346,6 @@ export function SellerConsolePage() {
                         options={[
                           { value: "all", label: t.invoices.filterAllNetworks },
                           { value: "TON", label: "TON" },
-                          { value: "TON_USDT", label: "TON (USDT)" },
                           { value: "TRON", label: "TRON" },
                           { value: "EVM", label: "Ethereum" },
                           { value: "SOLANA", label: "Solana" },

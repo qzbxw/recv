@@ -1,4 +1,4 @@
-export type Network = "TON" | "TON_USDT" | "TRON" | "EVM" | "SOLANA" | "BASE" | "ARBITRUM" | "BSC";
+export type Network = "TON" | "TRON" | "EVM" | "SOLANA" | "BASE" | "ARBITRUM" | "BSC";
 export type PaymentAsset = "GRAM" | "USDT" | "USDC" | "SOL" | "BNB";
 export type InvoiceStatus = "draft" | "awaiting_payment" | "paid" | "expired" | "underpaid" | "overpaid" | "manual_review";
 export type APIKeyMode = "live" | "test";

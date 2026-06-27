@@ -136,10 +136,6 @@ const uk = {
         label: "TON",
       },
       {
-        slug: "ton_usdt",
-        label: "USDT в TON",
-      },
-      {
         slug: "tron",
         label: "TRON",
       },

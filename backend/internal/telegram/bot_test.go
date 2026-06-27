@@ -188,14 +188,14 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if got := workspaceHandle(store.Workspace{}); got != "unlinked" {
 		t.Fatalf("expected unlinked workspace handle, got %q", got)
 	}
-	if networks := payableNetworksForWallet(store.NetworkEVM); len(networks) != 4 {
-		t.Fatalf("expected 4 payable networks for EVM wallet, got %#v", networks)
+	if options := payableOptionsForWallet(store.NetworkEVM); len(options) != 5 {
+		t.Fatalf("expected 5 payable options for EVM wallet, got %#v", options)
 	}
-	if networks := payableNetworksForWallet(store.NetworkSOLANA); len(networks) != 1 || networks[0] != store.NetworkSOLANA {
-		t.Fatalf("expected 1 SOLANA payable network, got %#v", networks)
+	if options := payableOptionsForWallet(store.NetworkSOLANA); len(options) != 3 || options[0].Network != store.NetworkSOLANA {
+		t.Fatalf("expected 3 SOLANA payable options, got %#v", options)
 	}
-	if networks := payableNetworksForWallet(store.NetworkTON); len(networks) != 2 || networks[0] != store.NetworkTON || networks[1] != store.NetworkTON_USDT {
-		t.Fatalf("expected TON payable networks for GRAM and USDT, got %#v", networks)
+	if options := payableOptionsForWallet(store.NetworkTON); len(options) != 2 || options[0].Network != store.NetworkTON || options[0].Asset != store.AssetGRAM || options[1].Network != store.NetworkTON || options[1].Asset != store.AssetUSDT {
+		t.Fatalf("expected TON payable options for GRAM and USDT, got %#v", options)
 	}
 	if got := networkButtonLabel(store.NetworkBASE); got != "BASE / USDT" {
 		t.Fatalf("unexpected network label: %q", got)

@@ -78,7 +78,7 @@ npm run dev   # or: npm start
 | Параметр | Тип | Обязателен | Описание |
 |----------|-----|------------|----------|
 | `plan_code` | string | Да | Одно из: `merchant`, `developer`, `business`. Для агента с API-ключами и вебхуками используйте `developer` или `business`. |
-| `payable_network` | string | Да | Вариант оплаты подписки recv. Одно из: `TON` (GRAM в TON), `TON_USDT` (USDT в TON), `TRON`, `BASE`, `BSC`. |
+| `payable_network` | string | Да | Сеть оплаты подписки recv. Одно из: `TON`, `TRON`, `BASE`, `BSC`. Используйте `payable_asset` или `payment_options`, чтобы выбрать `TON`/`GRAM` или `TON`/`USDT`. |
 
 ### `get_checkout_invoice`
 
@@ -100,7 +100,7 @@ npm run dev   # or: npm start
 |----------|-----|------------|----------|
 | `title` | string | Да | Человекочитаемое название, отображаемое плательщику (например, `"Order #1290"`). |
 | `base_amount_usd` | string | Да | Сумма в долларах США (USD) в виде десятичной строки (например, `"10.50"`). |
-| `payable_network` | string | Да | Вариант оплаты покупателя. Одно из: `TON` (GRAM в TON), `TON_USDT` (USDT в TON), `TRON`, `BASE`, `BSC`. |
+| `payable_network` | string | Да | Сеть оплаты покупателя. Одно из: `TON`, `TRON`, `BASE`, `BSC`. Используйте `payable_asset` или `payment_options`, чтобы выбрать `TON`/`GRAM` или `TON`/`USDT`. |
 | `expires_in_minutes` | number | Нет | Опциональное время жизни счета в минутах (по умолчанию 30). |
 
 Инструмент отправляет аргументы напрямую методом `POST` на `/v1/invoices`. Окружение созданного счета зависит от переданного API-ключа (`test_` → test). См. [Инвойсы](/ru/docs/invoices).
@@ -150,7 +150,7 @@ npm run dev   # or: npm start
 
 ### `list_supported_networks`
 
-Список поддерживаемых вариантов оплаты. Не принимает параметров и возвращает статичную сводку значений `payable_network` (`TON` для GRAM в TON, `TON_USDT` для USDT в TON, `TRON`, `BASE`, `BSC`). См. [Поддерживаемые сети](/ru/docs/networks) для авторитетного списка.
+Список поддерживаемых вариантов оплаты. Не принимает параметров и возвращает статичную сводку пар сеть/актив (`TON`/`GRAM`, `TON`/`USDT`, `TRON`/`USDT`, `BASE`/`USDT`, `BSC`/`USDT`). См. [Поддерживаемые сети](/ru/docs/networks) для авторитетного списка.
 
 ## Ресурсы
 

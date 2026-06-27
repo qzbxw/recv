@@ -91,7 +91,6 @@ const ru = {
       title: "Глобальная связность.",
       list: [
         { slug: "ton", label: "TON" },
-        { slug: "ton_usdt", label: "USDT в TON" },
         { slug: "tron", label: "TRON" },
         { slug: "solana", label: "Solana" },
         { slug: "base", label: "Base" },

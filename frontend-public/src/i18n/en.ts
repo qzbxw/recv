@@ -91,7 +91,6 @@ const en = {
       title: "Global Connectivity.",
       list: [
         { slug: "ton", label: "TON" },
-        { slug: "ton_usdt", label: "USDT on TON" },
         { slug: "tron", label: "TRON" },
         { slug: "solana", label: "Solana" },
         { slug: "base", label: "Base" },

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { Network, PaymentAsset } from "../lib/types";
 
-export type DisplayNetwork = Exclude<Network, "TON_USDT">;
+export type DisplayNetwork = Network;
 
 type CryptoLogoProps =
   | { type: "network"; value: DisplayNetwork | Network | string; className?: string }

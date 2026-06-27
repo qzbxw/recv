@@ -132,8 +132,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             base_amount_usd: { type: "string", description: "Amount in USD as a decimal string (e.g. '10.50')" },
             payable_network: {
               type: "string",
-              description: "Legacy single-option network. One of: TON, TON_USDT, TRON, SOLANA, BASE, ARBITRUM, BSC.",
-              enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"],
+              description: "Network code. One of: TON, TRON, SOLANA, BASE, ARBITRUM, BSC. Use payable_asset or payment_options to choose the asset; legacy TON_USDT is accepted by the API as TON/USDT.",
+              enum: ["TON", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"],
             },
             payable_asset: {
               type: "string",
@@ -142,11 +142,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             payment_options: {
               type: "array",
-              description: "Optional list of up to two payment choices, e.g. [{network:'TRON', asset:'USDT'}, {network:'SOLANA', asset:'SOL'}].",
+              description: "Optional list of payment choices, e.g. [{network:'TON', asset:'USDT'}, {network:'TRON', asset:'USDT'}].",
               items: {
                 type: "object",
                 properties: {
-                  network: { type: "string", enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] },
+                  network: { type: "string", enum: ["TON", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] },
                   asset: { type: "string", enum: ["GRAM", "USDT", "USDC", "SOL", "BNB"] },
                 },
                 required: ["network", "asset"],
@@ -192,8 +192,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             payable_network: {
               type: "string",
-              description: "Legacy single-option network used to pay recv for the subscription.",
-              enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"],
+              description: "Network used to pay recv for the subscription. Use payable_asset or payment_options to choose the asset; legacy TON_USDT is accepted by the API as TON/USDT.",
+              enum: ["TON", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"],
             },
             payable_asset: { type: "string", enum: ["GRAM", "USDT", "USDC", "SOL", "BNB"] },
             payment_options: {
@@ -201,7 +201,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               items: {
                 type: "object",
                 properties: {
-                  network: { type: "string", enum: ["TON", "TON_USDT", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] },
+                  network: { type: "string", enum: ["TON", "TRON", "SOLANA", "BASE", "ARBITRUM", "BSC"] },
                   asset: { type: "string", enum: ["GRAM", "USDT", "USDC", "SOL", "BNB"] },
                 },
                 required: ["network", "asset"],
@@ -346,7 +346,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{
             type: "text",
-            text: "recv supports these payment options (cached fallback):\n- TON/GRAM\n- TON_USDT/USDT\n- TRON/USDT\n- SOLANA/SOL, SOLANA/USDT, SOLANA/USDC\n- BASE/USDT, BASE/USDC\n- ARBITRUM/USDT, ARBITRUM/USDC\n- BSC/BNB, BSC/USDT"
+            text: "recv supports these payment options (cached fallback):\n- TON/GRAM, TON/USDT\n- TRON/USDT\n- SOLANA/SOL, SOLANA/USDT, SOLANA/USDC\n- BASE/USDT, BASE/USDC\n- ARBITRUM/USDT, ARBITRUM/USDC\n- BSC/BNB, BSC/USDT"
           }],
         };
       }

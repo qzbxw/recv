@@ -136,10 +136,6 @@ const de = {
         label: "TON",
       },
       {
-        slug: "ton_usdt",
-        label: "USDT auf TON",
-      },
-      {
         slug: "tron",
         label: "TRON",
       },

@@ -54,6 +54,7 @@ type botInvoiceDraft struct {
 	WalletID       int64
 	WalletNetwork  store.Network
 	PayableNetwork store.Network
+	PayableAsset   store.PaymentAsset
 	WalletLabel    string
 	Title          string
 	Amount         string
@@ -426,15 +427,47 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			WalletNetwork: wallet.Network,
 			WalletLabel:   fmt.Sprintf("%s • %s", networkButtonLabel(wallet.Network), shortAddress(wallet.Address)),
 		}
-		rows := make([][]tgInlineKeyboardButton, 0, 5)
-		for _, network := range payableNetworksForWallet(wallet.Network) {
+		rows := make([][]tgInlineKeyboardButton, 0, 8)
+		for _, option := range payableOptionsForWallet(wallet.Network) {
 			rows = append(rows, []tgInlineKeyboardButton{{
-				Text:         networkButtonLabel(network),
-				CallbackData: fmt.Sprintf("invoice:network:%d:%s", wallet.ID, network),
+				Text:         paymentOptionButtonLabel(option.Network, option.Asset),
+				CallbackData: fmt.Sprintf("invoice:option:%d:%s:%s", wallet.ID, option.Network, option.Asset),
 			}})
 		}
 		rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnCancel, CallbackData: "invoice:cancel"}})
 		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceNetworkPrompt(c, session.DraftInvoice), b.recvKeyboard(rows))
+	case strings.HasPrefix(data, "invoice:option:"):
+		parts := strings.Split(data, ":")
+		if len(parts) != 5 {
+			err = fmt.Errorf("invalid invoice option callback")
+			break
+		}
+		walletID, parseErr := strconv.ParseInt(parts[2], 10, 64)
+		if parseErr != nil {
+			err = parseErr
+			break
+		}
+		wallet, getErr := b.store.GetWalletByID(ctx, workspace.ID, walletID)
+		if getErr != nil {
+			err = getErr
+			break
+		}
+		network, asset := store.NormalizePaymentOption(store.Network(parts[3]), store.PaymentAsset(parts[4]))
+		if !store.IsSupportedPaymentOption(network, asset) || wallet.Network != network.WalletBucket() {
+			err = fmt.Errorf("wallet does not support payment option %s/%s", network, asset)
+			break
+		}
+		session.Flow = flowInvoiceTitle
+		session.DraftInvoice = botInvoiceDraft{
+			WalletID:       wallet.ID,
+			WalletNetwork:  wallet.Network,
+			PayableNetwork: network,
+			PayableAsset:   asset,
+			WalletLabel:    fmt.Sprintf("%s • %s", paymentOptionButtonLabel(network, asset), shortAddress(wallet.Address)),
+		}
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceTitlePrompt(c, session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnCancel, CallbackData: "invoice:cancel"}},
+		}))
 	case strings.HasPrefix(data, "invoice:network:"):
 		parts := strings.Split(data, ":")
 		if len(parts) != 4 {
@@ -451,8 +484,8 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = getErr
 			break
 		}
-		network := store.Network(parts[3])
-		if !network.IsSupportedPayableNetwork() || wallet.Network != network.WalletBucket() {
+		network, asset := store.NormalizePaymentOption(store.Network(parts[3]), "")
+		if !store.IsSupportedPaymentOption(network, asset) || wallet.Network != network.WalletBucket() {
 			err = fmt.Errorf("wallet does not support network %s", network)
 			break
 		}
@@ -461,7 +494,8 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			WalletID:       wallet.ID,
 			WalletNetwork:  wallet.Network,
 			PayableNetwork: network,
-			WalletLabel:    fmt.Sprintf("%s • %s", networkButtonLabel(network), shortAddress(wallet.Address)),
+			PayableAsset:   asset,
+			WalletLabel:    fmt.Sprintf("%s • %s", paymentOptionButtonLabel(network, asset), shortAddress(wallet.Address)),
 		}
 		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, b.invoiceTitlePrompt(c, session.DraftInvoice), b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: c.btnCancel, CallbackData: "invoice:cancel"}},
@@ -509,6 +543,27 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		planCode := store.NormalizePlanCode(parts[2])
 		network := store.Network(parts[3])
 		invoice, createErr := b.invoiceService.CreatePlanInvoice(ctx, workspace, planCode, network)
+		if createErr != nil {
+			err = createErr
+			break
+		}
+		plan := store.ResolvePlan(planCode)
+		callbackText = c.toastPlanCheckoutCreated
+		checkoutText := fmt.Sprintf(c.checkoutCreated, esc(plan.Name), esc(invoice.PublicID), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)))
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, checkoutText, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnOpenCheckout, URL: b.appURL("/checkout/" + invoice.PublicID)}},
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
+	case strings.HasPrefix(data, "plan:option:"):
+		parts := strings.Split(data, ":")
+		if len(parts) != 5 {
+			err = fmt.Errorf("invalid plan option callback")
+			break
+		}
+		planCode := store.NormalizePlanCode(parts[2])
+		network := store.Network(parts[3])
+		asset := store.PaymentAsset(parts[4])
+		invoice, createErr := b.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, []service.PaymentOptionInput{{Network: network, Asset: asset}}, nil, 0)
 		if createErr != nil {
 			err = createErr
 			break
@@ -670,6 +725,7 @@ func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Wor
 		BaseAmountUSD:    amount,
 		WalletID:         session.DraftInvoice.WalletID,
 		PayableNetwork:   session.DraftInvoice.PayableNetwork,
+		PayableAsset:     session.DraftInvoice.PayableAsset,
 		ExpiresInMinutes: minutes,
 	})
 	if err != nil {
@@ -972,11 +1028,13 @@ func (b *BotWorker) renderPlanNetworkPicker(ctx context.Context, workspace store
 	text := fmt.Sprintf(c.planPickNetwork, esc(plan.Name), esc(plan.PriceUSDString), esc(planDescription(c, plan.Code)))
 
 	rows := make([][]tgInlineKeyboardButton, 0, 8)
-	for _, network := range []store.Network{store.NetworkTRON, store.NetworkSOLANA, store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC, store.NetworkTON, store.NetworkTON_USDT} {
-		rows = append(rows, []tgInlineKeyboardButton{{
-			Text:         networkButtonLabel(network),
-			CallbackData: fmt.Sprintf("plan:network:%s:%s", plan.Code, network),
-		}})
+	for _, support := range store.SupportedPaymentOptions() {
+		for _, asset := range support.Assets {
+			rows = append(rows, []tgInlineKeyboardButton{{
+				Text:         paymentOptionButtonLabel(support.Network, asset),
+				CallbackData: fmt.Sprintf("plan:option:%s:%s:%s", plan.Code, support.Network, asset),
+			}})
+		}
 	}
 	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnBack, CallbackData: "screen:upgrade"}})
 	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard(rows))
@@ -1287,17 +1345,20 @@ func valueOrFallback(value string, fallback string) string {
 	return value
 }
 
-func payableNetworksForWallet(network store.Network) []store.Network {
-	switch network {
-	case store.NetworkEVM:
-		return []store.Network{store.NetworkBASE, store.NetworkARBITRUM, store.NetworkBSC, store.NetworkEVM}
-	case store.NetworkTON:
-		return []store.Network{store.NetworkTON, store.NetworkTON_USDT}
-	case store.NetworkSOLANA:
-		return []store.Network{store.NetworkSOLANA}
-	default:
-		return []store.Network{network}
+func payableOptionsForWallet(network store.Network) []service.PaymentOptionInput {
+	options := make([]service.PaymentOptionInput, 0)
+	for _, support := range store.SupportedPaymentOptions() {
+		if support.Network.WalletBucket() != network {
+			continue
+		}
+		for _, asset := range support.Assets {
+			options = append(options, service.PaymentOptionInput{
+				Network: support.Network,
+				Asset:   asset,
+			})
+		}
 	}
+	return options
 }
 
 func networkButtonLabel(network store.Network) string {
@@ -1321,6 +1382,10 @@ func networkButtonLabel(network store.Network) string {
 	default:
 		return string(network)
 	}
+}
+
+func paymentOptionButtonLabel(network store.Network, asset store.PaymentAsset) string {
+	return fmt.Sprintf("%s / %s", network, asset)
 }
 
 func planDescription(c botCopy, planCode store.PlanCode) string {

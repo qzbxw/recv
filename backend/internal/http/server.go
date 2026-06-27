@@ -1210,10 +1210,13 @@ func walletDeepLink(network store.Network, asset store.PaymentAsset, destination
 
 	switch network {
 	case store.NetworkTON:
-		if asset != store.AssetGRAM {
-			return destination
+		if asset == store.AssetUSDT {
+			return tonTransferURI(destination, amount, 6, "EQCxE6mC__G6cD7YIAkb4leT8akRi8nM60Nw2VY0lNAM9qfe", comment)
 		}
-		return tonTransferURI(destination, amount, 9, "", comment)
+		if asset == store.AssetGRAM {
+			return tonTransferURI(destination, amount, 9, "", comment)
+		}
+		return destination
 	case store.NetworkTON_USDT:
 		if asset != store.AssetUSDT {
 			return destination

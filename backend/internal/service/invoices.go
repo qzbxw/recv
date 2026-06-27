@@ -262,9 +262,9 @@ func normalizedMode(mode string) string {
 
 func (s *InvoiceService) createInvoiceWithDestination(ctx context.Context, params store.CreateInvoiceParams, expiresInMinutes int) (store.Invoice, error) {
 	request := PaymentOptionInput{Network: params.PayableNetwork, Asset: params.PayableAsset}
-	if request.Asset == "" {
-		request.Asset = store.DefaultAssetForNetwork(request.Network)
-	}
+	request.Network, request.Asset = store.NormalizePaymentOption(request.Network, request.Asset)
+	params.PayableNetwork = request.Network
+	params.PayableAsset = request.Asset
 	wallets := map[store.Network]store.Wallet{
 		params.PayableNetwork.WalletBucket(): {
 			Network: params.PayableNetwork.WalletBucket(),
@@ -523,14 +523,11 @@ func (s *InvoiceService) normalizePaymentOptionInputs(defaultNetwork store.Netwo
 	seen := map[string]struct{}{}
 	normalized := make([]PaymentOptionInput, 0, len(requested))
 	for _, option := range requested {
-		option.Network = store.Network(strings.ToUpper(strings.TrimSpace(string(option.Network))))
+		option.Network = store.NormalizePaymentNetwork(string(option.Network))
 		if option.Network == "" {
 			option.Network = defaultNetwork
 		}
-		if option.Asset == "" {
-			option.Asset = store.DefaultAssetForNetwork(option.Network)
-		}
-		option.Asset = store.NormalizePaymentAsset(string(option.Asset))
+		option.Network, option.Asset = store.NormalizePaymentOption(option.Network, option.Asset)
 		if !option.Network.IsSupportedPayableNetwork() {
 			return nil, fmt.Errorf("unsupported network %s", option.Network)
 		}

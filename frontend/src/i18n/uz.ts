@@ -327,7 +327,7 @@ const uz = {
           body: "Avtomatlashtirilgan payment processing. Watcherlarimiz transactionlarni kuzatadi va to'lovlarni 24/7 mustaqil tasdiqlaydi.",
         },
       ],
-      code: "// recv API v1 Beta orqali invoys yaratish\nconst response = await fetch(\"https://api.recv.money/v1/invoices\", {\n  method: \"POST\",\n  headers: {\n    \"X-API-Key\": \"live_...\",\n    \"Content-Type\": \"application/json\"\n  },\n  body: JSON.stringify({\n    title: \"Order #9921\",\n    base_amount_usd: \"149.00\",\n    payable_network: \"TRON\", // TON (GRAM), TON_USDT (USDT on TON), TRON, BASE yoki BSC\n    expires_in_minutes: 60\n  })\n});\n\nconst invoice = await response.json();\nconsole.log(\"Checkout URL:\", invoice.checkout_url);",
+      code: "// recv API v1 Beta orqali invoys yaratish\nconst response = await fetch(\"https://api.recv.money/v1/invoices\", {\n  method: \"POST\",\n  headers: {\n    \"X-API-Key\": \"live_...\",\n    \"Content-Type\": \"application/json\"\n  },\n  body: JSON.stringify({\n    title: \"Order #9921\",\n    base_amount_usd: \"149.00\",\n    payable_network: \"TRON\", // TON with payable_asset GRAM/USDT, TRON, BASE yoki BSC\n    expires_in_minutes: 60\n  })\n});\n\nconst invoice = await response.json();\nconsole.log(\"Checkout URL:\", invoice.checkout_url);",
     },
     business: {
       badge: "recv Business",

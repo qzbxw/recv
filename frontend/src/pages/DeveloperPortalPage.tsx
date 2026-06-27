@@ -22,7 +22,7 @@ import {
 import { ApiError, formatApiError, mapApiError } from "../lib/errors";
 import { buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus } from "../lib/status";
-import type { APIKey, DeveloperUsageResponse, Invoice, MeResponse, Network, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
+import type { APIKey, DeveloperUsageResponse, Invoice, MeResponse, Network, PaymentAsset, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { DEVELOPER_PORTAL_COPY as COPY, type Language } from "../i18n";
 
@@ -38,12 +38,12 @@ const PLAN_PRICES = {
   business: 79,
 } as const;
 
-const NETWORK_OPTIONS: Array<{ value: Network; label: string }> = [
-  { value: "TON", label: "GRAM on TON" },
-  { value: "TON_USDT", label: "USDT on TON" },
-  { value: "TRON", label: "TRON" },
-  { value: "BASE", label: "BASE" },
-  { value: "BSC", label: "BSC" },
+const NETWORK_OPTIONS: Array<{ value: string; network: Network; asset: PaymentAsset; label: string }> = [
+  { value: "TON:GRAM", network: "TON", asset: "GRAM", label: "TON GRAM" },
+  { value: "TON:USDT", network: "TON", asset: "USDT", label: "TON USDT" },
+  { value: "TRON:USDT", network: "TRON", asset: "USDT", label: "TRON USDT" },
+  { value: "BASE:USDT", network: "BASE", asset: "USDT", label: "Base USDT" },
+  { value: "BSC:USDT", network: "BSC", asset: "USDT", label: "BSC USDT" },
 ];
 
 const DEFAULT_SCOPES = ["invoices:read", "invoices:write"];
@@ -82,7 +82,7 @@ export function DeveloperPortalPage() {
   const [latestWebhookSecret, setLatestWebhookSecret] = useState("");
   const [copiedId, setCopiedId] = useState("");
   const [billingPlan, setBillingPlan] = useState<string>("developer");
-  const [billingNetwork, setBillingNetwork] = useState<Network>("TRON");
+  const [billingOption, setBillingOption] = useState<string>("TRON:USDT");
   const [billingDays, setBillingDays] = useState<number>(30);
   const [keyLabel, setKeyLabel] = useState("");
   const [keyScopes, setKeyScopes] = useState<string[]>(DEFAULT_SCOPES);
@@ -202,8 +202,11 @@ export function DeveloperPortalPage() {
       return;
     }
     try {
+      const selectedBillingOption = NETWORK_OPTIONS.find(option => option.value === billingOption) ?? NETWORK_OPTIONS[2];
       const invoice = await createBillingCheckout(token, {
-        payable_network: billingNetwork,
+        payable_network: selectedBillingOption.network,
+        payable_asset: selectedBillingOption.asset,
+        payment_options: [{ network: selectedBillingOption.network, asset: selectedBillingOption.asset }],
         plan_code: billingPlan,
         subscription_days: billingDays,
       });
@@ -300,7 +303,7 @@ export function DeveloperPortalPage() {
       params: [
         { name: "title", type: "string", desc: t.api.endpoints[2].params[0] },
         { name: "base_amount_usd", type: "decimal", desc: t.api.endpoints[2].params[1] },
-        { name: "payable_network", type: "string", desc: "TON (GRAM), TON_USDT (USDT on TON), TRON, BASE, or BSC." },
+        { name: "payable_network", type: "string", desc: "Network code such as TON, TRON, BASE, or BSC. Use payable_asset to choose GRAM or USDT on TON." },
         { name: "expires_in_minutes", type: "int", desc: t.api.endpoints[2].params[2] }
       ],
       response: {
@@ -767,7 +770,7 @@ export function DeveloperPortalPage() {
                   </div>
                   <div className="dev-input-group">
                     <label>{t.common.network}</label>
-                    <CustomSelect value={billingNetwork} options={NETWORK_OPTIONS} ariaLabel={t.common.network} onChange={v => setBillingNetwork(v as any)} />
+                    <CustomSelect value={billingOption} options={NETWORK_OPTIONS} ariaLabel={t.common.network} onChange={setBillingOption} />
                   </div>
                   {(() => {
                     const basePrice = PLAN_PRICES[billingPlan as keyof typeof PLAN_PRICES];
