@@ -26,7 +26,7 @@ func TestInvoiceServiceCreateInvoiceDBFlows(t *testing.T) {
 		t.Fatalf("CreateWallet EVM: %v", err)
 	}
 
-	tonWallet, err := st.CreateWallet(ctx, workspace.ID, store.NetworkTON, "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn")
+	tonWallet, err := st.CreateWallet(ctx, workspace.ID, store.NetworkTON, "UQBuzCySn6dYEHzKoGzUPmclj9Dg_m1dA-mzeDEvuF3F9x6P")
 	if err != nil {
 		t.Fatalf("CreateWallet TON: %v", err)
 	}

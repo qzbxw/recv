@@ -1539,6 +1539,9 @@ func parsePaymentOptionInputs(body []struct {
 }
 
 func validateWallet(network store.Network, address string) error {
+	if store.IsReservedDemoWalletAddress(address) {
+		return fmt.Errorf("demo wallet addresses cannot be connected for payouts")
+	}
 	return store.ValidateWalletAddress(network, address)
 }
 

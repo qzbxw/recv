@@ -2123,6 +2123,13 @@ func TestStoreWalletOperations(t *testing.T) {
 		}
 	})
 
+	t.Run("CreateWallet rejects reserved demo wallet", func(t *testing.T) {
+		_, err := st.CreateWallet(ctx, workspace.ID, NetworkTON, "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn")
+		if err == nil {
+			t.Fatal("expected reserved demo wallet to be rejected")
+		}
+	})
+
 	t.Run("DeactivateWallet deactivates successfully", func(t *testing.T) {
 		if err := st.DeactivateWallet(ctx, workspace.ID, wallet.ID); err != nil {
 			t.Fatalf("DeactivateWallet: %v", err)

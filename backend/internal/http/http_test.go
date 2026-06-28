@@ -310,6 +310,9 @@ func TestHelperUtilities(t *testing.T) {
 	if err := validateWallet(store.NetworkEVM, "0x1111111111111111111111111111111111111111"); err != nil {
 		t.Fatalf("expected valid wallet, got %v", err)
 	}
+	if err := validateWallet(store.NetworkTON, "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn"); err == nil {
+		t.Fatal("expected reserved demo wallet to be rejected")
+	}
 }
 
 func TestInvoicePresentationHelpers(t *testing.T) {
@@ -2033,6 +2036,21 @@ func TestListWalletsAndCreateWalletMalformedJSON(t *testing.T) {
 		router.ServeHTTP(rec, req)
 		if rec.Code != stdhttp.StatusBadRequest {
 			t.Fatalf("expected 400 for unsupported network, got %d", rec.Code)
+		}
+	})
+
+	t.Run("createWallet rejects reserved demo wallet", func(t *testing.T) {
+		router := gin.New()
+		router.Use(withWorkspaceContext(workspace))
+		router.POST("/api/wallets", server.handleCreateWallet)
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(stdhttp.MethodPost, "/api/wallets",
+			strings.NewReader(`{"network":"TON","address":"UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn"}`))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(rec, req)
+		if rec.Code != stdhttp.StatusBadRequest {
+			t.Fatalf("expected 400 for reserved demo wallet, got %d", rec.Code)
 		}
 	})
 

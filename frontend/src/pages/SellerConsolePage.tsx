@@ -1034,31 +1034,6 @@ export function SellerConsolePage() {
     setIsCreatingInvoice(true);
     setCreatedInvoice(null);
     try {
-      if (activeWalletsCount === 0) {
-        // Auto-create dummy wallets for selected network options
-        const selectedOptions = invoiceForm.optionKeys
-          .map(key => PAYABLE_PAYMENT_OPTIONS.find(option => option.key === key))
-          .filter(Boolean);
-        const bucketsToCreate = new Set(selectedOptions.map(opt => walletBucket(opt!.network)));
-        
-        for (const bucket of Array.from(bucketsToCreate)) {
-          let address = "";
-          if (bucket === "TON") {
-            address = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn";
-          } else if (bucket === "EVM") {
-            address = "0x0000000000000000000000000000000000000000";
-          } else if (bucket === "TRON") {
-            address = "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb";
-          } else if (bucket === "SOLANA") {
-            address = "HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1";
-          }
-          if (address) {
-            await createWallet(session.token, { network: bucket, address, environment });
-          }
-        }
-        await loadSession(session.token, { silent: true });
-      }
-
       const invoice = await createInvoice(session.token, {
         title: invoiceForm.title,
         base_amount_usd: invoiceForm.amount,

@@ -467,6 +467,10 @@ func (s *Store) ListWallets(ctx context.Context, workspaceID int64) ([]Wallet, e
 }
 
 func (s *Store) CreateWallet(ctx context.Context, workspaceID int64, network Network, address string, env ...Environment) (Wallet, error) {
+	if IsReservedDemoWalletAddress(address) {
+		metrics.IncResourceOperation("wallet", "create", "failure")
+		return Wallet{}, fmt.Errorf("demo wallet addresses cannot be connected for payouts")
+	}
 	walletEnv := EnvironmentLive
 	if len(env) > 0 && env[0] != "" {
 		walletEnv = env[0]
