@@ -253,12 +253,15 @@ func (s *AdminService) ParseToken(tokenString string) (AdminClaims, error) {
 }
 
 func (s *AdminService) authenticateLegacy(username string, password string) (AdminLoginResult, error) {
-	if strings.TrimSpace(username) != s.username {
-		metrics.IncAuthAttempt("admin_login", "failure", "username")
-		return AdminLoginResult{}, errors.New("invalid admin credentials")
-	}
-	if subtle.ConstantTimeCompare([]byte(s.password), []byte(password)) != 1 {
-		metrics.IncAuthAttempt("admin_login", "failure", "password")
+	userMatch := subtle.ConstantTimeCompare([]byte(s.username), []byte(strings.TrimSpace(username)))
+	passMatch := subtle.ConstantTimeCompare([]byte(s.password), []byte(password))
+
+	if userMatch != 1 || passMatch != 1 {
+		if userMatch != 1 {
+			metrics.IncAuthAttempt("admin_login", "failure", "username")
+		} else {
+			metrics.IncAuthAttempt("admin_login", "failure", "password")
+		}
 		return AdminLoginResult{}, errors.New("invalid admin credentials")
 	}
 	token, err := s.issueLegacyToken()
