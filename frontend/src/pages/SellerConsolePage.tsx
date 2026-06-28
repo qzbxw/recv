@@ -10,6 +10,7 @@ import {
   clearStoredToken,
   createAPIKey,
   createBillingCheckout,
+  getBillingOptions,
   redeemPromoCode,
   createInvoice,
   createWallet,
@@ -47,7 +48,7 @@ import { ApiError, formatApiError } from "../lib/errors";
 import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus, getInvoiceStatusMeta, getInvoiceStatusTooltip, formatNetworkLabel, formatPaymentAssetLabel } from "../lib/status";
 import { PAYABLE_PAYMENT_OPTIONS, walletBucket } from "../lib/paymentOptions";
-import type { APIKey, AuthIdentity, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, PaymentAsset, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
+import type { APIKey, AuthIdentity, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, PaymentAsset, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment, BillingOptionsResponse, BillingOptionPlan } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { SELLER_CONSOLE_COPY as COPY, type Language } from "../i18n";
 
@@ -87,6 +88,7 @@ declare global {
         initData?: string;
         ready?: () => void;
         expand?: () => void;
+        openInvoice?: (url: string, callback?: (status: string) => void) => void;
       };
     };
   }
@@ -627,7 +629,12 @@ export function SellerConsolePage() {
   const [hookForm, setHookForm] = useState({ label: "", url: "" });
   const [latestKeySecret, setLatestKeySecret] = useState("");
   const [latestWebhookSecret, setLatestWebhookSecret] = useState("");
-  const [billingForm, setBillingForm] = useState<{ plan: string; network: Network; optionKeys: string[]; subscriptionDays: number }>({ plan: "merchant", network: "TRON", optionKeys: ["TRON:USDT"], subscriptionDays: 30 });
+  const [billingForm, setBillingForm] = useState<{ plan: string; network: Network; optionKeys: string[]; subscriptionDays: number; paymentMethod: 'crypto' | 'telegram_stars' }>({ plan: "merchant", network: "TRON", optionKeys: ["TRON:USDT"], subscriptionDays: 30, paymentMethod: 'crypto' });
+  const [billingOptions, setBillingOptions] = useState<BillingOptionsResponse | null>(null);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+  const [starsInvoiceUrl, setStarsInvoiceUrl] = useState("");
+  const [starsPaymentStatus, setStarsPaymentStatus] = useState("");
+  const [starsPaymentDays, setStarsPaymentDays] = useState(0);
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [emailForm, setEmailForm] = useState("");
   const [emailNotice, setEmailNotice] = useState("");
@@ -887,6 +894,27 @@ export function SellerConsolePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePanel, session?.token, environment]);
 
+  useEffect(() => {
+    if (activePanel === "billing" && session?.token) {
+      const loadOptions = async () => {
+        setIsLoadingOptions(true);
+        try {
+          const opts = await getBillingOptions(session.token);
+          setBillingOptions(opts);
+          const currentPlan = session.me.plan.code;
+          const initialPlan = currentPlan === 'trial' ? 'merchant' : currentPlan;
+          setBillingForm(f => ({ ...f, plan: initialPlan }));
+        } catch (err) {
+          setError(formatApiError(err));
+        } finally {
+          setIsLoadingOptions(false);
+        }
+      };
+      void loadOptions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePanel, session?.token, session?.me?.workspace?.id]);
+
   async function onResendDelivery(id: number) {
     if (!session) return;
     setResendingId(id);
@@ -1099,13 +1127,42 @@ export function SellerConsolePage() {
       return;
     }
     try {
-      const inv = await createBillingCheckout(session.token, {
-        payable_network: "TRON",
-        payment_options: PAYABLE_PAYMENT_OPTIONS.map(option => ({ network: option.network, asset: option.asset })),
-        plan_code: billingForm.plan,
-        subscription_days: billingForm.subscriptionDays,
-      });
-      setCheckoutUrl(buildCheckoutUrl(inv.public_id));
+      if (billingForm.paymentMethod === 'telegram_stars') {
+        const res = await createBillingCheckout(session.token, {
+          payment_method: "telegram_stars",
+          plan_code: billingForm.plan,
+          subscription_days: billingForm.subscriptionDays,
+        });
+        const url = res.stars_payment?.invoice_url;
+        if (!url) {
+          throw new Error(language === 'ru' ? 'Не удалось создать счет Telegram Stars' : 'Failed to create Telegram Stars invoice');
+        }
+        setStarsInvoiceUrl(url);
+        setStarsPaymentDays(res.subscription_days || billingForm.subscriptionDays);
+        setStarsPaymentStatus("pending");
+        
+        if (window.Telegram?.WebApp?.openInvoice) {
+          window.Telegram.WebApp.openInvoice(url, async (status: string) => {
+            if (status === "paid") {
+              setStarsPaymentStatus("paid");
+              await loadSession(session.token);
+            } else {
+              setStarsPaymentStatus("failed");
+            }
+          });
+        } else {
+          window.open(url, "_blank");
+        }
+      } else {
+        const inv = await createBillingCheckout(session.token, {
+          payment_method: "crypto",
+          payable_network: "TRON",
+          payment_options: PAYABLE_PAYMENT_OPTIONS.map(option => ({ network: option.network, asset: option.asset })),
+          plan_code: billingForm.plan,
+          subscription_days: billingForm.subscriptionDays,
+        });
+        setCheckoutUrl(buildCheckoutUrl(inv.public_id));
+      }
     } catch (err) { setError(formatApiError(err)); }
   }
 
@@ -3409,329 +3466,477 @@ export function SellerConsolePage() {
                   </div>
                 </div>
 
-                {(() => {
-                  const fmt = (n: number | undefined, available = true) => {
-                    if (!available) return t.billing.notIncluded;
-                    return n && n > 0 ? n.toLocaleString() : t.common.unlimited;
-                  };
-                  const comparePlans = PLAN_COMPARE_ORDER
-                    .map(code => session.me.plans.find(p => p.code === code))
-                    .filter((p): p is NonNullable<typeof p> => Boolean(p));
-                  
-                  const planDescriptions: Record<string, { en: string; ru: string }> = {
-                    merchant: {
-                      en: "Ideal for simple online stores & digital sales via payment links. Zero development required.",
-                      ru: "Идеально для простых онлайн-магазинов и продаж по платежным ссылкам без разработки."
-                    },
-                    developer: {
-                      en: "Best for developers building custom checkouts. Includes REST API access & webhooks.",
-                      ru: "Лучший выбор для разработчиков. Доступ к REST API, вебхукам и интеграциям."
-                    },
-                    business: {
-                      en: "For growing teams and high-volume operations. Priority support & advanced limits.",
-                      ru: "Для растущих команд и больших объемов продаж. Приоритетная поддержка и лимиты."
-                    }
-                  };
+                {!billingOptions && isLoadingOptions ? (
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "250px" }}>
+                    <p className="muted" style={{ fontSize: "1.1rem" }}>
+                      {language === 'ru' ? 'Загрузка тарифов...' : 'Loading billing plans...'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {(() => {
+                      const fmt = (n: number | undefined, available = true) => {
+                        if (!available) return t.billing.notIncluded;
+                        return n && n > 0 ? n.toLocaleString() : t.common.unlimited;
+                      };
+                      const comparePlans = PLAN_COMPARE_ORDER
+                        .map(code => ((billingOptions?.plans || session.me.plans) as BillingOptionPlan[]).find(p => p.code === code))
+                        .filter((p): p is NonNullable<typeof p> => Boolean(p));
+                      
+                      const planDescriptions: Record<string, { en: string; ru: string }> = {
+                        merchant: {
+                          en: "Ideal for simple online stores & digital sales via payment links. Zero development required.",
+                          ru: "Идеально для простых онлайн-магазинов и продаж по платежным ссылкам без разработки."
+                        },
+                        developer: {
+                          en: "Best for developers building custom checkouts. Includes REST API access & webhooks.",
+                          ru: "Лучший выбор для разработчиков. Доступ к REST API, вебхукам и интеграциям."
+                        },
+                        business: {
+                          en: "For growing teams and high-volume operations. Priority support & advanced limits.",
+                          ru: "Для растущих команд и больших объемов продаж. Приоритетная поддержка и лимиты."
+                        }
+                      };
 
-                  const featRow = (label: string, on: boolean) => (
-                    <div className={`dev-plan-feat ${!on ? "dev-plan-feat--dimmed" : ""}`}>
-                      <span className={`dev-plan-feat__icon dev-plan-feat__icon--${on ? "yes" : "no"}`}>{on ? "✓" : "—"}</span>
-                      <span>{label}</span>
-                    </div>
-                  );
-                  
-                  return (
-                    <div className="dev-card console-billing__plans-card console-spotlight-card">
+                      const featRow = (label: string, on: boolean) => (
+                        <div className={`dev-plan-feat ${!on ? "dev-plan-feat--dimmed" : ""}`}>
+                          <span className={`dev-plan-feat__icon dev-plan-feat__icon--${on ? "yes" : "no"}`}>{on ? "✓" : "—"}</span>
+                          <span>{label}</span>
+                        </div>
+                      );
+                      
+                      return (
+                        <div className="dev-card console-billing__plans-card console-spotlight-card">
+                          <div className="console-card-spotlight" />
+                          <div className="console-dogfood-glow" />
+                          <div className="dev-portal__section-header dev-portal__section-header--margin">
+                            <h3>{t.billing.comparisonTitle}</h3>
+                            <p>{t.billing.comparisonSubtitle}</p>
+                          </div>
+                          <div className="dev-plan-grid console-billing__plan-grid">
+                            {comparePlans.map(plan => {
+                              const isCurrent = plan.code === session.me.plan.code;
+                              const isSelected = plan.code === billingForm.plan;
+                              const descLanguage = language === "ru" ? "ru" : "en";
+                              const desc = planDescriptions[plan.code]?.[descLanguage] || "";
+                              
+                              return (
+                                <div key={plan.code} className={`dev-plan-card console-billing__plan-card console-spotlight-card ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""}`}>
+                                  <div className="console-card-spotlight" />
+                                  <div className="console-dogfood-glow" />
+                                  <div className="dev-plan-card__head">
+                                    <span className="dev-plan-card__name">{plan.name}</span>
+                                    {isCurrent && <span className="dev-api-badge dev-api-badge--get dev-api-badge--micro">{t.billing.currentBadge}</span>}
+                                  </div>
+                                  
+                                  {(() => {
+                                    const period30 = plan.periods?.find(p => p.days === 30);
+                                    const dPct = session.me.workspace.discount_percent || 0;
+                                    const dPlan = session.me.workspace.discount_plan_code;
+                                    const hasD = dPct > 0 && (!dPlan || dPlan === plan.code);
+                                    
+                                    if (billingOptions && period30) {
+                                      const basePrice = plan.price_usd;
+                                      const p30Price = period30.price_usd;
+                                      const hasDApplied = Number(p30Price) < Number(basePrice);
+                                      if (hasDApplied) {
+                                        return (
+                                          <div className="dev-plan-card__price">
+                                            <span style={{ textDecoration: "line-through", opacity: 0.6, fontSize: "0.85em", marginRight: "0.5rem" }}>
+                                              ${basePrice}
+                                            </span>
+                                            <span style={{ color: "#27c24c", fontWeight: "bold" }}>
+                                              ${p30Price}
+                                            </span>
+                                            <span className="dev-plan-card__period">{t.billing.perMonth}</span>
+                                            <div style={{ fontSize: "0.68em", color: "#27c24c", marginTop: "0.25rem", fontWeight: "normal" }}>
+                                              {language === 'ru' ? `(скидка ${dPct}% применена)` : `(${dPct}% discount applied)`}
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                    } else if (hasD) {
+                                      const originalPrice = Number(plan.price_usd);
+                                      const discountedPrice = originalPrice * (1 - dPct / 100);
+                                      const formattedPrice = discountedPrice % 1 === 0 ? String(discountedPrice) : discountedPrice.toFixed(2);
+                                      return (
+                                        <div className="dev-plan-card__price">
+                                          <span style={{ textDecoration: "line-through", opacity: 0.6, fontSize: "0.85em", marginRight: "0.5rem" }}>
+                                            ${plan.price_usd}
+                                          </span>
+                                          <span style={{ color: "#27c24c", fontWeight: "bold" }}>
+                                            ${formattedPrice}
+                                          </span>
+                                          <span className="dev-plan-card__period">{t.billing.perMonth}</span>
+                                          <div style={{ fontSize: "0.68em", color: "#27c24c", marginTop: "0.25rem", fontWeight: "normal" }}>
+                                            {language === 'ru' ? `(скидка ${dPct}% применена)` : `(${dPct}% discount applied)`}
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return (
+                                      <div className="dev-plan-card__price">${plan.price_usd}<span className="dev-plan-card__period">{t.billing.perMonth}</span></div>
+                                    );
+                                  })()}
+                                  
+                                  <p className="dev-plan-card__description">{desc}</p>
+                                  
+                                  <div className="dev-plan-card__feats">
+                                    {featRow(t.billing.featApi, plan.has_api)}
+                                    {featRow(t.billing.featWebhooks, plan.has_webhooks)}
+                                    {featRow(t.billing.featUnlimited, plan.has_unlimited_sales)}
+                                    {featRow(t.billing.featPriority, plan.priority_support)}
+                                    <div className="dev-plan-feat dev-plan-feat--metric">
+                                      <span>{t.billing.featKeys}</span><strong>{fmt(plan.api_key_limit, plan.has_api)}</strong>
+                                    </div>
+                                    <div className="dev-plan-feat dev-plan-feat--metric">
+                                      <span>{t.billing.featRpm}</span><strong>{fmt(plan.requests_per_minute, plan.has_api)}</strong>
+                                    </div>
+                                    <div className="dev-plan-feat dev-plan-feat--metric">
+                                      <span>{t.billing.featMonthly}</span><strong>{fmt(plan.monthly_request_cap, plan.has_api)}</strong>
+                                    </div>
+                                    <div className="dev-plan-feat dev-plan-feat--metric">
+                                      <span>{t.billing.featRetries}</span><strong>{fmt(plan.webhook_retries, plan.has_webhooks)}</strong>
+                                    </div>
+                                    <div className="dev-plan-feat dev-plan-feat--metric">
+                                      <span>{t.billing.featSeats}</span><strong>{fmt(plan.max_seats)}</strong>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className={`dev-btn ${isSelected ? "dev-btn--primary" : "dev-btn--secondary"} dev-btn--full-width`}
+                                    disabled={isCurrent}
+                                    onClick={() => {
+                                      setCheckoutUrl("");
+                                      setStarsInvoiceUrl("");
+                                      setStarsPaymentStatus("");
+                                      setBillingForm(c => ({ ...c, plan: plan.code }));
+                                    }}
+                                  >
+                                    {isCurrent ? t.billing.currentBadge : t.billing.selectPlan}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <h3 className="checkout-section-title">
+                      {language === 'ru' ? 'Оформление подписки' : 'Checkout & Upgrade'}
+                    </h3>
+
+                    <div className="dev-card billing-checkout-container console-billing__checkout console-spotlight-card">
                       <div className="console-card-spotlight" />
                       <div className="console-dogfood-glow" />
-                      <div className="dev-portal__section-header dev-portal__section-header--margin">
-                        <h3>{t.billing.comparisonTitle}</h3>
-                        <p>{t.billing.comparisonSubtitle}</p>
-                      </div>
-                      <div className="dev-plan-grid console-billing__plan-grid">
-                        {comparePlans.map(plan => {
-                          const isCurrent = plan.code === session.me.plan.code;
-                          const isSelected = plan.code === billingForm.plan;
-                          const descLanguage = language === "ru" ? "ru" : "en";
-                          const desc = planDescriptions[plan.code]?.[descLanguage] || "";
+                      
+                      {checkoutUrl ? (
+                        <div className="billing-checkout-success console-billing__success" style={{ gridColumn: "span 2" }}>
+                          <div className="success-icon-wrapper">✓</div>
+                          <h4 className="success-title">
+                            {language === 'ru' ? 'Счёт успешно создан!' : 'Invoice Generated Successfully!'}
+                          </h4>
+                          <p className="success-subtitle">
+                            {language === 'ru' 
+                              ? 'Счёт готов к оплате криптовалютой. Выберите любую удобную для вас сеть и монету на странице оплаты.' 
+                              : 'Your subscription invoice is ready. You can complete the payment in any network/asset on the payment checkout page.'}
+                          </p>
                           
-                          return (
-                            <div key={plan.code} className={`dev-plan-card console-billing__plan-card console-spotlight-card ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""}`}>
-                              <div className="console-card-spotlight" />
-                              <div className="console-dogfood-glow" />
-                              <div className="dev-plan-card__head">
-                                <span className="dev-plan-card__name">{plan.name}</span>
-                                {isCurrent && <span className="dev-api-badge dev-api-badge--get dev-api-badge--micro">{t.billing.currentBadge}</span>}
-                              </div>
-                              
-                              {(() => {
-                                const dPct = session.me.workspace.discount_percent || 0;
-                                const dPlan = session.me.workspace.discount_plan_code;
-                                const hasD = dPct > 0 && (!dPlan || dPlan === plan.code);
-                                if (hasD) {
-                                  const originalPrice = Number(plan.price_usd);
-                                  const discountedPrice = originalPrice * (1 - dPct / 100);
-                                  const formattedPrice = discountedPrice % 1 === 0 ? String(discountedPrice) : discountedPrice.toFixed(2);
-                                  return (
-                                    <div className="dev-plan-card__price">
-                                      <span style={{ textDecoration: "line-through", opacity: 0.6, fontSize: "0.85em", marginRight: "0.5rem" }}>
-                                        ${plan.price_usd}
-                                      </span>
-                                      <span style={{ color: "#27c24c", fontWeight: "bold" }}>
-                                        ${formattedPrice}
-                                      </span>
-                                      <span className="dev-plan-card__period">{t.billing.perMonth}</span>
-                                      <div style={{ fontSize: "0.68em", color: "#27c24c", marginTop: "0.25rem", fontWeight: "normal" }}>
-                                        {language === 'ru' ? `(скидка ${dPct}% применена)` : `(${dPct}% discount applied)`}
-                                      </div>
-                                    </div>
-                                  );
-                                }
-                                return (
-                                  <div className="dev-plan-card__price">${plan.price_usd}<span className="dev-plan-card__period">{t.billing.perMonth}</span></div>
-                                );
-                              })()}
-                              
-                              <p className="dev-plan-card__description">{desc}</p>
-                              
-                              <div className="dev-plan-card__feats">
-                                {featRow(t.billing.featApi, plan.has_api)}
-                                {featRow(t.billing.featWebhooks, plan.has_webhooks)}
-                                {featRow(t.billing.featUnlimited, plan.has_unlimited_sales)}
-                                {featRow(t.billing.featPriority, plan.priority_support)}
-                                <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featKeys}</span><strong>{fmt(plan.api_key_limit, plan.has_api)}</strong>
-                                </div>
-                                <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featRpm}</span><strong>{fmt(plan.requests_per_minute, plan.has_api)}</strong>
-                                </div>
-                                <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featMonthly}</span><strong>{fmt(plan.monthly_request_cap, plan.has_api)}</strong>
-                                </div>
-                                <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featRetries}</span><strong>{fmt(plan.webhook_retries, plan.has_webhooks)}</strong>
-                                </div>
-                                <div className="dev-plan-feat dev-plan-feat--metric">
-                                  <span>{t.billing.featSeats}</span><strong>{fmt(plan.max_seats)}</strong>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                className={`dev-btn ${isSelected ? "dev-btn--primary" : "dev-btn--secondary"} dev-btn--full-width`}
-                                disabled={isCurrent}
+                          <div className="success-actions-row">
+                            <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered">
+                              {t.common.payNow || 'Pay Now'}
+                            </a>
+                            <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(checkoutUrl, "billing-url")}>
+                              {copiedId === "billing-url" ? t.common.copied : t.common.copy}
+                            </button>
+                          </div>
+                          
+                          <button className="success-back-button" onClick={() => setCheckoutUrl("")}>
+                            {language === 'ru' ? '← Изменить тариф или срок' : '← Change plan or duration'}
+                          </button>
+                        </div>
+                      ) : starsPaymentStatus ? (
+                        <div className="billing-checkout-success console-billing__success" style={{ gridColumn: "span 2" }}>
+                          <div className="success-icon-wrapper" style={{ backgroundColor: starsPaymentStatus === "paid" ? "#27c24c" : starsPaymentStatus === "failed" ? "#ff4d4f" : "var(--primary)" }}>
+                            {starsPaymentStatus === "paid" ? "✓" : starsPaymentStatus === "failed" ? "×" : "★"}
+                          </div>
+                          <h4 className="success-title">
+                            {starsPaymentStatus === "paid" 
+                              ? (language === 'ru' ? 'Оплата успешно завершена!' : 'Payment Completed Successfully!')
+                              : starsPaymentStatus === "failed"
+                              ? (language === 'ru' ? 'Оплата отменена или не удалась' : 'Payment Cancelled or Failed')
+                              : (t.billing.starsSent || 'Stars invoice sent')
+                            }
+                          </h4>
+                          <p className="success-subtitle" style={{ whiteSpace: "pre-line" }}>
+                            {starsPaymentStatus === "paid"
+                              ? (t.billing.starsPaid || 'Stars payment received! Access extended by {days} days.').replace("{days}", String(starsPaymentDays))
+                              : starsPaymentStatus === "failed"
+                              ? (language === 'ru' ? 'Пожалуйста, попробуйте снова.' : 'Please try again.')
+                              : (t.billing.completeStars || 'Complete the payment in Telegram...')
+                            }
+                          </p>
+                          
+                          <div className="success-actions-row">
+                            {starsPaymentStatus === "pending" && (
+                              <button 
+                                className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered"
                                 onClick={() => {
-                                  setCheckoutUrl("");
-                                  setBillingForm(c => ({ ...c, plan: plan.code }));
+                                  if (window.Telegram?.WebApp?.openInvoice) {
+                                    window.Telegram.WebApp.openInvoice(starsInvoiceUrl, async (status: string) => {
+                                      if (status === "paid") {
+                                        setStarsPaymentStatus("paid");
+                                        await loadSession(session.token);
+                                      } else {
+                                        setStarsPaymentStatus("failed");
+                                      }
+                                    });
+                                  } else {
+                                    window.open(starsInvoiceUrl, "_blank");
+                                  }
                                 }}
                               >
-                                {isCurrent ? t.billing.currentBadge : t.billing.selectPlan}
+                                {language === 'ru' ? 'Открыть оплату' : 'Open Payment'}
                               </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                <h3 className="checkout-section-title">
-                  {language === 'ru' ? 'Оформление подписки' : 'Checkout & Upgrade'}
-                </h3>
-
-                <div className="dev-card billing-checkout-container console-billing__checkout console-spotlight-card">
-                  <div className="console-card-spotlight" />
-                  <div className="console-dogfood-glow" />
-                  
-                  {checkoutUrl ? (
-                    <div className="billing-checkout-success console-billing__success" style={{ gridColumn: "span 2" }}>
-                      <div className="success-icon-wrapper">✓</div>
-                      <h4 className="success-title">
-                        {language === 'ru' ? 'Счёт успешно создан!' : 'Invoice Generated Successfully!'}
-                      </h4>
-                      <p className="success-subtitle">
-                        {language === 'ru' 
-                          ? 'Счёт готов к оплате криптовалютой. Выберите любую удобную для вас сеть и монету на странице оплаты.' 
-                          : 'Your subscription invoice is ready. You can complete the payment in any network/asset on the payment checkout page.'}
-                      </p>
-                      
-                      <div className="success-actions-row">
-                        <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered">
-                          {t.common.payNow || 'Pay Now'}
-                        </a>
-                        <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(checkoutUrl, "billing-url")}>
-                          {copiedId === "billing-url" ? t.common.copied : t.common.copy}
-                        </button>
-                      </div>
-                      
-                      <button className="success-back-button" onClick={() => setCheckoutUrl("")}>
-                        {language === 'ru' ? '← Изменить тариф или срок' : '← Change plan or duration'}
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="billing-checkout__left">
-                        <div className="dev-form">
-                          <div className="console-billing__selected-label-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.25rem" }}>
-                            <span style={{ textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: "600" }}>
-                              {language === 'ru' ? 'Выбранный тариф' : 'Selected Plan'}
-                            </span>
-                          </div>
-                          <div className="console-billing__selected-plan" style={{ fontSize: "1.4rem", fontWeight: "800", color: "#fff", fontFamily: "Space Grotesk, sans-serif" }}>
-                            {(() => {
-                              const plan = session.me.plans.find(p => p.code === billingForm.plan);
-                              return plan ? plan.name : billingForm.plan;
-                            })()}
-                          </div>
-                          
-                          <div className="billing-duration-selector" style={{ marginTop: "1.5rem" }}>
-                            <label style={{ fontSize: "0.85rem", color: "var(--muted)", fontWeight: "600" }}>
-                              {t.billing.durationDays || "Duration (days)"}
-                            </label>
-                            
-                            <div className="duration-presets console-billing__duration-presets">
-                              {[
-                                { days: 30, label: language === 'ru' ? '30 дней' : '30 Days' },
-                                { days: 90, label: language === 'ru' ? '90 дней' : '90 Days' },
-                                { days: 180, label: language === 'ru' ? '180 дней' : '180 Days' },
-                                { days: 365, label: language === 'ru' ? '365 дней' : '365 Days' }
-                              ].map(preset => (
-                                <button
-                                  key={preset.days}
-                                  type="button"
-                                  className={`preset-pill ${billingForm.subscriptionDays === preset.days ? 'is-active' : ''}`}
-                                  onClick={() => {
-                                    setCheckoutUrl("");
-                                    setBillingForm(c => ({ ...c, subscriptionDays: preset.days }));
-                                  }}
-                                >
-                                  {preset.label}
-                                </button>
-                              ))}
-                            </div>
-                            
-                            <div className="dev-input-group" style={{ marginTop: "0.5rem" }}>
-                              <input
-                                type="number"
-                                min="14"
-                                className="dev-input"
-                                value={billingForm.subscriptionDays}
-                                onChange={e => {
-                                  const val = parseInt(e.target.value, 10);
-                                  setCheckoutUrl("");
-                                  setBillingForm(c => ({ ...c, subscriptionDays: isNaN(val) ? 30 : val }));
-                                }}
-                              />
-                              <span className="dev-input-hint" style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "0.25rem" }}>
-                                {t.billing.durationDaysHint || "Minimum 14 days"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="billing-checkout__right">
-                        <div className="billing-price-summary">
-                          <span style={{ textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: "600" }}>
-                            {language === 'ru' ? 'Детали цены' : 'Pricing Details'}
-                          </span>
-                          
-                          {(() => {
-                            const selectedPlan = session.me.plans.find(p => p.code === billingForm.plan);
-                            if (!selectedPlan) return null;
-                            const days = billingForm.subscriptionDays;
-                            const dailyRate = Number(selectedPlan.price_usd) / 30;
-                            const totalPrice = dailyRate * days;
-                            const dPct = session.me.workspace.discount_percent || 0;
-                            const dPlan = session.me.workspace.discount_plan_code;
-                            const hasD = dPct > 0 && (!dPlan || dPlan === selectedPlan.code);
-                            const finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
-                            
-                            return (
-                              <>
-                                <div className="price-summary-row" style={{ marginTop: "0.5rem" }}>
-                                  <span>{language === 'ru' ? 'Базовый тариф' : 'Base rate'}</span>
-                                  <span>${selectedPlan.price_usd} / {language === 'ru' ? '30 дн.' : '30 days'}</span>
-                                </div>
-                                <div className="price-summary-row">
-                                  <span>{language === 'ru' ? 'Срок подписки' : 'Duration'}</span>
-                                  <span>{days} {language === 'ru' ? 'дн.' : 'days'}</span>
-                                </div>
-                                <div className="price-summary-row">
-                                  <span>{language === 'ru' ? 'Промежуточный итог' : 'Subtotal'}</span>
-                                  <span>${totalPrice.toFixed(2)} USD</span>
-                                </div>
-                                {hasD && (
-                                  <div className="price-summary-row">
-                                    <span>{language === 'ru' ? 'Скидка' : 'Discount'} ({dPct}%)</span>
-                                    <span className="price-summary-value--discount">-${(totalPrice - finalPrice).toFixed(2)} USD</span>
-                                  </div>
-                                )}
-                                <div className="price-summary-row price-summary-row--total">
-                                  <span>{language === 'ru' ? 'Итого к оплате' : 'Estimated Total'}</span>
-                                  <strong style={{ fontSize: "1.25rem", color: "#fff" }}>${finalPrice.toFixed(2)} USD</strong>
-                                </div>
-                              </>
-                            );
-                          })()}
-                        </div>
-                        
-                        <div className="console-billing__promo" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem" }}>
-                          <label style={{ fontSize: "0.8rem", color: "var(--muted)", fontWeight: "600", display: "block", marginBottom: "0.4rem" }}>
-                            {t.billing.promoCodeLabel}
-                          </label>
-                          
-                          {promoNotice && (
-                            <div className="alert alert--success console-billing__promo-alert" style={{ padding: "0.4rem 0.6rem", fontSize: "0.78rem", marginBottom: "0.5rem", display: "flex", justifyContent: "space-between" }}>
-                              <span>{promoNotice}</span>
-                              <span style={{ cursor: "pointer", fontWeight: "bold" }} onClick={() => setPromoNotice("")}>×</span>
-                            </div>
-                          )}
-                          {promoError && (
-                            <div className="alert console-billing__promo-alert" style={{ padding: "0.4rem 0.6rem", fontSize: "0.78rem", color: "#ff4d4f", borderColor: "#ff4d4f", marginBottom: "0.5rem", display: "flex", justifyContent: "space-between" }}>
-                              <span>{promoError}</span>
-                              <span style={{ cursor: "pointer", fontWeight: "bold" }} onClick={() => setPromoError("")}>×</span>
-                            </div>
-                          )}
-                          
-                          <div className="billing-promo-input-row console-billing__promo-input-row">
-                            <input
-                              type="text"
-                              className="dev-input"
-                              placeholder="SUMMER30"
-                              value={promoCode}
-                              onChange={e => setPromoCode(e.target.value.toUpperCase())}
-                              style={{ flex: 1, padding: "0.4rem 0.60rem", fontSize: "0.85rem" }}
-                            />
-                            <button
-                              type="button"
-                              className="dev-btn dev-btn--secondary"
-                              onClick={onRedeemPromoCode}
-                              disabled={!promoCode.trim() || redeemingPromo}
-                              style={{ padding: "0 0.75rem", height: "auto" }}
+                            )}
+                            <button 
+                              className="dev-btn dev-btn--secondary dev-btn--flex-grow" 
+                              onClick={() => {
+                                setStarsPaymentStatus("");
+                                setStarsInvoiceUrl("");
+                              }}
                             >
-                              {redeemingPromo ? t.common.loading : (language === 'ru' ? 'ОК' : 'Apply')}
+                              {starsPaymentStatus === "paid" 
+                                ? (language === 'ru' ? 'В консоль' : 'To Console')
+                                : (language === 'ru' ? '← Назад' : '← Back')
+                              }
                             </button>
                           </div>
                         </div>
-                        
-                        <div className="console-billing__network-note" style={{ fontSize: "0.72rem", color: "var(--muted)", lineHeight: "1.4", opacity: 0.8 }}>
-                          {language === 'ru' 
-                            ? 'Сгенерированный счёт можно оплатить любой криптовалютой во всех популярных сетях (TON, TRON, BSC, Solana, Base, Arbitrum).' 
-                            : 'All major crypto networks are supported at checkout (TON, TRON, BSC, Solana, Base, Arbitrum).'}
-                        </div>
-                        
-                        <button
-                          type="button"
-                          className="dev-btn dev-btn--primary dev-btn--full-width console-billing__create-btn"
-                          onClick={onUpgrade}
-                          style={{ marginTop: "0.5rem" }}
-                        >
-                          {language === 'ru' ? 'Создать счёт' : 'Create Invoice'}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                      ) : (
+                        <>
+                          <div className="billing-checkout__left">
+                            <div className="dev-form">
+                              <div className="console-billing__selected-label-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.25rem" }}>
+                                <span style={{ textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: "600" }}>
+                                  {language === 'ru' ? 'Выбранный тариф' : 'Selected Plan'}
+                                </span>
+                              </div>
+                              <div className="console-billing__selected-plan" style={{ fontSize: "1.4rem", fontWeight: "800", color: "#fff", fontFamily: "Space Grotesk, sans-serif" }}>
+                                {(() => {
+                                  const plan = (billingOptions?.plans || session.me.plans).find(p => p.code === billingForm.plan);
+                                  return plan ? plan.name : billingForm.plan;
+                                })()}
+                              </div>
+                              
+                              <div className="billing-duration-selector" style={{ marginTop: "1.5rem" }}>
+                                <label style={{ fontSize: "0.85rem", color: "var(--muted)", fontWeight: "600", display: "block", marginBottom: "0.5rem" }}>
+                                  {t.billing.selectBillingPeriod || "Select the billing period:"}
+                                </label>
+                                
+                                <div className="duration-presets console-billing__duration-presets" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.5rem" }}>
+                                  {(() => {
+                                    const selectedPlanOpt = billingOptions?.plans.find(p => p.code === billingForm.plan);
+                                    const presets = selectedPlanOpt?.periods || [
+                                      { days: 30, price_usd: "", stars_amount: 0 },
+                                      { days: 90, price_usd: "", stars_amount: 0 },
+                                      { days: 180, price_usd: "", stars_amount: 0 },
+                                      { days: 365, price_usd: "", stars_amount: 0 }
+                                    ];
+                                    
+                                    return presets.map(preset => {
+                                      const isSelected = billingForm.subscriptionDays === preset.days;
+                                      const showStars = !!window.Telegram?.WebApp?.initData && preset.stars_amount > 0;
+                                      const label = preset.days === 30 ? (language === 'ru' ? '30 дней' : '30 Days') :
+                                                    preset.days === 90 ? (language === 'ru' ? '90 дней' : '90 Days') :
+                                                    preset.days === 180 ? (language === 'ru' ? '180 дней' : '180 Days') :
+                                                    preset.days === 365 ? (language === 'ru' ? '1 год' : '1 Year') : `${preset.days} Days`;
+                                      
+                                      const pPlan = (billingOptions?.plans || session.me.plans).find(p => p.code === billingForm.plan);
+                                      const usdPrice = preset.price_usd || (pPlan ? String((Number(pPlan.price_usd) / 30 * preset.days).toFixed(2)) : "");
+                                      
+                                      return (
+                                        <button
+                                          key={preset.days}
+                                          type="button"
+                                          className={`preset-pill ${isSelected ? 'is-active' : ''}`}
+                                          style={{ height: "auto", padding: "0.75rem 0.5rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem", whiteSpace: "nowrap" }}
+                                          onClick={() => {
+                                            setCheckoutUrl("");
+                                            setBillingForm(c => ({ ...c, subscriptionDays: preset.days }));
+                                          }}
+                                        >
+                                          <span style={{ fontWeight: "600", fontSize: "0.85rem" }}>{label}</span>
+                                          <span style={{ opacity: 0.8, fontSize: "0.85rem" }}>${usdPrice}</span>
+                                          {showStars && (
+                                            <span style={{ fontSize: "0.7rem", opacity: 0.6 }}>or {preset.stars_amount} ★</span>
+                                          )}
+                                        </button>
+                                      );
+                                    });
+                                  })()}
+                                </div>
+                              </div>
+
+                              <div className="billing-payment-method-selector" style={{ marginTop: "1.5rem" }}>
+                                <label style={{ fontSize: "0.85rem", color: "var(--muted)", fontWeight: "600", display: "block", marginBottom: "0.5rem" }}>
+                                  {language === 'ru' ? 'Способ оплаты' : 'Payment Method'}
+                                </label>
+                                {!!window.Telegram?.WebApp?.initData ? (
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                                    <button
+                                      type="button"
+                                      className={`preset-pill ${billingForm.paymentMethod === 'crypto' ? 'is-active' : ''}`}
+                                      style={{ padding: "0.75rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem", height: "auto" }}
+                                      onClick={() => setBillingForm(c => ({ ...c, paymentMethod: 'crypto' }))}
+                                    >
+                                      <span style={{ fontSize: "1.2rem" }}>🪙</span>
+                                      <span style={{ fontWeight: "600", fontSize: "0.85rem" }}>{t.billing.payCrypto || "Pay with crypto"}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={`preset-pill ${billingForm.paymentMethod === 'telegram_stars' ? 'is-active' : ''}`}
+                                      style={{ padding: "0.75rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem", height: "auto" }}
+                                      onClick={() => setBillingForm(c => ({ ...c, paymentMethod: 'telegram_stars' }))}
+                                    >
+                                      <span style={{ fontSize: "1.2rem" }}>⭐</span>
+                                      <span style={{ fontWeight: "600", fontSize: "0.85rem" }}>{t.billing.payStars || "Pay with Stars"}</span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0" }}>
+                                    <span style={{ fontSize: "1.1rem" }}>🪙</span>
+                                    <span style={{ fontWeight: "600", fontSize: "0.9rem", color: "#fff" }}>{t.billing.payCrypto || "Pay with crypto"}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="billing-checkout__right">
+                            <div className="billing-price-summary">
+                              <span style={{ textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: "600" }}>
+                                {language === 'ru' ? 'Детали цены' : 'Pricing Details'}
+                              </span>
+                              
+                              {(() => {
+                                const pPlan = ((billingOptions?.plans || session.me.plans) as BillingOptionPlan[]).find(p => p.code === billingForm.plan);
+                                if (!pPlan) return null;
+                                const days = billingForm.subscriptionDays;
+                                
+                                const periodOpt = pPlan.periods?.find(p => p.days === days);
+                                
+                                let priceUSD = "";
+                                let starsAmt = 0;
+                                let baseRateUSD = pPlan.price_usd;
+                                
+                                if (billingOptions && periodOpt) {
+                                  priceUSD = periodOpt.price_usd;
+                                  starsAmt = periodOpt.stars_amount;
+                                  const p30 = pPlan.periods?.find(p => p.days === 30);
+                                  if (p30) baseRateUSD = p30.price_usd;
+                                } else {
+                                  const dailyRate = Number(pPlan.price_usd) / 30;
+                                  const totalPrice = dailyRate * days;
+                                  const dPct = session.me.workspace.discount_percent || 0;
+                                  const dPlan = session.me.workspace.discount_plan_code;
+                                  const hasD = dPct > 0 && (!dPlan || dPlan === pPlan.code);
+                                  const finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
+                                  priceUSD = finalPrice.toFixed(2);
+                                }
+                                
+                                return (
+                                  <>
+                                    <div className="price-summary-row" style={{ marginTop: "0.5rem" }}>
+                                      <span>{language === 'ru' ? 'Базовый тариф' : 'Base rate'}</span>
+                                      <span>${baseRateUSD} / {language === 'ru' ? '30 дн.' : '30 days'}</span>
+                                    </div>
+                                    <div className="price-summary-row">
+                                      <span>{language === 'ru' ? 'Срок подписки' : 'Duration'}</span>
+                                      <span>{days} {language === 'ru' ? 'дн.' : 'days'}</span>
+                                    </div>
+                                    <div className="price-summary-row price-summary-row--total">
+                                      <span>{language === 'ru' ? 'Итого к оплате' : 'Estimated Total'}</span>
+                                      <strong style={{ fontSize: "1.25rem", color: "#fff" }}>
+                                        {billingForm.paymentMethod === 'telegram_stars' && starsAmt > 0
+                                          ? `${starsAmt} Stars`
+                                          : `$${priceUSD} USD`
+                                        }
+                                      </strong>
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                            
+                            <div className="console-billing__promo" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem" }}>
+                              <label style={{ fontSize: "0.8rem", color: "var(--muted)", fontWeight: "600", display: "block", marginBottom: "0.4rem" }}>
+                                {t.billing.promoCodeLabel}
+                              </label>
+                              
+                              {promoNotice && (
+                                <div className="alert alert--success console-billing__promo-alert" style={{ padding: "0.4rem 0.6rem", fontSize: "0.78rem", marginBottom: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+                                  <span>{promoNotice}</span>
+                                  <span style={{ cursor: "pointer", fontWeight: "bold" }} onClick={() => setPromoNotice("")}>×</span>
+                                </div>
+                              )}
+                              {promoError && (
+                                <div className="alert console-billing__promo-alert" style={{ padding: "0.4rem 0.6rem", fontSize: "0.78rem", color: "#ff4d4f", borderColor: "#ff4d4f", marginBottom: "0.5rem", display: "flex", justifyContent: "space-between" }}>
+                                  <span>{promoError}</span>
+                                  <span style={{ cursor: "pointer", fontWeight: "bold" }} onClick={() => setPromoError("")}>×</span>
+                                </div>
+                              )}
+                              
+                              <div className="billing-promo-input-row console-billing__promo-input-row">
+                                <input
+                                  type="text"
+                                  className="dev-input"
+                                  placeholder="SUMMER30"
+                                  value={promoCode}
+                                  onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                                  style={{ flex: 1, padding: "0.4rem 0.60rem", fontSize: "0.85rem" }}
+                                />
+                                <button
+                                  type="button"
+                                  className="dev-btn dev-btn--secondary"
+                                  onClick={onRedeemPromoCode}
+                                  disabled={!promoCode.trim() || redeemingPromo}
+                                  style={{ padding: "0 0.75rem", height: "auto" }}
+                                >
+                                  {redeemingPromo ? t.common.loading : (language === 'ru' ? 'ОК' : 'Apply')}
+                                </button>
+                              </div>
+                            </div>
+                            
+                            <div className="console-billing__network-note" style={{ fontSize: "0.72rem", color: "var(--muted)", lineHeight: "1.4", opacity: 0.8 }}>
+                              {billingForm.paymentMethod === 'telegram_stars'
+                                ? (language === 'ru'
+                                  ? 'Платежи Telegram Stars обрабатываются мгновенно и безопасно через защищенные шлюзы Telegram.'
+                                  : 'Telegram Stars payments are processed instantly and securely through Telegram.')
+                                : (language === 'ru' 
+                                  ? 'Сгенерированный счёт можно оплатить любой криптовалютой во всех популярных сетях (TON, TRON, BSC, Solana, Base, Arbitrum).' 
+                                  : 'All major crypto networks are supported at checkout (TON, TRON, BSC, Solana, Base, Arbitrum).')
+                              }
+                            </div>
+                            
+                            <button
+                              type="button"
+                              className="dev-btn dev-btn--primary dev-btn--full-width console-billing__create-btn"
+                              onClick={onUpgrade}
+                              style={{ marginTop: "0.5rem" }}
+                            >
+                              {billingForm.paymentMethod === 'telegram_stars'
+                                ? (t.billing.payStars || 'Pay with Stars')
+                                : (language === 'ru' ? 'Создать счёт' : 'Create Invoice')
+                              }
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

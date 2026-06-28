@@ -17,6 +17,7 @@ type Config struct {
 	JWTSecret              string
 	InternalToken          string
 	TelegramBotToken       string
+	TelegramStarsPerUSD    int
 	TelegramInitMaxAge     time.Duration
 	AllowInsecureDevAuth   bool
 	GoogleOAuthClientID    string
@@ -35,7 +36,7 @@ type Config struct {
 	TonCenterBaseURL       string
 	TonCenterAPIKey        string
 	TonUSDTMasterAddress   string
-	GramUSDOverride         string
+	GramUSDOverride        string
 	SolanaRPCURL           string
 	EthereumRPCURL         string
 	BaseRPCURL             string
@@ -65,6 +66,7 @@ func Load() (Config, error) {
 		JWTSecret:              os.Getenv("JWT_SECRET"),
 		InternalToken:          os.Getenv("INTERNAL_TOKEN"),
 		TelegramBotToken:       os.Getenv("TELEGRAM_BOT_TOKEN"),
+		TelegramStarsPerUSD:    intEnv("TELEGRAM_STARS_PER_USD", 50),
 		AllowInsecureDevAuth:   boolEnv("ALLOW_INSECURE_DEV_AUTH", false),
 		GoogleOAuthClientID:    os.Getenv("GOOGLE_OAUTH_CLIENT_ID"),
 		GoogleOAuthSecret:      os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
@@ -77,7 +79,7 @@ func Load() (Config, error) {
 		TonCenterBaseURL:       envOrDefault("TONCENTER_BASE_URL", "https://toncenter.com/api/v2"),
 		TonCenterAPIKey:        os.Getenv("TONCENTER_API_KEY"),
 		TonUSDTMasterAddress:   envOrDefault("TON_USDT_MASTER_ADDRESS", "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"),
-		GramUSDOverride:         envOrDefault("GRAM_USD_RATE", os.Getenv("TON_USD_RATE")),
+		GramUSDOverride:        envOrDefault("GRAM_USD_RATE", os.Getenv("TON_USD_RATE")),
 		SolanaRPCURL:           envOrDefault("SOLANA_RPC_URL", "https://api.mainnet-beta.solana.com"),
 		EthereumRPCURL:         envOrDefault("ETHEREUM_RPC_URL", "https://eth.llamarpc.com"),
 		BaseRPCURL:             envOrDefault("BASE_RPC_URL", "https://base.llamarpc.com"),

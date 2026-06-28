@@ -33,6 +33,7 @@ const (
 type BotWorker struct {
 	store          *store.Store
 	invoiceService *service.InvoiceService
+	starsService   *service.StarsService
 	token          string
 	publicAppURL   string
 	httpClient     *http.Client
@@ -67,9 +68,10 @@ type tgAPIResponse[T any] struct {
 }
 
 type tgUpdate struct {
-	UpdateID      int64            `json:"update_id"`
-	Message       *tgMessage       `json:"message"`
-	CallbackQuery *tgCallbackQuery `json:"callback_query"`
+	UpdateID         int64               `json:"update_id"`
+	Message          *tgMessage          `json:"message"`
+	CallbackQuery    *tgCallbackQuery    `json:"callback_query"`
+	PreCheckoutQuery *tgPreCheckoutQuery `json:"pre_checkout_query"`
 }
 
 type tgMessage struct {
@@ -78,7 +80,8 @@ type tgMessage struct {
 	Chat      struct {
 		ID int64 `json:"id"`
 	} `json:"chat"`
-	From *tgUser `json:"from"`
+	From              *tgUser              `json:"from"`
+	SuccessfulPayment *tgSuccessfulPayment `json:"successful_payment"`
 }
 
 type tgUser struct {
@@ -92,6 +95,22 @@ type tgCallbackQuery struct {
 	Data    string     `json:"data"`
 	From    tgUser     `json:"from"`
 	Message *tgMessage `json:"message"`
+}
+
+type tgPreCheckoutQuery struct {
+	ID             string `json:"id"`
+	From           tgUser `json:"from"`
+	Currency       string `json:"currency"`
+	TotalAmount    int    `json:"total_amount"`
+	InvoicePayload string `json:"invoice_payload"`
+}
+
+type tgSuccessfulPayment struct {
+	Currency                string `json:"currency"`
+	TotalAmount             int    `json:"total_amount"`
+	InvoicePayload          string `json:"invoice_payload"`
+	TelegramPaymentChargeID string `json:"telegram_payment_charge_id"`
+	ProviderPaymentChargeID string `json:"provider_payment_charge_id"`
 }
 
 type tgInlineKeyboardMarkup struct {
@@ -117,10 +136,18 @@ type notificationAction struct {
 	URL  string `json:"url"`
 }
 
-func NewBotWorker(st *store.Store, invoiceService *service.InvoiceService, token string, publicAppURL string, logger *slog.Logger) *BotWorker {
+func NewBotWorker(st *store.Store, invoiceService *service.InvoiceService, token string, publicAppURL string, logger *slog.Logger, starsServices ...*service.StarsService) *BotWorker {
+	var starsService *service.StarsService
+	if len(starsServices) > 0 {
+		starsService = starsServices[0]
+	}
+	if starsService == nil {
+		starsService = service.NewStarsService(st, service.DefaultTelegramStarsPerUSD)
+	}
 	return &BotWorker{
 		store:          st,
 		invoiceService: invoiceService,
+		starsService:   starsService,
 		token:          token,
 		publicAppURL:   publicAppURL,
 		logger:         logger,
@@ -248,6 +275,8 @@ func (b *BotWorker) flush(ctx context.Context) error {
 
 func (b *BotWorker) handleUpdate(ctx context.Context, update tgUpdate) error {
 	switch {
+	case update.PreCheckoutQuery != nil:
+		return b.handlePreCheckoutQuery(ctx, update.PreCheckoutQuery)
 	case update.CallbackQuery != nil:
 		return b.handleCallback(ctx, update.CallbackQuery)
 	case update.Message != nil:
@@ -260,6 +289,9 @@ func (b *BotWorker) handleUpdate(ctx context.Context, update tgUpdate) error {
 func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error {
 	if message == nil || message.From == nil {
 		return nil
+	}
+	if message.SuccessfulPayment != nil {
+		return b.handleSuccessfulPayment(ctx, message)
 	}
 
 	workspace, err := b.ensureWorkspace(ctx, *message.From)
@@ -513,16 +545,33 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			err = fmt.Errorf("trial plan does not require checkout")
 			break
 		}
-		var options []service.PaymentOptionInput
-		for _, support := range store.SupportedPaymentOptions() {
-			for _, asset := range support.Assets {
-				options = append(options, service.PaymentOptionInput{
-					Network: support.Network,
-					Asset:   asset,
-				})
-			}
+		err = b.renderPlanPeriodPicker(ctx, workspace, planCode, query.Message.Chat.ID, query.Message.MessageID)
+	case strings.HasPrefix(data, "plan:period:"):
+		parts := strings.Split(data, ":")
+		if len(parts) != 4 {
+			err = fmt.Errorf("invalid plan period callback")
+			break
 		}
-		invoice, createErr := b.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, options, nil, 0)
+		planCode := store.NormalizePlanCode(parts[2])
+		days, parseErr := strconv.Atoi(parts[3])
+		if parseErr != nil {
+			err = parseErr
+			break
+		}
+		err = b.renderPlanPaymentMethodPicker(ctx, workspace, planCode, days, query.Message.Chat.ID, query.Message.MessageID)
+	case strings.HasPrefix(data, "plan:crypto:"):
+		parts := strings.Split(data, ":")
+		if len(parts) != 4 {
+			err = fmt.Errorf("invalid plan crypto callback")
+			break
+		}
+		planCode := store.NormalizePlanCode(parts[2])
+		days, parseErr := strconv.Atoi(parts[3])
+		if parseErr != nil {
+			err = parseErr
+			break
+		}
+		invoice, createErr := b.createCryptoPlanCheckout(ctx, workspace, planCode, days)
 		if createErr != nil {
 			err = createErr
 			break
@@ -532,6 +581,34 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 		checkoutText := fmt.Sprintf(c.checkoutCreated, esc(plan.Name), esc(invoice.PublicID), esc(invoice.PayableAmount.StringFixed(6)), esc(string(invoice.PayableNetwork)))
 		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, checkoutText, b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: c.btnOpenCheckout, URL: b.appURL("/checkout/" + invoice.PublicID)}},
+			{{Text: c.btnHome, CallbackData: "nav:home"}},
+		}))
+	case strings.HasPrefix(data, "plan:stars:"):
+		parts := strings.Split(data, ":")
+		if len(parts) != 4 {
+			err = fmt.Errorf("invalid plan stars callback")
+			break
+		}
+		planCode := store.NormalizePlanCode(parts[2])
+		days, parseErr := strconv.Atoi(parts[3])
+		if parseErr != nil {
+			err = parseErr
+			break
+		}
+		checkout, createErr := b.starsService.CreatePayment(ctx, workspace, service.CreateStarsPaymentInput{
+			PlanCode:         planCode,
+			SubscriptionDays: days,
+		})
+		if createErr != nil {
+			err = createErr
+			break
+		}
+		if sendErr := b.sendStarsInvoice(ctx, query.Message.Chat.ID, checkout); sendErr != nil {
+			err = sendErr
+			break
+		}
+		callbackText = c.toastStarsInvoiceSent
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf(c.starsInvoiceSent, esc(checkout.Plan.Name), checkout.Payment.SubscriptionDays, checkout.Payment.StarsAmount), b.recvKeyboard([][]tgInlineKeyboardButton{
 			{{Text: c.btnHome, CallbackData: "nav:home"}},
 		}))
 	case strings.HasPrefix(data, "plan:network:"):
@@ -1022,6 +1099,52 @@ func (b *BotWorker) renderPlans(ctx context.Context, workspace store.Workspace, 
 	return b.sendOrEdit(ctx, chatID, messageID, strings.Join(lines, "\n"), b.recvKeyboard(rows))
 }
 
+func (b *BotWorker) renderPlanPeriodPicker(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
+	plan := store.ResolvePlan(planCode)
+	text := fmt.Sprintf(c.planPickPeriod, esc(plan.Name), esc(planDescription(c, plan.Code)))
+	periods := []int{30, 90, 180, 365}
+	rows := make([][]tgInlineKeyboardButton, 0, len(periods)+1)
+	for _, days := range periods {
+		price := service.PlanPriceForPeriod(workspace, plan, days)
+		starsAmount := b.starsService.StarsAmountForUSD(price)
+		rows = append(rows, []tgInlineKeyboardButton{{
+			Text:         fmt.Sprintf("%d days · $%s · %d Stars", days, price.StringFixed(2), starsAmount),
+			CallbackData: fmt.Sprintf("plan:period:%s:%d", plan.Code, days),
+		}})
+	}
+	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnBack, CallbackData: "screen:upgrade"}})
+	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard(rows))
+}
+
+func (b *BotWorker) renderPlanPaymentMethodPicker(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, days int, chatID int64, messageID int64) error {
+	c := copyFor(workspace.Language)
+	plan := store.ResolvePlan(planCode)
+	price := service.PlanPriceForPeriod(workspace, plan, days)
+	starsAmount := b.starsService.StarsAmountForUSD(price)
+	text := fmt.Sprintf(c.planPickMethod, esc(plan.Name), days, esc(price.StringFixed(2)), starsAmount)
+	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard([][]tgInlineKeyboardButton{
+		{
+			{Text: c.btnPayCrypto, CallbackData: fmt.Sprintf("plan:crypto:%s:%d", plan.Code, days)},
+			{Text: c.btnPayStars, CallbackData: fmt.Sprintf("plan:stars:%s:%d", plan.Code, days)},
+		},
+		{{Text: c.btnBack, CallbackData: "plan:select:" + string(plan.Code)}},
+	}))
+}
+
+func (b *BotWorker) createCryptoPlanCheckout(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, days int) (store.Invoice, error) {
+	var options []service.PaymentOptionInput
+	for _, support := range store.SupportedPaymentOptions() {
+		for _, asset := range support.Assets {
+			options = append(options, service.PaymentOptionInput{
+				Network: support.Network,
+				Asset:   asset,
+			})
+		}
+	}
+	return b.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, options, nil, days)
+}
+
 func (b *BotWorker) renderPlanNetworkPicker(ctx context.Context, workspace store.Workspace, planCode store.PlanCode, chatID int64, messageID int64) error {
 	c := copyFor(workspace.Language)
 	plan := store.ResolvePlan(planCode)
@@ -1181,6 +1304,48 @@ func (b *BotWorker) sendOrEdit(ctx context.Context, chatID int64, messageID int6
 	return nil
 }
 
+func (b *BotWorker) handlePreCheckoutQuery(ctx context.Context, query *tgPreCheckoutQuery) error {
+	if query == nil {
+		return nil
+	}
+	payment, err := b.store.GetTelegramStarPaymentByPayload(ctx, query.InvoicePayload)
+	if err != nil {
+		_ = b.answerPreCheckoutQuery(ctx, query.ID, false, "Payment session was not found. Please create a new checkout.")
+		return nil
+	}
+	if payment.Status != "pending" {
+		_ = b.answerPreCheckoutQuery(ctx, query.ID, false, "Payment session is no longer active.")
+		return nil
+	}
+	if strings.ToUpper(query.Currency) != "XTR" || payment.StarsAmount != query.TotalAmount {
+		_ = b.answerPreCheckoutQuery(ctx, query.ID, false, "Payment amount changed. Please create a new checkout.")
+		return nil
+	}
+	return b.answerPreCheckoutQuery(ctx, query.ID, true, "")
+}
+
+func (b *BotWorker) handleSuccessfulPayment(ctx context.Context, message *tgMessage) error {
+	payment := message.SuccessfulPayment
+	if payment == nil || message.From == nil {
+		return nil
+	}
+	confirmed, err := b.starsService.ConfirmPayment(ctx, payment.InvoicePayload, payment.Currency, payment.TotalAmount, payment.TelegramPaymentChargeID, payment.ProviderPaymentChargeID, time.Now().UTC())
+	if err != nil {
+		b.logger.Error("confirm telegram stars payment", "payload", payment.InvoicePayload, "error", err)
+		return err
+	}
+	workspace, err := b.ensureWorkspace(ctx, *message.From)
+	if err != nil {
+		return err
+	}
+	c := copyFor(workspace.Language)
+	plan := store.ResolvePlan(confirmed.PlanCode)
+	_, err = b.sendMessage(ctx, message.Chat.ID, fmt.Sprintf(c.starsPaid, esc(plan.Name), confirmed.SubscriptionDays), b.recvKeyboard([][]tgInlineKeyboardButton{
+		{{Text: c.btnHome, CallbackData: "nav:home"}},
+	}))
+	return err
+}
+
 func (b *BotWorker) sendMessage(ctx context.Context, chatID int64, text string, keyboard *tgInlineKeyboardMarkup) (int64, error) {
 	payload := map[string]any{
 		"chat_id":                  chatID,
@@ -1197,6 +1362,25 @@ func (b *BotWorker) sendMessage(ctx context.Context, chatID int64, text string, 
 		return 0, err
 	}
 	return result.MessageID, nil
+}
+
+func (b *BotWorker) sendStarsInvoice(ctx context.Context, chatID int64, checkout service.StarsPaymentCheckout) error {
+	payload := map[string]any{
+		"chat_id":        chatID,
+		"title":          checkout.Title,
+		"description":    checkout.Description,
+		"payload":        checkout.Payment.Payload,
+		"provider_token": "",
+		"currency":       checkout.Currency,
+		"prices": []map[string]any{
+			{
+				"label":  checkout.Title,
+				"amount": checkout.Payment.StarsAmount,
+			},
+		},
+	}
+	var ignored json.RawMessage
+	return b.callTelegram(ctx, "sendInvoice", payload, &ignored)
 }
 
 func (b *BotWorker) editMessage(ctx context.Context, chatID int64, messageID int64, text string, keyboard *tgInlineKeyboardMarkup) error {
@@ -1228,6 +1412,18 @@ func (b *BotWorker) answerCallbackQuery(ctx context.Context, callbackID string, 
 	}
 	var ignored json.RawMessage
 	return b.callTelegram(ctx, "answerCallbackQuery", payload, &ignored)
+}
+
+func (b *BotWorker) answerPreCheckoutQuery(ctx context.Context, queryID string, ok bool, errorMessage string) error {
+	payload := map[string]any{
+		"pre_checkout_query_id": queryID,
+		"ok":                    ok,
+	}
+	if !ok && strings.TrimSpace(errorMessage) != "" {
+		payload["error_message"] = errorMessage
+	}
+	var ignored json.RawMessage
+	return b.callTelegram(ctx, "answerPreCheckoutQuery", payload, &ignored)
 }
 
 func (b *BotWorker) callTelegram(ctx context.Context, method string, payload any, out any) error {

@@ -1626,7 +1626,14 @@ func applyInvoicePostPaymentEffects(ctx context.Context, tx pgx.Tx, invoice Invo
 	if invoice.Kind != InvoiceKindSubscription || invoice.SubscriptionDays <= 0 {
 		return nil
 	}
-	planCode := NormalizePlanCode(string(invoice.PlanCode))
+	return extendWorkspaceSubscriptionTx(ctx, tx, invoice.WorkspaceID, invoice.PlanCode, invoice.SubscriptionDays)
+}
+
+func extendWorkspaceSubscriptionTx(ctx context.Context, tx pgx.Tx, workspaceID int64, rawPlanCode PlanCode, days int) error {
+	if days <= 0 {
+		return nil
+	}
+	planCode := NormalizePlanCode(string(rawPlanCode))
 	if planCode == PlanCodeTrial {
 		planCode = PlanCodeMerchant
 	}
@@ -1637,7 +1644,7 @@ func applyInvoicePostPaymentEffects(ctx context.Context, tx pgx.Tx, invoice Invo
 		    discount_percent = 0,
 		    discount_plan_code = NULL
 		WHERE id = $1
-	`, invoice.WorkspaceID, planCode, invoice.SubscriptionDays); err != nil {
+	`, workspaceID, planCode, days); err != nil {
 		return fmt.Errorf("extend workspace subscription: %w", err)
 	}
 	return nil

@@ -745,3 +745,23 @@ export type AdminWalletListResponse = {
   page: number;
   page_size: number;
 };
+
+export interface BillingOptionPeriod {
+  days: number;
+  price_usd: string;
+  stars_amount: number;
+}
+
+export interface BillingOptionPlan extends Plan {
+  periods: BillingOptionPeriod[];
+}
+
+export interface BillingOptionsResponse {
+  payment_methods: Array<{ code: string; label: string }>;
+  plans: BillingOptionPlan[];
+  periods: Array<{ days: number; label: string }>;
+  telegram_stars: {
+    currency: string;
+  };
+}
+

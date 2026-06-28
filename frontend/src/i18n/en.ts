@@ -728,6 +728,13 @@ function verify(payload, signature, secret) {
       durationDaysHint: "Minimum 14 days",
       durationInvalid: "Subscription duration must be at least 14 days",
       estimatedPrice: "Estimated price",
+      payCrypto: "Cryptocurrency",
+      payStars: "Telegram Stars",
+      selectBillingPeriod: "Billing period",
+      priceStars: "Price: ${usd} or ${stars} Stars",
+      starsSent: "Stars invoice sent",
+      completeStars: "Complete the payment in Telegram. The plan activates automatically.",
+      starsPaid: "Stars payment received. Access extended by {days} days.",
     },
     settings: {
       title: "Profile Settings",

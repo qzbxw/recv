@@ -1,9 +1,12 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -30,6 +33,7 @@ type Server struct {
 	adminService   *service.AdminService
 	invoiceService *service.InvoiceService
 	paymentService *service.PaymentService
+	starsService   *service.StarsService
 	apiLimiter     *memoryRateLimiter
 }
 
@@ -105,6 +109,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 		adminService:   adminService,
 		invoiceService: invoiceService,
 		paymentService: paymentService,
+		starsService:   service.NewStarsService(st, cfg.TelegramStarsPerUSD),
 		apiLimiter:     &memoryRateLimiter{buckets: map[string]rateBucket{}},
 	}
 
@@ -168,6 +173,7 @@ func NewServer(cfg config.Config, st *store.Store, authService *service.AuthServ
 	api.GET("/wallets", server.handleListWallets)
 	api.POST("/wallets", server.handleCreateWallet)
 	api.DELETE("/wallets/:id", server.handleDeleteWallet)
+	api.GET("/billing/options", server.handleBillingOptions)
 	api.POST("/billing/checkout", server.handleCreateBillingCheckout)
 	api.POST("/billing/promo-code/redeem", server.handleRedeemPromoCode)
 	api.GET("/invoices", server.handleListInvoices)
@@ -1125,12 +1131,68 @@ func isWorkspaceManagedInvoice(invoice store.Invoice) bool {
 	return invoice.Kind == store.InvoiceKindMerchant && invoice.SubscriptionDays <= 0
 }
 
+func (s *Server) handleBillingOptions(c *gin.Context) {
+	wc := workspaceFromContext(c)
+	periods := []int{30, 90, 180, 365}
+	plans := make([]gin.H, 0, len(store.ListPaidPlans()))
+	for _, plan := range store.ListPaidPlans() {
+		periodPrices := make([]gin.H, 0, len(periods))
+		for _, days := range periods {
+			priceUSD := service.PlanPriceForPeriod(wc.Workspace, plan, days)
+			starsAmount := 0
+			if s.starsService != nil {
+				starsAmount = s.starsService.StarsAmountForUSD(priceUSD)
+			}
+			periodPrices = append(periodPrices, gin.H{
+				"days":         days,
+				"price_usd":    priceUSD.StringFixed(2),
+				"stars_amount": starsAmount,
+			})
+		}
+		plans = append(plans, gin.H{
+			"code":             plan.Code,
+			"name":             plan.Name,
+			"price_usd":        plan.PriceUSDString,
+			"billing_days":     plan.BillingDays,
+			"periods":          periodPrices,
+			"checkout_badge":   plan.CheckoutBadge,
+			"marketing_label":  plan.MarketingLabel,
+			"has_api":          plan.HasAPI,
+			"has_webhooks":     plan.HasWebhooks,
+			"api_key_limit":    plan.APIKeyLimit,
+			"webhook_limit":    plan.WebhookLimit,
+			"max_workspaces":   plan.MaxWorkspaces,
+			"max_seats":        plan.MaxSeats,
+			"analytics_level":  plan.AnalyticsLevel,
+			"support_level":    plan.SupportLevel,
+			"priority_support": plan.PrioritySupport,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"payment_methods": []gin.H{
+			{"code": store.BillingPaymentMethodCrypto, "label": "Crypto checkout"},
+			{"code": store.BillingPaymentMethodTelegramStars, "label": "Telegram Stars"},
+		},
+		"plans": plans,
+		"periods": []gin.H{
+			{"days": 30, "label": "30 days"},
+			{"days": 90, "label": "90 days"},
+			{"days": 180, "label": "180 days"},
+			{"days": 365, "label": "365 days"},
+		},
+		"telegram_stars": gin.H{
+			"currency": "XTR",
+		},
+	})
+}
+
 func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 	wc := workspaceFromContext(c)
 	if !s.requireWorkspaceManager(c, wc) {
 		return
 	}
 	var body struct {
+		PaymentMethod  string `json:"payment_method"`
 		PayableNetwork string `json:"payable_network"`
 		PayableAsset   string `json:"payable_asset"`
 		PaymentOptions []struct {
@@ -1150,11 +1212,40 @@ func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 		return
 	}
 
-	network := store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork)))
 	planCode := store.NormalizePlanCode(body.PlanCode)
 	if strings.TrimSpace(body.PlanCode) == "" {
 		planCode = store.PlanCodeMerchant
 	}
+	method := store.BillingPaymentMethod(strings.ToLower(strings.TrimSpace(body.PaymentMethod)))
+	if method == "" {
+		method = store.BillingPaymentMethodCrypto
+	}
+	if method == store.BillingPaymentMethodTelegramStars {
+		if s.starsService == nil {
+			respondError(c, http.StatusInternalServerError, errors.New("telegram stars billing is not configured"))
+			return
+		}
+		checkout, err := s.starsService.CreatePayment(c.Request.Context(), wc.Workspace, service.CreateStarsPaymentInput{
+			PlanCode:         planCode,
+			SubscriptionDays: body.SubscriptionDays,
+		})
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if invoiceURL, linkErr := s.createTelegramStarsInvoiceLink(c.Request.Context(), checkout); linkErr == nil {
+			checkout.InvoiceURL = invoiceURL
+		} else {
+			log.Printf("create telegram stars invoice link: %v", linkErr)
+		}
+		c.JSON(http.StatusCreated, starsCheckoutResponse(checkout))
+		return
+	}
+	if method != store.BillingPaymentMethodCrypto {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported payment_method"})
+		return
+	}
+	network := store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork)))
 	options := parsePaymentOptionInputs(body.PaymentOptions)
 	if len(options) == 0 {
 		options = []service.PaymentOptionInput{{Network: network, Asset: store.NormalizePaymentAsset(body.PayableAsset)}}
@@ -1165,6 +1256,78 @@ func (s *Server) handleCreateBillingCheckout(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, publicInvoiceResponse(invoice))
+}
+
+func starsCheckoutResponse(checkout service.StarsPaymentCheckout) gin.H {
+	return gin.H{
+		"payment_method": checkout.PaymentMethod,
+		"plan": gin.H{
+			"code":         checkout.Plan.Code,
+			"name":         checkout.Plan.Name,
+			"price_usd":    checkout.Plan.PriceUSDString,
+			"billing_days": checkout.Plan.BillingDays,
+		},
+		"stars_payment": gin.H{
+			"id":                checkout.Payment.ID,
+			"payload":           checkout.Payment.Payload,
+			"status":            checkout.Payment.Status,
+			"base_amount_usd":   checkout.Payment.BaseAmountUSD.StringFixed(2),
+			"stars_amount":      checkout.Payment.StarsAmount,
+			"subscription_days": checkout.Payment.SubscriptionDays,
+			"currency":          checkout.Currency,
+			"title":             checkout.Title,
+			"description":       checkout.Description,
+			"invoice_url":       checkout.InvoiceURL,
+			"created_at":        checkout.Payment.CreatedAt,
+		},
+	}
+}
+
+func (s *Server) createTelegramStarsInvoiceLink(ctx context.Context, checkout service.StarsPaymentCheckout) (string, error) {
+	token := strings.TrimSpace(s.cfg.TelegramBotToken)
+	if token == "" {
+		return "", errors.New("TELEGRAM_BOT_TOKEN is not configured")
+	}
+	payload := map[string]any{
+		"title":          checkout.Title,
+		"description":    checkout.Description,
+		"payload":        checkout.Payment.Payload,
+		"provider_token": "",
+		"currency":       checkout.Currency,
+		"prices": []map[string]any{
+			{
+				"label":  checkout.Title,
+				"amount": checkout.Payment.StarsAmount,
+			},
+		},
+	}
+	body, _ := json.Marshal(payload)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("https://api.telegram.org/bot%s/createInvoiceLink", token), bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	var result struct {
+		OK          bool   `json:"ok"`
+		Description string `json:"description"`
+		Result      string `json:"result"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return "", fmt.Errorf("decode telegram createInvoiceLink: %w %s", err, strings.TrimSpace(string(raw)))
+	}
+	if !result.OK {
+		return "", fmt.Errorf("telegram createInvoiceLink failed: %s", result.Description)
+	}
+	if strings.TrimSpace(result.Result) == "" {
+		return "", errors.New("telegram createInvoiceLink returned empty result")
+	}
+	return result.Result, nil
 }
 
 func checkoutBadge(invoice store.Invoice) string {

@@ -33,11 +33,11 @@ const (
 )
 
 type InvoiceService struct {
-	store      *store.Store
-	httpClient *http.Client
+	store       *store.Store
+	httpClient  *http.Client
 	gramRateEnv string
-	rateMu     sync.Mutex
-	rateCache  map[store.PaymentAsset]cachedRate
+	rateMu      sync.Mutex
+	rateCache   map[store.PaymentAsset]cachedRate
 }
 
 type cachedRate struct {
@@ -68,7 +68,7 @@ func NewInvoiceService(st *store.Store, gramRateEnv string) *InvoiceService {
 			Timeout: 10 * time.Second,
 		},
 		gramRateEnv: gramRateEnv,
-		rateCache:  map[store.PaymentAsset]cachedRate{},
+		rateCache:   map[store.PaymentAsset]cachedRate{},
 	}
 }
 
@@ -197,21 +197,27 @@ func (s *InvoiceService) CreatePlanInvoiceWithPriceAndOptions(ctx context.Contex
 		billingDays = customDays
 	}
 
-	baseAmountUSD := plan.PriceUSD
-	if customDays > 0 {
-		baseAmountUSD = plan.PriceUSD.Mul(decimal.NewFromInt(int64(customDays))).Div(decimal.NewFromInt(int64(plan.BillingDays))).Round(2)
-	}
 	if overridePriceUSD != nil {
-		baseAmountUSD = overridePriceUSD.Round(6)
-	} else {
-		if workspace.DiscountPercent > 0 && (workspace.DiscountPlanCode == nil || *workspace.DiscountPlanCode == "" || store.PlanCode(*workspace.DiscountPlanCode) == planCode) {
-			discountMultiplier := decimal.NewFromInt(100 - int64(workspace.DiscountPercent)).Div(decimal.NewFromInt(100))
-			baseAmountUSD = baseAmountUSD.Mul(discountMultiplier).Round(2)
+		baseAmountUSD := overridePriceUSD.Round(6)
+		if !baseAmountUSD.IsPositive() {
+			metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "invalid_price")
+			return store.Invoice{}, errors.New("subscription price must be positive")
 		}
+		return s.createPlanInvoiceFromAmount(ctx, workspace, plan, billingDays, requestedOptions, requests, baseAmountUSD)
 	}
+	baseAmountUSD := PlanPriceForPeriod(workspace, plan, billingDays)
 	if !baseAmountUSD.IsPositive() {
 		metrics.IncInvoiceOperation("create", source, string(store.InvoiceKindSubscription), string(network), string(plan.Code), "failure", "invalid_price")
 		return store.Invoice{}, errors.New("subscription price must be positive")
+	}
+	return s.createPlanInvoiceFromAmount(ctx, workspace, plan, billingDays, requestedOptions, requests, baseAmountUSD)
+}
+
+func (s *InvoiceService) createPlanInvoiceFromAmount(ctx context.Context, workspace store.Workspace, plan store.PlanDefinition, billingDays int, requestedOptions []PaymentOptionInput, requests []PaymentOptionInput, baseAmountUSD decimal.Decimal) (store.Invoice, error) {
+	source := metrics.SourceFromContext(ctx)
+	network := store.Network("")
+	if len(requestedOptions) > 0 {
+		network = requestedOptions[0].Network
 	}
 	wallets := make(map[store.Network]store.Wallet)
 	for _, request := range requests {
@@ -232,8 +238,8 @@ func (s *InvoiceService) CreatePlanInvoiceWithPriceAndOptions(ctx context.Contex
 		return store.Invoice{}, err
 	}
 	title := plan.CheckoutTitle
-	if customDays > 0 {
-		title = fmt.Sprintf("recv %s · %d days", plan.Name, customDays)
+	if billingDays != plan.BillingDays {
+		title = fmt.Sprintf("recv %s · %d days", plan.Name, billingDays)
 	}
 	invoice, err := s.createInvoiceFromOptions(ctx, store.CreateInvoiceParams{
 		WorkspaceID:       workspace.ID,

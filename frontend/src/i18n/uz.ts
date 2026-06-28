@@ -762,6 +762,13 @@ const uz = {
       durationDaysHint: "Kamida 14 kun",
       durationInvalid: "Subscription davomiyligi kamida 14 kun bo'lishi kerak",
       estimatedPrice: "Taxminiy narx",
+      payCrypto: "Kriptovalyuta",
+      payStars: "Telegram Stars",
+      selectBillingPeriod: "To'lov muddati",
+      priceStars: "Narxi: ${usd} yoki ${stars} Stars",
+      starsSent: "Stars hisobi yuborildi",
+      completeStars: "Telegram-da to'lovni yakunlang. Tarif avtomatik ravishda faollashadi.",
+      starsPaid: "Stars to'lovi qabul qilindi. Kirish {days} kunga uzaytirildi.",
     },
     settings: {
       title: "Profil sozlamalari",

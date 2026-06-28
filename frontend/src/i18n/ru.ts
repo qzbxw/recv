@@ -727,6 +727,13 @@ function verify(payload, signature, secret) {
       durationDaysHint: "Минимум 14 дней",
       durationInvalid: "Срок подписки должен быть не менее 14 дней",
       estimatedPrice: "Ориентировочная стоимость",
+      payCrypto: "Криптовалюта",
+      payStars: "Telegram Stars",
+      selectBillingPeriod: "Период оплаты",
+      priceStars: "Стоимость: ${usd} или ${stars} Stars",
+      starsSent: "Счет в Stars отправлен",
+      completeStars: "Завершите оплату в Telegram. Тариф активируется автоматически.",
+      starsPaid: "Оплата в Stars получена. Доступ продлен на {days} дн.",
     },
     settings: {
       title: "Настройки профиля",

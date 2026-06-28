@@ -49,6 +49,8 @@ type botCopy struct {
 	btnDisable         string // %s = network label
 	btnNewInvoiceShort string
 	btnPayPlan         string // %s = plan name
+	btnPayCrypto       string
+	btnPayStars        string
 	btnStartSetup      string
 	btnHowPlans        string
 	minuteSuffix       string // e.g. "min" / "мин"
@@ -89,15 +91,19 @@ type botCopy struct {
 	invoiceTrialReached string
 
 	// Upgrade
-	plansTitle      string
-	plansBody       string
-	plansCurrent    string // %s plan, %s date
-	planLine        string // %s name, %s price, %s features
-	planMerchant    string
-	planDeveloper   string
-	planBusiness    string
-	planPickNetwork string // %s plan name, %s price, %s features
-	checkoutCreated string // %s plan, %s id, %s amount, %s network
+	plansTitle       string
+	plansBody        string
+	plansCurrent     string // %s plan, %s date
+	planLine         string // %s name, %s price, %s features
+	planMerchant     string
+	planDeveloper    string
+	planBusiness     string
+	planPickNetwork  string // %s plan name, %s price, %s features
+	planPickPeriod   string // %s plan name, %s features
+	planPickMethod   string // %s plan name, %d days, %s usd, %d stars
+	checkoutCreated  string // %s plan, %s id, %s amount, %s network
+	starsInvoiceSent string // %s plan, %d days, %d stars
+	starsPaid        string // %s plan, %d days
 
 	// Manual-review callbacks
 	markedPaid    string // %s id
@@ -108,29 +114,29 @@ type botCopy struct {
 	languageTitle string
 
 	// Retention reminders
-	reminderNoWallet         string
-	reminderNoWallet2        string
-	reminderNoWallet3        string
-	reminderNoWallet4        string
-	reminderNoWallet5        string
-	reminderNoInvoice        string
-	reminderNoInvoice2       string
-	reminderNoInvoice3       string
-	reminderNoInvoice4       string
-	reminderNoInvoice5       string
-	reminderTrialExhausted   string
-	reminderTrialExhausted2  string
-	reminderTrialExhausted3  string
-	reminderExpired          string
-	reminderExpired2         string
-	reminderExpired3         string
-	reminderExpired4         string
-	reminderExpired5         string
-	reminderInactive         string
-	reminderInactive2        string
-	reminderInactive3        string
-	reminderInactive4        string
-	reminderInactive5        string
+	reminderNoWallet        string
+	reminderNoWallet2       string
+	reminderNoWallet3       string
+	reminderNoWallet4       string
+	reminderNoWallet5       string
+	reminderNoInvoice       string
+	reminderNoInvoice2      string
+	reminderNoInvoice3      string
+	reminderNoInvoice4      string
+	reminderNoInvoice5      string
+	reminderTrialExhausted  string
+	reminderTrialExhausted2 string
+	reminderTrialExhausted3 string
+	reminderExpired         string
+	reminderExpired2        string
+	reminderExpired3        string
+	reminderExpired4        string
+	reminderExpired5        string
+	reminderInactive        string
+	reminderInactive2       string
+	reminderInactive3       string
+	reminderInactive4       string
+	reminderInactive5       string
 
 	// Callback toasts (answerCallbackQuery)
 	toastWalletDisabled      string
@@ -139,6 +145,7 @@ type botCopy struct {
 	toastMarkedPaid          string
 	toastLeftReview          string
 	toastPlanCheckoutCreated string
+	toastStarsInvoiceSent    string
 	toastLanguageSet         string
 	toastUnknownAction       string
 }
@@ -183,6 +190,8 @@ var enCopy = botCopy{
 	btnDisable:         "Remove %s",
 	btnNewInvoiceShort: "＋ Create another",
 	btnPayPlan:         "Pay for %s",
+	btnPayCrypto:       "Pay with crypto",
+	btnPayStars:        "Pay with Stars",
 	btnStartSetup:      "⚙️ Configure wallet",
 	btnHowPlans:        "Pricing and fees",
 	minuteSuffix:       "min",
@@ -217,15 +226,19 @@ var enCopy = botCopy{
 	invoiceCreated:      "✅ <b>Invoice generated successfully</b>\n\nID: %s\nDescription: %s\nAmount: %s USD\nNetwork: %s\nValid until: %s\n\nShare this secure checkout link with your client:\n%s",
 	invoiceTrialReached: "Free invoice limit exhausted. Upgrade to the Merchant plan for standard checkouts or Developer tier for API and webhooks access.",
 
-	plansTitle:      "⭐ <b>recv Billing & Plans</b>",
-	plansBody:       "0% processing fees. Funds route instantly to your non-custodial wallets. Select the infrastructure tier that meets your business volume.",
-	plansCurrent:    "Active plan · %s (Expires: %s)",
-	planLine:        "<b>%s</b> · $%s / 30 days\n%s",
-	planMerchant:    "Checkout links, Telegram flow, manual invoice review.",
-	planDeveloper:   "Full API access, webhooks, idempotency keys, MCP tools.",
-	planBusiness:    "Team access, audit logs, extended limits, priority workflow.",
-	planPickNetwork: "<b>%s</b> · $%s / 30 days\n\n%s\n\nSelect the payment network to proceed:",
-	checkoutCreated: "✅ <b>Checkout for %s is generated</b>\n\nInvoice ID: %s\n%s %s · 30 days access\n\nComplete the transaction below. Plan activates automatically upon network confirmation.",
+	plansTitle:       "⭐ <b>recv Billing & Plans</b>",
+	plansBody:        "0% processing fees. Funds route instantly to your non-custodial wallets. Select the infrastructure tier that meets your business volume.",
+	plansCurrent:     "Active plan · %s (Expires: %s)",
+	planLine:         "<b>%s</b> · $%s / 30 days\n%s",
+	planMerchant:     "Checkout links, Telegram flow, manual invoice review.",
+	planDeveloper:    "Full API access, webhooks, idempotency keys, MCP tools.",
+	planBusiness:     "Team access, audit logs, extended limits, priority workflow.",
+	planPickNetwork:  "<b>%s</b> · $%s / 30 days\n\n%s\n\nSelect the payment network to proceed:",
+	planPickPeriod:   "<b>%s</b>\n\n%s\n\nBilling period:",
+	planPickMethod:   "<b>%s</b> · %d days\n\nPrice: $%s or %d Stars\n\nPayment method:",
+	checkoutCreated:  "✅ <b>Checkout for %s is generated</b>\n\nInvoice ID: %s\n%s %s\n\nComplete the transaction below. Plan activates automatically upon network confirmation.",
+	starsInvoiceSent: "✅ <b>Stars invoice sent</b>\n\n%s · %d days\nAmount: %d Stars\n\nComplete the payment in Telegram. The plan activates automatically.",
+	starsPaid:        "✅ <b>%s activated</b>\n\nStars payment received. Access extended by %d days.",
 
 	markedPaid:    "✅ Invoice %s successfully marked as paid.",
 	keptUnderpaid: "⏳ Invoice %s remains open pending additional funds.",
@@ -263,6 +276,7 @@ var enCopy = botCopy{
 	toastMarkedPaid:          "Status updated: Paid",
 	toastLeftReview:          "Status updated: Manual Review",
 	toastPlanCheckoutCreated: "Billing invoice generated",
+	toastStarsInvoiceSent:    "Stars invoice sent",
 	toastLanguageSet:         "Language preferences updated",
 	toastUnknownAction:       "Invalid action requested",
 }
@@ -307,6 +321,8 @@ var ruCopy = botCopy{
 	btnDisable:         "Отключить %s",
 	btnNewInvoiceShort: "＋ Создать еще один",
 	btnPayPlan:         "Оплатить %s",
+	btnPayCrypto:       "Оплатить криптовалютой",
+	btnPayStars:        "Оплатить Stars",
 	btnStartSetup:      "⚙️ Настроить кошелек",
 	btnHowPlans:        "Тарифы и комиссии",
 	minuteSuffix:       "мин",
@@ -341,15 +357,19 @@ var ruCopy = botCopy{
 	invoiceCreated:      "✅ **Счет успешно сформирован**\n\nID: %s\nНазначение: %s\nСумма: %s USD\nСеть: %s\nДействителен до: %s\n\nОтправьте данную ссылку клиенту для оплаты:\n%s",
 	invoiceTrialReached: "Лимит бесплатных счетов исчерпан. Перейдите на тариф Merchant для стандартных продаж или Developer для доступа к API и вебхукам.",
 
-	plansTitle:      "⭐ <b>Тарифы и Биллинг recv</b>",
-	plansBody:       "0% комиссий за эквайринг. Мгновенная маршрутизация средств на Ваши некастодиальные кошельки. Выберите уровень инфраструктуры для Вашего бизнеса.",
-	plansCurrent:    "Активный тариф · %s (Действует до: %s)",
-	planLine:        "<b>%s</b> · $%s / 30 дней\n%s",
-	planMerchant:    "Платежные ссылки, касса в Telegram, ручная проверка платежей.",
-	planDeveloper:   "Полный доступ к API, вебхуки, ключи идемпотентности, MCP-инструменты.",
-	planBusiness:    "Доступ для команд, аудит-логи, расширенные лимиты, приоритетная поддержка.",
-	planPickNetwork: "**%s** · $%s / 30 дней\n\n%s\n\nВыберите сеть для проведения оплаты:",
-	checkoutCreated: "✅ **Счет на оплату тарифа %s сформирован**\n\nID счета: %s\n%s %s · Доступ на 30 дней\n\nОплатите счет ниже. Тариф активируется автоматически после подтверждения сетью.",
+	plansTitle:       "⭐ <b>Тарифы и Биллинг recv</b>",
+	plansBody:        "0% комиссий за эквайринг. Мгновенная маршрутизация средств на Ваши некастодиальные кошельки. Выберите уровень инфраструктуры для Вашего бизнеса.",
+	plansCurrent:     "Активный тариф · %s (Действует до: %s)",
+	planLine:         "<b>%s</b> · $%s / 30 дней\n%s",
+	planMerchant:     "Платежные ссылки, касса в Telegram, ручная проверка платежей.",
+	planDeveloper:    "Полный доступ к API, вебхуки, ключи идемпотентности, MCP-инструменты.",
+	planBusiness:     "Доступ для команд, аудит-логи, расширенные лимиты, приоритетная поддержка.",
+	planPickNetwork:  "**%s** · $%s / 30 дней\n\n%s\n\nВыберите сеть для проведения оплаты:",
+	planPickPeriod:   "<b>%s</b>\n\n%s\n\nПериод оплаты:",
+	planPickMethod:   "<b>%s</b> · %d дн.\n\nЦена: $%s или %d Stars\n\nСпособ оплаты:",
+	checkoutCreated:  "✅ <b>Счет на оплату тарифа %s сформирован</b>\n\nID счета: %s\n%s %s\n\nОплатите счет ниже. Тариф активируется автоматически после подтверждения сетью.",
+	starsInvoiceSent: "✅ <b>Счет в Stars отправлен</b>\n\n%s · %d дн.\nСумма: %d Stars\n\nЗавершите оплату в Telegram. Тариф активируется автоматически.",
+	starsPaid:        "✅ <b>%s активирован</b>\n\nОплата в Stars получена. Доступ продлен на %d дн.",
 
 	markedPaid:    "✅ Счет %s успешно переведен в статус оплаченного.",
 	keptUnderpaid: "⏳ Счет %s оставлен открытым до поступления полной суммы.",
@@ -387,6 +407,7 @@ var ruCopy = botCopy{
 	toastMarkedPaid:          "Статус обновлен: Оплачен",
 	toastLeftReview:          "Статус обновлен: Ручная проверка",
 	toastPlanCheckoutCreated: "Счет на оплату сформирован",
+	toastStarsInvoiceSent:    "Счет Stars отправлен",
 	toastLanguageSet:         "Языковые настройки обновлены",
 	toastUnknownAction:       "Запрошено недопустимое действие",
 }
@@ -692,14 +713,14 @@ var deCopy = botCopy{
 	invoicesEmpty: "Noch keine Rechnungen. Erstellen Sie eine und senden Sie den Checkout-Link an den Käufer.",
 	invoiceLine:   "<b>%s</b> · %s\n%s %s · %s",
 
-	walletsTitle:    "👛 <b>Auszahlungs-Wallets</b>",
-	walletsEmpty:    "Noch keine Wallets. Fügen Sie eine hinzu und Zahlungen landen direkt bei Ihnen — recv berührt sie nicht.",
-	walletsSaved:    "✅ Wallet gespeichert.",
-	walletsDisabled: "Wallet entfernt.",
-	walletsAddFirst: "<b>Eine Auszahlungs-Wallet ist erforderlich, um eine Rechnung zu erstellen.</b>\n\nDamit Kunden Rechnungen bezahlen können und das Geld bei Ihnen ankommt, verbinden Sie bitte zuerst eine Auszahlungs-Wallet. Das dauert nur wenige Sekunden.",
-	walletPromptEVM: "<b>Wallet-Verbindung: EVM</b>\n\nBitte senden Sie Ihre EVM-Wallet-Adresse in diesen Chat. Kundenzahlungen in den unterstützten EVM-Netzwerken werden an diese Adresse weitergeleitet.\n\nBeispiel: <code>0x...</code>\n\nStellen Sie sicher, dass die Adresse exakt kopiert wurde.",
-	walletPromptSOL: "<b>Wallet-Verbindung: Solana</b>\n\nBitte senden Sie Ihre Solana-Wallet-Adresse in diesen Chat. Kundenzahlungen auf Solana werden an diese Adresse weitergeleitet.\n\nBeispiel: <code>So...</code>\n\nStellen Sie sicher, dass die Adresse exakt kopiert wurde.",
-	walletPromptTRON: "<b>Wallet-Verbindung: TRON (TRC-20)</b>\n\nBitte senden Sie Ihre TRON-Wallet-Adresse in diesen Chat. Kundenzahlungen auf TRON werden an diese Adresse weitergeleitet.\n\nBeispiel: <code>T...</code>\n\nStellen Sie sicher, dass die Adresse exakt kopiert wurde.",
+	walletsTitle:      "👛 <b>Auszahlungs-Wallets</b>",
+	walletsEmpty:      "Noch keine Wallets. Fügen Sie eine hinzu und Zahlungen landen direkt bei Ihnen — recv berührt sie nicht.",
+	walletsSaved:      "✅ Wallet gespeichert.",
+	walletsDisabled:   "Wallet entfernt.",
+	walletsAddFirst:   "<b>Eine Auszahlungs-Wallet ist erforderlich, um eine Rechnung zu erstellen.</b>\n\nDamit Kunden Rechnungen bezahlen können und das Geld bei Ihnen ankommt, verbinden Sie bitte zuerst eine Auszahlungs-Wallet. Das dauert nur wenige Sekunden.",
+	walletPromptEVM:   "<b>Wallet-Verbindung: EVM</b>\n\nBitte senden Sie Ihre EVM-Wallet-Adresse in diesen Chat. Kundenzahlungen in den unterstützten EVM-Netzwerken werden an diese Adresse weitergeleitet.\n\nBeispiel: <code>0x...</code>\n\nStellen Sie sicher, dass die Adresse exakt kopiert wurde.",
+	walletPromptSOL:   "<b>Wallet-Verbindung: Solana</b>\n\nBitte senden Sie Ihre Solana-Wallet-Adresse in diesen Chat. Kundenzahlungen auf Solana werden an diese Adresse weitergeleitet.\n\nBeispiel: <code>So...</code>\n\nStellen Sie sicher, dass die Adresse exakt kopiert wurde.",
+	walletPromptTRON:  "<b>Wallet-Verbindung: TRON (TRC-20)</b>\n\nBitte senden Sie Ihre TRON-Wallet-Adresse in diesen Chat. Kundenzahlungen auf TRON werden an diese Adresse weitergeleitet.\n\nBeispiel: <code>T...</code>\n\nStellen Sie sicher, dass die Adresse exakt kopiert wurde.",
 	walletPromptOther: "<b>Wallet-Verbindung: %s</b>\n\nBitte senden Sie Ihre Wallet-Adresse in diesen Chat. Kundenzahlungen werden an diese Adresse weitergeleitet.\n\nStellen Sie sicher, dass die Adresse exakt kopiert wurde.",
 	walletInvalidHint: "⚠️ %s — versuchen Sie es noch einmal.",
 
@@ -891,46 +912,46 @@ var ukCopy = botCopy{
 
 	lang: "uk",
 
-	homeTitle: "<b>recv</b> — платежі на автопілоті",
-	homeWorkspace: "Воркспейс · %s",
-	homePlan: "Тариф · %s",
-	homeWallets: "Кошельки для виплат · %d",
-	homeLatest: "Останній рахунок · %s",
+	homeTitle:      "<b>recv</b> — платежі на автопілоті",
+	homeWorkspace:  "Воркспейс · %s",
+	homePlan:       "Тариф · %s",
+	homeWallets:    "Кошельки для виплат · %d",
+	homeLatest:     "Останній рахунок · %s",
 	homeNoInvoices: "Рахунків поки немає — зараз це виправимо.",
-	homeTagline: "Посилання на оплату, гаманці, тариф, останні рахунки — вся каса прямо в чаті.",
+	homeTagline:    "Посилання на оплату, гаманці, тариф, останні рахунки — вся каса прямо в чаті.",
 	homePlanActive: "⭐ %s активний до %s",
-	homeTrialLeft: "Пробний період · залишилося %d безкоштовних рахунків",
+	homeTrialLeft:  "Пробний період · залишилося %d безкоштовних рахунків",
 
 	startTitle: "<b>Ласкаво просимо до recv</b> — некастодіальний криптоеквайринг для вашого бізнесу",
-	startBody: "Приймайте платежі в USDT та інших криптовалютах напряму в Telegram. Жодних посередників, холдів чи прихованих комісій — кошти надходять прямо на ваш особистий гаманець.",
+	startBody:  "Приймайте платежі в USDT та інших криптовалютах напряму в Telegram. Жодних посередників, холдів чи прихованих комісій — кошти надходять прямо на ваш особистий гаманець.",
 	startProof: "Налаштуйте прийом платежів за 1 хвилину.",
 
 	tgcRedirTitle: "📢 <b>Приєднатися до Telegram-каналу</b>",
 	tgcRedirBody:  "Натисніть кнопку нижче, щоб перейти до нашого офіційного Telegram-каналу, де ми ділимося аналітикою, оновленнями та новинами.",
 	btnTgcRedir:   "📢 Перейти до @recvmoney",
 
-	btnNewInvoice: "＋ Новий рахунок",
-	btnRecentInvoices: "🧾 Останні",
-	btnWallets: "👛 Гаманці",
-	btnPlans: "⭐ Тарифи",
-	btnExtendPlan: "⭐ Продовжити тариф",
-	btnHome: "← Додому",
-	btnBack: "← Назад",
-	btnCancel: "✕ Скасувати",
-	btnLanguage: "🌐 Мова",
-	btnOpenCheckout: "💳 Відкрити оплату",
-	btnOpenConsole: "↗ Спробувати Mini app",
-	btnOpenStats: "📊 Статистика в Mini app",
-	btnPricing: "Тарифи на сайті",
-	btnDocs: "Документація",
-	btnSetWallet: "Вказати %s",
-	btnAddWallet: "＋ Додати гаманець",
-	btnDisable: "Прибрати %s",
+	btnNewInvoice:      "＋ Новий рахунок",
+	btnRecentInvoices:  "🧾 Останні",
+	btnWallets:         "👛 Гаманці",
+	btnPlans:           "⭐ Тарифи",
+	btnExtendPlan:      "⭐ Продовжити тариф",
+	btnHome:            "← Додому",
+	btnBack:            "← Назад",
+	btnCancel:          "✕ Скасувати",
+	btnLanguage:        "🌐 Мова",
+	btnOpenCheckout:    "💳 Відкрити оплату",
+	btnOpenConsole:     "↗ Спробувати Mini app",
+	btnOpenStats:       "📊 Статистика в Mini app",
+	btnPricing:         "Тарифи на сайті",
+	btnDocs:            "Документація",
+	btnSetWallet:       "Вказати %s",
+	btnAddWallet:       "＋ Додати гаманець",
+	btnDisable:         "Прибрати %s",
 	btnNewInvoiceShort: "＋ Ще один",
-	btnPayPlan: "Оплатити %s",
-	btnStartSetup: "⚙️ Налаштувати гаманець",
-	btnHowPlans: "Скільки це коштує?",
-	minuteSuffix: "хв",
+	btnPayPlan:         "Оплатити %s",
+	btnStartSetup:      "⚙️ Налаштувати гаманець",
+	btnHowPlans:        "Скільки це коштує?",
+	minuteSuffix:       "хв",
 
 	loginTitle: "🔑 <b>Вхід через браузер</b>",
 	loginSteps: "1. Відкрийте сторінку входу recv у браузері.\n2. Введіть @username.\n3. Натисніть «Отримати код».\n4. Вставте код, який прийде сюди. Готово.",
@@ -939,95 +960,118 @@ var ukCopy = botCopy{
 
 	invoicesTitle: "🧾 <b>Останні рахунки</b>",
 	invoicesEmpty: "Рахунок поки що немає. Створіть перший тут і надішліть покупцю посилання на оплату.",
-	invoiceLine: "<b>%s</b> · %s\n%s %s · %s",
+	invoiceLine:   "<b>%s</b> · %s\n%s %s · %s",
 
-	walletsTitle: "👛 <b>Гаманці для виплат</b>",
-	walletsEmpty: "Гаманців поки що немає. Додайте - гроші підуть безпосередньо вам, recv їх не стосується.",
-	walletsSaved: "✅ Гаманець збережений.",
-	walletsDisabled: "Гаманець прибраний.",
-	walletsAddFirst: "<b>Для створення рахунку потрібен гаманець.</b>\n\nЩоб Ваші клієнти могли сплатити рахунок, а Ви отримати кошти, будь ласка, прив'яжіть гаманець для виплат. Це триватиме кілька секунд.",
-	walletPromptEVM: "<b>Підключення гаманця: EVM</b>\n\nБудь ласка, відправте в чат адресу EVM-гаманця. На цю адресу будуть автоматично надходити платежі клієнтів у підтримуваних мережах EVM.\n\nПриклад: <code>0x...</code>\n\nПереконайтеся, що копіюєте точну адресу.",
-	walletPromptSOL: "<b>Підключення гаманця: Solana</b>\n\nБудь ласка, відправте в чат адресу Вашого гаманця в мережі Solana. На цю адресу автоматично надходитимуть платежі клієнтів у Solana.\n\nПриклад: <code>So...</code>\n\nПереконайтеся, що копіюєте точну адресу.",
-	walletPromptTRON: "<b>Підключення гаманця: TRON (TRC-20)</b>\n\nБудь ласка, відправте в чат адресу Вашого гаманця в мережі TRON.\nНа цю адресу будуть автоматично надходити всі платежі від Ваших клієнтів.",
+	walletsTitle:      "👛 <b>Гаманці для виплат</b>",
+	walletsEmpty:      "Гаманців поки що немає. Додайте - гроші підуть безпосередньо вам, recv їх не стосується.",
+	walletsSaved:      "✅ Гаманець збережений.",
+	walletsDisabled:   "Гаманець прибраний.",
+	walletsAddFirst:   "<b>Для створення рахунку потрібен гаманець.</b>\n\nЩоб Ваші клієнти могли сплатити рахунок, а Ви отримати кошти, будь ласка, прив'яжіть гаманець для виплат. Це триватиме кілька секунд.",
+	walletPromptEVM:   "<b>Підключення гаманця: EVM</b>\n\nБудь ласка, відправте в чат адресу EVM-гаманця. На цю адресу будуть автоматично надходити платежі клієнтів у підтримуваних мережах EVM.\n\nПриклад: <code>0x...</code>\n\nПереконайтеся, що копіюєте точну адресу.",
+	walletPromptSOL:   "<b>Підключення гаманця: Solana</b>\n\nБудь ласка, відправте в чат адресу Вашого гаманця в мережі Solana. На цю адресу автоматично надходитимуть платежі клієнтів у Solana.\n\nПриклад: <code>So...</code>\n\nПереконайтеся, що копіюєте точну адресу.",
+	walletPromptTRON:  "<b>Підключення гаманця: TRON (TRC-20)</b>\n\nБудь ласка, відправте в чат адресу Вашого гаманця в мережі TRON.\nНа цю адресу будуть автоматично надходити всі платежі від Ваших клієнтів.",
 	walletPromptOther: "<b>Підключення гаманця: %s</b>\n\nБудь ласка, надішліть адресу Вашого гаманця в чат. На цю адресу будуть автоматично надходити платежі клієнтів.\n\nПереконайтеся, що копіюєте точну адресу.",
 	walletInvalidHint: "⚠️ %s — спробуйте ще раз.",
 
-	invoicePickWallet: "<b>Новий рахунок</b>\n\nНа який гаманець прийняти оплату?",
-	invoicePickNetwork: "<b>Новий рахунок</b>\nГаманець · %s\n\nУ якій мережі виставити рахунок?",
-	invoiceStep1: "<b>Новий рахунок</b> · крок 1 з 3\nГаманець · %s\n\nЗа що беремо оплату? Надішліть назву.",
-	invoiceStep2: "<b>Новий рахунок</b> · крок 2 з 3\nГаманець · %s\nНазва · %s\n\nСкільки в USD? Надішліть суму.",
-	invoiceStep3: "<b>Новий рахунок</b> · крок 3 з 3\nГаманець · %s\nНазва · %s\nСума · %s USD\n\nСкільки посилання має бути активним?",
-	invoiceTitleEmpty: "Назва не може бути порожньою - надішліть пару слів.",
-	invoiceAmountBad: "Це не схоже на суму. Надішліть позитивне число в USD, наприклад 49.90.",
-	invoiceCreated: "✅ <b>Рахунок успішно створений</b>\n\nID: <code>%s</code>\nПризначення: %s\nСума: %s USD\nМережа: %s\nДійсно до: %s\n\nСкопіюйте посилання нижче і надішліть його клієнту для оплати:\n<code>%s",
+	invoicePickWallet:   "<b>Новий рахунок</b>\n\nНа який гаманець прийняти оплату?",
+	invoicePickNetwork:  "<b>Новий рахунок</b>\nГаманець · %s\n\nУ якій мережі виставити рахунок?",
+	invoiceStep1:        "<b>Новий рахунок</b> · крок 1 з 3\nГаманець · %s\n\nЗа що беремо оплату? Надішліть назву.",
+	invoiceStep2:        "<b>Новий рахунок</b> · крок 2 з 3\nГаманець · %s\nНазва · %s\n\nСкільки в USD? Надішліть суму.",
+	invoiceStep3:        "<b>Новий рахунок</b> · крок 3 з 3\nГаманець · %s\nНазва · %s\nСума · %s USD\n\nСкільки посилання має бути активним?",
+	invoiceTitleEmpty:   "Назва не може бути порожньою - надішліть пару слів.",
+	invoiceAmountBad:    "Це не схоже на суму. Надішліть позитивне число в USD, наприклад 49.90.",
+	invoiceCreated:      "✅ <b>Рахунок успішно створений</b>\n\nID: <code>%s</code>\nПризначення: %s\nСума: %s USD\nМережа: %s\nДійсно до: %s\n\nСкопіюйте посилання нижче і надішліть його клієнту для оплати:\n<code>%s",
 	invoiceTrialReached: "Пробні заслання закінчилися. Беріть Merchant для звичайних оплат або Developer, якщо потрібні API та веб-хуки.",
 
-	plansTitle: "⭐ <b>Тарифи recv</b>",
-	plansBody: "0% комісії з обігу. Гроші йдуть одразу на ваш гаманець. Виберіть рівень під вашу механіку.",
-	plansCurrent: "Зараз · %s до %s",
-	planLine: "<b>%s</b> · $%s / 30 днів\n%s",
-	planMerchant: "Платіжні посилання, Telegram-Flow, ручна перевірка.",
-	planDeveloper: "Повний API, веб-хуки, ідемпотентність, MCP-інструменти.",
-	planBusiness: "Команди, audit logs, високі ліміти, пріоритетний workflow.",
+	plansTitle:      "⭐ <b>Тарифи recv</b>",
+	plansBody:       "0% комісії з обігу. Гроші йдуть одразу на ваш гаманець. Виберіть рівень під вашу механіку.",
+	plansCurrent:    "Зараз · %s до %s",
+	planLine:        "<b>%s</b> · $%s / 30 днів\n%s",
+	planMerchant:    "Платіжні посилання, Telegram-Flow, ручна перевірка.",
+	planDeveloper:   "Повний API, веб-хуки, ідемпотентність, MCP-інструменти.",
+	planBusiness:    "Команди, audit logs, високі ліміти, пріоритетний workflow.",
 	planPickNetwork: "<b>%s</b> · $%s / 30 днів\n\n%s\n\nВиберіть мережу для оплати:",
 	checkoutCreated: "✅ <b>Рахунок на %s готовий</b>\n\nІнвойс %s\n%s %s · 30 днів\n\nСплатіть нижче. Після підтвердження тариф увімкнеться автоматично.",
 
-	markedPaid: "✅ Рахунок %s відзначений оплаченим. Чудово.",
+	markedPaid:    "✅ Рахунок %s відзначений оплаченим. Чудово.",
 	keptUnderpaid: "⏳ Рахунок %s залишено відкритим. Чекаємо на доплату.",
-	keptReview: "🔍 Рахунок %s залишається на ручній перевірці.",
+	keptReview:    "🔍 Рахунок %s залишається на ручній перевірці.",
 
 	languageTitle: "🌐 <b>Мова</b>\n\nЗастосовується скрізь — бот, додаток та повідомлення про оплату синхронізовані.",
 
-	reminderNoWallet: "<b>Ваш обліковий запис recv майже готовий до роботи.</b>\n\nВи знаходитесь в одному кроці від прийому криптоплатежів. Додайте адресу Вашого гаманця, щоб створити перший рахунок. Ваші кошти залишаються під Вашим контролем.",
-	reminderNoWallet2: "<b>Виникли труднощі з налаштуванням?</b>\n\nДодавання гаманця безпечне: ми використовуємо його тільки для маршрутизації платежів безпосередньо Вам. Виберіть мережу та надішліть адресу, щоб почати.",
-	reminderNoWallet3: "💬 <b>Потрібна допомога з налаштування гаманця?</b>\n\nМи помітили, що ви ще не додали гаманець. Якщо у вас виникли питання чи труднощі, напишіть на нашу підтримку @recvmoneysupport!",
-	reminderNoWallet4: "🔒 <b>Некастодіальні платежі - це свобода</b>\n\nНа відміну від інших систем, recv відправляє кошти прямо на ваш особистий гаманець. 100% прибутку залишається вам. Прив'яжіть гаманець прямо зараз!",
-	reminderNoWallet5: "📞 <b>Давайте налаштуємо гаманець разом</b>\n\nВсе ще не додали гаманець? Якщо ви новачок у крипті, напишіть нам на підтримку @recvmoneysupport - ми допоможемо у всьому розібратися!",
-	reminderNoInvoice: "<b>Ваш гаманець підключений і готовий до прийому платежів.</b>\n\nСтворіть перший тестовий рахунок прямо зараз, щоб побачити, як легко Ваші клієнти зможуть робити оплату.",
-	reminderNoInvoice2: "⚡ <b>Почніть приймати USDT вже сьогодні!</b>\n\nВаш гаманець для виплат налаштований і готовий до роботи. Створіть посилання на оплату прямо в цьому чаті та надішліть його клієнтам.",
-	reminderNoInvoice3: "🙋 <b>Не вдається створити перший рахунок?</b>\n\nМи допоможемо! Якщо у вас є особливі вимоги або питання інтеграції, напишіть нашій команді підтримки @recvmoneysupport.",
-	reminderNoInvoice4: "💸 <b>Приймайте USDT за 10 секунд</b>\n\nГотові отримати першу оплату? Напишіть /invoice зараз, щоб створити посилання на оплату.",
-	reminderNoInvoice5: "⚙️ <b>Потрібна інтеграція?</b>\n\nЯкщо вам потрібні API, вебхуки, кастомні боти або плагіни для кошика, напишіть @recvmoneysupport, і ми допоможемо з інтеграцією.",
-	reminderTrialExhausted: "⚠️ <b>Ваш пробний період завершено.</b>\n\nВи успішно використовували ліміт безкоштовних рахунків. Щоб продовжити приймати платежі без зупинок та отримати доступ до розширеної аналітики, будь ласка, активуйте відповідний тарифний план.",
+	reminderNoWallet:        "<b>Ваш обліковий запис recv майже готовий до роботи.</b>\n\nВи знаходитесь в одному кроці від прийому криптоплатежів. Додайте адресу Вашого гаманця, щоб створити перший рахунок. Ваші кошти залишаються під Вашим контролем.",
+	reminderNoWallet2:       "<b>Виникли труднощі з налаштуванням?</b>\n\nДодавання гаманця безпечне: ми використовуємо його тільки для маршрутизації платежів безпосередньо Вам. Виберіть мережу та надішліть адресу, щоб почати.",
+	reminderNoWallet3:       "💬 <b>Потрібна допомога з налаштування гаманця?</b>\n\nМи помітили, що ви ще не додали гаманець. Якщо у вас виникли питання чи труднощі, напишіть на нашу підтримку @recvmoneysupport!",
+	reminderNoWallet4:       "🔒 <b>Некастодіальні платежі - це свобода</b>\n\nНа відміну від інших систем, recv відправляє кошти прямо на ваш особистий гаманець. 100% прибутку залишається вам. Прив'яжіть гаманець прямо зараз!",
+	reminderNoWallet5:       "📞 <b>Давайте налаштуємо гаманець разом</b>\n\nВсе ще не додали гаманець? Якщо ви новачок у крипті, напишіть нам на підтримку @recvmoneysupport - ми допоможемо у всьому розібратися!",
+	reminderNoInvoice:       "<b>Ваш гаманець підключений і готовий до прийому платежів.</b>\n\nСтворіть перший тестовий рахунок прямо зараз, щоб побачити, як легко Ваші клієнти зможуть робити оплату.",
+	reminderNoInvoice2:      "⚡ <b>Почніть приймати USDT вже сьогодні!</b>\n\nВаш гаманець для виплат налаштований і готовий до роботи. Створіть посилання на оплату прямо в цьому чаті та надішліть його клієнтам.",
+	reminderNoInvoice3:      "🙋 <b>Не вдається створити перший рахунок?</b>\n\nМи допоможемо! Якщо у вас є особливі вимоги або питання інтеграції, напишіть нашій команді підтримки @recvmoneysupport.",
+	reminderNoInvoice4:      "💸 <b>Приймайте USDT за 10 секунд</b>\n\nГотові отримати першу оплату? Напишіть /invoice зараз, щоб створити посилання на оплату.",
+	reminderNoInvoice5:      "⚙️ <b>Потрібна інтеграція?</b>\n\nЯкщо вам потрібні API, вебхуки, кастомні боти або плагіни для кошика, напишіть @recvmoneysupport, і ми допоможемо з інтеграцією.",
+	reminderTrialExhausted:  "⚠️ <b>Ваш пробний період завершено.</b>\n\nВи успішно використовували ліміт безкоштовних рахунків. Щоб продовжити приймати платежі без зупинок та отримати доступ до розширеної аналітики, будь ласка, активуйте відповідний тарифний план.",
 	reminderTrialExhausted2: "<b>Не втрачайте платежі від Ваших клієнтів.</b>\n\nПрийом нових сплат припинено. Перейдіть на тариф Merchant, Business або Developer, щоб повернути повну функціональність Вашого воркспейсу.",
 	reminderTrialExhausted3: "💬 <b>Індивідуальні умови?</b>\n\nЯкщо у вас великі обсяги, особливі вимоги або питання щодо тарифів, напишіть нам @recvmoneysupport.",
-	reminderExpired: "⏳ <b>Потрібна допомога з рахунками?</b>\n\nТермін оплати за вашим посиланням минув. Напишіть нам, якщо потрібна допомога із тестуванням платежів чи інтеграцією!",
-	reminderExpired2: "🔄 <b>Спробуйте ще раз!</b>\n\nСтворіть нове посилання на оплату і спробуйте оплатити його самі в тестовій мережі або реальним USDT, щоб побачити, як швидко та просто працює підтвердження!",
-	reminderExpired3: "💬 <b>Потрібна допомога в тестуванні оплати?</b>\n\nЯкщо у вас є питання щодо підтвердження платежів або комісій, не соромтеся писати нашій підтримці @recvmoneysupport.",
-	reminderExpired4: "🛠️ <b>Потрібна допомога з інтеграцією або вебхуками?</b>\n\nЯкщо виникли труднощі з коллбеками оплати, API або тестуванням, напишіть нам @recvmoneysupport!",
-	reminderExpired5: "👋 <b>Давайте запустимо ваші продажі</b>\n\nМи хочемо, щоб ви успішно прийняли свій перший платіж. Наша підтримка завжди на зв'язку в @recvmoneysupport.",
-	reminderInactive: "<b>Ми помітили, що Ви давно не створювали нових рахунків.</b>\n\nУ recv з'явилися нові функції для Вашого бізнесу. Відкрийте програму, щоб виставити рахунок або перевірити актуальну статистику.",
-	reminderInactive2: "<b>Ми помітили, що Ви давно не створювали нових рахунків.</b>\n\nУ recv з'явилися нові функції для Вашого бізнесу. Відкрийте програму, щоб виставити рахунок або перевірити актуальну статистику.",
-	reminderInactive3: "👋 <b>Ми сумуємо за вами!</b>\n\nВаша автоматична каса все ще чекає на вас. Створіть посилання на оплату прямо зараз або поділіться відгуком із нашою підтримкою @recvmoneysupport!",
-	reminderInactive4: "🚀 <b>Приймайте оплати прямо в Telegram</b>\n\nНаші Mini App і бот роблять прийом USDT максимально простим. Створіть новий рахунок вже сьогодні!",
-	reminderInactive5: "🎁 <b>Поділіться вашим відгуком</b>\n\nМи хочемо зробити сервіс кращим. Напишіть нам @recvmoneysupport і розкажіть, яких функцій вам не вистачає!",
+	reminderExpired:         "⏳ <b>Потрібна допомога з рахунками?</b>\n\nТермін оплати за вашим посиланням минув. Напишіть нам, якщо потрібна допомога із тестуванням платежів чи інтеграцією!",
+	reminderExpired2:        "🔄 <b>Спробуйте ще раз!</b>\n\nСтворіть нове посилання на оплату і спробуйте оплатити його самі в тестовій мережі або реальним USDT, щоб побачити, як швидко та просто працює підтвердження!",
+	reminderExpired3:        "💬 <b>Потрібна допомога в тестуванні оплати?</b>\n\nЯкщо у вас є питання щодо підтвердження платежів або комісій, не соромтеся писати нашій підтримці @recvmoneysupport.",
+	reminderExpired4:        "🛠️ <b>Потрібна допомога з інтеграцією або вебхуками?</b>\n\nЯкщо виникли труднощі з коллбеками оплати, API або тестуванням, напишіть нам @recvmoneysupport!",
+	reminderExpired5:        "👋 <b>Давайте запустимо ваші продажі</b>\n\nМи хочемо, щоб ви успішно прийняли свій перший платіж. Наша підтримка завжди на зв'язку в @recvmoneysupport.",
+	reminderInactive:        "<b>Ми помітили, що Ви давно не створювали нових рахунків.</b>\n\nУ recv з'явилися нові функції для Вашого бізнесу. Відкрийте програму, щоб виставити рахунок або перевірити актуальну статистику.",
+	reminderInactive2:       "<b>Ми помітили, що Ви давно не створювали нових рахунків.</b>\n\nУ recv з'явилися нові функції для Вашого бізнесу. Відкрийте програму, щоб виставити рахунок або перевірити актуальну статистику.",
+	reminderInactive3:       "👋 <b>Ми сумуємо за вами!</b>\n\nВаша автоматична каса все ще чекає на вас. Створіть посилання на оплату прямо зараз або поділіться відгуком із нашою підтримкою @recvmoneysupport!",
+	reminderInactive4:       "🚀 <b>Приймайте оплати прямо в Telegram</b>\n\nНаші Mini App і бот роблять прийом USDT максимально простим. Створіть новий рахунок вже сьогодні!",
+	reminderInactive5:       "🎁 <b>Поділіться вашим відгуком</b>\n\nМи хочемо зробити сервіс кращим. Напишіть нам @recvmoneysupport і розкажіть, яких функцій вам не вистачає!",
 
-	toastWalletDisabled: "Гаманець прибраний",
-	toastActionFailed: "Щось пішло не так",
-	toastWaitingTopUp: "Чекаємо на доплату",
-	toastMarkedPaid: "Позначено оплаченим",
-	toastLeftReview: "Залишено на перевірці",
+	toastWalletDisabled:      "Гаманець прибраний",
+	toastActionFailed:        "Щось пішло не так",
+	toastWaitingTopUp:        "Чекаємо на доплату",
+	toastMarkedPaid:          "Позначено оплаченим",
+	toastLeftReview:          "Залишено на перевірці",
 	toastPlanCheckoutCreated: "Рахунок готовий",
-	toastLanguageSet: "Мова оновлена",
-	toastUnknownAction: "Невідома дія",
-
+	toastLanguageSet:         "Мова оновлена",
+	toastUnknownAction:       "Невідома дія",
 }
 
 func copyFor(language string) botCopy {
+	withDefaults := func(c botCopy) botCopy {
+		if c.btnPayCrypto == "" {
+			c.btnPayCrypto = enCopy.btnPayCrypto
+		}
+		if c.btnPayStars == "" {
+			c.btnPayStars = enCopy.btnPayStars
+		}
+		if c.planPickPeriod == "" {
+			c.planPickPeriod = enCopy.planPickPeriod
+		}
+		if c.planPickMethod == "" {
+			c.planPickMethod = enCopy.planPickMethod
+		}
+		if c.starsInvoiceSent == "" {
+			c.starsInvoiceSent = enCopy.starsInvoiceSent
+		}
+		if c.starsPaid == "" {
+			c.starsPaid = enCopy.starsPaid
+		}
+		if c.toastStarsInvoiceSent == "" {
+			c.toastStarsInvoiceSent = enCopy.toastStarsInvoiceSent
+		}
+		return c
+	}
 	switch store.NormalizeLanguage(language) {
 	case "uk":
-		return ukCopy
+		return withDefaults(ukCopy)
 	case "ru":
-		return ruCopy
+		return withDefaults(ruCopy)
 	case "es":
-		return esCopy
+		return withDefaults(esCopy)
 	case "pt":
-		return ptCopy
+		return withDefaults(ptCopy)
 	case "de":
-		return deCopy
+		return withDefaults(deCopy)
 	case "uz":
-		return uzCopy
+		return withDefaults(uzCopy)
 	default:
-		return enCopy
+		return withDefaults(enCopy)
 	}
 }

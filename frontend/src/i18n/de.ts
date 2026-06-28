@@ -762,6 +762,13 @@ const de = {
       durationDaysHint: "Mindestens 14 Tage",
       durationInvalid: "Die Abonnementdauer muss mindestens 14 Tage betragen.",
       estimatedPrice: "Geschätzter Preis",
+      payCrypto: "Kryptowährung",
+      payStars: "Telegram Stars",
+      selectBillingPeriod: "Abrechnungszeitraum",
+      priceStars: "Preis: ${usd} oder ${stars} Stars",
+      starsSent: "Stars-Rechnung gesendet",
+      completeStars: "Schließen Sie die Zahlung in Telegram ab. Der Tarif wird automatisch aktiviert.",
+      starsPaid: "Stars-Zahlung erhalten. Zugang um {days} Tage verlängert.",
     },
     settings: {
       title: "Profileinstellungen",

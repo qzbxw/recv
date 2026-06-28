@@ -18,11 +18,12 @@ import {
   resendWebhookDelivery,
   rotateWebhookEndpointSecret,
   simulateTestPayment,
+  getBillingOptions,
 } from "../lib/api";
 import { ApiError, formatApiError, mapApiError } from "../lib/errors";
 import { buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus } from "../lib/status";
-import type { APIKey, DeveloperUsageResponse, Invoice, MeResponse, Network, PaymentAsset, WebhookDelivery, WebhookEndpoint, Environment } from "../lib/types";
+import type { APIKey, DeveloperUsageResponse, Invoice, MeResponse, Network, PaymentAsset, WebhookDelivery, WebhookEndpoint, Environment, BillingOptionsResponse, BillingOptionPlan } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { DEVELOPER_PORTAL_COPY as COPY, type Language } from "../i18n";
 
@@ -31,12 +32,6 @@ const PLAN_OPTIONS = [
   { value: "developer", label: "Developer" },
   { value: "business", label: "Business" },
 ] as const;
-
-const PLAN_PRICES = {
-  merchant: 9,
-  developer: 29,
-  business: 79,
-} as const;
 
 const NETWORK_OPTIONS: Array<{ value: string; network: Network; asset: PaymentAsset; label: string }> = [
   { value: "TON:GRAM", network: "TON", asset: "GRAM", label: "TON GRAM" },
@@ -73,6 +68,7 @@ export function DeveloperPortalPage() {
   const [apiKeys, setAPIKeys] = useState<APIKey[]>([]);
   const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([]);
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
+  const [billingOptions, setBillingOptions] = useState<BillingOptionsResponse | null>(null);
   const [loading, setLoading] = useState(Boolean(token));
   const [error, setError] = useState("");
   const [activeSection, setActiveSection] = useState("hero");
@@ -116,18 +112,20 @@ export function DeveloperPortalPage() {
   async function loadPortal(sessionToken: string) {
     try {
       setLoading(true);
-      const [meRes, usageRes, keysRes, hooksRes, deliveriesRes] = await Promise.all([
+      const [meRes, usageRes, keysRes, hooksRes, deliveriesRes, billingOpts] = await Promise.all([
         fetchMe(sessionToken),
         fetchDeveloperUsage(sessionToken).catch(() => null),
         fetchAPIKeys(sessionToken).catch(() => ({ items: [] })),
         fetchWebhookEndpoints(sessionToken).catch(() => ({ items: [] })),
         fetchWebhookDeliveries(sessionToken).catch(() => ({ items: [] })),
+        getBillingOptions(sessionToken).catch(() => null),
       ]);
       setMe(meRes);
       setUsage(usageRes);
       setAPIKeys(keysRes.items ?? []);
       setWebhooks(hooksRes.items ?? []);
       setDeliveries(deliveriesRes.items ?? []);
+      setBillingOptions(billingOpts);
     } catch (err) {
       setError(formatApiError(err));
     } finally {
@@ -204,6 +202,7 @@ export function DeveloperPortalPage() {
     try {
       const selectedBillingOption = NETWORK_OPTIONS.find(option => option.value === billingOption) ?? NETWORK_OPTIONS[2];
       const invoice = await createBillingCheckout(token, {
+        payment_method: "crypto",
         payable_network: selectedBillingOption.network,
         payable_asset: selectedBillingOption.asset,
         payment_options: [{ network: selectedBillingOption.network, asset: selectedBillingOption.asset }],
@@ -773,15 +772,24 @@ export function DeveloperPortalPage() {
                     <CustomSelect value={billingOption} options={NETWORK_OPTIONS} ariaLabel={t.common.network} onChange={setBillingOption} />
                   </div>
                   {(() => {
-                    const basePrice = PLAN_PRICES[billingPlan as keyof typeof PLAN_PRICES];
+                    const selectedPlan = ((billingOptions?.plans || me?.plans) as BillingOptionPlan[] | undefined)?.find(p => p.code === billingPlan);
+                    if (!selectedPlan) return null;
                     const days = billingDays;
                     if (days < 14) return null;
-                    const dailyRate = basePrice / 30;
-                    const totalPrice = dailyRate * days;
-                    const dPct = me?.workspace?.discount_percent || 0;
-                    const dPlan = me?.workspace?.discount_plan_code;
-                    const hasD = dPct > 0 && (!dPlan || dPlan === billingPlan);
-                    const finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
+
+                    const periodOpt = selectedPlan.periods?.find(p => p.days === days);
+                    let finalPrice = 0;
+                    if (billingOptions && periodOpt) {
+                      finalPrice = Number(periodOpt.price_usd);
+                    } else {
+                      const dailyRate = Number(selectedPlan.price_usd) / 30;
+                      const totalPrice = dailyRate * days;
+                      const dPct = me?.workspace?.discount_percent || 0;
+                      const dPlan = me?.workspace?.discount_plan_code;
+                      const hasD = dPct > 0 && (!dPlan || dPlan === billingPlan);
+                      finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
+                    }
+
                     return (
                       <div style={{ fontSize: "0.9em", marginBottom: "1rem", opacity: 0.9 }}>
                         {t.billing.estimatedPrice || "Estimated price"}: <strong>${finalPrice.toFixed(2)} USD</strong> {days !== 30 && `(for ${days} days)`}

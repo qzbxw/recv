@@ -762,6 +762,13 @@ const uk = {
       durationDaysHint: "Мінімум 14 днів",
       durationInvalid: "Тривалість підписки має бути щонайменше 14 днів",
       estimatedPrice: "Орієнтовна ціна",
+      payCrypto: "Криптовалюта",
+      payStars: "Telegram Stars",
+      selectBillingPeriod: "Період оплати",
+      priceStars: "Вартість: ${usd} або ${stars} Stars",
+      starsSent: "Рахунок у Stars надіслано",
+      completeStars: "Завершіть оплату в Telegram. Тариф активується автоматично.",
+      starsPaid: "Оплату в Stars отримано. Доступ продовжено на {days} дн.",
     },
     settings: {
       title: "Налаштування профілю",

@@ -12,7 +12,7 @@ import (
 type Network string
 
 const (
-	NetworkTON      Network = "TON"
+	NetworkTON Network = "TON"
 	// NetworkTON_USDT is accepted as a legacy API/database value. New payment
 	// options should use NetworkTON with AssetUSDT.
 	NetworkTON_USDT Network = "TON_USDT"
@@ -216,6 +216,13 @@ const (
 	InvoiceKindSubscription InvoiceKind = "subscription"
 )
 
+type BillingPaymentMethod string
+
+const (
+	BillingPaymentMethodCrypto        BillingPaymentMethod = "crypto"
+	BillingPaymentMethodTelegramStars BillingPaymentMethod = "telegram_stars"
+)
+
 type Environment string
 
 const (
@@ -311,23 +318,23 @@ type AttributionInput struct {
 }
 
 type Workspace struct {
-	ID                 int64      `json:"id"`
-	OwnerTelegramID    *int64     `json:"owner_telegram_id"`
-	Username           string     `json:"username"`
-	Email              string     `json:"email"`
-	DefaultNetwork     Network    `json:"default_network"`
-	Language           string     `json:"language"`
-	PlanCode           PlanCode   `json:"plan_code"`
-	SubscriptionEndsAt *time.Time `json:"subscription_ends_at"`
-	FreeInvoicesUsed   int        `json:"free_invoices_used"`
-	IsBlocked          bool       `json:"is_blocked"`
-	TelegramLinkedAt   *time.Time `json:"telegram_linked_at"`
-	DiscountPercent    int        `json:"discount_percent"`
-	DiscountPlanCode   *string    `json:"discount_plan_code"`
-	BotBlocked         bool       `json:"bot_blocked"`
+	ID                      int64      `json:"id"`
+	OwnerTelegramID         *int64     `json:"owner_telegram_id"`
+	Username                string     `json:"username"`
+	Email                   string     `json:"email"`
+	DefaultNetwork          Network    `json:"default_network"`
+	Language                string     `json:"language"`
+	PlanCode                PlanCode   `json:"plan_code"`
+	SubscriptionEndsAt      *time.Time `json:"subscription_ends_at"`
+	FreeInvoicesUsed        int        `json:"free_invoices_used"`
+	IsBlocked               bool       `json:"is_blocked"`
+	TelegramLinkedAt        *time.Time `json:"telegram_linked_at"`
+	DiscountPercent         int        `json:"discount_percent"`
+	DiscountPlanCode        *string    `json:"discount_plan_code"`
+	BotBlocked              bool       `json:"bot_blocked"`
 	LastRetentionReminderAt *time.Time `json:"last_retention_reminder_at"`
-	RetentionStage     *string    `json:"retention_stage"`
-	CreatedAt          time.Time  `json:"created_at"`
+	RetentionStage          *string    `json:"retention_stage"`
+	CreatedAt               time.Time  `json:"created_at"`
 }
 
 // SupportedLanguages lists the interface languages shared by the web app and bot.
@@ -444,6 +451,22 @@ type PaymentEvent struct {
 	ExternalEventID    string          `json:"external_event_id"`
 	AllocatedAmount    decimal.Decimal `json:"allocated_amount"`
 	CreatedAt          time.Time       `json:"created_at"`
+}
+
+type TelegramStarPayment struct {
+	ID                      int64           `json:"id"`
+	Payload                 string          `json:"payload"`
+	WorkspaceID             int64           `json:"workspace_id"`
+	PlanCode                PlanCode        `json:"plan_code"`
+	SubscriptionDays        int             `json:"subscription_days"`
+	BaseAmountUSD           decimal.Decimal `json:"base_amount_usd"`
+	StarsAmount             int             `json:"stars_amount"`
+	Status                  string          `json:"status"`
+	TelegramPaymentChargeID string          `json:"telegram_payment_charge_id,omitempty"`
+	ProviderPaymentChargeID string          `json:"provider_payment_charge_id,omitempty"`
+	PaidAt                  *time.Time      `json:"paid_at,omitempty"`
+	CreatedAt               time.Time       `json:"created_at"`
+	UpdatedAt               time.Time       `json:"updated_at"`
 }
 
 type ObservedTransfer struct {

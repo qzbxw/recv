@@ -26,6 +26,7 @@ declare global {
         initData?: string;
         ready?: () => void;
         expand?: () => void;
+        openInvoice?: (url: string, callback?: (status: string) => void) => void;
       };
     };
   }

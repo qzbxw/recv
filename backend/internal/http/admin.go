@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -358,10 +359,12 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 	}
 
 	var body struct {
-		PlanCode       string `json:"plan_code"`
-		PayableNetwork string `json:"payable_network"`
-		PayableAsset   string `json:"payable_asset"`
-		PaymentOptions []struct {
+		PaymentMethod    string `json:"payment_method"`
+		PlanCode         string `json:"plan_code"`
+		PayableNetwork   string `json:"payable_network"`
+		PayableAsset     string `json:"payable_asset"`
+		SubscriptionDays int    `json:"subscription_days"`
+		PaymentOptions   []struct {
 			Network string `json:"network"`
 			Asset   string `json:"asset"`
 		} `json:"payment_options"`
@@ -388,24 +391,67 @@ func (s *Server) handleAdminCreateBillingCheckout(c *gin.Context) {
 		return
 	}
 
+	if body.SubscriptionDays > 0 && body.SubscriptionDays < 14 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "subscription duration must be at least 14 days"})
+		return
+	}
+
 	network := store.Network(strings.ToUpper(strings.TrimSpace(body.PayableNetwork)))
+
+	ctx := metrics.WithSource(c.Request.Context(), "admin_api")
+	method := store.BillingPaymentMethod(strings.ToLower(strings.TrimSpace(body.PaymentMethod)))
+	if method == "" {
+		method = store.BillingPaymentMethodCrypto
+	}
+	if method == store.BillingPaymentMethodTelegramStars {
+		if s.starsService == nil {
+			respondError(c, http.StatusInternalServerError, errors.New("telegram stars billing is not configured"))
+			return
+		}
+		checkout, err := s.starsService.CreatePayment(ctx, workspace, service.CreateStarsPaymentInput{
+			PlanCode:         planCode,
+			SubscriptionDays: body.SubscriptionDays,
+		})
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if invoiceURL, linkErr := s.createTelegramStarsInvoiceLink(c.Request.Context(), checkout); linkErr == nil {
+			checkout.InvoiceURL = invoiceURL
+		} else {
+			log.Printf("create admin telegram stars invoice link: %v", linkErr)
+		}
+		adminCtx := adminFromContext(c)
+		_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_billing_stars_payment", "workspace", strconv.FormatInt(workspaceID, 10), gin.H{"stars_payment_id": checkout.Payment.ID, "plan_code": planCode, "subscription_days": checkout.Payment.SubscriptionDays})
+		c.JSON(http.StatusCreated, gin.H{
+			"workspace": gin.H{
+				"id":       workspace.ID,
+				"username": workspace.Username,
+				"email":    workspace.Email,
+			},
+			"stars_checkout": starsCheckoutResponse(checkout),
+		})
+		return
+	}
+	if method != store.BillingPaymentMethodCrypto {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported payment_method"})
+		return
+	}
 	if !network.IsSupportedPayableNetwork() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported network"})
 		return
 	}
-
-	ctx := metrics.WithSource(c.Request.Context(), "admin_api")
 	options := parsePaymentOptionInputs(body.PaymentOptions)
 	if len(options) == 0 {
 		options = []service.PaymentOptionInput{{Network: network, Asset: store.NormalizePaymentAsset(body.PayableAsset)}}
 	}
-	invoice, err := s.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, options, nil, 0)
+	invoice, err := s.invoiceService.CreatePlanInvoiceWithPriceAndOptions(ctx, workspace, planCode, options, nil, body.SubscriptionDays)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	adminCtx := adminFromContext(c)
-	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_billing_checkout", "workspace", strconv.FormatInt(workspaceID, 10), gin.H{"invoice_id": invoice.ID, "plan_code": planCode, "network": network})
+	_ = s.store.RecordAdminAuditEvent(c.Request.Context(), adminCtx.Claims.Username, "create_billing_checkout", "workspace", strconv.FormatInt(workspaceID, 10), gin.H{"invoice_id": invoice.ID, "plan_code": planCode, "network": network, "subscription_days": invoice.SubscriptionDays})
 
 	plan := store.ResolvePlan(planCode)
 	priceLabel := plan.PriceUSDString
