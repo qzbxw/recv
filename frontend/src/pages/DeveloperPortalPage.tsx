@@ -808,7 +808,20 @@ export function DeveloperPortalPage() {
                         <button className="dev-btn dev-btn--secondary" onClick={() => handleCopy(checkoutUrl, "billing")}>
                           {copiedId === "billing" ? t.common.copied : t.common.copy}
                         </button>
-                        <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary">{t.common.payNow}</a>
+                        <a 
+                          href={checkoutUrl} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="dev-btn dev-btn--primary"
+                          onClick={e => {
+                            if ((window as any).Telegram?.WebApp?.openLink) {
+                              e.preventDefault();
+                              (window as any).Telegram.WebApp.openLink(checkoutUrl);
+                            }
+                          }}
+                        >
+                          {t.common.payNow}
+                        </a>
                       </div>
                     </div>
                   ) : (

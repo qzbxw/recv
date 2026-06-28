@@ -2052,7 +2052,18 @@ export function SellerConsolePage() {
                             <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `quick-${inv.id}`)}>
                                {copiedId === `quick-${inv.id}` ? t.common.copied : t.common.url}
                             </button>
-                            <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--compact">
+                            <a 
+                              href={buildCheckoutPath(inv.public_id)} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="dev-btn dev-btn--secondary dev-btn--compact"
+                              onClick={e => {
+                                if ((window as any).Telegram?.WebApp?.openLink) {
+                                  e.preventDefault();
+                                  (window as any).Telegram.WebApp.openLink(buildCheckoutUrl(inv.public_id));
+                                }
+                              }}
+                            >
                                {t.common.viewInvoice}
                             </a>
                             <div className="dev-resource-card__date">
@@ -2588,7 +2599,20 @@ export function SellerConsolePage() {
                             <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(inv.public_id, `id-${inv.id}`)}>
                               {copiedId === `id-${inv.id}` ? t.common.copied : t.invoices.copyId}
                             </button>
-                            <a href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer" className="dev-btn dev-btn--secondary dev-btn--flex-grow dev-btn--centered">{t.invoices.view}</a>
+                            <a 
+                               href={buildCheckoutPath(inv.public_id)} 
+                               target="_blank" 
+                               rel="noreferrer" 
+                               className="dev-btn dev-btn--secondary dev-btn--flex-grow dev-btn--centered"
+                               onClick={e => {
+                                 if ((window as any).Telegram?.WebApp?.openLink) {
+                                   e.preventDefault();
+                                   (window as any).Telegram.WebApp.openLink(buildCheckoutUrl(inv.public_id));
+                                 }
+                               }}
+                             >
+                               {t.invoices.view}
+                             </a>
                             <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => setExpandedInvoice(isOpen ? null : inv.id)}>
                               {isOpen ? t.invoices.hide : t.invoices.details}
                             </button>
@@ -2739,7 +2763,13 @@ export function SellerConsolePage() {
                                                 rel="noreferrer" 
                                                 className="dropdown-item"
                                                 style={{ color: '#e2e8f0', padding: '8px 12px', width: '100%', textAlign: 'left', display: 'block', textDecoration: 'none', fontSize: '12px' }}
-                                                onClick={() => setActiveActionMenuId(null)}
+                                                onClick={e => {
+                                                  if ((window as any).Telegram?.WebApp?.openLink) {
+                                                    e.preventDefault();
+                                                    (window as any).Telegram.WebApp.openLink(buildCheckoutUrl(inv.public_id));
+                                                  }
+                                                  setActiveActionMenuId(null);
+                                                }}
                                               >
                                                 {t.invoices.view}
                                               </a>
@@ -2949,7 +2979,20 @@ export function SellerConsolePage() {
                           <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(buildCheckoutUrl(createdInvoice.public_id), "created-invoice")}>
                             {copiedId === "created-invoice" ? t.common.copied : t.invoices.copyLink}
                           </button>
-                          <a className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered" href={buildCheckoutPath(createdInvoice.public_id)} target="_blank" rel="noreferrer">{t.create.openLink}</a>
+                          <a 
+                             className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered" 
+                             href={buildCheckoutPath(createdInvoice.public_id)} 
+                             target="_blank" 
+                             rel="noreferrer"
+                             onClick={e => {
+                               if ((window as any).Telegram?.WebApp?.openLink) {
+                                 e.preventDefault();
+                                 (window as any).Telegram.WebApp.openLink(buildCheckoutUrl(createdInvoice.public_id));
+                               }
+                             }}
+                           >
+                             {t.create.openLink}
+                           </a>
                         </div>
                       </div>
                     ) : (
@@ -2979,7 +3022,20 @@ export function SellerConsolePage() {
                             <button className="dev-btn dev-btn--secondary dev-btn--compact" onClick={() => handleCopy(buildCheckoutUrl(inv.public_id), `recent-${inv.id}`)}>
                               {copiedId === `recent-${inv.id}` ? t.common.copied : t.common.url}
                             </button>
-                            <a className="dev-btn dev-btn--secondary dev-btn--compact" href={buildCheckoutPath(inv.public_id)} target="_blank" rel="noreferrer">{t.create.openLink}</a>
+                            <a 
+                              className="dev-btn dev-btn--secondary dev-btn--compact" 
+                              href={buildCheckoutPath(inv.public_id)} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              onClick={e => {
+                                if ((window as any).Telegram?.WebApp?.openLink) {
+                                  e.preventDefault();
+                                  (window as any).Telegram.WebApp.openLink(buildCheckoutUrl(inv.public_id));
+                                }
+                              }}
+                            >
+                              {t.create.openLink}
+                            </a>
                           </div>
                         </div>
                       ))}
@@ -3692,7 +3748,18 @@ export function SellerConsolePage() {
                           </p>
                           
                           <div className="success-actions-row">
-                            <a href={checkoutUrl} target="_blank" rel="noreferrer" className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered">
+                            <a 
+                              href={checkoutUrl} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="dev-btn dev-btn--primary dev-btn--flex-grow dev-btn--centered"
+                              onClick={e => {
+                                if ((window as any).Telegram?.WebApp?.openLink) {
+                                  e.preventDefault();
+                                  (window as any).Telegram.WebApp.openLink(checkoutUrl);
+                                }
+                              }}
+                            >
                               {t.common.payNow || 'Pay Now'}
                             </a>
                             <button className="dev-btn dev-btn--secondary dev-btn--flex-grow" onClick={() => handleCopy(checkoutUrl, "billing-url")}>

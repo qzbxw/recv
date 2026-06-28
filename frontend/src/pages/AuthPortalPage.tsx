@@ -516,7 +516,18 @@ export function AuthPortalPage() {
                   {!codeRequested && (
                     <div className="auth-portal__tg-hint">
                       <span>{text.browserHint}</span>{" "}
-                      <a href={BOT_URL} target="_blank" rel="noreferrer" className="auth-portal__inline-bot-link">
+                      <a 
+                        href={BOT_URL} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="auth-portal__inline-bot-link"
+                        onClick={e => {
+                          if ((window as any).Telegram?.WebApp?.openTelegramLink) {
+                            e.preventDefault();
+                            (window as any).Telegram.WebApp.openTelegramLink(BOT_URL);
+                          }
+                        }}
+                      >
                         {text.openBot}
                       </a>
                     </div>
