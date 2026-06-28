@@ -20,9 +20,9 @@ const (
 )
 
 var telegramStarsPer30Days = map[store.PlanCode]int{
-	store.PlanCodeMerchant:  7200,
-	store.PlanCodeDeveloper: 850,
-	store.PlanCodeBusiness:  2700,
+	store.PlanCodeMerchant:  850,
+	store.PlanCodeDeveloper: 2700,
+	store.PlanCodeBusiness:  7200,
 }
 
 type StarsService struct {
