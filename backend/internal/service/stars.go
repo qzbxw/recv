@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -19,6 +18,12 @@ const (
 	DefaultTelegramStarsPerUSD = 50
 	telegramStarsCurrency      = "XTR"
 )
+
+var telegramStarsPer30Days = map[store.PlanCode]int{
+	store.PlanCodeMerchant:  7200,
+	store.PlanCodeDeveloper: 850,
+	store.PlanCodeBusiness:  2700,
+}
 
 type StarsService struct {
 	store       *store.Store
@@ -65,7 +70,7 @@ func (s *StarsService) CreatePayment(ctx context.Context, workspace store.Worksp
 		return StarsPaymentCheckout{}, errors.New("subscription duration must be at least 14 days")
 	}
 	priceUSD := PlanPriceForPeriod(workspace, plan, days)
-	starsAmount := s.StarsAmountForUSD(priceUSD)
+	starsAmount := s.StarsAmountForPlan(workspace, plan, days)
 	payload, err := generateStarsPayload()
 	if err != nil {
 		return StarsPaymentCheckout{}, err
@@ -115,10 +120,36 @@ func (s *StarsService) StarsAmountForUSD(amount decimal.Decimal) int {
 	if value.LessThan(decimal.NewFromInt(1)) {
 		return 1
 	}
-	if !value.LessThanOrEqual(decimal.NewFromInt(math.MaxInt32)) {
-		return math.MaxInt32
-	}
 	return int(value.IntPart())
+}
+
+func (s *StarsService) StarsAmountForPlan(workspace store.Workspace, plan store.PlanDefinition, days int) int {
+	if days <= 0 {
+		days = plan.BillingDays
+	}
+	baseStars, ok := telegramStarsPer30Days[plan.Code]
+	if !ok || baseStars <= 0 {
+		return s.StarsAmountForUSD(PlanPriceForPeriod(workspace, plan, days))
+	}
+	amount := decimal.NewFromInt(int64(baseStars)).
+		Mul(decimal.NewFromInt(int64(days))).
+		Div(decimal.NewFromInt(30)).
+		Ceil()
+	if workspace.DiscountPercent > 0 && (workspace.DiscountPlanCode == nil || *workspace.DiscountPlanCode == "" || store.PlanCode(*workspace.DiscountPlanCode) == plan.Code) {
+		discountMultiplier := decimal.NewFromInt(100 - int64(workspace.DiscountPercent)).Div(decimal.NewFromInt(100))
+		amount = amount.Mul(discountMultiplier).Ceil()
+	}
+	if amount.LessThan(decimal.NewFromInt(1)) {
+		return 1
+	}
+	return int(amount.IntPart())
+}
+
+func StarsBaseAmountForPlan(plan store.PlanDefinition) int {
+	if amount, ok := telegramStarsPer30Days[plan.Code]; ok {
+		return amount
+	}
+	return 0
 }
 
 func PlanPriceForPeriod(workspace store.Workspace, plan store.PlanDefinition, days int) decimal.Decimal {

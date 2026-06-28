@@ -1141,7 +1141,7 @@ func (s *Server) handleBillingOptions(c *gin.Context) {
 			priceUSD := service.PlanPriceForPeriod(wc.Workspace, plan, days)
 			starsAmount := 0
 			if s.starsService != nil {
-				starsAmount = s.starsService.StarsAmountForUSD(priceUSD)
+				starsAmount = s.starsService.StarsAmountForPlan(wc.Workspace, plan, days)
 			}
 			periodPrices = append(periodPrices, gin.H{
 				"days":         days,
@@ -1166,6 +1166,7 @@ func (s *Server) handleBillingOptions(c *gin.Context) {
 			"analytics_level":  plan.AnalyticsLevel,
 			"support_level":    plan.SupportLevel,
 			"priority_support": plan.PrioritySupport,
+			"stars_base_30d":   service.StarsBaseAmountForPlan(plan),
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -1182,6 +1183,11 @@ func (s *Server) handleBillingOptions(c *gin.Context) {
 		},
 		"telegram_stars": gin.H{
 			"currency": "XTR",
+		},
+		"custom_period": gin.H{
+			"min_days":     14,
+			"default_days": 30,
+			"step_days":    1,
 		},
 	})
 }

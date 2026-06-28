@@ -48,7 +48,7 @@ import { ApiError, formatApiError } from "../lib/errors";
 import { buildAuthHref, buildCheckoutPath, buildCheckoutUrl } from "../lib/routing";
 import { formatInvoiceStatus, getInvoiceStatusMeta, getInvoiceStatusTooltip, formatNetworkLabel, formatPaymentAssetLabel } from "../lib/status";
 import { PAYABLE_PAYMENT_OPTIONS, walletBucket } from "../lib/paymentOptions";
-import type { APIKey, AuthIdentity, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, PaymentAsset, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment, BillingOptionsResponse, BillingOptionPlan } from "../lib/types";
+import type { APIKey, AuthIdentity, DeveloperUsageResponse, Invoice, InvoiceStatus, MeResponse, MemberRole, Network, PaymentAsset, TeamResponse, Wallet, WebhookDelivery, WebhookEndpoint, Environment, BillingOptionsResponse, BillingOptionPlan, Workspace } from "../lib/types";
 import { useUI } from "../lib/ui";
 import { SELLER_CONSOLE_COPY as COPY, type Language } from "../i18n";
 
@@ -77,6 +77,28 @@ function TelegramIcon({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.52-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.88.03-.24.38-.49 1.05-.75 4.12-1.79 6.87-2.97 8.25-3.54 3.92-1.63 4.73-1.91 5.26-1.92.12 0 .38.03.55.17.14.11.18.27.2.42-.01.06 0 .13-.01.2z" />
+    </svg>
+  );
+}
+
+function StarsIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      <circle cx="14" cy="14" r="13" fill="#32A9E8" />
+      <circle cx="14" cy="14" r="10.5" fill="#F7C948" />
+      <path d="M14 5.2l2.42 5.3 5.78.68-4.27 3.96 1.13 5.71L14 17.98l-5.06 2.87 1.13-5.71-4.27-3.96 5.78-.68L14 5.2z" fill="#fff" />
+      <path d="M14 8.45l1.45 3.18 3.47.41-2.56 2.38.68 3.42L14 16.12l-3.04 1.72.68-3.42-2.56-2.38 3.47-.41L14 8.45z" fill="#F7C948" />
+    </svg>
+  );
+}
+
+function CryptoPaymentIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      <rect x="3" y="5" width="22" height="16" rx="5" fill="#121826" stroke="#7dd3fc" strokeWidth="1.5" />
+      <path d="M8.5 12.5h8.75a2.75 2.75 0 110 5.5H8.5v-5.5z" fill="#1f2937" stroke="#22c55e" strokeWidth="1.4" />
+      <path d="M10.25 10h7a2.5 2.5 0 010 5h-7v-5z" fill="#111827" stroke="#facc15" strokeWidth="1.4" />
+      <path d="M12 8.25v11.5M15.25 8.25v11.5" stroke="#e5e7eb" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -142,6 +164,21 @@ function statusToneClass(status: InvoiceStatus) {
 const AMOUNT_PRESETS = ["10.00", "25.00", "50.00", "100.00", "250.00"];
 
 const PLAN_COMPARE_ORDER = ["merchant", "developer", "business"] as const;
+
+function estimateStarsForPeriod(plan: BillingOptionPlan | undefined, days: number, workspace?: Workspace) {
+  if (!plan || !Number.isFinite(days) || days <= 0) return 0;
+  const exact = plan.periods?.find(period => period.days === days);
+  if (exact?.stars_amount) return exact.stars_amount;
+  const base = plan.stars_base_30d || plan.periods?.find(period => period.days === 30)?.stars_amount || 0;
+  if (!base) return 0;
+  let amount = Math.ceil((base * days) / 30);
+  const discount = workspace?.discount_percent || 0;
+  const discountPlan = workspace?.discount_plan_code;
+  if (discount > 0 && (!discountPlan || discountPlan === plan.code)) {
+    amount = Math.ceil(amount * ((100 - discount) / 100));
+  }
+  return Math.max(1, amount);
+}
 
 function QrImage({ value, alt }: { value: string; alt: string }) {
   const [src, setSrc] = useState("");
@@ -1138,7 +1175,7 @@ export function SellerConsolePage() {
           throw new Error(language === 'ru' ? 'Не удалось создать счет Telegram Stars' : 'Failed to create Telegram Stars invoice');
         }
         setStarsInvoiceUrl(url);
-        setStarsPaymentDays(res.subscription_days || billingForm.subscriptionDays);
+        setStarsPaymentDays(res.stars_payment?.subscription_days || billingForm.subscriptionDays);
         setStarsPaymentStatus("pending");
         
         if (window.Telegram?.WebApp?.openInvoice) {
@@ -3578,6 +3615,17 @@ export function SellerConsolePage() {
                                       <div className="dev-plan-card__price">${plan.price_usd}<span className="dev-plan-card__period">{t.billing.perMonth}</span></div>
                                     );
                                   })()}
+
+                                  {(() => {
+                                    const stars30 = estimateStarsForPeriod(plan, 30, session.me.workspace);
+                                    if (!stars30) return null;
+                                    return (
+                                      <div style={{ marginTop: "0.35rem", color: "var(--muted)", fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                                        <StarsIcon size={14} />
+                                        {stars30.toLocaleString()} Stars / {language === 'ru' ? '30 дн.' : '30 days'}
+                                      </div>
+                                    );
+                                  })()}
                                   
                                   <p className="dev-plan-card__description">{desc}</p>
                                   
@@ -3747,7 +3795,7 @@ export function SellerConsolePage() {
                                     
                                     return presets.map(preset => {
                                       const isSelected = billingForm.subscriptionDays === preset.days;
-                                      const showStars = !!window.Telegram?.WebApp?.initData && preset.stars_amount > 0;
+                                      const showStars = preset.stars_amount > 0;
                                       const label = preset.days === 30 ? (language === 'ru' ? '30 дней' : '30 Days') :
                                                     preset.days === 90 ? (language === 'ru' ? '90 дней' : '90 Days') :
                                                     preset.days === 180 ? (language === 'ru' ? '180 дней' : '180 Days') :
@@ -3770,12 +3818,35 @@ export function SellerConsolePage() {
                                           <span style={{ fontWeight: "600", fontSize: "0.85rem" }}>{label}</span>
                                           <span style={{ opacity: 0.8, fontSize: "0.85rem" }}>${usdPrice}</span>
                                           {showStars && (
-                                            <span style={{ fontSize: "0.7rem", opacity: 0.6 }}>or {preset.stars_amount} ★</span>
+                                            <span style={{ fontSize: "0.7rem", opacity: 0.7, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                              {language === 'ru' ? 'или' : 'or'} <StarsIcon size={13} /> {preset.stars_amount}
+                                            </span>
                                           )}
                                         </button>
                                       );
                                     });
                                   })()}
+                                </div>
+                                <div style={{ marginTop: "0.75rem", display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: "0.5rem", alignItems: "center" }}>
+                                  <input
+                                    type="number"
+                                    min={billingOptions?.custom_period?.min_days || 14}
+                                    step={billingOptions?.custom_period?.step_days || 1}
+                                    className="dev-input"
+                                    value={billingForm.subscriptionDays}
+                                    onChange={e => {
+                                      const next = Math.max(0, Math.floor(Number(e.target.value) || 0));
+                                      setCheckoutUrl("");
+                                      setStarsInvoiceUrl("");
+                                      setStarsPaymentStatus("");
+                                      setBillingForm(c => ({ ...c, subscriptionDays: next }));
+                                    }}
+                                    aria-label={language === 'ru' ? 'Количество дней подписки' : 'Subscription days'}
+                                    style={{ minWidth: 0 }}
+                                  />
+                                  <span style={{ color: "var(--muted)", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                                    {language === 'ru' ? 'дней' : 'days'}
+                                  </span>
                                 </div>
                               </div>
 
@@ -3791,7 +3862,7 @@ export function SellerConsolePage() {
                                       style={{ padding: "0.75rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem", height: "auto" }}
                                       onClick={() => setBillingForm(c => ({ ...c, paymentMethod: 'crypto' }))}
                                     >
-                                      <span style={{ fontSize: "1.2rem" }}>🪙</span>
+                                      <CryptoPaymentIcon />
                                       <span style={{ fontWeight: "600", fontSize: "0.85rem" }}>{t.billing.payCrypto || "Pay with crypto"}</span>
                                     </button>
                                     <button
@@ -3800,13 +3871,13 @@ export function SellerConsolePage() {
                                       style={{ padding: "0.75rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem", height: "auto" }}
                                       onClick={() => setBillingForm(c => ({ ...c, paymentMethod: 'telegram_stars' }))}
                                     >
-                                      <span style={{ fontSize: "1.2rem" }}>⭐</span>
+                                      <StarsIcon />
                                       <span style={{ fontWeight: "600", fontSize: "0.85rem" }}>{t.billing.payStars || "Pay with Stars"}</span>
                                     </button>
                                   </div>
                                 ) : (
                                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0" }}>
-                                    <span style={{ fontSize: "1.1rem" }}>🪙</span>
+                                    <CryptoPaymentIcon size={20} />
                                     <span style={{ fontWeight: "600", fontSize: "0.9rem", color: "#fff" }}>{t.billing.payCrypto || "Pay with crypto"}</span>
                                   </div>
                                 )}
@@ -3844,6 +3915,7 @@ export function SellerConsolePage() {
                                   const hasD = dPct > 0 && (!dPlan || dPlan === pPlan.code);
                                   const finalPrice = hasD ? totalPrice * (1 - dPct / 100) : totalPrice;
                                   priceUSD = finalPrice.toFixed(2);
+                                  starsAmt = estimateStarsForPeriod(pPlan, days, session.me.workspace);
                                 }
                                 
                                 return (
@@ -3858,11 +3930,15 @@ export function SellerConsolePage() {
                                     </div>
                                     <div className="price-summary-row price-summary-row--total">
                                       <span>{language === 'ru' ? 'Итого к оплате' : 'Estimated Total'}</span>
-                                      <strong style={{ fontSize: "1.25rem", color: "#fff" }}>
-                                        {billingForm.paymentMethod === 'telegram_stars' && starsAmt > 0
-                                          ? `${starsAmt} Stars`
-                                          : `$${priceUSD} USD`
-                                        }
+                                      <strong style={{ fontSize: "1.25rem", color: "#fff", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+                                        {billingForm.paymentMethod === 'telegram_stars' && starsAmt > 0 ? (
+                                          <>
+                                            <StarsIcon size={20} />
+                                            {starsAmt} Stars
+                                          </>
+                                        ) : (
+                                          `$${priceUSD} USD`
+                                        )}
                                       </strong>
                                     </div>
                                   </>

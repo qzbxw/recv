@@ -754,6 +754,7 @@ export interface BillingOptionPeriod {
 
 export interface BillingOptionPlan extends Plan {
   periods: BillingOptionPeriod[];
+  stars_base_30d?: number;
 }
 
 export interface BillingOptionsResponse {
@@ -763,5 +764,9 @@ export interface BillingOptionsResponse {
   telegram_stars: {
     currency: string;
   };
+  custom_period?: {
+    min_days: number;
+    default_days: number;
+    step_days: number;
+  };
 }
-

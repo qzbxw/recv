@@ -51,6 +51,7 @@ type botCopy struct {
 	btnPayPlan         string // %s = plan name
 	btnPayCrypto       string
 	btnPayStars        string
+	btnCustomPeriod    string
 	btnStartSetup      string
 	btnHowPlans        string
 	minuteSuffix       string // e.g. "min" / "мин"
@@ -101,6 +102,8 @@ type botCopy struct {
 	planPickNetwork  string // %s plan name, %s price, %s features
 	planPickPeriod   string // %s plan name, %s features
 	planPickMethod   string // %s plan name, %d days, %s usd, %d stars
+	planCustomPeriod string // %s plan name
+	planPeriodBad    string
 	checkoutCreated  string // %s plan, %s id, %s amount, %s network
 	starsInvoiceSent string // %s plan, %d days, %d stars
 	starsPaid        string // %s plan, %d days
@@ -192,6 +195,7 @@ var enCopy = botCopy{
 	btnPayPlan:         "Pay for %s",
 	btnPayCrypto:       "Pay with crypto",
 	btnPayStars:        "Pay with Stars",
+	btnCustomPeriod:    "Enter days",
 	btnStartSetup:      "⚙️ Configure wallet",
 	btnHowPlans:        "Pricing and fees",
 	minuteSuffix:       "min",
@@ -236,6 +240,8 @@ var enCopy = botCopy{
 	planPickNetwork:  "<b>%s</b> · $%s / 30 days\n\n%s\n\nSelect the payment network to proceed:",
 	planPickPeriod:   "<b>%s</b>\n\n%s\n\nBilling period:",
 	planPickMethod:   "<b>%s</b> · %d days\n\nPrice: $%s or %d Stars\n\nPayment method:",
+	planCustomPeriod: "<b>%s</b>\n\nSend the number of days for this subscription. Minimum: 14 days.",
+	planPeriodBad:    "Invalid period. Send a whole number of days, 14 or more.",
 	checkoutCreated:  "✅ <b>Checkout for %s is generated</b>\n\nInvoice ID: %s\n%s %s\n\nComplete the transaction below. Plan activates automatically upon network confirmation.",
 	starsInvoiceSent: "✅ <b>Stars invoice sent</b>\n\n%s · %d days\nAmount: %d Stars\n\nComplete the payment in Telegram. The plan activates automatically.",
 	starsPaid:        "✅ <b>%s activated</b>\n\nStars payment received. Access extended by %d days.",
@@ -323,6 +329,7 @@ var ruCopy = botCopy{
 	btnPayPlan:         "Оплатить %s",
 	btnPayCrypto:       "Оплатить криптовалютой",
 	btnPayStars:        "Оплатить Stars",
+	btnCustomPeriod:    "Ввести дни",
 	btnStartSetup:      "⚙️ Настроить кошелек",
 	btnHowPlans:        "Тарифы и комиссии",
 	minuteSuffix:       "мин",
@@ -367,6 +374,8 @@ var ruCopy = botCopy{
 	planPickNetwork:  "**%s** · $%s / 30 дней\n\n%s\n\nВыберите сеть для проведения оплаты:",
 	planPickPeriod:   "<b>%s</b>\n\n%s\n\nПериод оплаты:",
 	planPickMethod:   "<b>%s</b> · %d дн.\n\nЦена: $%s или %d Stars\n\nСпособ оплаты:",
+	planCustomPeriod: "<b>%s</b>\n\nОтправьте количество дней подписки числом. Минимум: 14 дней.",
+	planPeriodBad:    "Некорректный период. Отправьте целое число дней, не меньше 14.",
 	checkoutCreated:  "✅ <b>Счет на оплату тарифа %s сформирован</b>\n\nID счета: %s\n%s %s\n\nОплатите счет ниже. Тариф активируется автоматически после подтверждения сетью.",
 	starsInvoiceSent: "✅ <b>Счет в Stars отправлен</b>\n\n%s · %d дн.\nСумма: %d Stars\n\nЗавершите оплату в Telegram. Тариф активируется автоматически.",
 	starsPaid:        "✅ <b>%s активирован</b>\n\nОплата в Stars получена. Доступ продлен на %d дн.",
@@ -1041,11 +1050,20 @@ func copyFor(language string) botCopy {
 		if c.btnPayStars == "" {
 			c.btnPayStars = enCopy.btnPayStars
 		}
+		if c.btnCustomPeriod == "" {
+			c.btnCustomPeriod = enCopy.btnCustomPeriod
+		}
 		if c.planPickPeriod == "" {
 			c.planPickPeriod = enCopy.planPickPeriod
 		}
 		if c.planPickMethod == "" {
 			c.planPickMethod = enCopy.planPickMethod
+		}
+		if c.planCustomPeriod == "" {
+			c.planCustomPeriod = enCopy.planCustomPeriod
+		}
+		if c.planPeriodBad == "" {
+			c.planPeriodBad = enCopy.planPeriodBad
 		}
 		if c.starsInvoiceSent == "" {
 			c.starsInvoiceSent = enCopy.starsInvoiceSent

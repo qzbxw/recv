@@ -28,6 +28,7 @@ const (
 	flowWalletAddress botFlow = "wallet_address"
 	flowInvoiceTitle  botFlow = "invoice_title"
 	flowInvoiceAmount botFlow = "invoice_amount"
+	flowPlanPeriod    botFlow = "plan_period"
 )
 
 type BotWorker struct {
@@ -48,6 +49,7 @@ type botSession struct {
 	MenuMessageID int64
 	Flow          botFlow
 	WalletNetwork store.Network
+	PlanCode      store.PlanCode
 	DraftInvoice  botInvoiceDraft
 }
 
@@ -346,6 +348,8 @@ func (b *BotWorker) handleMessage(ctx context.Context, message *tgMessage) error
 		return b.handleInvoiceTitleInput(ctx, workspace, message, text)
 	case flowInvoiceAmount:
 		return b.handleInvoiceAmountInput(ctx, workspace, message, text)
+	case flowPlanPeriod:
+		return b.handlePlanPeriodInput(ctx, workspace, message, text)
 	default:
 		return nil
 	}
@@ -559,6 +563,14 @@ func (b *BotWorker) handleCallback(ctx context.Context, query *tgCallbackQuery) 
 			break
 		}
 		err = b.renderPlanPaymentMethodPicker(ctx, workspace, planCode, days, query.Message.Chat.ID, query.Message.MessageID)
+	case strings.HasPrefix(data, "plan:custom:"):
+		planCode := store.NormalizePlanCode(strings.TrimPrefix(data, "plan:custom:"))
+		session.Flow = flowPlanPeriod
+		session.PlanCode = planCode
+		err = b.editMessage(ctx, query.Message.Chat.ID, query.Message.MessageID, fmt.Sprintf(c.planCustomPeriod, esc(store.ResolvePlan(planCode).Name)), b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnBack, CallbackData: "plan:select:" + string(planCode)}},
+			{{Text: c.btnCancel, CallbackData: "screen:upgrade"}},
+		}))
 	case strings.HasPrefix(data, "plan:crypto:"):
 		parts := strings.Split(data, ":")
 		if len(parts) != 4 {
@@ -787,6 +799,22 @@ func (b *BotWorker) handleInvoiceAmountInput(ctx context.Context, workspace stor
 			{Text: c.btnCancel, CallbackData: "invoice:cancel"},
 		},
 	}))
+}
+
+func (b *BotWorker) handlePlanPeriodInput(ctx context.Context, workspace store.Workspace, message *tgMessage, text string) error {
+	session := b.session(message.Chat.ID)
+	c := copyFor(workspace.Language)
+	days, err := strconv.Atoi(strings.TrimSpace(text))
+	if err != nil || days < 14 {
+		return b.editMessage(ctx, message.Chat.ID, session.MenuMessageID, fmt.Sprintf(c.planCustomPeriod, esc(store.ResolvePlan(session.PlanCode).Name))+"\n\n"+c.planPeriodBad, b.recvKeyboard([][]tgInlineKeyboardButton{
+			{{Text: c.btnBack, CallbackData: "plan:select:" + string(session.PlanCode)}},
+			{{Text: c.btnCancel, CallbackData: "screen:upgrade"}},
+		}))
+	}
+	planCode := session.PlanCode
+	session.Flow = flowIdle
+	session.PlanCode = ""
+	return b.renderPlanPaymentMethodPicker(ctx, workspace, planCode, days, message.Chat.ID, session.MenuMessageID)
 }
 
 func (b *BotWorker) finishInvoiceWizard(ctx context.Context, workspace store.Workspace, chatID int64, messageID int64, minutes int) error {
@@ -1107,12 +1135,13 @@ func (b *BotWorker) renderPlanPeriodPicker(ctx context.Context, workspace store.
 	rows := make([][]tgInlineKeyboardButton, 0, len(periods)+1)
 	for _, days := range periods {
 		price := service.PlanPriceForPeriod(workspace, plan, days)
-		starsAmount := b.starsService.StarsAmountForUSD(price)
+		starsAmount := b.starsService.StarsAmountForPlan(workspace, plan, days)
 		rows = append(rows, []tgInlineKeyboardButton{{
 			Text:         fmt.Sprintf("%d days · $%s · %d Stars", days, price.StringFixed(2), starsAmount),
 			CallbackData: fmt.Sprintf("plan:period:%s:%d", plan.Code, days),
 		}})
 	}
+	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnCustomPeriod, CallbackData: "plan:custom:" + string(plan.Code)}})
 	rows = append(rows, []tgInlineKeyboardButton{{Text: c.btnBack, CallbackData: "screen:upgrade"}})
 	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard(rows))
 }
@@ -1121,7 +1150,7 @@ func (b *BotWorker) renderPlanPaymentMethodPicker(ctx context.Context, workspace
 	c := copyFor(workspace.Language)
 	plan := store.ResolvePlan(planCode)
 	price := service.PlanPriceForPeriod(workspace, plan, days)
-	starsAmount := b.starsService.StarsAmountForUSD(price)
+	starsAmount := b.starsService.StarsAmountForPlan(workspace, plan, days)
 	text := fmt.Sprintf(c.planPickMethod, esc(plan.Name), days, esc(price.StringFixed(2)), starsAmount)
 	return b.sendOrEdit(ctx, chatID, messageID, text, b.recvKeyboard([][]tgInlineKeyboardButton{
 		{
