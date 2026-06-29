@@ -473,6 +473,17 @@ func (s *Store) ListAdminWallets(ctx context.Context, filters AdminWalletFilters
 	args := make([]any, 0, 8)
 	argIndex := 1
 
+	reservedAddresses := ReservedDemoWalletAddresses()
+	if len(reservedAddresses) > 0 {
+		placeholders := make([]string, 0, len(reservedAddresses))
+		for _, address := range reservedAddresses {
+			placeholders = append(placeholders, fmt.Sprintf("$%d", argIndex))
+			args = append(args, address)
+			argIndex++
+		}
+		whereParts = append(whereParts, "wal.address NOT IN ("+strings.Join(placeholders, ", ")+")")
+	}
+
 	if network := strings.TrimSpace(filters.Network); network != "" && network != "all" {
 		whereParts = append(whereParts, fmt.Sprintf("wal.network = $%d", argIndex))
 		args = append(args, network)
@@ -563,4 +574,3 @@ func (s *Store) ListAdminWallets(ctx context.Context, filters AdminWalletFilters
 		PageSize: filters.PageSize,
 	}, nil
 }
-

@@ -241,7 +241,7 @@ export function AdminDashboardPage() {
   const [seoRedirects, setSeoRedirects] = useState<SEORedirect[]>([]);
   const [workspaces, setWorkspaces] = useState<AdminWorkspace[]>([]);
   const [walletsList, setWalletsList] = useState<AdminWalletListResponse | null>(null);
-  const [walletFilters, setWalletFilters] = useState({ network: "all", environment: "all", is_active: "all", query: "", page: 1, page_size: 50 });
+  const [walletFilters, setWalletFilters] = useState({ network: "all", environment: "all", is_active: "active", query: "", page: 1, page_size: 50 });
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [analyticsGroupBy, setAnalyticsGroupBy] = useState<"date" | "network" | "plan" | "mode">("date");

@@ -237,6 +237,15 @@ var reservedDemoWalletAddresses = map[string]struct{}{
 	"HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1":           {},
 }
 
+func ReservedDemoWalletAddresses() []string {
+	return []string{
+		"UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn",
+		"0x0000000000000000000000000000000000000000",
+		"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb",
+		"HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1",
+	}
+}
+
 func IsReservedDemoWalletAddress(address string) bool {
 	_, ok := reservedDemoWalletAddresses[strings.TrimSpace(address)]
 	return ok

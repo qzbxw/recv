@@ -2052,6 +2052,14 @@ func TestStoreWalletOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWallet: %v", err)
 	}
+	var legacyReservedWalletID int64
+	if err := st.pool.QueryRow(ctx, `
+		INSERT INTO wallets (workspace_id, network, address, environment, is_active)
+		VALUES ($1, $2, $3, $4, TRUE)
+		RETURNING id
+	`, workspace.ID, NetworkTON, "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn", EnvironmentLive).Scan(&legacyReservedWalletID); err != nil {
+		t.Fatalf("insert legacy reserved wallet: %v", err)
+	}
 
 	t.Run("ListWallets returns wallet", func(t *testing.T) {
 		wallets, err := st.ListWallets(ctx, workspace.ID)
@@ -2075,17 +2083,23 @@ func TestStoreWalletOperations(t *testing.T) {
 			t.Fatalf("expected at least 1 wallet in admin view, got %d", res.Total)
 		}
 		found := false
+		foundReserved := false
 		for _, w := range res.Items {
 			if w.ID == wallet.ID {
 				found = true
 				if w.WorkspaceUsername != "walletopsuser" {
 					t.Errorf("expected WorkspaceUsername walletopsuser, got %s", w.WorkspaceUsername)
 				}
-				break
+			}
+			if w.ID == legacyReservedWalletID {
+				foundReserved = true
 			}
 		}
 		if !found {
 			t.Errorf("wallet ID %d not found in admin wallets list", wallet.ID)
+		}
+		if foundReserved {
+			t.Errorf("reserved demo wallet ID %d should not appear in admin wallets list", legacyReservedWalletID)
 		}
 	})
 
