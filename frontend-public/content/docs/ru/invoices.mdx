@@ -23,7 +23,7 @@ POST /v1/invoices        (scope: invoices:write)
 | `base_amount_usd` | string | Да | Сумма в долларах как десятичная строка (например, `"149.00"`). Должна быть положительной. |
 | `payable_network` | string | Да, если нет `payment_options` | Legacy single-option сеть. |
 | `payable_asset` | string | Нет | Актив для legacy single-option запроса. По умолчанию определяется сетью. |
-| `payment_options` | array | Нет | До двух `{ "network": "...", "asset": "..." }` вариантов, например USDT и SOL в одном счете. |
+| `payment_options` | array | Нет | Несколько `{ "network": "...", "asset": "..." }` вариантов, например USDT и SOL в одном счете. |
 | `expires_in_minutes` | integer | Нет | Окно оплаты. По умолчанию **30** для stablecoins и **10** при наличии volatile native asset. Для native volatile максимум **15**. |
 
 Окружение счета (`test`/`live`) наследуется от API-ключа — в теле нет поля `mode`.

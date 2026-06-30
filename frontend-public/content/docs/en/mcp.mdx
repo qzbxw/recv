@@ -78,7 +78,7 @@ Create a recv billing checkout for the current workspace. Requires `RECV_ACCESS_
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
 | `plan_code` | string | Yes | One of `merchant`, `developer`, `business`. Use `developer` or `business` when the agent needs API keys and webhooks. |
-| `payable_network` | string | Yes | Network used to pay recv. One of: `TON`, `TRON`, `BASE`, `BSC`. Use `payable_asset` or `payment_options` to choose `TON`/`GRAM` vs `TON`/`USDT`. |
+| `payable_network` | string | Yes | Network used to pay recv. One of: `TON`, `TRON`, `SOLANA`, `BASE`, `ARBITRUM`, `BSC`. Use `payable_asset` or `payment_options` to choose assets like `TON`/`GRAM` vs `TON`/`USDT`. |
 
 ### `get_checkout_invoice`
 
@@ -100,7 +100,7 @@ Create a new payment invoice.
 |-------|------|----------|-------------|
 | `title` | string | Yes | Human-readable title shown to the payer (e.g. `"Order #1290"`). |
 | `base_amount_usd` | string | Yes | Amount in USD as a decimal string (e.g. `"10.50"`). |
-| `payable_network` | string | Yes | Network the customer pays on. One of: `TON`, `TRON`, `BASE`, `BSC`. Use `payable_asset` or `payment_options` to choose `TON`/`GRAM` vs `TON`/`USDT`. |
+| `payable_network` | string | Yes | Network the customer pays on. One of: `TON`, `TRON`, `SOLANA`, `BASE`, `ARBITRUM`, `BSC`. Use `payable_asset` or `payment_options` to choose assets like `TON`/`GRAM` vs `TON`/`USDT`. |
 | `expires_in_minutes` | number | No | Optional invoice lifetime in minutes (default 30). |
 
 The tool `POST`s the arguments directly to `/v1/invoices`. The created invoice's environment follows the API key (`test_` → test). See [Invoices](/en/docs/invoices).
@@ -150,7 +150,7 @@ Pass the body bytes verbatim. Re-encoding the JSON (which can reorder keys or ch
 
 ### `list_supported_networks`
 
-List the payment options recv supports. Takes no parameters and returns a static summary of network/asset pairs (`TON`/`GRAM`, `TON`/`USDT`, `TRON`/`USDT`, `BASE`/`USDT`, `BSC`/`USDT`). See [Supported Networks](/en/docs/networks) for the authoritative list.
+List the payment options recv supports. Takes no parameters and returns a static summary of network/asset pairs (`TON`/`GRAM`, `TON`/`USDT`, `TRON`/`USDT`, `SOLANA`/`SOL`, `SOLANA`/`USDT`, `SOLANA`/`USDC`, `BASE`/`USDT`, `BASE`/`USDC`, `ARBITRUM`/`USDT`, `ARBITRUM`/`USDC`, `BSC`/`BNB`, `BSC`/`USDT`). See [Supported Networks](/en/docs/networks) for the authoritative list.
 
 ## Resources
 

@@ -23,7 +23,7 @@ POST /v1/invoices        (scope: invoices:write)
 | `base_amount_usd` | string | Yes | Amount in USD as a decimal string (e.g. `"149.00"`). Must be positive. |
 | `payable_network` | string | Yes unless `payment_options` is used | Legacy single-option network. |
 | `payable_asset` | string | No | Asset for legacy single-option requests. Defaults from the network. |
-| `payment_options` | array | No | Up to two `{ "network": "...", "asset": "..." }` options, for example USDT and SOL on one invoice. |
+| `payment_options` | array | No | Multiple `{ "network": "...", "asset": "..." }` options, for example USDT and SOL on one invoice. |
 | `expires_in_minutes` | integer | No | Payment window in minutes. Defaults to **30** for stablecoins and **10** when any native volatile asset is present. Native volatile invoices reject values above **15**. |
 
 The invoice environment (`test`/`live`) is inherited from the API key — there is no `mode` field in the body.
