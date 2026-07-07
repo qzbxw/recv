@@ -107,8 +107,10 @@ fi
 update_env_var GHCR_IMAGE_TAG "$DEPLOY_SHA"
 
 # 4. Собираем образы локально на сервере (экономит лимиты GitHub Actions)
-echo "--> Сборка Docker-образов на сервере..."
-docker compose build api frontend_public frontend
+echo "--> Сборка Docker-образов на сервере (последовательно для экономии памяти)..."
+docker compose build api
+docker compose build frontend
+docker compose build frontend_public
 
 # 5. Запуск PostgreSQL (если не запущен)
 docker compose up -d postgres
