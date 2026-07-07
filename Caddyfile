@@ -29,3 +29,44 @@ http://www.recv.money, www.recv.money {
 
 	reverse_proxy frontend:80
 }
+
+safeape.co, www.safeape.co, app.safeape.co {
+	encode zstd gzip
+
+	log {
+		output stdout
+		format json
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
+	reverse_proxy 172.17.0.1:8082
+}
+
+admin.safeape.co {
+	encode zstd gzip
+
+	log {
+		output stdout
+		format json
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
+	@miniappRoutes path / /scan /scan/* /premium /premium/* /radar /radar/* /verdict /verdict/*
+	redir @miniappRoutes /admin 302
+
+	reverse_proxy 172.17.0.1:8082
+}
