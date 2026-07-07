@@ -303,8 +303,8 @@ export function CheckoutPage() {
       margin: 2,
       errorCorrectionLevel: "M",
       color: {
-        dark: "#ffffff",
-        light: "#121214",
+        dark: "#050505",
+        light: "#ffffff",
       },
     })
       .then(setQrDataUrl)
@@ -315,8 +315,8 @@ export function CheckoutPage() {
             margin: 2,
             errorCorrectionLevel: "M",
             color: {
-              dark: "#ffffff",
-              light: "#121214",
+              dark: "#050505",
+              light: "#ffffff",
             },
           });
           setQrDataUrl(fallback);
