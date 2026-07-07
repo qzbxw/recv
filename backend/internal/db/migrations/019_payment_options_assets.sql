@@ -70,7 +70,8 @@ END
 WHERE asset = '' OR asset IS NULL;
 
 ALTER TABLE watcher_checkpoints
-  DROP CONSTRAINT IF EXISTS watcher_checkpoints_poll_network_payable_network_destination_address_key;
+  DROP CONSTRAINT IF EXISTS watcher_checkpoints_poll_network_payable_network_destination_address_key,
+  DROP CONSTRAINT IF EXISTS watcher_checkpoints_poll_network_payable_network_destinatio_key;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_watcher_checkpoints_asset_key
 ON watcher_checkpoints (poll_network, payable_network, asset, destination_address);

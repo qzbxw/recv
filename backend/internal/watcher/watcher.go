@@ -363,7 +363,7 @@ type tonCenterJettonTransfer struct {
 	Destination     string `json:"destination"`
 	Amount          string `json:"amount"`
 	JettonMaster    string `json:"jetton_master"`
-	QueryID         int64  `json:"query_id"`
+	QueryID         any    `json:"query_id"`
 	Comment         string `json:"comment"`
 }
 
