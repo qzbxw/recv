@@ -107,10 +107,16 @@ fi
 update_env_var GHCR_IMAGE_TAG "$DEPLOY_SHA"
 
 # 4. Собираем образы локально на сервере (экономит лимиты GitHub Actions)
-echo "--> Сборка Docker-образов на сервере (последовательно для экономии памяти)..."
-docker compose build api
-docker compose build frontend
-docker compose build frontend_public
+if docker image inspect "ghcr.io/qzbxw/recv/api:$DEPLOY_SHA" >/dev/null 2>&1 && \
+   docker image inspect "ghcr.io/qzbxw/recv/frontend:$DEPLOY_SHA" >/dev/null 2>&1 && \
+   docker image inspect "ghcr.io/qzbxw/recv/frontend-public:$DEPLOY_SHA" >/dev/null 2>&1; then
+  echo "--> Все Docker-образы для коммита $DEPLOY_SHA найдены на сервере. Пропускаем сборку."
+else
+  echo "--> Сборка Docker-образов на сервере (последовательно для экономии памяти)..."
+  docker compose build api
+  docker compose build frontend
+  docker compose build frontend_public
+fi
 
 # 5. Запуск PostgreSQL (если не запущен)
 docker compose up -d postgres
