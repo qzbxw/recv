@@ -144,6 +144,13 @@ func (w *Watcher) pollEVMStablecoin(ctx context.Context, wallet store.WatchedWal
 		return nil, nil
 	}
 
+	if wallet.PayableNetwork == store.NetworkBSC {
+		maxBSCBlocks := int64(30)
+		if toBlock-fromBlock > maxBSCBlocks {
+			fromBlock = toBlock - maxBSCBlocks
+		}
+	}
+
 	filter := map[string]any{
 		"fromBlock": hexQuantity(fromBlock),
 		"toBlock":   hexQuantity(toBlock),
@@ -307,6 +314,11 @@ func (w *Watcher) pollBSCNative(ctx context.Context, wallet store.WatchedWallet)
 	}
 	if fromBlock > toBlock {
 		return nil, nil
+	}
+
+	maxBSCBlocks := int64(30)
+	if toBlock-fromBlock > maxBSCBlocks {
+		fromBlock = toBlock - maxBSCBlocks
 	}
 
 	transfers := make([]store.ObservedTransfer, 0)

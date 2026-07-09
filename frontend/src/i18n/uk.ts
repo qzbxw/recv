@@ -460,6 +460,8 @@ const uk = {
     networkOnly: "Тільки ця мережа",
     paidTitle: "Сплачено",
     paidBody: "Ваш платіж успішно підтверджено.",
+    txHash: "Хеш транзакції",
+    viewInExplorer: "Перевірити в експлорері",
     underpaidBody: "Отримано меншу суму. Доплатіть залишок до завершення сесії або дочекайтеся перевірки мерчантом.",
     underpaidReceived: "Отримано",
     underpaidRemaining: "Залишок",

@@ -2,6 +2,8 @@ package watcher
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -277,6 +279,15 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 	if usdtMaster == "" {
 		return nil, errors.New("TON_USDT_MASTER_ADDRESS is required")
 	}
+	rawUSDTMaster, err := tonAddressToRaw(usdtMaster)
+	if err != nil {
+		return nil, fmt.Errorf("normalize usdt master: %w", err)
+	}
+	rawWalletAddr, err := tonAddressToRaw(wallet.Address)
+	if err != nil {
+		return nil, fmt.Errorf("normalize wallet address: %w", err)
+	}
+
 	base := tonCenterV3BaseURL(w.cfg.TonCenterBaseURL)
 	values := url.Values{}
 	values.Set("owner_address", wallet.Address)
@@ -323,8 +334,17 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 
 	var transfers []store.ObservedTransfer
 	for _, item := range items {
+		rawItemMaster, err := tonAddressToRaw(item.JettonMaster)
+		if err != nil {
+			continue
+		}
+		rawItemDest, err := tonAddressToRaw(item.Destination)
+		if err != nil {
+			continue
+		}
+
 		// Filter by USDT master and destination address
-		if !strings.EqualFold(item.JettonMaster, usdtMaster) || !strings.EqualFold(item.Destination, wallet.Address) {
+		if !strings.EqualFold(rawItemMaster, rawUSDTMaster) || !strings.EqualFold(rawItemDest, rawWalletAddr) {
 			continue
 		}
 
@@ -336,14 +356,26 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 		amount := rawAmount.Div(decimal.NewFromInt(1_000_000)).Round(6)
 		raw, _ := json.Marshal(item)
 
+		comment := ""
+		if item.DecodedForwardPayload != nil && item.DecodedForwardPayload.Type == "text_comment" {
+			comment = item.DecodedForwardPayload.Comment
+		} else if item.Comment != "" {
+			comment = item.Comment
+		}
+
+		utime := item.TransactionNow
+		if utime == 0 {
+			utime = item.UTime
+		}
+
 		transfer := store.ObservedTransfer{
 			TxHash:             item.TransactionHash,
 			Network:            wallet.PayableNetwork,
 			Asset:              store.AssetUSDT,
 			DestinationAddress: wallet.Address,
 			Amount:             amount,
-			PaymentComment:     strings.TrimSpace(item.Comment),
-			ObservedAt:         time.Unix(item.UTime, 0).UTC(),
+			PaymentComment:     strings.TrimSpace(comment),
+			ObservedAt:         time.Unix(utime, 0).UTC(),
 			RawPayload:         raw,
 		}
 		if err := service.NormalizeObservedTransfer(&transfer); err != nil {
@@ -357,14 +389,21 @@ func (w *Watcher) pollTON_USDT(ctx context.Context, wallet store.WatchedWallet) 
 }
 
 type tonCenterJettonTransfer struct {
-	UTime           int64  `json:"utime"`
-	TransactionHash string `json:"transaction_hash"`
-	Source          string `json:"source"`
-	Destination     string `json:"destination"`
-	Amount          string `json:"amount"`
-	JettonMaster    string `json:"jetton_master"`
-	QueryID         any    `json:"query_id"`
-	Comment         string `json:"comment"`
+	UTime                 int64                     `json:"utime"`
+	TransactionNow        int64                     `json:"transaction_now"`
+	TransactionHash       string                    `json:"transaction_hash"`
+	Source                string                    `json:"source"`
+	Destination           string                    `json:"destination"`
+	Amount                string                    `json:"amount"`
+	JettonMaster          string                    `json:"jetton_master"`
+	QueryID               any                       `json:"query_id"`
+	Comment               string                    `json:"comment"`
+	DecodedForwardPayload *tonDecodedForwardPayload `json:"decoded_forward_payload"`
+}
+
+type tonDecodedForwardPayload struct {
+	Type    string `json:"@type"`
+	Comment string `json:"comment"`
 }
 
 func tonCenterV3BaseURL(baseURL string) string {
@@ -442,4 +481,30 @@ func parseTronTimestamp(value any) time.Time {
 	default:
 		return time.Time{}
 	}
+}
+
+func tonAddressToRaw(address string) (string, error) {
+	address = strings.TrimSpace(address)
+	if address == "" {
+		return "", fmt.Errorf("empty address")
+	}
+	if strings.Contains(address, ":") {
+		return strings.ToLower(address), nil
+	}
+
+	r := strings.NewReplacer("+", "-", "/", "_")
+	safeAddr := r.Replace(address)
+	safeAddr = strings.TrimRight(safeAddr, "=")
+
+	data, err := base64.RawURLEncoding.DecodeString(safeAddr)
+	if err != nil {
+		return strings.ToLower(address), nil
+	}
+	if len(data) != 36 {
+		return strings.ToLower(address), nil
+	}
+
+	workchain := int8(data[1])
+	accountID := hex.EncodeToString(data[2:34])
+	return fmt.Sprintf("%d:%s", workchain, accountID), nil
 }

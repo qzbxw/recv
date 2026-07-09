@@ -426,6 +426,8 @@ function verify(payload, signature, secret) {
     networkOnly: "Network only",
     paidTitle: "Paid",
     paidBody: "Your payment has been successfully confirmed.",
+    txHash: "Transaction Hash",
+    viewInExplorer: "Verify on Block Explorer",
     underpaidBody: "A smaller amount was received. Top up the remaining amount before expiry or wait for merchant review.",
     underpaidReceived: "Received",
     underpaidRemaining: "Remaining",

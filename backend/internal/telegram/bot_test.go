@@ -188,8 +188,8 @@ func TestBotWorkerHelpers(t *testing.T) {
 	if got := workspaceHandle(store.Workspace{}); got != "unlinked" {
 		t.Fatalf("expected unlinked workspace handle, got %q", got)
 	}
-	if options := payableOptionsForWallet(store.NetworkEVM); len(options) != 5 {
-		t.Fatalf("expected 5 payable options for EVM wallet, got %#v", options)
+	if options := payableOptionsForWallet(store.NetworkEVM); len(options) != 6 {
+		t.Fatalf("expected 6 payable options for EVM wallet, got %#v", options)
 	}
 	if options := payableOptionsForWallet(store.NetworkSOLANA); len(options) != 3 || options[0].Network != store.NetworkSOLANA {
 		t.Fatalf("expected 3 SOLANA payable options, got %#v", options)
@@ -785,6 +785,12 @@ func TestHandleCallbackScreenUpgrade(t *testing.T) {
 	}
 	if err := worker.handleCallback(ctx, botCallback("plan:select:developer", messageID, chatID, user)); err != nil {
 		t.Fatalf("plan select callback returned error: %v", err)
+	}
+	if err := worker.handleCallback(ctx, botCallback("plan:period:developer:30", messageID, chatID, user)); err != nil {
+		t.Fatalf("plan period callback returned error: %v", err)
+	}
+	if err := worker.handleCallback(ctx, botCallback("plan:crypto:developer:30", messageID, chatID, user)); err != nil {
+		t.Fatalf("plan crypto callback returned error: %v", err)
 	}
 	workspace, err := st.GetWorkspaceByTelegramID(ctx, user.ID)
 	if err != nil {

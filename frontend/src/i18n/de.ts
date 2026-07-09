@@ -460,6 +460,8 @@ const de = {
     networkOnly: "Nur Netzwerk",
     paidTitle: "Bezahlt",
     paidBody: "Ihre Zahlung wurde erfolgreich bestätigt.",
+    txHash: "Transaktions-Hash",
+    viewInExplorer: "Im Explorer überprüfen",
     underpaidBody: "Ein geringerer Betrag wurde empfangen. Zahlen Sie den verbleibenden Betrag vor Ablauf nach oder warten Sie auf die Prüfung durch den Händler.",
     underpaidReceived: "Empfangen",
     underpaidRemaining: "Verbleibend",

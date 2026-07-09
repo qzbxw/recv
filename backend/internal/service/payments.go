@@ -68,18 +68,21 @@ func (s *PaymentService) matchTransfer(ctx context.Context, transfer store.Obser
 	}
 	switch transfer.Network {
 	case store.NetworkTON:
-		if transfer.Asset != store.AssetGRAM || transfer.PaymentComment == "" {
-			return nil, "unmatched", store.InvoiceStatusDraft, nil
-		}
-		invoice, err := s.store.FindInvoiceByPaymentComment(ctx, transfer.DestinationAddress, transfer.Network, transfer.Asset, transfer.PaymentComment)
-		if err != nil {
-			if errors.Is(err, store.ErrNotFound) {
+		if transfer.Asset == store.AssetGRAM {
+			if transfer.PaymentComment == "" {
 				return nil, "unmatched", store.InvoiceStatusDraft, nil
 			}
-			return nil, "", store.InvoiceStatusDraft, err
+			invoice, err := s.store.FindInvoiceByPaymentComment(ctx, transfer.DestinationAddress, transfer.Network, transfer.Asset, transfer.PaymentComment)
+			if err != nil {
+				if errors.Is(err, store.ErrNotFound) {
+					return nil, "unmatched", store.InvoiceStatusDraft, nil
+				}
+				return nil, "", store.InvoiceStatusDraft, err
+			}
+			decision := store.DecideInvoicePaymentStatus(invoice, transfer.Amount, transfer.ObservedAt, "")
+			return &invoice, decision.Classification, decision.Status, nil
 		}
-		decision := store.DecideInvoicePaymentStatus(invoice, transfer.Amount, transfer.ObservedAt, "")
-		return &invoice, decision.Classification, decision.Status, nil
+		fallthrough
 	default:
 		invoice, err := s.store.FindInvoiceByExactAmountAndAsset(ctx, transfer.DestinationAddress, transfer.Network, transfer.Asset, transfer.Amount)
 		if err == nil {

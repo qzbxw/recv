@@ -2131,7 +2131,7 @@ func TestStoreWalletOperations(t *testing.T) {
 	})
 
 	t.Run("GetActiveWalletForNetwork returns ErrNotFound for missing network", func(t *testing.T) {
-		_, err := st.GetActiveWalletForNetwork(ctx, workspace.ID, NetworkTON)
+		_, err := st.GetActiveWalletForNetwork(ctx, workspace.ID, NetworkSOLANA)
 		if !errors.Is(err, ErrNotFound) {
 			t.Fatalf("expected ErrNotFound, got %v", err)
 		}

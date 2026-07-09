@@ -460,6 +460,8 @@ const uz = {
     networkOnly: "Faqat tarmoq",
     paidTitle: "To'langan",
     paidBody: "To'lovingiz muvaffaqiyatli tasdiqlandi.",
+    txHash: "Tranzaksiya heshi",
+    viewInExplorer: "Eksplorerda tekshirish",
     underpaidBody: "Kamroq summa qabul qilindi. Muddat tugashidan oldin qolgan summani to'ldiring yoki merchant reviewni kuting.",
     underpaidReceived: "Qabul qilindi",
     underpaidRemaining: "Qoldiq",

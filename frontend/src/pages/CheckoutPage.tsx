@@ -60,6 +60,32 @@ function formatDateTime(value: string, language: keyof typeof COPY) {
   return new Date(value).toLocaleString(language === "ru" ? "ru-RU" : "en-US");
 }
 
+function getTxExplorerUrl(network: Network, txHash: string, environment: "test" | "live"): string {
+  const isLive = environment === "live";
+  switch (network) {
+    case "TON":
+      return isLive ? `https://tonviewer.com/transaction/${txHash}` : `https://testnet.tonviewer.com/transaction/${txHash}`;
+    case "TRON":
+      return isLive ? `https://tronscan.org/#/transaction/${txHash}` : `https://shasta.tronscan.org/#/transaction/${txHash}`;
+    case "SOLANA":
+      return isLive ? `https://solscan.io/tx/${txHash}` : `https://solscan.io/tx/${txHash}?cluster=testnet`;
+    case "BASE":
+      return isLive ? `https://basescan.org/tx/${txHash}` : `https://sepolia.basescan.org/tx/${txHash}`;
+    case "ARBITRUM":
+      return isLive ? `https://arbiscan.io/tx/${txHash}` : `https://sepolia.arbiscan.io/tx/${txHash}`;
+    case "BSC":
+      return isLive ? `https://bscscan.com/tx/${txHash}` : `https://testnet.bscscan.com/tx/${txHash}`;
+    case "EVM":
+    default:
+      return isLive ? `https://etherscan.io/tx/${txHash}` : `https://sepolia.etherscan.io/tx/${txHash}`;
+  }
+}
+
+function formatTxHashPreview(txHash: string) {
+  if (txHash.length <= 16) return txHash;
+  return `${txHash.slice(0, 8)}...${txHash.slice(-8)}`;
+}
+
 function CheckoutAssetAmount({ amount, asset, network }: { amount: string; asset?: PaymentAsset; network: Network }) {
   const label = formatPaymentAssetLabel(asset, network);
   return (
@@ -168,6 +194,13 @@ const Icons = {
       <polyline points="6 9 12 15 18 9" />
     </svg>
   ),
+  ExternalLink: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  ),
 };
 
 export function CheckoutPage() {
@@ -195,7 +228,7 @@ export function CheckoutPage() {
   const [error, setError] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [now, setNow] = useState(Date.now());
-  const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "details" | "">("");
+  const [copiedField, setCopiedField] = useState<"amount" | "address" | "comment" | "details" | "tx_hash" | "">("");
   const [walletActionState, setWalletActionState] = useState<"idle" | "opening" | "fallback" | "copy_failed">("idle");
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
   const [networkDropOpen, setNetworkDropOpen] = useState(false);
@@ -494,7 +527,7 @@ export function CheckoutPage() {
       ]
     : [];
 
-  async function copyValue(key: "amount" | "address" | "comment", value: string) {
+  async function copyValue(key: "amount" | "address" | "comment" | "tx_hash", value: string) {
     try {
       await navigator.clipboard.writeText(value);
       setCopiedField(key);
@@ -594,6 +627,34 @@ export function CheckoutPage() {
               {language === 'ru' 
                 ? 'Это демонстрационный счет для тестирования. Средства не будут зачислены продавцу.' 
                 : 'This is a demo/preview invoice for testing. Funds will not be credited to the merchant.'}
+              {invoice && invoice.status !== 'paid' && (
+                <div style={{ marginTop: '8px' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setInvoice(prev => prev ? { 
+                      ...prev, 
+                      status: "paid", 
+                      tx_hash: prev.payable_network === "TON" 
+                        ? "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7_tx_hash_mock_demo" 
+                        : "0x3333333333333333333333333333333333333333333333333333333333333333",
+                      finalized_at: new Date().toISOString()
+                    } : null)}
+                    style={{
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                      color: '#f59e0b',
+                      padding: '5px 10px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {language === 'ru' ? 'Симулировать оплату (Paid)' : 'Simulate Payment (Paid)'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -612,22 +673,113 @@ export function CheckoutPage() {
             <h1 className="co-final__title">{statusLabel}</h1>
             <div className="co-final__amount">{bigAmount}</div>
             <p className="co-final__body">{finalBody}</p>
-            {isOverpaid || isManualReview ? (
-              <div className="co-final__note">
-                <strong>{text.underpaidReceived}: <CheckoutAssetAmount amount={invoice.received_amount || "0"} asset={invoice.payable_asset} network={invoice.payable_network} /></strong>
-                {invoice.review_reason ? <small>{invoice.review_reason.replaceAll("_", " ")}</small> : null}
+            
+            {isPaid ? (
+              <div className="co-tx-details">
+                <div className="co-tx-card">
+                  <span className="co-tx-card__label">{text.invoiceId}</span>
+                  <span className="co-tx-card__value">{invoice.public_id}</span>
+                </div>
+                
+                <div className="co-tx-card">
+                  <span className="co-tx-card__label">
+                    {language === "ru" ? "Сеть" : "Network"}
+                  </span>
+                  <span className="co-tx-card__value">
+                    <span style={{ display: "inline-flex", alignItems: "center", width: 14, height: 14, marginRight: 4 }}>
+                      <CryptoLogo type="network" value={invoice.payable_network} />
+                    </span>
+                    {formatNetworkLabel(invoice.payable_network)}
+                  </span>
+                </div>
+
+                <div className="co-tx-card">
+                  <span className="co-tx-card__label">
+                    {language === "ru" ? "Получатель" : "Recipient"}
+                  </span>
+                  <span className="co-tx-card__value">
+                    <code>{formatAddressPreview(invoice.destination_address)}</code>
+                    <button 
+                      type="button" 
+                      className={`co-tx-card__copy-btn ${copiedField === "address" ? "is-copied" : ""}`}
+                      onClick={() => copyValue("address", invoice.destination_address)}
+                      title={text.copyAddress}
+                    >
+                      {copiedField === "address" ? <Icons.Check /> : <Icons.Copy />}
+                    </button>
+                  </span>
+                </div>
+
+                {invoice.tx_hash ? (
+                  <div className="co-tx-card">
+                    <span className="co-tx-card__label">{text.txHash}</span>
+                    <span className="co-tx-card__value">
+                      <code>{formatTxHashPreview(invoice.tx_hash)}</code>
+                      <button 
+                        type="button" 
+                        className={`co-tx-card__copy-btn ${copiedField === "tx_hash" ? "is-copied" : ""}`}
+                        onClick={() => copyValue("tx_hash", invoice.tx_hash!)}
+                        title={language === "ru" ? "Скопировать хэш" : "Copy transaction hash"}
+                      >
+                        {copiedField === "tx_hash" ? <Icons.Check /> : <Icons.Copy />}
+                      </button>
+                    </span>
+                  </div>
+                ) : null}
+
+                {(invoice.finalized_at || invoice.created_at) ? (
+                  <div className="co-tx-card">
+                    <span className="co-tx-card__label">
+                      {language === "ru" ? "Дата и время" : "Date & Time"}
+                    </span>
+                    <span className="co-tx-card__value">
+                      {formatDateTime(invoice.finalized_at || invoice.created_at, language)}
+                    </span>
+                  </div>
+                ) : null}
+
+                {invoice.tx_hash ? (
+                  <a 
+                    href={getTxExplorerUrl(invoice.payable_network, invoice.tx_hash, invoice.environment)}
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="co-final__explorer-btn"
+                  >
+                    <span>{text.viewInExplorer}</span>
+                    <Icons.ExternalLink />
+                  </a>
+                ) : null}
+
+                {isDemoInvoice && (
+                  <button 
+                    type="button" 
+                    className="co-final__simulate-btn"
+                    onClick={() => setInvoice(demoInvoice)}
+                  >
+                    {language === "ru" ? "Сбросить демо-счет" : "Reset Demo Invoice"}
+                  </button>
+                )}
               </div>
-            ) : null}
-            <div className="co-final__meta">
-              <div>
-                <span>{text.invoiceId}</span>
-                <strong>{invoice.public_id}</strong>
-              </div>
-              <div>
-                <span>{isPaid ? text.status : text.expiresAt}</span>
-                <strong>{isPaid ? statusLabel : formatDateTime(invoice.expires_at, language)}</strong>
-              </div>
-            </div>
+            ) : (
+              <>
+                {isOverpaid || isManualReview ? (
+                  <div className="co-final__note">
+                    <strong>{text.underpaidReceived}: <CheckoutAssetAmount amount={invoice.received_amount || "0"} asset={invoice.payable_asset} network={invoice.payable_network} /></strong>
+                    {invoice.review_reason ? <small>{invoice.review_reason.replaceAll("_", " ")}</small> : null}
+                  </div>
+                ) : null}
+                <div className="co-final__meta">
+                  <div>
+                    <span>{text.invoiceId}</span>
+                    <strong>{invoice.public_id}</strong>
+                  </div>
+                  <div>
+                    <span>{isPaid ? text.status : text.expiresAt}</span>
+                    <strong>{isPaid ? statusLabel : formatDateTime(invoice.expires_at, language)}</strong>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="co-pay">

@@ -2284,8 +2284,8 @@ func TestAdminResponseHelpers(t *testing.T) {
 			{Network: store.NetworkBASE, PaidUSD: decimal.RequireFromString("50"), PaidCount: 3, TotalCount: 5},
 		}
 		result := adminNetworkBreakdownResponse(items)
-		if len(result) != 7 {
-			t.Fatalf("expected all 7 payable networks, got %d", len(result))
+		if len(result) != 6 {
+			t.Fatalf("expected all 6 payable networks, got %d", len(result))
 		}
 		var base gin.H
 		for _, row := range result {
@@ -2975,8 +2975,8 @@ func TestHandlePublicPaymentOptions(t *testing.T) {
 	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("decode payment options: %v", err)
 	}
-	if len(payload.Options) != 7 {
-		t.Fatalf("expected 7 networks, got %d", len(payload.Options))
+	if len(payload.Options) != 6 {
+		t.Fatalf("expected 6 networks, got %d", len(payload.Options))
 	}
 	byNetwork := map[store.Network][]store.PaymentAsset{}
 	for _, option := range payload.Options {
@@ -2990,7 +2990,7 @@ func TestHandlePublicPaymentOptions(t *testing.T) {
 	if assets := byNetwork[store.NetworkSOLANA]; len(assets) != 3 {
 		t.Fatalf("expected SOLANA to list 3 assets, got %v", assets)
 	}
-	if assets := byNetwork[store.NetworkTON]; len(assets) != 1 || assets[0] != store.AssetGRAM {
-		t.Fatalf("expected TON to list only native GRAM, got %v", assets)
+	if assets := byNetwork[store.NetworkTON]; len(assets) != 2 || assets[0] != store.AssetGRAM || assets[1] != store.AssetUSDT {
+		t.Fatalf("expected TON to list native GRAM and USDT, got %v", assets)
 	}
 }

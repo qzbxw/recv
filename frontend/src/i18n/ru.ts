@@ -425,6 +425,8 @@ function verify(payload, signature, secret) {
     networkOnly: "Только эта сеть",
     paidTitle: "Оплачено",
     paidBody: "Ваш платеж успешно подтвержден.",
+    txHash: "Хэш транзакции",
+    viewInExplorer: "Проверить в эксплорере",
     underpaidBody: "Получена меньшая сумма. Доплатите остаток до истечения времени или дождитесь проверки продавца.",
     underpaidReceived: "Получено",
     underpaidRemaining: "Осталось доплатить",
