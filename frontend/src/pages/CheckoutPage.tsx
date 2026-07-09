@@ -33,6 +33,17 @@ function fallbackPaymentURI(payment: CheckoutPaymentDetails) {
   return "";
 }
 
+function qrPaymentSource(payment: CheckoutPaymentDetails, labels: { amount: string; wallet: string; network: string; comment: string }) {
+  if (payment.payable_network === "TON" && payment.payable_asset !== "GRAM") {
+    return payment.destination_address;
+  }
+  if (isWalletURI(payment.payment_uri)) {
+    return payment.payment_uri;
+  }
+  const fallback = fallbackPaymentURI(payment);
+  return fallback || paymentDetailsText(payment, labels);
+}
+
 function paymentDetailsText(payment: CheckoutPaymentDetails, labels: { amount: string; wallet: string; network: string; comment: string }) {
   return [
     `${labels.amount}: ${payment.payable_amount}`,
@@ -323,15 +334,15 @@ export function CheckoutPage() {
 
     const option = invoice.payment_options?.[selectedOptionIndex] ?? invoice.payment_options?.[0];
     const source = option
-      ? (isWalletURI(option.payment_uri) ? option.payment_uri : paymentDetailsText({
+      ? qrPaymentSource({
           payable_amount: option.payable_amount,
           payable_network: option.network,
           payable_asset: option.asset,
           destination_address: option.destination_address,
           payment_comment: option.payment_comment,
           payment_uri: option.payment_uri,
-        }, text))
-      : (isWalletURI(invoice.payment_uri) ? invoice.payment_uri : paymentDetailsText(invoice, text));
+        }, text)
+      : qrPaymentSource(invoice, text);
 
     void QRCode.toDataURL(source, {
       width: 288,
@@ -343,22 +354,7 @@ export function CheckoutPage() {
       },
     })
       .then(setQrDataUrl)
-      .catch(async () => {
-        try {
-          const fallback = await QRCode.toDataURL(paymentDetailsText(invoice, text), {
-            width: 288,
-            margin: 2,
-            errorCorrectionLevel: "M",
-            color: {
-              dark: "#050505",
-              light: "#ffffff",
-            },
-          });
-          setQrDataUrl(fallback);
-        } catch {
-          setQrDataUrl("");
-        }
-      });
+      .catch(() => setQrDataUrl(""));
   }, [invoice, selectedOptionIndex, text]);
 
   useEffect(() => {
