@@ -232,6 +232,7 @@ const (
 
 var reservedDemoWalletAddresses = map[string]struct{}{
 	"UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn": {},
+	"UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ":         {},
 	"0x0000000000000000000000000000000000000000":             {},
 	"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb":                    {},
 	"HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1":           {},
@@ -240,6 +241,7 @@ var reservedDemoWalletAddresses = map[string]struct{}{
 func ReservedDemoWalletAddresses() []string {
 	return []string{
 		"UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn",
+		"UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ",
 		"0x0000000000000000000000000000000000000000",
 		"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb",
 		"HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1",

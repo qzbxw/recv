@@ -245,7 +245,7 @@ const MOCK_INVOICES: Invoice[] = [
     payable_amount: "49.00",
     payable_network: "TON",
     payable_asset: "USDT",
-    destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    destination_address: "UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l",
     payment_comment: "RECV-2026-001",
     status: "paid",
     environment: "live",
@@ -256,7 +256,7 @@ const MOCK_INVOICES: Invoice[] = [
     review_reason: null,
     finalized_at: new Date().toISOString(),
     checkout_url: "/app/checkout/RECV-2026-001",
-    payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=49000000000&text=RECV-2026-001"
+    payment_uri: "ton://transfer/UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l?amount=49000000&jetton=EQCxE6mC__G6cD7YIAkb4leT8akRi8nM60Nw2VY0lNAM9qfe&text=RECV-2026-001"
   },
   {
     id: 102,
@@ -311,7 +311,7 @@ const MOCK_INVOICES: Invoice[] = [
     payable_amount: "140.00",
     payable_network: "TON",
     payable_asset: "GRAM",
-    destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    destination_address: "UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l",
     payment_comment: "RECV-2026-004",
     status: "expired",
     environment: "live",
@@ -322,7 +322,7 @@ const MOCK_INVOICES: Invoice[] = [
     review_reason: null,
     finalized_at: null,
     checkout_url: "/app/checkout/RECV-2026-004",
-    payment_uri: "ton://transfer/..."
+    payment_uri: "ton://transfer/UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l?amount=140000000000&text=RECV-2026-004"
   },
   {
     id: 105,
@@ -397,7 +397,7 @@ const MOCK_WALLETS: Wallet[] = [
     id: 1,
     workspace_id: 1,
     network: "TON",
-    address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    address: "UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l",
     is_active: true,
     created_at: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(),
     environment: "live"

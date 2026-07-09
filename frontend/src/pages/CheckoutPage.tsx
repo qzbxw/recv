@@ -121,7 +121,7 @@ function createDemoInvoice(): Invoice {
     payable_amount: "149 USDT",
     payable_network: "TON",
     payable_asset: "USDT",
-    destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    destination_address: "UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l",
     payment_comment: "RECV-DEMO-149",
     status: "awaiting_payment",
     environment: "test",
@@ -132,17 +132,17 @@ function createDemoInvoice(): Invoice {
     review_reason: null,
     finalized_at: null,
     checkout_url: "/app/checkout/demo",
-    payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=149000000000&text=RECV-DEMO-149",
+    payment_uri: "ton://transfer/UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l?amount=149000000&jetton=EQCxE6mC__G6cD7YIAkb4leT8akRi8nM60Nw2VY0lNAM9qfe&text=RECV-DEMO-149",
     payment_options: [
-      { network: "TON", asset: "USDT", payable_amount: "149.000000", destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: "RECV-DEMO-149", payment_uri: "", is_default: true },
-      { network: "TON", asset: "GRAM", payable_amount: "1234.500000", destination_address: "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: "RECV-DEMO-149", payment_uri: "ton://transfer/UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7?amount=1234500000000&text=RECV-DEMO-149", is_default: false },
-      { network: "TRON", asset: "USDT", payable_amount: "149.000000", destination_address: "TXDemoTRON4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1", payment_comment: null, payment_uri: "", is_default: false },
-      { network: "SOLANA", asset: "USDT", payable_amount: "149.000000", destination_address: "DemoSoLana7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: null, payment_uri: "", is_default: false },
-      { network: "SOLANA", asset: "USDC", payable_amount: "149.000000", destination_address: "DemoSoLana7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7", payment_comment: null, payment_uri: "", is_default: false },
-      { network: "BASE", asset: "USDT", payable_amount: "149.000000", destination_address: "0xDemoBase4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD", payment_comment: null, payment_uri: "", is_default: false },
-      { network: "ARBITRUM", asset: "USDC", payable_amount: "149.000000", destination_address: "0xDemoArb4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD", payment_comment: null, payment_uri: "", is_default: false },
-      { network: "BSC", asset: "BNB", payable_amount: "0.412000", destination_address: "0xDemoBSC4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD", payment_comment: null, payment_uri: "", is_default: false },
-      { network: "BSC", asset: "USDT", payable_amount: "149.000000", destination_address: "0xDemoBSC4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD", payment_comment: null, payment_uri: "", is_default: false },
+      { network: "TON", asset: "USDT", payable_amount: "149.000000", destination_address: "UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l", payment_comment: "RECV-DEMO-149", payment_uri: "ton://transfer/UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l?amount=149000000&jetton=EQCxE6mC__G6cD7YIAkb4leT8akRi8nM60Nw2VY0lNAM9qfe&text=RECV-DEMO-149", is_default: true },
+      { network: "TON", asset: "GRAM", payable_amount: "1234.500000", destination_address: "UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l", payment_comment: "RECV-DEMO-149", payment_uri: "ton://transfer/UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l?amount=1234500000000&text=RECV-DEMO-149", is_default: false },
+      { network: "TRON", asset: "USDT", payable_amount: "149.000000", destination_address: "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb", payment_comment: null, payment_uri: "tron:T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb?amount=149.000000&contract=TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj&token=USDT", is_default: false },
+      { network: "SOLANA", asset: "USDT", payable_amount: "149.000000", destination_address: "HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1", payment_comment: null, payment_uri: "solana:HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1?amount=149.000000&label=recv&spl-token=Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", is_default: false },
+      { network: "SOLANA", asset: "USDC", payable_amount: "149.000000", destination_address: "HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1", payment_comment: null, payment_uri: "solana:HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1?amount=149.000000&label=recv&spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", is_default: false },
+      { network: "BASE", asset: "USDT", payable_amount: "149.000000", destination_address: "0x0000000000000000000000000000000000000000", payment_comment: null, payment_uri: "ethereum:0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2@8453/transfer?address=0x0000000000000000000000000000000000000000&uint256=149000000", is_default: false },
+      { network: "ARBITRUM", asset: "USDC", payable_amount: "149.000000", destination_address: "0x0000000000000000000000000000000000000000", payment_comment: null, payment_uri: "ethereum:0xaf88d065e77c8cC2239327C5EDb3A432268e5831@42161/transfer?address=0x0000000000000000000000000000000000000000&uint256=149000000", is_default: false },
+      { network: "BSC", asset: "BNB", payable_amount: "0.412000", destination_address: "0x0000000000000000000000000000000000000000", payment_comment: null, payment_uri: "ethereum:0x0000000000000000000000000000000000000000@56?value=412000000000000000", is_default: false },
+      { network: "BSC", asset: "USDT", payable_amount: "149.000000", destination_address: "0x0000000000000000000000000000000000000000", payment_comment: null, payment_uri: "ethereum:0x55d398326f99059fF775485246999027B3197955@56/transfer?address=0x0000000000000000000000000000000000000000&uint256=149000000000000000000", is_default: false },
     ],
   };
 }
@@ -211,7 +211,9 @@ export function CheckoutPage() {
   
   const DUMMY_WALLETS_LIST = useMemo(() => [
     "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7",
+    "UQCI7d2SQ9ili8W41vpsIuaMyVmBMQcsBxEcM01UE5aL-j5l",
     "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHaWqcn",
+    "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ",
     "0x0000000000000000000000000000000000000000",
     "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb",
     "HN7cABViJeKaQRXmgUeJZr1H2dCxsf2A6Dks4K624zY1"
@@ -635,7 +637,7 @@ export function CheckoutPage() {
                       ...prev, 
                       status: "paid", 
                       tx_hash: prev.payable_network === "TON" 
-                        ? "UQDemo4A7m9f6jK2x8mP3sL0qW8rT2nV5yH1cD6pQ9zX4aB7_tx_hash_mock_demo" 
+                        ? "a3ae04d48a586efb375e2ff04412239bd5fc182807dfb7d1e40e73a64db2b34e" 
                         : "0x3333333333333333333333333333333333333333333333333333333333333333",
                       finalized_at: new Date().toISOString()
                     } : null)}
