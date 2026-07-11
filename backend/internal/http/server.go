@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1025,7 +1026,7 @@ func (s *Server) validInternalToken(ctx context.Context, token string) bool {
 			if json.Unmarshal(cfg.Value, &hashes) == nil {
 				tokenHash := hashSecret(token)
 				for _, candidate := range hashes {
-					if strings.TrimSpace(candidate) == tokenHash {
+					if subtle.ConstantTimeCompare([]byte(strings.TrimSpace(candidate)), []byte(tokenHash)) == 1 {
 						return true
 					}
 				}
@@ -1033,7 +1034,7 @@ func (s *Server) validInternalToken(ctx context.Context, token string) bool {
 			}
 		}
 	}
-	return token == s.cfg.InternalToken
+	return subtle.ConstantTimeCompare([]byte(token), []byte(s.cfg.InternalToken)) == 1
 }
 
 func requestMetricsMiddleware() gin.HandlerFunc {
