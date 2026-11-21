@@ -1,0 +1,2 @@
+*.rsc linguist-detectable=false
+frontend-public/.next_user/** linguist-generated=true
